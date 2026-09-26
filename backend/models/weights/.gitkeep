@@ -1,0 +1,2 @@
+# Placeholder for pre-trained PyTorch EfficientNet-B0 weights (.pth/.pt)
+# See docs/model_integration_guide.md for checkpoint loading instructions and SHA-256 verification.

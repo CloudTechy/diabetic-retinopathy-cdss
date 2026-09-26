@@ -1,0 +1,101 @@
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 16 Relational Store & Audit Log
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: dr_cdss_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dr_secure_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-dr_cdss_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dr_user} -d ${POSTGRES_DB:-dr_cdss_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - dr_network
+
+  # ----------------------------------------------------------------------------
+  # FastAPI Backend Service (Python 3.11 with Hot Reload)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dr_cdss_backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Diabetic Retinopathy CDSS}
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-true}
+      SECRET_KEY: ${SECRET_KEY:-replace-this-with-a-secure-random-secret-key}
+      API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
+      POSTGRES_USER: ${POSTGRES_USER:-dr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dr_secure_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-dr_cdss_db}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-dr_user}:${POSTGRES_PASSWORD:-dr_secure_password_2026}@db:5432/${POSTGRES_DB:-dr_cdss_db}
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-dr_user}:${POSTGRES_PASSWORD:-dr_secure_password_2026}@db:5432/${POSTGRES_DB:-dr_cdss_db}
+      STORAGE_BASE_PATH: /app/storage
+      STORAGE_IMAGES_PATH: /app/storage/images
+      STORAGE_REPORTS_PATH: /app/storage/reports
+      STORAGE_ATTRIBUTIONS_PATH: /app/storage/attributions
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-15}
+      MODEL_CHECKPOINT_PATH: ${MODEL_CHECKPOINT_PATH:-/app/models/checkpoints/efficientnet_b0_dr.pth}
+      MODEL_DEVICE: ${MODEL_DEVICE:-cpu}
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","http://127.0.0.1:3000","http://127.0.0.1:5173"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    networks:
+      - dr_network
+
+  # ----------------------------------------------------------------------------
+  # Vite + React 18 + TypeScript Frontend Dev Server
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dr_cdss_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+      VITE_PORT: 3000
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+    networks:
+      - dr_network
+
+# ------------------------------------------------------------------------------
+# Persistent Storage Volumes & Networks
+# ------------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  dr_network:
+    driver: bridge

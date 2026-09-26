@@ -1,0 +1,3 @@
+# Private saliency / visual attribution map storage directory
+# Grad-CAM overlays, heatmaps, and spatial validation artifacts
+# Strictly protected from public access

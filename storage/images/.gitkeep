@@ -1,0 +1,3 @@
+# Private medical image storage directory
+# Raw uploaded retinal fundus images (JPEG/PNG/TIFF/DICOM)
+# Strictly protected from public access
