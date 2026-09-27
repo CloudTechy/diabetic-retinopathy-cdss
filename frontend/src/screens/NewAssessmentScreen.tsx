@@ -5,10 +5,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  ShieldAlert
 } from 'lucide-react';
 import { EyeLaterality } from '../types/clinical';
 import { generateSyntheticFundus } from '../utils/syntheticFundus';
+import { analyzeRetinalImageOnCanvas, ClientValidationResult } from '../utils/retinalValidator';
 
 interface NewAssessmentScreenProps {
   onStartValidation: (data: {
@@ -22,6 +24,7 @@ interface NewAssessmentScreenProps {
     filename: string;
     simulateGateFailure?: 1 | 2 | 3 | null;
     candidateGrade?: number;
+    clientValidation?: ClientValidationResult;
   }) => void;
   onCancel: () => void;
 }
@@ -42,6 +45,8 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileDimensions, setFileDimensions] = useState<{ width: number; height: number } | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [validationWarning, setValidationWarning] = useState<string | null>(null);
+  const [clientValidation, setClientValidation] = useState<ClientValidationResult | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   // Simulation test mode (allows simulating Gate 1, 2, or 3 failure or selecting a preset pathology)
@@ -53,6 +58,8 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   // Pre-flight validation logic
   const processImageFile = (file: File) => {
     setFileError(null);
+    setValidationWarning(null);
+    setClientValidation(null);
 
     // 1. MIME check
     const validMimes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -76,12 +83,33 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
       const dataUrl = e.target?.result as string;
       setPreviewUrl(dataUrl);
 
-      // Check pixel dimensions
+      // Check pixel dimensions and run real-time client-side retinal computer vision analysis
       const img = new Image();
       img.onload = () => {
         setFileDimensions({ width: img.width, height: img.height });
-        if (img.width < 512 || img.height < 512) {
-          setFileError('Warning: Native resolution is below recommended 512x512 threshold. May fail Gate 3 sharpness check.');
+
+        // Run off-screen canvas analysis for circular aperture, chromatic R/B ratio, and blur
+        const analysis = analyzeRetinalImageOnCanvas(img, file.size, file.type);
+        setClientValidation(analysis);
+
+        if (!analysis.allPassed && analysis.failedGate) {
+          setSimulateGateFailure(analysis.failedGate);
+          if (analysis.failedGate === 2) {
+            setValidationWarning(
+              analysis.gate2.rejectionReason ||
+              'Non-retinal content detected: Image does not exhibit ophthalmic fundus chromatic characteristics (mean R/B ratio < 1.15) or circular aperture. Suspected document, schematic, or non-ocular photography.'
+            );
+          } else if (analysis.failedGate === 3) {
+            setValidationWarning(
+              analysis.gate3.rejectionReason ||
+              'Image quality warning: low optical sharpness or motion blur detected.'
+            );
+          } else if (analysis.failedGate === 1) {
+            setFileError(analysis.gate1.rejectionReason || 'Invalid file format or size.');
+          }
+        } else {
+          setSimulateGateFailure(null);
+          setValidationWarning(null);
         }
       };
       img.src = dataUrl;
@@ -110,6 +138,8 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   const handleLoadSample = (grade: number, failGate?: 1 | 2 | 3) => {
     setCandidateGrade(grade);
     setSimulateGateFailure(failGate || null);
+    setClientValidation(null);
+    setValidationWarning(null);
     const { fundusDataUrl } = generateSyntheticFundus(grade, laterality);
     setPreviewUrl(fundusDataUrl);
     setFileDimensions({ width: 2240, height: 1488 });
@@ -141,6 +171,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
       filename: selectedFile?.name || `fundus_${laterality}.jpg`,
       simulateGateFailure,
       candidateGrade,
+      clientValidation: clientValidation || undefined,
     });
   };
 
@@ -333,10 +364,23 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                 </div>
 
                 <div className="text-left space-y-1 text-xs">
-                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>File Selected & Pre-flight Passed</span>
-                  </div>
+                  {clientValidation && !clientValidation.allPassed ? (
+                    <div className="font-bold text-rose-800 flex items-center gap-1.5">
+                      <ShieldAlert className="w-4 h-4 text-rose-600" />
+                      <span>
+                        {clientValidation.failedGate === 2
+                          ? 'Non-Retinal Content Detected (Gate 2 Failure)'
+                          : clientValidation.failedGate === 3
+                          ? 'Quality Issue Detected (Gate 3)'
+                          : 'Format / File Issue (Gate 1)'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>File Selected & Pre-flight Passed</span>
+                    </div>
+                  )}
                   <p className="text-slate-600 font-mono text-[11px]">
                     {selectedFile?.name || 'synthetic_retinal_fundus.jpg'}
                   </p>
@@ -367,6 +411,20 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
               </div>
             )}
           </div>
+
+          {/* Validation Pre-Screening Warning Alert */}
+          {validationWarning && (
+            <div className="p-3.5 bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs rounded-xl flex items-start gap-2.5">
+              <ShieldAlert className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold block text-sm">Gate 2 Safeguard Alert: Non-Retinal Modality Detected</span>
+                <p className="text-[11px] leading-relaxed font-medium">{validationWarning}</p>
+                <p className="text-[10px] text-rose-700 font-mono">
+                  Proceeding will trigger the fail-closed validation rejection. Downstream model evaluation and Grad-CAM will be strictly prohibited.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* File Error Alert */}
           {fileError && (

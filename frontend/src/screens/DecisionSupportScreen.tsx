@@ -4,6 +4,8 @@ import {
   UserCheck,
   Download,
   ShieldCheck,
+  ShieldAlert,
+  ArrowLeft,
   Eye,
   Clock
 } from 'lucide-react';
@@ -35,6 +37,62 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
       setIsDownloading(false);
     }
   };
+
+  // Fail-Closed Safety Guard: Abort rendering if assessment was rejected or has no valid observation
+  if (assessment.status === 'rejected' || !assessment.modelObservation) {
+    const failedGate = assessment.validationGates.find((g) => g.status === 'failed') || assessment.validationGates[1];
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+        <div className="bg-white rounded-2xl border-2 border-rose-200 p-8 shadow-sm space-y-6 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-rose-50 border border-rose-300 flex items-center justify-center text-rose-600">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300">
+              Fail-Closed SaMD Safety Lock
+            </span>
+            <h2 className="text-xl font-black text-slate-900">
+              Automated AI Inference Strictly Aborted
+            </h2>
+            <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
+              This assessment was rejected during 3-gate validation ({failedGate.title}). To prevent automation bias, diagnostic drift, and invalid classification, neural network inference and Grad-CAM saliency mapping are strictly prohibited.
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto p-4 bg-rose-50/80 rounded-xl border border-rose-200 text-left space-y-2 text-xs">
+            <div className="font-bold text-rose-900 flex items-center justify-between">
+              <span>Rejection Reason:</span>
+              <span className="text-[11px] font-mono text-rose-700">Gate {failedGate.gateIndex}</span>
+            </div>
+            <p className="text-rose-800 leading-relaxed text-[11px]">
+              {failedGate.rejectionReason || 'Non-retinal content or technical image quality violation.'}
+            </p>
+            {failedGate.clinicalAction && (
+              <div className="pt-2 border-t border-rose-200 text-[11px] text-slate-700">
+                <strong className="text-rose-900 block font-semibold">Recommended Action:</strong>
+                <p>{failedGate.clinicalAction}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = 'new_assessment';
+                window.location.reload();
+              }}
+              className="px-5 py-2.5 bg-clinical-primary text-white text-xs font-bold rounded-lg shadow-sm hover:bg-clinical-primary-hover transition flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Upload Valid Retinal Photograph</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">

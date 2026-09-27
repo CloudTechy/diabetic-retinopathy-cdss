@@ -10,6 +10,7 @@ import {
   ICDR_GRADES
 } from '../types/clinical';
 import { generateSyntheticFundus, generateSyntheticGradCam } from '../utils/syntheticFundus';
+import { ClientValidationResult } from '../utils/retinalValidator';
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -412,42 +413,45 @@ class ClinicalApiService {
     filename: string;
     simulateGateFailure?: 1 | 2 | 3 | null;
     candidateGrade?: number;
+    clientValidation?: ClientValidationResult;
   }): Promise<AssessmentRecord> {
     const newId = `REC-2026-00${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date().toISOString();
     const grade = payload.candidateGrade !== undefined ? payload.candidateGrade : 2;
 
-    const syntheticGradCam = generateSyntheticGradCam(grade, payload.laterality, 'viridis', 0.25);
+    const cv = payload.clientValidation;
+    const failsAt = cv && !cv.allPassed ? cv.failedGate : payload.simulateGateFailure;
+    const isRejected = !!failsAt;
 
-    const isRejected = !!payload.simulateGateFailure;
+    const syntheticGradCam = generateSyntheticGradCam(grade, payload.laterality, 'viridis', 0.25);
 
     const gates: GateResult[] = [
       {
         gateIndex: 1,
         name: 'Gate 1',
         title: 'File Integrity & Security',
-        status: payload.simulateGateFailure === 1 ? 'failed' : 'passed',
-        metric: payload.simulateGateFailure === 1 ? 'Corrupted file signature or header' : 'Valid binary signature (0xFFD8FF)',
-        rejectionReason: payload.simulateGateFailure === 1 ? 'Binary magic number validation failed; file signature corrupted.' : undefined,
-        clinicalAction: payload.simulateGateFailure === 1 ? 'Please re-export retinal photograph in uncorrupted JPEG/PNG format.' : undefined,
+        status: failsAt === 1 ? 'failed' : 'passed',
+        metric: cv ? cv.gate1.metric : failsAt === 1 ? 'Corrupted file signature or header' : 'Valid binary signature (0xFFD8FF)',
+        rejectionReason: cv?.gate1.rejectionReason || (failsAt === 1 ? 'Binary magic number validation failed; file signature corrupted.' : undefined),
+        clinicalAction: cv?.gate1.clinicalAction || (failsAt === 1 ? 'Please re-export retinal photograph in uncorrupted JPEG/PNG format.' : undefined),
       },
       {
         gateIndex: 2,
         name: 'Gate 2',
         title: 'Retinal Anatomical Relevance',
-        status: payload.simulateGateFailure === 2 ? 'failed' : payload.simulateGateFailure === 1 ? 'pending' : 'passed',
-        metric: payload.simulateGateFailure === 2 ? 'Retinal coverage: 12.4% (Threshold >= 70%)' : 'Retinal field-of-view 92.5%',
-        rejectionReason: payload.simulateGateFailure === 2 ? 'Image lacks distinctive retinal morphology (optic disc / fovea not detected; possible anterior segment or non-ocular image).' : undefined,
-        clinicalAction: payload.simulateGateFailure === 2 ? 'Ensure retinal camera is focused on posterior pole fundus and anterior segment lens adapter is removed.' : undefined,
+        status: failsAt === 2 ? 'failed' : failsAt === 1 ? 'pending' : 'passed',
+        metric: cv ? cv.gate2.metric : failsAt === 2 ? 'Retinal coverage: 12.4% (Threshold >= 70%)' : 'Retinal field-of-view 92.5%',
+        rejectionReason: cv?.gate2.rejectionReason || (failsAt === 2 ? 'Image lacks distinctive retinal morphology (optic disc / fovea not detected; possible anterior segment or non-ocular image).' : undefined),
+        clinicalAction: cv?.gate2.clinicalAction || (failsAt === 2 ? 'Ensure retinal camera is focused on posterior pole fundus and anterior segment lens adapter is removed.' : undefined),
       },
       {
         gateIndex: 3,
         name: 'Gate 3',
         title: 'Technical Quality & Sharpness',
-        status: payload.simulateGateFailure === 3 ? 'failed' : payload.simulateGateFailure ? 'pending' : 'passed',
-        metric: payload.simulateGateFailure === 3 ? 'Laplacian variance: 45.2 (Threshold >= 100.0)' : 'Laplacian variance: 275.4 (> 100 threshold)',
-        rejectionReason: payload.simulateGateFailure === 3 ? 'Severe motion blur or insufficient contrast detected.' : undefined,
-        clinicalAction: payload.simulateGateFailure === 3 ? 'Recapture retinal photograph ensuring patient fixation is steady and lens is clean.' : undefined,
+        status: failsAt === 3 ? 'failed' : failsAt ? 'pending' : 'passed',
+        metric: cv ? cv.gate3.metric : failsAt === 3 ? 'Laplacian variance: 45.2 (Threshold >= 100.0)' : 'Laplacian variance: 275.4 (> 100 threshold)',
+        rejectionReason: cv?.gate3.rejectionReason || (failsAt === 3 ? 'Severe motion blur or insufficient contrast detected.' : undefined),
+        clinicalAction: cv?.gate3.clinicalAction || (failsAt === 3 ? 'Recapture retinal photograph ensuring patient fixation is steady and lens is clean.' : undefined),
       },
     ];
 
@@ -463,8 +467,8 @@ class ClinicalApiService {
       imageUrl: payload.imageDataUrl,
       gradcamUrl: isRejected ? undefined : syntheticGradCam.gradcamDataUrl,
       qualityMetrics: {
-        laplacianVariance: payload.simulateGateFailure === 3 ? 45.2 : 275.4,
-        illuminationIndex: 0.89,
+        laplacianVariance: cv ? cv.gate3.laplacianVariance : failsAt === 3 ? 45.2 : 275.4,
+        illuminationIndex: cv && cv.gate2.isDocumentOrDiagram ? 0.21 : 0.89,
         contrastDynamicRange: 182.0,
         nativeResolution: '2240x1488 px',
         fileSizeBytes: payload.fileSizeBytes,
