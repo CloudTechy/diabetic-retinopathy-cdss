@@ -47,7 +47,9 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
     setLoading(true);
     try {
       const data = await clinicalApi.searchRecords(filters);
-      setRecords(data);
+      setRecords(Array.isArray(data) ? data : []);
+    } catch {
+      setRecords([]);
     } finally {
       setLoading(false);
     }

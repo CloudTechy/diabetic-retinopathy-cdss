@@ -20,6 +20,23 @@ const apiClient = axios.create({
   },
 });
 
+// Interceptor: if static hosting (e.g. Vercel) rewrites missing API endpoints to index.html,
+// detect HTML payload and reject so all callers gracefully fallback to the in-memory store.
+apiClient.interceptors.response.use(
+  (response) => {
+    if (
+      typeof response.data === 'string' &&
+      (response.data.trim().startsWith('<!doctype html') ||
+        response.data.trim().startsWith('<html') ||
+        response.data.trim().startsWith('<!DOCTYPE html'))
+    ) {
+      return Promise.reject(new Error('HTML response returned from SPA fallback; backend API unavailable.'));
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Default Mock Clinician User
 export const DEFAULT_CLINICIAN: ClinicianUser = {
   id: 'USR-8821',
@@ -385,7 +402,10 @@ class ClinicalApiService {
   async getWorklist(): Promise<AssessmentRecord[]> {
     try {
       const res = await apiClient.get('/assessments');
-      return res.data;
+      if (Array.isArray(res.data)) {
+        return res.data;
+      }
+      return [...this.records];
     } catch {
       // Mock fallback: return copy of in-memory store
       return [...this.records];
@@ -573,7 +593,10 @@ class ClinicalApiService {
   async searchRecords(filters: WorklistFilter): Promise<AssessmentRecord[]> {
     try {
       const res = await apiClient.get('/assessments/search', { params: filters });
-      return res.data;
+      if (Array.isArray(res.data)) {
+        return res.data;
+      }
+      throw new Error('Non-array response');
     } catch {
       return this.records.filter((rec) => {
         if (filters.searchQuery) {

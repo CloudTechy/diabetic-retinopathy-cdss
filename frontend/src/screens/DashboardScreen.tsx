@@ -37,7 +37,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     setLoading(true);
     try {
       const data = await clinicalApi.getWorklist();
-      setRecords(data);
+      setRecords(Array.isArray(data) ? data : []);
+    } catch {
+      setRecords([]);
     } finally {
       setLoading(false);
     }
