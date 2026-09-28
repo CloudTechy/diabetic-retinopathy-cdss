@@ -136,7 +136,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       </div>
 
       {/* Top Metrics Ribbon */}
-      <section aria-label="Triage Worklist Summary Metrics" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section aria-label="Assessment Worklist Summary Metrics" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1 */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
@@ -164,9 +164,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         {/* Metric 3 */}
         <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase text-rose-700">High-Priority Flagged</p>
+            <p className="text-xs font-semibold uppercase text-rose-700">Marked for Attention</p>
             <p className="text-2xl font-black text-rose-700 mt-1">{highPriority}</p>
-            <p className="text-[11px] text-rose-600">Severe NPDR or PDR</p>
+            <p className="text-[11px] text-rose-600">Severe NPDR or PDR (Grade 3/4)</p>
           </div>
           <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
             <AlertTriangle className="w-5 h-5" />
@@ -297,7 +297,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         <div className="font-bold flex items-center gap-1.5">
                           <span>{rec.patientId}</span>
                           {isSevere && (
-                            <span className="w-2 h-2 rounded-full bg-rose-500" title="Flagged: High Priority" />
+                            <span className="w-2 h-2 rounded-full bg-rose-500" title="Attention: Higher Stage Observation (Grade 3/4)" />
                           )}
                         </div>
                         <span className="text-[10px] text-slate-400 font-mono">{rec.id}</span>

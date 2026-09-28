@@ -63,6 +63,7 @@ storage/reports/*
 !storage/reports/.gitkeep
 storage/attributions/*
 !storage/attributions/.gitkeep
+backend/storage/
 
 # Node.js / Frontend
 frontend/node_modules/

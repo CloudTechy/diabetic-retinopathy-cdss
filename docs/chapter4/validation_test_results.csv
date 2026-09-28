@@ -1,0 +1,13 @@
+test_case_id,test_image_description,input_type,expected_status,failed_gate,measured_metric,pass_fail,clinical_action_prescribed
+VAL-TC-001,High-quality clear retinal fundus (OD),retinal_fundus,accepted,none,Laplacian: 142.4 (Pass),PASS,Proceed to automated inference
+VAL-TC-002,Standard dilated fundus photo (OS),retinal_fundus,accepted,none,Laplacian: 118.6 (Pass),PASS,Proceed to automated inference
+VAL-TC-003,Corrupted image file header (Zero-byte slice),corrupt_binary,rejected,Gate 1,Magic bytes invalid,PASS,Reject immediately; request valid image file
+VAL-TC-004,Unsupported TIFF image container,unsupported_format,rejected,Gate 1,MIME type image/tiff not accepted,PASS,Prompt for JPEG or PNG format
+VAL-TC-005,System architecture diagram screenshot,non_retinal_doc,rejected,Gate 2,White corners (248.2); R/B ratio 0.94,PASS,Reject: Non-retinal clinical diagram detected
+VAL-TC-006,Clinical portrait of patient face,portrait,rejected,Gate 2,Aspect ratio 1.77; R/B ratio 1.02,PASS,Reject: Retinal circular mask absent
+VAL-TC-007,Chest radiograph (X-ray),radiograph,rejected,Gate 2,R/B chromatic ratio 1.00 (Monochrome),PASS,Reject: Retinal spectral balance absent
+VAL-TC-008,Defocused retinal fundus (Heavy blur),retinal_fundus,rejected,Gate 3,Laplacian variance: 22.4 (<60.0),PASS,Reject: Excessive motion blur; recalibrate focus
+VAL-TC-009,Severely underexposed fundus photo,retinal_fundus,rejected,Gate 3,Illumination index: 0.12 (<0.20),PASS,Reject: Insufficient illumination; repeat imaging
+VAL-TC-010,Flash flare overexposure across posterior pole,retinal_fundus,rejected,Gate 3,Illumination index: 0.89 (>0.85),PASS,Reject: Overexposure artifact; adjust flash intensity
+VAL-TC-011,Extreme widescreen panoramic fundus collage,panoramic_crop,rejected,Gate 2,Aspect ratio 2.40 (>1.25),PASS,Reject: Non-standard aperture aspect ratio
+VAL-TC-012,Borderline focus retinal photograph (Marginal),retinal_fundus,accepted,none,Laplacian variance: 68.5 (Pass),PASS,Proceed to automated inference with advisory note

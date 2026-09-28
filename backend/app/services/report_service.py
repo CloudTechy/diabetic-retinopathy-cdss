@@ -89,12 +89,12 @@ class ReportService:
         elements = []
 
         # --- Header ---
-        elements.append(Paragraph("DIABETIC RETINOPATHY CLINICAL DECISION SUPPORT SYSTEM", title_style))
+        elements.append(Paragraph("Assessment Report", title_style))
         elements.append(Paragraph("Ophthalmic Retinal Screening & Decision-Support Consultation Summary", subtitle_style))
         elements.append(Spacer(1, 4))
         elements.append(
             Paragraph(
-                "<strong>Target Standard:</strong> FDA SaMD Guidance &middot; NHS DTAC / NICE ESF Clinical Quality Protocols",
+                "<strong>System:</strong> Diabetic Retinopathy Decision Support (EfficientNet-B0) &middot; Clinical Evaluation Protocol",
                 disclaimer_style,
             )
         )
@@ -240,13 +240,13 @@ class ReportService:
         )
         elements.append(Spacer(1, 10))
 
-        # --- Section B: Certified Clinical Evaluation ---
-        elements.append(Paragraph("3. Certified Clinical Evaluation (Authoritative Human-in-the-Loop)", h2_style))
+        # --- Section B: Professional Review Response ---
+        elements.append(Paragraph("3. Professional Review Response (Authoritative Human-in-the-Loop)", h2_style))
         elements.append(Spacer(1, 4))
 
         if rev:
             agreement_label = "AGREED with Model Observation" if rev.agreement == "agree" else (
-                "DISAGREED with Model Observation" if rev.agreement == "disagree" else "INCONCLUSIVE / INDETERMINATE"
+                "DISAGREED with Model Observation" if rev.agreement == "disagree" else "UNABLE TO DETERMINE / INDETERMINATE"
             )
 
             rev_data = [
@@ -271,7 +271,7 @@ class ReportService:
                 [
                     Paragraph("<strong>Signature Timestamp:</strong>", body_style),
                     Paragraph(rev.signed_at.strftime("%Y-%m-%d %H:%M:%S UTC"), body_style),
-                    Paragraph("<strong>Cryptographic Hash:</strong>", body_style),
+                    Paragraph("<strong>Assessment Integrity Hash:</strong>", body_style),
                     Paragraph(f"<font face='Courier' size=7>{rev.signature_hash}</font>", body_style),
                 ],
             ]

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   X,
   CheckCircle2,
-  AlertCircle,
   AlertTriangle,
   HelpCircle,
   Lock,
@@ -44,11 +43,9 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
 
   const modelGrade = assessment.modelObservation?.primaryClassGrade ?? 2;
 
-  // Validation rules
-  const isJustificationRequired = agreement === 'disagree' || agreement === 'inconclusive';
-  const isJustificationValid = !isJustificationRequired || justificationNotes.trim().length >= 15;
+  // Validation rules: Per supervisor directive, observation rationale is optional and arbitrary 15-char restriction is removed
   const isGradeSelected = certifiedGrade !== null;
-  const canProceed = agreement !== null && isGradeSelected && isJustificationValid;
+  const canProceed = agreement !== null && isGradeSelected;
 
   const handleSelectAgreement = (type: AgreementType) => {
     setAgreement(type);
@@ -78,7 +75,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
         agreement,
         certifiedGrade,
         certifiedGradeLabel: ICDR_GRADES[certifiedGrade].label,
-        justificationNotes: isJustificationRequired ? justificationNotes.trim() : undefined,
+        justificationNotes: justificationNotes.trim() || undefined,
         inconclusiveReason: agreement === 'inconclusive' ? inconclusiveReason : undefined,
         referralPlan,
       });
@@ -290,34 +287,25 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
             </div>
           )}
 
-          {/* Mandatory Disagreement Justification (if Disagree or Inconclusive) */}
-          {isJustificationRequired && (
-            <div className="space-y-2 p-3.5 bg-amber-50/60 border border-amber-300 rounded-xl">
-              <div className="flex items-center justify-between">
-                <label htmlFor="justification-text" className="block text-xs font-bold text-amber-950">
-                  Mandatory Clinical Justification (Min 15 chars) *
-                </label>
-                <span className="text-[11px] font-mono text-amber-800">
-                  {justificationNotes.trim().length} / 15 chars
-                </span>
-              </div>
-              <textarea
-                id="justification-text"
-                rows={3}
-                required
-                value={justificationNotes}
-                onChange={(e) => setJustificationNotes(e.target.value)}
-                placeholder="Enter clinical rationale for override or ambiguity (e.g., Extensive venous beading identified in superior arcade fulfilling 4-2-1 rule)..."
-                className="w-full text-xs p-2.5 border border-amber-300 rounded-lg bg-white shadow-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
-              />
-              {justificationNotes.trim().length < 15 && (
-                <p className="text-[11px] text-amber-800 flex items-center gap-1 font-medium">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  At least 15 characters required for medical-legal traceability before signing.
-                </p>
-              )}
+          {/* Clinical Observation Rationale (Optional per supervisor directive) */}
+          <div className="space-y-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-center justify-between">
+              <label htmlFor="justification-text" className="block text-xs font-bold text-slate-800">
+                Clinical Observation Rationale (Optional)
+              </label>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Optional observation notes
+              </span>
             </div>
-          )}
+            <textarea
+              id="justification-text"
+              rows={2}
+              value={justificationNotes}
+              onChange={(e) => setJustificationNotes(e.target.value)}
+              placeholder="Enter optional clinical findings or override rationale (e.g., Focal microaneurysms noted in macular zone, or 4-2-1 rule verification)..."
+              className="w-full text-xs p-2.5 border border-slate-300 rounded-lg bg-white shadow-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            />
+          </div>
 
           {/* Section 3: Management & Referral Protocol */}
           <div className="space-y-2">
@@ -355,7 +343,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
             </div>
             <div className="flex items-center text-teal-700 font-mono font-semibold">
               <Lock className="w-3.5 h-3.5 mr-1 text-teal-600" />
-              Cryptographic Sign-off
+              Professional Review Sign-off
             </div>
           </div>
 

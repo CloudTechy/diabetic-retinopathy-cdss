@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-teal-400"></span>
             <span className="font-semibold text-slate-100 uppercase tracking-wider">
-              FDA SaMD Class II / NHS DTAC Decision Support Aid
+              AI Clinical Decision Support Aid (Research & Decision Support)
             </span>
             <span className="text-slate-400 hidden sm:inline">|</span>
             <span className="text-slate-400 hidden sm:inline">

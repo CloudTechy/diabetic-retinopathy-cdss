@@ -53,7 +53,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           className="inline-flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 transition focus-visible:ring-2 focus-visible:ring-clinical-primary rounded-md p-1"
         >
           <ArrowLeft className="w-4 h-4 mr-1.5" />
-          Return to Triage Worklist
+          Return to Assessment Worklist
         </button>
 
         {/* Lock Status Indicator */}
@@ -94,11 +94,11 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           </div>
         </div>
 
-        {/* Cryptographic SHA-256 Retinal Image Hash */}
+        {/* Assessment Integrity Hash */}
         <div className="p-3 bg-slate-900 rounded-xl text-slate-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <Lock className="w-4 h-4 text-teal-400 flex-shrink-0" />
-            <span className="font-semibold text-slate-200">SHA-256 Retinal Image Integrity:</span>
+            <span className="font-semibold text-slate-200">Assessment Integrity Hash:</span>
           </div>
           <span className="font-mono text-[11px] text-teal-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 break-all">
             {assessment.qualityMetrics.sha256Hash}
@@ -181,7 +181,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
             </div>
 
             <h3 id="clinician-domain-heading" className="text-base font-bold text-slate-900">
-              Certified Medical Diagnosis
+              Professional Review Response
             </h3>
 
             {review && certifiedGradeInfo ? (
