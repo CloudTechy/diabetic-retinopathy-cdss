@@ -83,12 +83,13 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 - **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
 - **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
 - **Benchmark:** mean **8.36 ms** forward pass — **on the Tesla T4, GPU, forward pass only**. ⚠️ Not a CPU figure and not end-to-end. No clinical-workstation latency is claimed anywhere in this thesis.
+- **Grad-CAM composition:** vectorised, **650 ms → 52 ms** (~12x), byte-identical output. This was the dominant cost in the request path.
 
 ---
 
 ## 5. Test Suite
 
-**45 passed, 1 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant.
+**58 passed, 1 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant and 13 asserting Grad-CAM render equivalence.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
@@ -100,7 +101,7 @@ cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
 
 | # | Item | Why it matters |
 | :---: | :--- | :--- |
-| 1 | **CPU end-to-end benchmark** | The committed 8.36 ms is a T4 forward pass. The deployment target is CPU, and the figure excludes decode, validation, preprocessing and Grad-CAM. Until measured, no latency claim is defensible. See [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) §4. |
+| 1 | **Run the CPU end-to-end benchmark** | Harness built (`backend/scripts/benchmark_cpu_end_to_end.py`, stage-by-stage, CPU-pinned) and the dominant bottleneck already fixed — Grad-CAM composition went from ~650 ms to 52 ms. **Not yet executed on real fundus images**, so no total is recorded and no latency claim is made. Needs an APTOS image directory. See [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) §4. |
 | 2 | Re-split with byte-hash duplicate grouping, then re-train | 27/549 held-out images are byte-identical to a training image because `duplicated_info.csv` is absent from the Kaggle download. Measured effect: nil (clean-subset $\kappa$ = 0.877818 vs 0.877747 full). Disclosed in [`dataset_audit.md`](docs/chapter4/dataset_audit.md) §4; remediation deferred as it would invalidate the hash-verified checkpoint for no measurable gain. |
 | 3 | Refresh UI screenshots | Panels in `docs/chapter4/screenshots/` predate the evidence refresh and may display superseded metric values. They evidence interface behaviour, not model performance. |
 | 4 | External-cohort validation | No evaluation on any dataset other than APTOS 2019. No generalisation claim is made. |

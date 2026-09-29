@@ -237,8 +237,8 @@ Re-verified against the genuine APTOS 2019 run. Every figure below is recomputed
 
 ### Target 7: Automated Test Suite & Deployment
 * **Findings:**
-  - Backend suite: **45 passed, 1 skipped** (the skip requires PyTorch, absent from the local virtual environment). The suite now opts into the simulated inference engine explicitly.
-  - Six of those tests specifically guard the fail-closed invariant: the engine must refuse to grade without verified trained weights.
+  - Backend suite: **58 passed, 1 skipped** (the skip requires PyTorch, absent from the local virtual environment). The suite now opts into the simulated inference engine explicitly.
+  - Eight of those tests guard the fail-closed invariant (the engine must refuse to grade without verified trained weights); 13 more assert that Grad-CAM render output is byte-identical after vectorisation.
   - Production deployment verified live on Vercel returning HTTP 200.
 * **Determination:** ✅ **PASS**
 

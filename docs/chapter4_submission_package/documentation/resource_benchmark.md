@@ -67,14 +67,34 @@ The claims that survive regardless of device:
 
 ## 4. Closing the CPU Gap
 
-Two distinct pieces of work are outstanding, and neither is done:
+A dedicated harness now exists: [`backend/scripts/benchmark_cpu_end_to_end.py`](../../backend/scripts/benchmark_cpu_end_to_end.py).
 
-**(a) CPU forward-pass latency.** [`backend/scripts/benchmark_resources.py`](../../backend/scripts/benchmark_resources.py) already selects the device automatically (`cuda` if available, else `cpu`) and takes no arguments. Running it unchanged on a CPU-only machine, or in the backend container, therefore produces the CPU figure directly:
+It pins the device to CPU (it clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot accidentally reproduce the GPU-measurement error this section exists to correct) and times the full request path **stage by stage**:
 
-```bash
-python backend/scripts/benchmark_resources.py
+```text
+read -> gate1 -> gate2 -> gate3 -> preprocess -> forward -> gradcam -> compose -> encode
 ```
 
-**(b) End-to-end request latency.** This is **not implemented**. The script times the forward pass alone; it has no mode that exercises decode → three-gate validation → preprocessing → forward → Grad-CAM → heatmap composition. Producing the number a clinician actually experiences requires extending the script to time that full path, or instrumenting the `/api/v1/assessments` handler directly.
+Per-stage reporting is the point. A single total tells you a request is slow but not which part to fix.
 
-Once (a) and (b) exist, the CPU end-to-end figure should become the headline in §1, with the T4 forward-pass figure retained below it as a labelled training-environment reference point. Reporting both, clearly distinguished, is the honest presentation; reporting the T4 number as though it described the clinical workstation would not be.
+### Running it
+
+Requires the APTOS images. In a Colab **CPU** runtime:
+
+```bash
+pip install -q pydantic-settings
+cd diabetic-retinopathy-cdss
+python backend/scripts/benchmark_cpu_end_to_end.py --images-dir aptos2019/train_images --runs 30
+```
+
+It writes `cpu_end_to_end_benchmark.json` and `.csv` into `docs/chapter4/`. Once those exist, their total should replace §1 as the headline, with the T4 forward-pass figure retained below as a labelled training-environment reference point.
+
+### Already fixed as a result of building this harness
+
+Profiling the path exposed that Grad-CAM heatmap composition built its 512x512 RGBA overlay with a nested Python loop — **262,144 interpreter iterations per request**, measured at **650-700 ms on CPU**. That single stage cost roughly an order of magnitude more than the model forward pass it accompanies.
+
+It is now vectorised (`viridis_rgba_array`), taking **52 ms** — about **12x faster**, removing ~600 ms from every clinical request. Output is byte-identical, verified by 13 tests in `backend/tests/test_gradcam_colormap.py` against the original per-pixel implementation.
+
+### Still outstanding
+
+The measured CPU end-to-end total. The harness exists and the dominant bottleneck is fixed, but the benchmark has **not yet been executed on real fundus images**, so no total is recorded here. **Until it is, no clinical-workstation latency claim is made anywhere in this thesis.**

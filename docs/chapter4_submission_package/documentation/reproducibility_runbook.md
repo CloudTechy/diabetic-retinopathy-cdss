@@ -193,4 +193,4 @@ cd backend
 # python -m pytest tests/ -q                       # Linux/macOS
 ```
 
-Expected: **45 passed, 1 skipped**. The skip requires PyTorch; install `backend/requirements.txt` to run it.
+Expected: **58 passed, 1 skipped**. The skip requires PyTorch; install `backend/requirements.txt` to run it.
