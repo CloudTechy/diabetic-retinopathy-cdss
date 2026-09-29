@@ -331,7 +331,7 @@ export const App: React.FC = () => {
             Diabetic Retinopathy Clinical Decision Support System (DR-CDSS) © 2026 • Researcher: Onyekelu Chukwuebuka Elochukwu (2024516020FN)
           </span>
           <span className="font-mono text-[11px] text-slate-400">
-            MSc Academic Research Prototype • EfficientNet-B0 Decision Support • WCAG 2.1 AA
+            PGD Academic Research Prototype • Department of Computer Science • Faculty of Physical Sciences
           </span>
         </div>
       </footer>

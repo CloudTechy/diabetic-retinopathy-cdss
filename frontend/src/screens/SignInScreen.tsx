@@ -208,7 +208,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
 
         {/* Footer Reference */}
         <p className="mt-4 text-center text-[11px] text-slate-400">
-          Academic Research Prototype • MSc Biomedical Software Engineering
+          Academic Research Prototype • PGD Computer Science, Faculty of Physical Sciences
         </p>
       </div>
     </div>

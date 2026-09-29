@@ -52,11 +52,14 @@ env/
 *.bin
 *.h5
 *.tflite
+!docs/chapter4_submission_package/checkpoint/*.pth
+!backend/models/weights/*.pth
 models/checkpoints/*
 !models/checkpoints/.gitkeep
 
 # Medical Storage / Patient PHI / Uploaded Binaries
 # Strictly isolate binary directories to comply with Section 12 & 13 of PRD
+storage/datasets/
 storage/images/*
 !storage/images/.gitkeep
 storage/reports/*

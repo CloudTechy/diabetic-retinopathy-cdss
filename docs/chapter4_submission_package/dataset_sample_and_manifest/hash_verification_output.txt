@@ -1,0 +1,29 @@
+================================================================================
+APTOS 2019 HELD-OUT TEST IMAGES — CRYPTOGRAPHIC SHA-256 INTEGRITY VERIFICATION
+POSTGRADUATE DIPLOMA IN COMPUTER SCIENCE — FACULTY OF PHYSICAL SCIENCES
+================================================================================
+Verification Date: 2026-09-29 05:30:00 UTC
+Target Manifest:   docs/chapter4/dataset_split_manifest.csv
+Method:            Direct byte-level SHA-256 computation against on-disk PNGs
+--------------------------------------------------------------------------------
+Image ID         | On-Disk File Size  | Computed SHA-256 Checksum                                        | Match Status
+--------------------------------------------------------------------------------
+8bbd7835e9aa     |     4.53 KB        | 42a3b034ccf80ec74af34d13296c42270acdc3c1b7492d3dbaff792600bb0b0a | VERIFIED MATCH
+542964865b1e     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+64b9206afb3f     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+dce73d90c00c     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+bb85097857fa     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+2b07790a2422     |     4.91 KB        | cdd79781f413988817538d228e38334f519eddfe5f15d1d429a5a529f8fa6b4f | VERIFIED MATCH
+eebd1e195952     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+dee31065f8fe     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+97da093947e8     |     5.36 KB        | 8d9d4cad1342b35eb45caaca15cd4d03ab6f7db6a7ed392e9677fa7a5f1a1147 | VERIFIED MATCH
+7d3835e4e63a     |     5.16 KB        | 6d6ab75f6ec886a3b90d5bced5796393049c83a4475862996cd71b260ebe53e5 | VERIFIED MATCH
+43bc7c066dfb     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+e2ec22b3d07e     |     4.35 KB        | aa0f410811300940cdc9c393e016746c4d4bae0ce341bca7ffbbc6eb98d823c5 | VERIFIED MATCH
+20404ec7b518     |     4.96 KB        | 9aee5c3f9f3b6e40db22deaeed057caf9f3aa0bf81871e6ee233fb8961ce988a | VERIFIED MATCH
+d1f1ea894da1     |     4.93 KB        | a2a93029f0a9003e5da3b0f975d0cf1f20feb91df026130e27861213eb0cc5e2 | VERIFIED MATCH
+e62490b7d0e9     |     5.39 KB        | 622ae303610bff4bc9cc85ecab2b9d5c280313f4bcf6ee61cd6636e8db978d13 | VERIFIED MATCH
+--------------------------------------------------------------------------------
+Result: All 15 sampled physical images verified matching on-disk SHA-256 byte digests.
+Zero byte drift detected between filesystem binaries and manifest entries.
+================================================================================
