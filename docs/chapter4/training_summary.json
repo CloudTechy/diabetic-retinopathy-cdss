@@ -1,0 +1,20 @@
+{
+  "model": "EfficientNet-B0",
+  "pretrained": "ImageNet (IMAGENET1K_V1)",
+  "epochs": 15,
+  "batch_size": 32,
+  "optimizer": "AdamW",
+  "lr": 0.0001,
+  "weight_decay": 0.0001,
+  "scheduler": "CosineAnnealingLR",
+  "best_epoch": 11,
+  "best_val_qwk": 0.893724,
+  "checkpoint_sha256": "8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa",
+  "checkpoint_size_mb": 15.6,
+  "total_time_seconds": 3146.7,
+  "device": "cuda",
+  "pytorch_version": "2.11.0+cu128",
+  "gpu": "Tesla T4",
+  "train_samples": 2563,
+  "val_samples": 550
+}

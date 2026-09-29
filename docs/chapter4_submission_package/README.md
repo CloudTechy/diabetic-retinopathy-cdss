@@ -1,106 +1,140 @@
 # Chapter Four Evidence & Reproduction Submission Package
 
-**Programme:** Postgraduate Diploma (PGD) in Computer Science  
-**Faculty:** Faculty of Physical Sciences  
-**Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy  
-**Candidate:** Onyekelu Chukwuebuka Elochukwu (Reg No: 2024516020FN)  
-**Submission Date:** September 2026  
+**Programme:** Postgraduate Diploma (PGD) in Computer Science
+**Faculty:** Faculty of Physical Sciences
+**Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
+**Candidate:** Onyekelu Chukwuebuka Elochukwu (Reg No: 2024516020FN)
+**Evidence run:** 2026-09-29 — APTOS 2019, Google Colab Tesla T4, checkpoint `8ee14d75…`
 
 ---
 
-## 1. Executive Summary & Verification Notice
+## 1. Summary
 
-This self-contained submission folder provides empirical, reproducible evidence addressing all 10 critical review recommendations and 14 required artifacts for Chapter Four evaluation.
+Every artefact in this package derives from a single genuine training run whose console transcript, per-epoch history, per-image predictions and checkpoint digest are all included and mutually consistent.
 
-Every artifact has been computed directly from verifiable assets:
-- **Trained Neural Network Weights:** EfficientNet-B0 (15.60 MB, SHA-256 verified).
-- **Exact Held-Out Test Evaluation ($N = 544$):** Quadratic Weighted Kappa $\kappa = 0.9415$, Multi-Class Accuracy $86.40\%$, 0 argmax contradictions.
-- **Dataset Traceability:** 3,662 APTOS 2019 records with on-disk sample test image SHA-256 byte verification.
-- **Inference Latency Benchmark:** 100 raw consecutive passes averaging $95.76\text{ ms} = 0.09576\text{ s}$ per patient encounter (standard CPU, batch size 1).
-- **Clinical Web UI:** 9 high-resolution full-screen captures with PGD attribution, strict non-diagnostic boundary notices, and active triage/review workflows.
+| Item | Value |
+| :--- | :--- |
+| **Trained weights** | EfficientNet-B0, 15.60 MB, SHA-256 `8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa` |
+| **Held-out cohort** | $N = 549$ |
+| **Quadratic Weighted Kappa** | **0.8777** |
+| **Exact accuracy** | 78.69% (432 / 549) — see the note below |
+| **Within-one-grade agreement** | 92.71% |
+| **Referable DR** (grade ≥ 2) | Sensitivity **86.6%**, specificity **96.3%** |
+| **Sight-threatening DR** (grade ≥ 3) | Sensitivity **82.4%**, NPV **97.1%** |
+| **Argmax contradictions** | 0 / 549 |
+| **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
+| **Test suite** | 45 passed, 1 skipped |
+
+> **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
+
+### Two disclosed limitations
+
+1. **Duplicate leakage (measured, immaterial).** 27 of 549 held-out images are byte-identical to a training image, because APTOS's `duplicated_info.csv` is absent from the Kaggle download and the grouping step silently no-opped. Effect: accuracy 77.78% on the affected images vs 78.74% on the clean 522; clean-subset $\kappa$ = 0.877818 vs 0.877747. No metric is inflated. See `documentation/dataset_audit.md` §4.
+
+2. **Latency is not measured on the deployment target.** The 8.36 ms benchmark is a **Tesla T4 forward pass**. The system deploys on **CPU** and the figure excludes decode, validation, preprocessing and Grad-CAM. **No clinical-workstation latency claim is made.** See `documentation/resource_benchmark.md` §4.
 
 ---
 
-## 2. Directory Layout & Artifact Map
+## 2. Directory Layout
 
 ```text
 docs/chapter4_submission_package/
 ├── checkpoint/
-│   └── efficientnet_b0_dr.pth            # Trained PyTorch weights (15.60 MB, SHA-256 verified)
+│   └── efficientnet_b0_dr.pth            # Trained weights (15.60 MB, SHA-256 8ee14d75...)
 ├── dataset_sample_and_manifest/
-│   ├── dataset_split_manifest.csv        # 3,662 records (2,567 train, 551 val, 544 test)
-│   ├── sample_test_images/               # 15 sample held-out PNGs matching manifest byte hashes
-│   ├── verify_manifest_hashes.py         # One-command SHA-256 byte integrity verification
-│   └── hash_verification_output.txt      # 100% hash match log output
+│   ├── README.md                         # Why no images ship; how to verify
+│   ├── dataset_split_manifest.csv        # 3,662 records (2,563 train / 550 val / 549 test)
+│   └── verify_manifest_hashes.py         # Verifies the manifest against YOUR APTOS copy
 ├── documentation/
-│   ├── objective_traceability_matrix.md  # Bidirectional mapping across 9 approved objectives
-│   ├── checkpoint_manifest.md            # Weights provenance, layer hooks (features.8), param count
-│   ├── model_evaluation_report.md        # Single-source metrics, confusion matrix, discussion
-│   ├── validation_module_spec.md         # 3-gate specs (0.65-1.65 aspect ratio, sharpness >= 100)
-│   ├── resource_benchmark.md             # Benchmark summary with verified arithmetic conversion
-│   ├── training_protocol.md              # 15-epoch hyperparameter protocol and loss curves
-│   └── system_test_report.md             # 8-screen end-to-end integration and API test suite
+│   ├── model_evaluation_report.md        # Metrics, operating points, error structure
+│   ├── dataset_audit.md                  # Provenance, partition, duplicate audit
+│   ├── training_protocol.md              # Hyperparameters + 15-epoch convergence ledger
+│   ├── training_environment.md           # Hardware, versions, reproducibility limits
+│   ├── checkpoint_manifest.md            # Topology, digest, runtime provenance enforcement
+│   ├── preprocessing_and_augmentation_spec.md
+│   ├── resource_benchmark.md             # Benchmark + explicit scope caveat
+│   ├── known_limitations.md              # What this model cannot do
+│   ├── reproducibility_runbook.md        # Three levels of reproduction
+│   ├── validation_module_spec.md         # The 3 technical-acceptance gates
+│   └── objective_traceability_matrix.md  # Objectives a-i -> evidence
 ├── logs_and_metrics/
-│   ├── held_out_predictions.csv          # 544 itemized rows with strict argmax validation
-│   ├── epoch_history.csv                 # 15-epoch training and validation loss, accuracy, and QWK
-│   ├── training_execution.log            # Raw epoch-by-epoch terminal training logs
-│   ├── benchmark_timings.csv             # 100 individual inference run timings
-│   └── validation_test_results.csv       # Test cases across 3 gates (valid, corrupt, blurry)
+│   ├── training_execution.log            # Raw console transcript of the run
+│   ├── epoch_history.csv                 # Per-epoch loss / accuracy / QWK / F1
+│   ├── training_summary.json             # Hyperparameters + environment, as recorded
+│   ├── held_out_predictions.csv          # 549 rows, full softmax distributions
+│   ├── evaluation_summary.json           # Confusion matrix + headline metrics
+│   ├── clinical_metrics.json             # Operating points, CIs, leakage audit
+│   ├── benchmark_timings.csv             # 100 raw per-run timings
+│   ├── benchmark_summary.json            # Benchmark aggregate + device
+│   └── validation_test_results.csv       # Gate behaviour across image types
+├── scripts/
+│   ├── colab_train_and_evaluate.py       # The pipeline that produced everything here
+│   ├── analyze_clinical_metrics.py       # Recomputes all metrics (stdlib only)
+│   ├── train_efficientnet_b0.py
+│   ├── evaluate_model.py
+│   ├── generate_aptos_manifest.py
+│   └── benchmark_resources.py
 ├── visualizations/
-│   ├── confusion_matrix.png              # 5-class confusion matrix matching 544 held-out set
-│   └── learning_curves.png               # 15-epoch convergence and QWK trajectory
-├── screenshots/
-│   ├── 01_signin_screen.png              # PGD Computer Science attribution, credential entry
-│   ├── 02_clinical_dashboard.png         # Prioritized triage worklist & patient encounter table
-│   ├── 03_new_assessment_upload.png     # Pre-flight upload interface with boundary disclaimers
-│   ├── 04_validation_stepper_passed.png  # Real-time 3-stage validation passing stepper
-│   ├── 04b_validation_stepper_rejected.png# Fail-closed rejection preventing model inference
-│   ├── 05_decision_support_workspace.png # Grad-CAM viewer (Viridis, 60% opacity) & score breakdown
-│   ├── 06_professional_review_modal.png  # Mandatory clinician concordance sign-off modal
-│   ├── 07_completed_assessment_record.png# Tamper-evident finalized clinical assessment record
-│   └── 08_record_history_audit.png       # Audit trail and filterable clinical search history
-└── scripts/
-    ├── evaluate_model.py                 # Evaluates checkpoint and recomputes confusion matrix
-    ├── train_efficientnet_b0.py          # Supervised training loop with cosine annealing
-    ├── benchmark_resources.py            # Automated 100-run inference latency benchmarking
-    └── generate_aptos_manifest.py        # Manifest generator with duplicate grouping
+│   ├── confusion_matrix.png              # 5x5 matrix, N = 549
+│   └── learning_curves.png               # Loss + validation metrics over 15 epochs
+└── screenshots/                          # Clinical UI captures
 ```
 
 ---
 
-## 3. Quick Verification Instructions
+## 3. Verification — start here
 
-### A. Verify Model Checkpoint SHA-256 Digest
+### 3.1 Recompute every metric (no ML dependencies, < 5 seconds)
+
 ```bash
-python -c "import hashlib; print(hashlib.sha256(open('docs/chapter4_submission_package/checkpoint/efficientnet_b0_dr.pth', 'rb').read()).hexdigest())"
-# Expected output:
-# 0d443fa065528b2a1d24baea7bf8d8bf71a6203b22b817585374a7becd547c07
+python scripts/analyze_clinical_metrics.py
 ```
 
-### B. Verify Sample Test Image Hashes against Manifest
+Reads `logs_and_metrics/held_out_predictions.csv` and recomputes QWK (implemented from first principles), per-class sensitivity/specificity with Wilson confidence intervals, all three operating points, and the duplicate-leakage audit — using only the Python standard library.
+
+### 3.2 Verify the checkpoint
+
 ```bash
-python docs/chapter4_submission_package/dataset_sample_and_manifest/verify_manifest_hashes.py
-# Output: 15/15 MATCHED (100%), 0 byte drift
+sha256sum checkpoint/efficientnet_b0_dr.pth
+# 8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa
 ```
 
-### C. Verify Zero Argmax Violations in Predictions
-```bash
-python -c "import csv; rows = list(csv.DictReader(open('docs/chapter4_submission_package/logs_and_metrics/held_out_predictions.csv', encoding='utf-8'))); violations = [r['image_id'] for r in rows if int(r['predicted_grade']) != [float(r[f'score_grade_{k}']) for k in range(5)].index(max([float(r[f'score_grade_{k}']) for k in range(5)]))]; print(f'Violations: {len(violations)} / {len(rows)}')"
-# Expected output:
-# Violations: 0 / 544
+```powershell
+Get-FileHash checkpoint\efficientnet_b0_dr.pth -Algorithm SHA256
 ```
 
-### D. Verify 100-Run Benchmark Arithmetic
+The running system enforces this same digest and refuses to serve on mismatch.
+
+### 3.3 Verify the dataset manifest against real images
+
 ```bash
-python -c "import csv; timings = [float(r['inference_time_ms']) for r in csv.DictReader(open('docs/chapter4_submission_package/logs_and_metrics/benchmark_timings.csv', encoding='utf-8'))]; mean_ms = sum(timings)/len(timings); print(f'Runs: {len(timings)}, Mean: {mean_ms:.2f} ms = {mean_ms/1000.0:.5f} s (< 0.25000 s threshold)')"
-# Expected output:
-# Runs: 100, Mean: 95.76 ms = 0.09576 s (< 0.25000 s threshold)
+python dataset_sample_and_manifest/verify_manifest_hashes.py <path>/aptos2019/train_images --sample 25
 ```
+
+See `dataset_sample_and_manifest/README.md` for why the images themselves are not redistributed.
+
+### 3.4 Cross-check the confusion matrix
+
+`logs_and_metrics/evaluation_summary.json` must agree with `visualizations/confusion_matrix.png` and with §2 of `documentation/model_evaluation_report.md`:
+
+```text
+[[267,  3,  0,  0,  0],
+ [  3, 40, 11,  0,  1],
+ [  3, 25, 80, 15, 27],
+ [  0,  1,  4, 17,  7],
+ [  0,  1,  7,  9, 28]]
+```
+
+Row sums: 270 / 55 / 150 / 29 / 45 = 549. Trace = 432 = 78.69%.
 
 ---
 
-## 4. Academic Integrity & Honest Research Boundaries
+## 4. Revision note
 
-1. **Non-Diagnostic Framing:** In adherence to clinical governance, outputs are designated as *“Model-Generated Class Scores”* for decision support.
-2. **Mild NPDR Sensitivity (69.64%):** Transparently discussed as a clinical limitation due to microaneurysm subtlety (10–30 pixels).
-3. **No Simulation Presets:** All demo buttons and mock simulation presets have been purged from the user interface.
+An earlier revision of this package reported $N = 544$, $\kappa = 0.9415$ and 86.40% accuracy, and shipped 15 placeholder PNGs as "sample test images". Those artefacts did not originate from a real training run: the manifest's recorded hashes matched **none** of the actual APTOS files, and it carried a `patient_id` column that APTOS 2019 does not publish. They have been replaced throughout by the 2026-09-29 run documented above, and `documentation/` now records the correction rather than concealing it.
+
+---
+
+## 5. Scope
+
+This is a **research prototype supporting a PGD dissertation**. It is not a medical device, holds no regulatory clearance, has undergone no prospective clinical trial, and must not be used for patient care. All model output is decision *support* requiring clinician review.

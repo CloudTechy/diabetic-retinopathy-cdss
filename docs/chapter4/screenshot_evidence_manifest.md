@@ -23,5 +23,16 @@
 | **Figure 4.7** | **Professional Review Modal** | Demonstrates human-in-the-loop tri-state selector (Agree / Disagree / Unable to determine), optional clinical observations, mandatory confirmation checkbox, and scope attribution notice. | [`docs/chapter4/screenshots/06_professional_review_modal.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/screenshots/06_professional_review_modal.png) |
 | **Figure 4.8** | **Completed Assessment Record** | Displays finalized consultation report with "Preliminary Model Observation", "Professional Review Response", clinical scope boundary notice, and tamper-evident SHA-256 hash. | [`docs/chapter4/screenshots/07_completed_assessment_record.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/screenshots/07_completed_assessment_record.png) |
 | **Figure 4.9** | **Record History & Audit Drawer** | Shows search and filter controls across historical assessments with chronological slide-out audit trail demonstrating append-only integrity logs. | [`docs/chapter4/screenshots/08_record_history_audit.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/screenshots/08_record_history_audit.png) |
-| **Figure 4.10**| **Empirical Confusion Matrix** | High-resolution empirical 5x5 confusion matrix heatmap from the untouched held-out evaluation cohort ($N = 544$) with Quadratic Weighted Kappa ($\kappa = 0.9415$). | [`docs/chapter4/confusion_matrix.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/confusion_matrix.png) |
+| **Figure 4.10**| **Empirical Confusion Matrix** | High-resolution empirical 5x5 confusion matrix heatmap from the untouched held-out evaluation cohort ($N = 549$) with Quadratic Weighted Kappa ($\kappa = 0.8777$). | [`docs/chapter4/confusion_matrix.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/confusion_matrix.png) |
 | **Figure 4.11**| **Server-Rendered Report PDF** | Complete clinical assessment report rendered via ReportLab with patient metadata, validation telemetry, 5-class score table, and professional review response. | [`docs/chapter4/screenshots/10_tamper_evident_pdf_report.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/screenshots/10_tamper_evident_pdf_report.png) |
+
+---
+
+> [!NOTE]
+> **Screenshot currency.** The interface captures in `docs/chapter4/screenshots/` were taken before the
+> 2026-09-29 evidence refresh. Any metric values visible inside those images may show superseded figures
+> and should not be cited as results. They are evidence of **interface behaviour and clinical workflow**
+> — validation stepper states, review controls, audit trail, report rendering — not of model performance.
+> The authoritative metrics are in [`model_evaluation_report.md`](model_evaluation_report.md).
+>
+> Figure 4.10 is the exception: `confusion_matrix.png` was regenerated from the genuine run and is current.

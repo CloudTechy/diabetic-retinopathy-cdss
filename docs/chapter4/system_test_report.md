@@ -4,24 +4,23 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective i (System verification, quality assurance & security)
-- **Git Commit:** `22cda2c` (Baseline)
-- **Date Test Run:** 2026-09-28
+- **Date Test Run:** 2026-09-29
 - **Test Framework:** Pytest 9.1.1, Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **38 PASSED, 0 FAILED (100% Pass Rate)**
+- **Overall Result:** **45 PASSED, 0 FAILED, 1 SKIPPED**
 
 ---
 
 ## 1. Executive Summary
 
-A rigorous, multi-layer automated test suite comprising 38 itemized unit, integration, and security test cases was executed against the complete CDSS platform. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 46 unit, integration and security test cases was executed against the complete CDSS platform. 45 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Total Tests Run:       38
-Passed:                38 (100.0%)
+Total Tests Run:       46
+Passed:                45 (97.8%)
 Failed:                0  (0.0%)
-Skipped:               0  (0.0%)
-Total Wall-Clock Time: 48.2 seconds
+Skipped:               1  (2.2%)  <- requires PyTorch (absent locally)
+Total Wall-Clock Time: 28.3 seconds
 Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 ====================================================================================
 ```
@@ -91,3 +90,22 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 | `test_root_endpoint` | Health | Root endpoint returns service identity | **PASS** |
 | `test_health_endpoint` | Health | Health probe confirms DB and service availability | **PASS** |
 | `test_api_v1_health_endpoint` | Health | API v1 health probe confirms readiness | **PASS** |
+
+---
+
+## Fail-Closed Inference Tests (added 2026-09-29)
+
+Six cases in `backend/tests/test_inference_fail_closed.py` guard a single safety invariant: **the system must never return a diabetic retinopathy grade unless verified trained weights are loaded.**
+
+| # | Test | Asserts |
+| :---: | :--- | :--- |
+| 1 | `test_missing_checkpoint_raises_instead_of_using_random_weights` | An absent checkpoint raises `ModelCheckpointError`; the service stays uninitialised rather than serving the randomly-initialised graph. |
+| 2 | `test_predict_refuses_when_uninitialised` | `predict()` raises instead of silently delegating to the simulated engine. |
+| 3 | `test_corrupt_checkpoint_raises` *(skipped without PyTorch)* | A file that exists but will not deserialise fails closed. |
+| 4 | `test_digest_mismatch_refuses_to_load` | Weights whose SHA-256 differs from `MODEL_CHECKPOINT_SHA256` are rejected on provenance. |
+| 5 | `test_missing_torch_does_not_silently_downgrade_to_mock` | A missing PyTorch raises rather than downgrading to simulated grades. |
+| 6 | `test_mock_engine_only_served_when_explicitly_requested` | The simulated engine is returned only for `AI_INFERENCE_ENGINE=mock`, never as a fallback. |
+| 7 | `test_configured_checkpoint_path_matches_compose_mount` | Regression guard on the path defect that made every deployment serve random weights. |
+| 8 | `test_repository_checkpoint_matches_declared_digest` | The committed weights are the evaluated weights. |
+
+The suite opts into the simulated engine explicitly in `conftest.py`. Without that opt-in the assessment endpoints correctly return `503` — which is the behaviour being protected.

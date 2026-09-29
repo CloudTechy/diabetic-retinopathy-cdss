@@ -1,43 +1,22 @@
-================================================================================
-CLINICAL DECISION SUPPORT SYSTEM FOR DIABETIC RETINOPATHY — TRAINING EXECUTION
-POSTGRADUATE DIPLOMA IN COMPUTER SCIENCE — FACULTY OF PHYSICAL SCIENCES
-================================================================================
-Execution Timestamp: 2026-09-29 02:45:12 UTC
-System Architecture: AMD64 (Windows 11)
-Python Runtime:     Python 3.13.5
-PyTorch Version:    2.14.0+cpu
-Dataset Source:     APTOS 2019 Blindness Detection (Aravind Eye Hospital)
-Partition Strategy: Duplicate-Group-Aware Stratified Split (70/15/15)
-  - Training Set:   2,567 images
-  - Validation Set: 551 images
-  - Test Set:       544 images
-Model Backbone:     EfficientNet-B0 (torchvision pretrained ImageNet base)
-Classification Head: Linear(in_features=1280, out_features=5)
-Explainability Hook: features.8 (1,280-channel final convolutional feature layer)
-Loss Function:      CrossEntropyLoss (Inverse Class Frequency Weighted)
-Optimizer:          AdamW(lr=1e-4, weight_decay=1e-4)
-LR Scheduler:       CosineAnnealingLR(T_max=15, eta_min=1e-6)
---------------------------------------------------------------------------------
-Epoch    | Train Loss  | Val Loss  | Val Acc   | Val QWK   | Val F1    | Learning Rate  | Status
---------------------------------------------------------------------------------
-Ep 01/15   | 1.6214      | 1.4012    | 54.81   % | 0.5182    | 0.4912    | 1.00e-04       | [*] BEST
-Ep 02/15   | 1.3412      | 1.1894    | 62.79   % | 0.6341    | 0.5843    | 9.89e-05       | [*] BEST
-Ep 03/15   | 1.1205      | 0.9841    | 70.42   % | 0.7294    | 0.6691    | 9.57e-05       | [*] BEST
-Ep 04/15   | 0.9418      | 0.8123    | 76.23   % | 0.7981    | 0.7284    | 9.05e-05       | [*] BEST
-Ep 05/15   | 0.8120      | 0.7014    | 79.67   % | 0.8392    | 0.7690    | 8.35e-05       | [*] BEST
-Ep 06/15   | 0.7042      | 0.6128    | 82.21   % | 0.8710    | 0.8012    | 7.50e-05       | [*] BEST
-Ep 07/15   | 0.6189      | 0.5412    | 83.85   % | 0.8924    | 0.8194    | 6.55e-05       | [*] BEST
-Ep 08/15   | 0.5491      | 0.4905    | 84.94   % | 0.9082    | 0.8299    | 5.52e-05       | [*] BEST
-Ep 09/15   | 0.4912      | 0.4518    | 85.66   % | 0.9190    | 0.8371    | 4.48e-05       | [*] BEST
-Ep 10/15   | 0.4438      | 0.4219    | 86.21   % | 0.9275    | 0.8428    | 3.45e-05       | [*] BEST
-Ep 11/15   | 0.4081      | 0.4014    | 86.75   % | 0.9331    | 0.8465    | 2.50e-05       | [*] BEST
-Ep 12/15   | 0.3812      | 0.3889    | 87.11   % | 0.9378    | 0.8492    | 1.65e-05       | [*] BEST
-Ep 13/15   | 0.3624      | 0.3802    | 87.48   % | 0.9405    | 0.8510    | 9.55e-06       | [*] BEST
-Ep 14/15   | 0.3498      | 0.3751    | 87.84   % | 0.9421    | 0.8534    | 4.30e-06       | [*] BEST (OPTIMAL)
-Ep 15/15   | 0.3421      | 0.3762    | 87.66   % | 0.9418    | 0.8529    | 1.00e-06       | 
---------------------------------------------------------------------------------
-Training Complete. Optimal Checkpoint Selected: Epoch 14 (Val QWK: 0.9421)
-Checkpoint Saved: backend/models/weights/efficientnet_b0_dr.pth
-File Size: 15.60 MB
-SHA-256 Checksum: 0d443fa065528b2a1d24baea7bf8d8bf71a6203b22b817585374a7becd547c07
-================================================================================
+
+ Ep |   TrLoss |    VLoss |   VAcc |   VQWK |    VF1 |         LR | Status
+------------------------------------------------------------------------------
+  1 | 1.362504 | 0.947581 | 65.64% | 0.7712 | 0.4917 | 1.00e-04 | [BEST] (210s)
+  2 | 1.034721 | 0.774030 | 70.55% | 0.8305 | 0.5411 | 9.89e-05 | [BEST] (209s)
+  3 | 0.904448 | 0.638443 | 79.64% | 0.8673 | 0.6547 | 9.57e-05 | [BEST] (208s)
+  4 | 0.785597 | 0.620398 | 78.91% | 0.8558 | 0.6371 | 9.05e-05 | (209s)
+  5 | 0.767437 | 0.608991 | 79.82% | 0.8744 | 0.6311 | 8.36e-05 | [BEST] (210s)
+  6 | 0.712628 | 0.629791 | 76.73% | 0.8519 | 0.6341 | 7.52e-05 | (211s)
+  7 | 0.679063 | 0.571831 | 77.45% | 0.8637 | 0.6423 | 6.58e-05 | (210s)
+  8 | 0.668761 | 0.567656 | 81.09% | 0.8796 | 0.6885 | 5.57e-05 | [BEST] (209s)
+  9 | 0.623921 | 0.564016 | 80.18% | 0.8838 | 0.6637 | 4.53e-05 | [BEST] (207s)
+ 10 | 0.564530 | 0.573863 | 80.18% | 0.8828 | 0.6676 | 3.52e-05 | (209s)
+ 11 | 0.517256 | 0.560883 | 81.09% | 0.8937 | 0.6862 | 2.58e-05 | [BEST] (210s)
+ 12 | 0.535151 | 0.559696 | 80.73% | 0.8917 | 0.6813 | 1.74e-05 | (210s)
+ 13 | 0.542185 | 0.573130 | 80.73% | 0.8885 | 0.6697 | 1.05e-05 | (216s)
+ 14 | 0.528482 | 0.555868 | 80.55% | 0.8886 | 0.6771 | 5.28e-06 | (210s)
+ 15 | 0.496885 | 0.557285 | 80.36% | 0.8869 | 0.6785 | 2.08e-06 | (210s)
+
+Done in 3147s. Best: epoch 11, QWK=0.8937
+Checkpoint: output/efficientnet_b0_dr.pth (15.60 MB)
+SHA-256: 8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa

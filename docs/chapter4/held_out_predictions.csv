@@ -1,545 +1,550 @@
-image_id,patient_id,source_dataset,file_path,true_grade,true_label,predicted_grade,predicted_label,score_grade_0,score_grade_1,score_grade_2,score_grade_3,score_grade_4,correct,is_mild_npdr_error
-005b95c28852,APTOS-P0005,APTOS 2019 (Aravind Eye Hospital),train_images/005b95c28852.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6110,0.0899,0.1154,0.0961,0.0876,TRUE,FALSE
-014508ccb9cb,APTOS-P0018,APTOS 2019 (Aravind Eye Hospital),train_images/014508ccb9cb.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4836,0.1232,0.1602,0.1445,0.0885,TRUE,FALSE
-0231642cf1c2,APTOS-P0030,APTOS 2019 (Aravind Eye Hospital),train_images/0231642cf1c2.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6183,0.1035,0.0518,0.0849,0.1415,TRUE,FALSE
-0232dfea7547,APTOS-P0031,APTOS 2019 (Aravind Eye Hospital),train_images/0232dfea7547.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6852,0.0671,0.1136,0.0668,0.0673,TRUE,FALSE
-04efb1a284cc,APTOS-P0063,APTOS 2019 (Aravind Eye Hospital),train_images/04efb1a284cc.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6331,0.0864,0.0709,0.0570,0.1526,TRUE,FALSE
-07751b94a88a,APTOS-P0094,APTOS 2019 (Aravind Eye Hospital),train_images/07751b94a88a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6182,0.1023,0.0709,0.1325,0.0761,TRUE,FALSE
-07e827469099,APTOS-P0103,APTOS 2019 (Aravind Eye Hospital),train_images/07e827469099.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6155,0.0844,0.0908,0.0995,0.1098,TRUE,FALSE
-08ee569d4721,APTOS-P0117,APTOS 2019 (Aravind Eye Hospital),train_images/08ee569d4721.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5292,0.1334,0.1044,0.1499,0.0831,TRUE,FALSE
-0924cec998fa,APTOS-P0120,APTOS 2019 (Aravind Eye Hospital),train_images/0924cec998fa.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5412,0.0972,0.1382,0.1375,0.0859,TRUE,FALSE
-09f1111a388a,APTOS-P0133,APTOS 2019 (Aravind Eye Hospital),train_images/09f1111a388a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6799,0.0619,0.1204,0.0454,0.0924,TRUE,FALSE
-0a85a1e8f9e9,APTOS-P0142,APTOS 2019 (Aravind Eye Hospital),train_images/0a85a1e8f9e9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5909,0.1221,0.0773,0.0969,0.1128,TRUE,FALSE
-0da321efbce6,APTOS-P0183,APTOS 2019 (Aravind Eye Hospital),train_images/0da321efbce6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4569,0.1659,0.1188,0.1547,0.1037,TRUE,FALSE
-0e0003ddd8df,APTOS-P0192,APTOS 2019 (Aravind Eye Hospital),train_images/0e0003ddd8df.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4143,0.1507,0.1299,0.1658,0.1393,TRUE,FALSE
-0e94cd271c00,APTOS-P0198,APTOS 2019 (Aravind Eye Hospital),train_images/0e94cd271c00.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4821,0.1029,0.1313,0.1254,0.1583,TRUE,FALSE
-11d8e5eaee5b,APTOS-P0243,APTOS 2019 (Aravind Eye Hospital),train_images/11d8e5eaee5b.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3826,0.1560,0.1769,0.1177,0.1668,TRUE,FALSE
-12b57dac703e,APTOS-P0250,APTOS 2019 (Aravind Eye Hospital),train_images/12b57dac703e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5145,0.1750,0.1004,0.0645,0.1456,TRUE,FALSE
-12ef75375322,APTOS-P0255,APTOS 2019 (Aravind Eye Hospital),train_images/12ef75375322.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6600,0.1161,0.0939,0.0563,0.0737,TRUE,FALSE
-150fc7127582,APTOS-P0278,APTOS 2019 (Aravind Eye Hospital),train_images/150fc7127582.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5593,0.0971,0.1254,0.0916,0.1266,TRUE,FALSE
-152db3de8120,APTOS-P0279,APTOS 2019 (Aravind Eye Hospital),train_images/152db3de8120.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6703,0.0510,0.1161,0.0458,0.1168,TRUE,FALSE
-15e24b73d4a7,APTOS-P0290,APTOS 2019 (Aravind Eye Hospital),train_images/15e24b73d4a7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6457,0.0617,0.0702,0.1176,0.1048,TRUE,FALSE
-164cd5a3a6cd,APTOS-P0301,APTOS 2019 (Aravind Eye Hospital),train_images/164cd5a3a6cd.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4808,0.1544,0.1070,0.1673,0.0905,TRUE,FALSE
-165634a6167e,APTOS-P0302,APTOS 2019 (Aravind Eye Hospital),train_images/165634a6167e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6082,0.1260,0.0850,0.1110,0.0698,TRUE,FALSE
-1782142e17d9,APTOS-P0311,APTOS 2019 (Aravind Eye Hospital),train_images/1782142e17d9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3821,0.1745,0.1401,0.1538,0.1495,TRUE,FALSE
-178412895d5e,APTOS-P0312,APTOS 2019 (Aravind Eye Hospital),train_images/178412895d5e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5846,0.0933,0.1640,0.0788,0.0793,TRUE,FALSE
-18ce0cdc473d,APTOS-P0336,APTOS 2019 (Aravind Eye Hospital),train_images/18ce0cdc473d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.7005,0.1146,0.0566,0.0746,0.0537,TRUE,FALSE
-191cf5668f33,APTOS-P0343,APTOS 2019 (Aravind Eye Hospital),train_images/191cf5668f33.png,0,Grade 0: No Apparent DR,2,Grade 2: Moderate NPDR,0.0961,0.0938,0.5615,0.1188,0.1298,FALSE,FALSE
-1c13a1483f4a,APTOS-P0380,APTOS 2019 (Aravind Eye Hospital),train_images/1c13a1483f4a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6788,0.0575,0.0468,0.1286,0.0883,TRUE,FALSE
-1c9c583c10bf,APTOS-P0391,APTOS 2019 (Aravind Eye Hospital),train_images/1c9c583c10bf.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.0852,0.6142,0.1196,0.0651,0.1159,FALSE,FALSE
-1d2472849dce,APTOS-P0402,APTOS 2019 (Aravind Eye Hospital),train_images/1d2472849dce.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4422,0.1343,0.0903,0.1271,0.2061,TRUE,FALSE
-1d3e9b939732,APTOS-P0405,APTOS 2019 (Aravind Eye Hospital),train_images/1d3e9b939732.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6364,0.0703,0.1128,0.0735,0.1070,TRUE,FALSE
-1d74c4713e21,APTOS-P0409,APTOS 2019 (Aravind Eye Hospital),train_images/1d74c4713e21.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6475,0.0838,0.0945,0.1112,0.0630,TRUE,FALSE
-1dfe599d12a9,APTOS-P0422,APTOS 2019 (Aravind Eye Hospital),train_images/1dfe599d12a9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4970,0.1442,0.0983,0.1647,0.0958,TRUE,FALSE
-1f15ca672675,APTOS-P0438,APTOS 2019 (Aravind Eye Hospital),train_images/1f15ca672675.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6250,0.1415,0.0662,0.0970,0.0703,TRUE,FALSE
-1f4fb37e0854,APTOS-P0442,APTOS 2019 (Aravind Eye Hospital),train_images/1f4fb37e0854.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4920,0.0963,0.1558,0.0986,0.1573,TRUE,FALSE
-207dd0487264,APTOS-P0460,APTOS 2019 (Aravind Eye Hospital),train_images/207dd0487264.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5029,0.1925,0.0908,0.1063,0.1075,TRUE,FALSE
-2221cf5c7935,APTOS-P0475,APTOS 2019 (Aravind Eye Hospital),train_images/2221cf5c7935.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5413,0.1134,0.1514,0.0905,0.1034,TRUE,FALSE
-22d843b2bbd1,APTOS-P0487,APTOS 2019 (Aravind Eye Hospital),train_images/22d843b2bbd1.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5930,0.0766,0.1349,0.1081,0.0874,TRUE,FALSE
-233d948e2544,APTOS-P0491,APTOS 2019 (Aravind Eye Hospital),train_images/233d948e2544.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6436,0.0552,0.0946,0.0407,0.1659,TRUE,FALSE
-242fc19be06f,APTOS-P0503,APTOS 2019 (Aravind Eye Hospital),train_images/242fc19be06f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5862,0.1223,0.0870,0.1150,0.0895,TRUE,FALSE
-2682e6da9050,APTOS-P0538,APTOS 2019 (Aravind Eye Hospital),train_images/2682e6da9050.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4664,0.1591,0.0894,0.1226,0.1625,TRUE,FALSE
-27f82ada84ac,APTOS-P0560,APTOS 2019 (Aravind Eye Hospital),train_images/27f82ada84ac.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5420,0.1159,0.0761,0.0939,0.1721,TRUE,FALSE
-283c3aeba594,APTOS-P0565,APTOS 2019 (Aravind Eye Hospital),train_images/283c3aeba594.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4353,0.1065,0.1936,0.1322,0.1324,TRUE,FALSE
-28dc010a0780,APTOS-P0572,APTOS 2019 (Aravind Eye Hospital),train_images/28dc010a0780.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5660,0.1956,0.0705,0.0666,0.1013,TRUE,FALSE
-2c77bf969079,APTOS-P0623,APTOS 2019 (Aravind Eye Hospital),train_images/2c77bf969079.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6306,0.0704,0.0957,0.1154,0.0879,TRUE,FALSE
-2c827005b8f8,APTOS-P0625,APTOS 2019 (Aravind Eye Hospital),train_images/2c827005b8f8.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5998,0.1161,0.0729,0.1102,0.1010,TRUE,FALSE
-2d07162a13b1,APTOS-P0635,APTOS 2019 (Aravind Eye Hospital),train_images/2d07162a13b1.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5184,0.1191,0.1015,0.1061,0.1549,TRUE,FALSE
-3132556f5352,APTOS-P0683,APTOS 2019 (Aravind Eye Hospital),train_images/3132556f5352.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5666,0.0895,0.1189,0.0849,0.1401,TRUE,FALSE
-3232b34cbe99,APTOS-P0695,APTOS 2019 (Aravind Eye Hospital),train_images/3232b34cbe99.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1354,0.4440,0.1097,0.1881,0.1228,FALSE,FALSE
-32ed318235b8,APTOS-P0702,APTOS 2019 (Aravind Eye Hospital),train_images/32ed318235b8.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5004,0.1051,0.1508,0.1385,0.1052,TRUE,FALSE
-3325b1fe55d2,APTOS-P0706,APTOS 2019 (Aravind Eye Hospital),train_images/3325b1fe55d2.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1168,0.4825,0.0958,0.1670,0.1379,FALSE,FALSE
-33596a635b53,APTOS-P0707,APTOS 2019 (Aravind Eye Hospital),train_images/33596a635b53.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5048,0.1242,0.1077,0.1918,0.0715,TRUE,FALSE
-33b978734eab,APTOS-P0712,APTOS 2019 (Aravind Eye Hospital),train_images/33b978734eab.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3897,0.1530,0.1500,0.1498,0.1575,TRUE,FALSE
-342edf9b889d,APTOS-P0719,APTOS 2019 (Aravind Eye Hospital),train_images/342edf9b889d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5468,0.1411,0.0731,0.0848,0.1542,TRUE,FALSE
-345b1f0abbba,APTOS-P0721,APTOS 2019 (Aravind Eye Hospital),train_images/345b1f0abbba.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5171,0.0942,0.1389,0.0989,0.1509,TRUE,FALSE
-34acae864963,APTOS-P0728,APTOS 2019 (Aravind Eye Hospital),train_images/34acae864963.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6071,0.0767,0.1061,0.0735,0.1366,TRUE,FALSE
-35df2bc6ae95,APTOS-P0744,APTOS 2019 (Aravind Eye Hospital),train_images/35df2bc6ae95.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6458,0.0962,0.0548,0.1236,0.0796,TRUE,FALSE
-387138ddf43d,APTOS-P0779,APTOS 2019 (Aravind Eye Hospital),train_images/387138ddf43d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6785,0.0613,0.0913,0.1071,0.0618,TRUE,FALSE
-3cd9713c0ecb,APTOS-P0835,APTOS 2019 (Aravind Eye Hospital),train_images/3cd9713c0ecb.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5255,0.0685,0.1411,0.1584,0.1065,TRUE,FALSE
-401fdfd0db07,APTOS-P0873,APTOS 2019 (Aravind Eye Hospital),train_images/401fdfd0db07.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5009,0.1332,0.1382,0.1523,0.0754,TRUE,FALSE
-40c24aded50c,APTOS-P0881,APTOS 2019 (Aravind Eye Hospital),train_images/40c24aded50c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4064,0.1398,0.1281,0.1689,0.1568,TRUE,FALSE
-435414ccccf7,APTOS-P0913,APTOS 2019 (Aravind Eye Hospital),train_images/435414ccccf7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4260,0.0833,0.1520,0.1491,0.1896,TRUE,FALSE
-43823561c3f0,APTOS-P0920,APTOS 2019 (Aravind Eye Hospital),train_images/43823561c3f0.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4022,0.1181,0.1706,0.1295,0.1796,TRUE,FALSE
-43bc7c066dfb,APTOS-P0923,APTOS 2019 (Aravind Eye Hospital),train_images/43bc7c066dfb.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6173,0.0936,0.0690,0.1458,0.0743,TRUE,FALSE
-43f22d1be8dd,APTOS-P0926,APTOS 2019 (Aravind Eye Hospital),train_images/43f22d1be8dd.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5005,0.1509,0.0834,0.1283,0.1369,TRUE,FALSE
-445a8a6da55c,APTOS-P0934,APTOS 2019 (Aravind Eye Hospital),train_images/445a8a6da55c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6344,0.1074,0.1055,0.0979,0.0548,TRUE,FALSE
-4528fbbd43a3,APTOS-P0950,APTOS 2019 (Aravind Eye Hospital),train_images/4528fbbd43a3.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5603,0.0886,0.1575,0.0744,0.1192,TRUE,FALSE
-454792eb6e05,APTOS-P0954,APTOS 2019 (Aravind Eye Hospital),train_images/454792eb6e05.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4171,0.1308,0.1450,0.1825,0.1246,TRUE,FALSE
-4554062fa836,APTOS-P0956,APTOS 2019 (Aravind Eye Hospital),train_images/4554062fa836.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5284,0.1294,0.0665,0.0897,0.1860,TRUE,FALSE
-4731e708ede3,APTOS-P0976,APTOS 2019 (Aravind Eye Hospital),train_images/4731e708ede3.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5365,0.1271,0.1550,0.0900,0.0914,TRUE,FALSE
-478fc46eaa49,APTOS-P0980,APTOS 2019 (Aravind Eye Hospital),train_images/478fc46eaa49.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6301,0.0794,0.1066,0.1063,0.0776,TRUE,FALSE
-48a45619d1a3,APTOS-P0991,APTOS 2019 (Aravind Eye Hospital),train_images/48a45619d1a3.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4949,0.0663,0.1254,0.1648,0.1486,TRUE,FALSE
-493d99f030e2,APTOS-P0999,APTOS 2019 (Aravind Eye Hospital),train_images/493d99f030e2.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6995,0.0391,0.0842,0.0390,0.1382,TRUE,FALSE
-4958bfcc9f38,APTOS-P1004,APTOS 2019 (Aravind Eye Hospital),train_images/4958bfcc9f38.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4170,0.1178,0.1578,0.1310,0.1764,TRUE,FALSE
-4a05f81b3aba,APTOS-P1014,APTOS 2019 (Aravind Eye Hospital),train_images/4a05f81b3aba.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4018,0.1620,0.1338,0.1567,0.1457,TRUE,FALSE
-4beeca5cc859,APTOS-P1043,APTOS 2019 (Aravind Eye Hospital),train_images/4beeca5cc859.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5437,0.0585,0.1659,0.1319,0.1000,TRUE,FALSE
-4c53cc97ea13,APTOS-P1049,APTOS 2019 (Aravind Eye Hospital),train_images/4c53cc97ea13.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6584,0.1089,0.0980,0.0727,0.0620,TRUE,FALSE
-4cf4d528c08e,APTOS-P1063,APTOS 2019 (Aravind Eye Hospital),train_images/4cf4d528c08e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5905,0.0816,0.0879,0.1314,0.1086,TRUE,FALSE
-4d1e7def7624,APTOS-P1069,APTOS 2019 (Aravind Eye Hospital),train_images/4d1e7def7624.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6307,0.0610,0.0790,0.1291,0.1002,TRUE,FALSE
-4dd14c380696,APTOS-P1078,APTOS 2019 (Aravind Eye Hospital),train_images/4dd14c380696.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3911,0.1171,0.1518,0.1664,0.1736,TRUE,FALSE
-4e8585a96739,APTOS-P1094,APTOS 2019 (Aravind Eye Hospital),train_images/4e8585a96739.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5771,0.0774,0.1211,0.0956,0.1288,TRUE,FALSE
-519c6e8f78dc,APTOS-P1144,APTOS 2019 (Aravind Eye Hospital),train_images/519c6e8f78dc.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5643,0.1403,0.0944,0.0983,0.1027,TRUE,FALSE
-51a078d6d43a,APTOS-P1145,APTOS 2019 (Aravind Eye Hospital),train_images/51a078d6d43a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6669,0.0804,0.1172,0.0498,0.0857,TRUE,FALSE
-51af8a689511,APTOS-P1148,APTOS 2019 (Aravind Eye Hospital),train_images/51af8a689511.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5653,0.0878,0.0743,0.0804,0.1922,TRUE,FALSE
-51cd8d2057fa,APTOS-P1150,APTOS 2019 (Aravind Eye Hospital),train_images/51cd8d2057fa.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6972,0.1097,0.0630,0.0549,0.0752,TRUE,FALSE
-525d0dd8dc45,APTOS-P1166,APTOS 2019 (Aravind Eye Hospital),train_images/525d0dd8dc45.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4093,0.1390,0.1265,0.1887,0.1365,TRUE,FALSE
-5288f7441f64,APTOS-P1171,APTOS 2019 (Aravind Eye Hospital),train_images/5288f7441f64.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6552,0.0835,0.0554,0.1315,0.0744,TRUE,FALSE
-52ddde91a349,APTOS-P1177,APTOS 2019 (Aravind Eye Hospital),train_images/52ddde91a349.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5119,0.1101,0.1206,0.0696,0.1878,TRUE,FALSE
-542964865b1e,APTOS-P1196,APTOS 2019 (Aravind Eye Hospital),train_images/542964865b1e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5879,0.1047,0.0801,0.1064,0.1209,TRUE,FALSE
-54f57cf26126,APTOS-P1208,APTOS 2019 (Aravind Eye Hospital),train_images/54f57cf26126.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5964,0.0680,0.1167,0.1183,0.1006,TRUE,FALSE
-596f4fdb0004,APTOS-P1259,APTOS 2019 (Aravind Eye Hospital),train_images/596f4fdb0004.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4690,0.1261,0.1012,0.1490,0.1547,TRUE,FALSE
-5a444c32cd9a,APTOS-P1276,APTOS 2019 (Aravind Eye Hospital),train_images/5a444c32cd9a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4772,0.1609,0.1671,0.0800,0.1148,TRUE,FALSE
-5a93c0f783c4,APTOS-P1278,APTOS 2019 (Aravind Eye Hospital),train_images/5a93c0f783c4.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5039,0.1156,0.1457,0.1720,0.0628,TRUE,FALSE
-5baed382f062,APTOS-P1297,APTOS 2019 (Aravind Eye Hospital),train_images/5baed382f062.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5593,0.0827,0.1092,0.1255,0.1233,TRUE,FALSE
-5e505e25cd3e,APTOS-P1328,APTOS 2019 (Aravind Eye Hospital),train_images/5e505e25cd3e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4460,0.1338,0.1174,0.1908,0.1120,TRUE,FALSE
-5fcff7280019,APTOS-P1346,APTOS 2019 (Aravind Eye Hospital),train_images/5fcff7280019.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4618,0.1350,0.1435,0.1430,0.1167,TRUE,FALSE
-6110ecb3bb1c,APTOS-P1358,APTOS 2019 (Aravind Eye Hospital),train_images/6110ecb3bb1c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5263,0.1218,0.1176,0.1258,0.1085,TRUE,FALSE
-6180920bc224,APTOS-P1363,APTOS 2019 (Aravind Eye Hospital),train_images/6180920bc224.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5667,0.1238,0.0974,0.1031,0.1090,TRUE,FALSE
-64b9206afb3f,APTOS-P1404,APTOS 2019 (Aravind Eye Hospital),train_images/64b9206afb3f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6368,0.0851,0.0824,0.1006,0.0951,TRUE,FALSE
-64c6c6ee0d98,APTOS-P1406,APTOS 2019 (Aravind Eye Hospital),train_images/64c6c6ee0d98.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6051,0.1328,0.0859,0.1070,0.0692,TRUE,FALSE
-68ddb15a74de,APTOS-P1466,APTOS 2019 (Aravind Eye Hospital),train_images/68ddb15a74de.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5667,0.0970,0.1292,0.1302,0.0769,TRUE,FALSE
-6966abf40b8c,APTOS-P1470,APTOS 2019 (Aravind Eye Hospital),train_images/6966abf40b8c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5329,0.0861,0.1544,0.1125,0.1141,TRUE,FALSE
-6a2642131e4a,APTOS-P1480,APTOS 2019 (Aravind Eye Hospital),train_images/6a2642131e4a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6202,0.0838,0.1085,0.1086,0.0789,TRUE,FALSE
-6b66b0e86f7e,APTOS-P1491,APTOS 2019 (Aravind Eye Hospital),train_images/6b66b0e86f7e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4730,0.0854,0.0817,0.2020,0.1579,TRUE,FALSE
-6dc07f968794,APTOS-P1534,APTOS 2019 (Aravind Eye Hospital),train_images/6dc07f968794.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4961,0.1185,0.1624,0.1178,0.1052,TRUE,FALSE
-6e44f6d04fc9,APTOS-P1545,APTOS 2019 (Aravind Eye Hospital),train_images/6e44f6d04fc9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6623,0.0717,0.0870,0.1279,0.0511,TRUE,FALSE
-6f689fced922,APTOS-P1558,APTOS 2019 (Aravind Eye Hospital),train_images/6f689fced922.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5159,0.1135,0.1797,0.1183,0.0726,TRUE,FALSE
-6fbaaf8eb67a,APTOS-P1561,APTOS 2019 (Aravind Eye Hospital),train_images/6fbaaf8eb67a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4947,0.1163,0.0756,0.1112,0.2022,TRUE,FALSE
-6fe67fd7f5d1,APTOS-P1564,APTOS 2019 (Aravind Eye Hospital),train_images/6fe67fd7f5d1.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5072,0.0851,0.1790,0.1134,0.1153,TRUE,FALSE
-7179f85bfd6f,APTOS-P1577,APTOS 2019 (Aravind Eye Hospital),train_images/7179f85bfd6f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5494,0.1351,0.1172,0.1159,0.0824,TRUE,FALSE
-7347bd23ba80,APTOS-P1598,APTOS 2019 (Aravind Eye Hospital),train_images/7347bd23ba80.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6497,0.0866,0.1129,0.0738,0.0770,TRUE,FALSE
-73ef3c3dcbe4,APTOS-P1609,APTOS 2019 (Aravind Eye Hospital),train_images/73ef3c3dcbe4.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1386,0.5354,0.0844,0.0834,0.1582,FALSE,FALSE
-74211a2b6dcf,APTOS-P1610,APTOS 2019 (Aravind Eye Hospital),train_images/74211a2b6dcf.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4515,0.1356,0.1067,0.1811,0.1251,TRUE,FALSE
-75a071608ea6,APTOS-P1628,APTOS 2019 (Aravind Eye Hospital),train_images/75a071608ea6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5271,0.1800,0.0889,0.1048,0.0992,TRUE,FALSE
-75c180e04f65,APTOS-P1631,APTOS 2019 (Aravind Eye Hospital),train_images/75c180e04f65.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5552,0.0893,0.1214,0.1277,0.1064,TRUE,FALSE
-75ed83dbccce,APTOS-P1632,APTOS 2019 (Aravind Eye Hospital),train_images/75ed83dbccce.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6215,0.0716,0.1152,0.0735,0.1182,TRUE,FALSE
-763ad1236efe,APTOS-P1637,APTOS 2019 (Aravind Eye Hospital),train_images/763ad1236efe.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4717,0.0854,0.1683,0.1142,0.1604,TRUE,FALSE
-76df141d966b,APTOS-P1647,APTOS 2019 (Aravind Eye Hospital),train_images/76df141d966b.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6069,0.0842,0.0844,0.0981,0.1264,TRUE,FALSE
-7a39c91416e2,APTOS-P1692,APTOS 2019 (Aravind Eye Hospital),train_images/7a39c91416e2.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5963,0.0676,0.0846,0.1519,0.0996,TRUE,FALSE
-7ad0c4975890,APTOS-P1701,APTOS 2019 (Aravind Eye Hospital),train_images/7ad0c4975890.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5088,0.1051,0.2271,0.0827,0.0763,TRUE,FALSE
-7b87b0015282,APTOS-P1710,APTOS 2019 (Aravind Eye Hospital),train_images/7b87b0015282.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4099,0.1157,0.1583,0.1634,0.1527,TRUE,FALSE
-80c67efc8101,APTOS-P1783,APTOS 2019 (Aravind Eye Hospital),train_images/80c67efc8101.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4552,0.1313,0.0983,0.1676,0.1476,TRUE,FALSE
-810ed108f5b7,APTOS-P1793,APTOS 2019 (Aravind Eye Hospital),train_images/810ed108f5b7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5936,0.0799,0.1335,0.1184,0.0746,TRUE,FALSE
-81371b0c01ad,APTOS-P1796,APTOS 2019 (Aravind Eye Hospital),train_images/81371b0c01ad.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.0887,0.6332,0.0794,0.0694,0.1293,FALSE,FALSE
-81704925f759,APTOS-P1797,APTOS 2019 (Aravind Eye Hospital),train_images/81704925f759.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4026,0.1116,0.1455,0.1641,0.1762,TRUE,FALSE
-8344c783da65,APTOS-P1817,APTOS 2019 (Aravind Eye Hospital),train_images/8344c783da65.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4728,0.0619,0.1878,0.1685,0.1090,TRUE,FALSE
-848e66b9e199,APTOS-P1838,APTOS 2019 (Aravind Eye Hospital),train_images/848e66b9e199.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6442,0.0714,0.1010,0.1151,0.0683,TRUE,FALSE
-86410aa13b3e,APTOS-P1856,APTOS 2019 (Aravind Eye Hospital),train_images/86410aa13b3e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5860,0.1419,0.1053,0.0972,0.0696,TRUE,FALSE
-88e5051f65bd,APTOS-P1898,APTOS 2019 (Aravind Eye Hospital),train_images/88e5051f65bd.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4194,0.1316,0.1753,0.1196,0.1541,TRUE,FALSE
-896ad584a841,APTOS-P1905,APTOS 2019 (Aravind Eye Hospital),train_images/896ad584a841.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1526,0.4031,0.1186,0.1464,0.1793,FALSE,FALSE
-8a7765e785fb,APTOS-P1919,APTOS 2019 (Aravind Eye Hospital),train_images/8a7765e785fb.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4785,0.1981,0.1029,0.1250,0.0955,TRUE,FALSE
-8a81f62320d6,APTOS-P1920,APTOS 2019 (Aravind Eye Hospital),train_images/8a81f62320d6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5538,0.0964,0.1237,0.1255,0.1006,TRUE,FALSE
-8b8fe3fc8950,APTOS-P1938,APTOS 2019 (Aravind Eye Hospital),train_images/8b8fe3fc8950.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5391,0.1006,0.1536,0.1190,0.0877,TRUE,FALSE
-8be6629a6039,APTOS-P1943,APTOS 2019 (Aravind Eye Hospital),train_images/8be6629a6039.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4925,0.1477,0.0992,0.1490,0.1116,TRUE,FALSE
-8ceff4c4c860,APTOS-P1955,APTOS 2019 (Aravind Eye Hospital),train_images/8ceff4c4c860.png,0,Grade 0: No Apparent DR,2,Grade 2: Moderate NPDR,0.1033,0.1111,0.5751,0.1272,0.0833,FALSE,FALSE
-8ead17dfb6a6,APTOS-P1978,APTOS 2019 (Aravind Eye Hospital),train_images/8ead17dfb6a6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6384,0.0822,0.0589,0.0877,0.1328,TRUE,FALSE
-9095d43fb132,APTOS-P2006,APTOS 2019 (Aravind Eye Hospital),train_images/9095d43fb132.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5381,0.0931,0.1418,0.1237,0.1033,TRUE,FALSE
-936299166bea,APTOS-P2045,APTOS 2019 (Aravind Eye Hospital),train_images/936299166bea.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4653,0.1739,0.0682,0.1963,0.0963,TRUE,FALSE
-94076a9fb9b5,APTOS-P2051,APTOS 2019 (Aravind Eye Hospital),train_images/94076a9fb9b5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4083,0.1164,0.1411,0.1567,0.1775,TRUE,FALSE
-958c1fa044ba,APTOS-P2067,APTOS 2019 (Aravind Eye Hospital),train_images/958c1fa044ba.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6466,0.0935,0.0728,0.1158,0.0713,TRUE,FALSE
-973b0facfa9b,APTOS-P2086,APTOS 2019 (Aravind Eye Hospital),train_images/973b0facfa9b.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6157,0.0580,0.0504,0.0705,0.2054,TRUE,FALSE
-97a235367f9d,APTOS-P2093,APTOS 2019 (Aravind Eye Hospital),train_images/97a235367f9d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4414,0.1921,0.1180,0.1144,0.1341,TRUE,FALSE
-9870ce41cac4,APTOS-P2107,APTOS 2019 (Aravind Eye Hospital),train_images/9870ce41cac4.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.0896,0.5711,0.1129,0.0937,0.1327,FALSE,FALSE
-99240ee00485,APTOS-P2118,APTOS 2019 (Aravind Eye Hospital),train_images/99240ee00485.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4206,0.1472,0.0882,0.1541,0.1899,TRUE,FALSE
-9985375d709f,APTOS-P2123,APTOS 2019 (Aravind Eye Hospital),train_images/9985375d709f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5265,0.1363,0.0794,0.1145,0.1433,TRUE,FALSE
-9bbb6c455913,APTOS-P2158,APTOS 2019 (Aravind Eye Hospital),train_images/9bbb6c455913.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5791,0.0996,0.1344,0.0639,0.1230,TRUE,FALSE
-9f1b14dfa14c,APTOS-P0913,APTOS 2019 (Aravind Eye Hospital),train_images/9f1b14dfa14c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5608,0.1354,0.0962,0.1236,0.0840,TRUE,FALSE
-9f285b3e57ed,APTOS-P2196,APTOS 2019 (Aravind Eye Hospital),train_images/9f285b3e57ed.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5997,0.1415,0.0576,0.1194,0.0818,TRUE,FALSE
-9fa02dfb5553,APTOS-P2202,APTOS 2019 (Aravind Eye Hospital),train_images/9fa02dfb5553.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4814,0.1194,0.1724,0.1037,0.1231,TRUE,FALSE
-a06a63d866b2,APTOS-P2214,APTOS 2019 (Aravind Eye Hospital),train_images/a06a63d866b2.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6930,0.0436,0.0708,0.0732,0.1194,TRUE,FALSE
-a07d9a5045cb,APTOS-P2219,APTOS 2019 (Aravind Eye Hospital),train_images/a07d9a5045cb.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6258,0.0767,0.1356,0.0830,0.0789,TRUE,FALSE
-a0adbe677508,APTOS-P2223,APTOS 2019 (Aravind Eye Hospital),train_images/a0adbe677508.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6610,0.0968,0.0674,0.0646,0.1102,TRUE,FALSE
-a12ca80bb8c7,APTOS-P2232,APTOS 2019 (Aravind Eye Hospital),train_images/a12ca80bb8c7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5592,0.1510,0.0770,0.1130,0.0998,TRUE,FALSE
-a1822dd8d05d,APTOS-P2238,APTOS 2019 (Aravind Eye Hospital),train_images/a1822dd8d05d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6592,0.0822,0.1037,0.0735,0.0814,TRUE,FALSE
-a1e236fbc863,APTOS-P2244,APTOS 2019 (Aravind Eye Hospital),train_images/a1e236fbc863.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5303,0.1295,0.1384,0.1223,0.0795,TRUE,FALSE
-a1eb88562239,APTOS-P2245,APTOS 2019 (Aravind Eye Hospital),train_images/a1eb88562239.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4033,0.1503,0.1570,0.1286,0.1608,TRUE,FALSE
-a34fc5376669,APTOS-P2266,APTOS 2019 (Aravind Eye Hospital),train_images/a34fc5376669.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6400,0.1093,0.1368,0.0569,0.0570,TRUE,FALSE
-a53d6d2472a6,APTOS-P2292,APTOS 2019 (Aravind Eye Hospital),train_images/a53d6d2472a6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6375,0.1272,0.1012,0.0540,0.0801,TRUE,FALSE
-a6356a3c5d11,APTOS-P2301,APTOS 2019 (Aravind Eye Hospital),train_images/a6356a3c5d11.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.0964,0.6460,0.0843,0.1129,0.0604,FALSE,FALSE
-a673193cd5a9,APTOS-P2307,APTOS 2019 (Aravind Eye Hospital),train_images/a673193cd5a9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5297,0.0921,0.0811,0.1578,0.1393,TRUE,FALSE
-a6731dd737af,APTOS-P2308,APTOS 2019 (Aravind Eye Hospital),train_images/a6731dd737af.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4246,0.1774,0.1894,0.0986,0.1100,TRUE,FALSE
-a7673ac44509,APTOS-P2319,APTOS 2019 (Aravind Eye Hospital),train_images/a7673ac44509.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4565,0.1321,0.1966,0.1055,0.1093,TRUE,FALSE
-a88365134c3c,APTOS-P2340,APTOS 2019 (Aravind Eye Hospital),train_images/a88365134c3c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4337,0.1673,0.1852,0.0799,0.1339,TRUE,FALSE
-a987aa7aac37,APTOS-P2359,APTOS 2019 (Aravind Eye Hospital),train_images/a987aa7aac37.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5837,0.0810,0.1827,0.0687,0.0839,TRUE,FALSE
-ab724603ee93,APTOS-P2393,APTOS 2019 (Aravind Eye Hospital),train_images/ab724603ee93.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4138,0.1232,0.1467,0.1410,0.1753,TRUE,FALSE
-ad029ba7fa8b,APTOS-P2416,APTOS 2019 (Aravind Eye Hospital),train_images/ad029ba7fa8b.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6263,0.0678,0.0929,0.0944,0.1186,TRUE,FALSE
-ad1aa75d5630,APTOS-P2418,APTOS 2019 (Aravind Eye Hospital),train_images/ad1aa75d5630.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4238,0.1960,0.1373,0.1181,0.1248,TRUE,FALSE
-ae20112e7a1e,APTOS-P2432,APTOS 2019 (Aravind Eye Hospital),train_images/ae20112e7a1e.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1547,0.4876,0.1773,0.1040,0.0764,FALSE,FALSE
-ae2c3f6312ef,APTOS-P2433,APTOS 2019 (Aravind Eye Hospital),train_images/ae2c3f6312ef.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6484,0.0821,0.1220,0.0737,0.0738,TRUE,FALSE
-ae2e888905ba,APTOS-P2434,APTOS 2019 (Aravind Eye Hospital),train_images/ae2e888905ba.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3795,0.1790,0.1372,0.1339,0.1704,TRUE,FALSE
-ae58ccb5905e,APTOS-P2437,APTOS 2019 (Aravind Eye Hospital),train_images/ae58ccb5905e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5394,0.0751,0.1296,0.1126,0.1433,TRUE,FALSE
-af5a0bc4e1fa,APTOS-P2456,APTOS 2019 (Aravind Eye Hospital),train_images/af5a0bc4e1fa.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.7008,0.1267,0.0431,0.0620,0.0674,TRUE,FALSE
-af6166d57f13,APTOS-P2457,APTOS 2019 (Aravind Eye Hospital),train_images/af6166d57f13.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4959,0.1475,0.1201,0.0783,0.1582,TRUE,FALSE
-afc744fad65e,APTOS-P2465,APTOS 2019 (Aravind Eye Hospital),train_images/afc744fad65e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4303,0.1756,0.1483,0.1425,0.1033,TRUE,FALSE
-b0acd3593310,APTOS-P2475,APTOS 2019 (Aravind Eye Hospital),train_images/b0acd3593310.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6193,0.0940,0.1377,0.0778,0.0712,TRUE,FALSE
-b0f8613305a3,APTOS-P2483,APTOS 2019 (Aravind Eye Hospital),train_images/b0f8613305a3.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3870,0.1454,0.1620,0.1755,0.1301,TRUE,FALSE
-b22cc1bf0b8a,APTOS-P2496,APTOS 2019 (Aravind Eye Hospital),train_images/b22cc1bf0b8a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5026,0.1192,0.1688,0.1238,0.0856,TRUE,FALSE
-b35cad8fe2d7,APTOS-P2505,APTOS 2019 (Aravind Eye Hospital),train_images/b35cad8fe2d7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6446,0.1179,0.0783,0.0860,0.0732,TRUE,FALSE
-b67ae80f7eba,APTOS-P2547,APTOS 2019 (Aravind Eye Hospital),train_images/b67ae80f7eba.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5245,0.1367,0.1024,0.0832,0.1532,TRUE,FALSE
-b7aca95b97b9,APTOS-P2569,APTOS 2019 (Aravind Eye Hospital),train_images/b7aca95b97b9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4710,0.1380,0.1485,0.1061,0.1364,TRUE,FALSE
-b82dfa63a75f,APTOS-P2576,APTOS 2019 (Aravind Eye Hospital),train_images/b82dfa63a75f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5067,0.1214,0.0904,0.1490,0.1325,TRUE,FALSE
-b842b43cb7fb,APTOS-P2579,APTOS 2019 (Aravind Eye Hospital),train_images/b842b43cb7fb.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4977,0.1252,0.1212,0.1440,0.1119,TRUE,FALSE
-b92eacd1392a,APTOS-P2592,APTOS 2019 (Aravind Eye Hospital),train_images/b92eacd1392a.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.0911,0.6233,0.0888,0.0781,0.1187,FALSE,FALSE
-ba2ea9182090,APTOS-P2612,APTOS 2019 (Aravind Eye Hospital),train_images/ba2ea9182090.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5758,0.0926,0.0815,0.0761,0.1740,TRUE,FALSE
-ba4e62c11cc0,APTOS-P2614,APTOS 2019 (Aravind Eye Hospital),train_images/ba4e62c11cc0.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6096,0.0646,0.1020,0.1106,0.1132,TRUE,FALSE
-bb752b179751,APTOS-P2626,APTOS 2019 (Aravind Eye Hospital),train_images/bb752b179751.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6420,0.0683,0.1064,0.1067,0.0766,TRUE,FALSE
-bb85097857fa,APTOS-P2629,APTOS 2019 (Aravind Eye Hospital),train_images/bb85097857fa.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5008,0.1452,0.1269,0.0931,0.1340,TRUE,FALSE
-bc34f52c37c7,APTOS-P2634,APTOS 2019 (Aravind Eye Hospital),train_images/bc34f52c37c7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3977,0.1623,0.1263,0.1825,0.1312,TRUE,FALSE
-bc8c6a778cde,APTOS-P2637,APTOS 2019 (Aravind Eye Hospital),train_images/bc8c6a778cde.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6006,0.0998,0.1209,0.0985,0.0802,TRUE,FALSE
-bd375ba756b1,APTOS-P2646,APTOS 2019 (Aravind Eye Hospital),train_images/bd375ba756b1.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4629,0.1262,0.1083,0.1143,0.1883,TRUE,FALSE
-be8697eb2078,APTOS-P2665,APTOS 2019 (Aravind Eye Hospital),train_images/be8697eb2078.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6402,0.1240,0.1142,0.0831,0.0385,TRUE,FALSE
-bebfbd907cac,APTOS-P2669,APTOS 2019 (Aravind Eye Hospital),train_images/bebfbd907cac.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4442,0.1509,0.1429,0.1196,0.1424,TRUE,FALSE
-c06024f05a16,APTOS-P2694,APTOS 2019 (Aravind Eye Hospital),train_images/c06024f05a16.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5060,0.1403,0.1606,0.1023,0.0908,TRUE,FALSE
-c24bcf7a1bc4,APTOS-P2712,APTOS 2019 (Aravind Eye Hospital),train_images/c24bcf7a1bc4.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6531,0.1644,0.0738,0.0563,0.0524,TRUE,FALSE
-c2a58b2cfd0b,APTOS-P2718,APTOS 2019 (Aravind Eye Hospital),train_images/c2a58b2cfd0b.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4310,0.0520,0.1432,0.1844,0.1894,TRUE,FALSE
-c5a6f432a1ec,APTOS-P2752,APTOS 2019 (Aravind Eye Hospital),train_images/c5a6f432a1ec.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4577,0.1884,0.1044,0.1477,0.1018,TRUE,FALSE
-c6229222bf22,APTOS-P2760,APTOS 2019 (Aravind Eye Hospital),train_images/c6229222bf22.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4135,0.1452,0.1697,0.1070,0.1646,TRUE,FALSE
-c7c3d363bc86,APTOS-P2782,APTOS 2019 (Aravind Eye Hospital),train_images/c7c3d363bc86.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6736,0.0687,0.0620,0.0733,0.1224,TRUE,FALSE
-c97472ef2c66,APTOS-P2799,APTOS 2019 (Aravind Eye Hospital),train_images/c97472ef2c66.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6358,0.1074,0.0656,0.0848,0.1064,TRUE,FALSE
-c9e697117f3f,APTOS-P2803,APTOS 2019 (Aravind Eye Hospital),train_images/c9e697117f3f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.7135,0.1177,0.0449,0.0557,0.0682,TRUE,FALSE
-cad5b1a82e60,APTOS-P2819,APTOS 2019 (Aravind Eye Hospital),train_images/cad5b1a82e60.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6030,0.0871,0.1407,0.0841,0.0851,TRUE,FALSE
-cb02bb47fdc5,APTOS-P2824,APTOS 2019 (Aravind Eye Hospital),train_images/cb02bb47fdc5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6419,0.0611,0.0926,0.1097,0.0947,TRUE,FALSE
-cbe633765ea7,APTOS-P2837,APTOS 2019 (Aravind Eye Hospital),train_images/cbe633765ea7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5986,0.1142,0.0746,0.1211,0.0915,TRUE,FALSE
-ccd6dcb2f568,APTOS-P2847,APTOS 2019 (Aravind Eye Hospital),train_images/ccd6dcb2f568.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6085,0.1044,0.0585,0.0709,0.1577,TRUE,FALSE
-cf8ae5501bd6,APTOS-P2880,APTOS 2019 (Aravind Eye Hospital),train_images/cf8ae5501bd6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5637,0.0843,0.0811,0.1006,0.1703,TRUE,FALSE
-d02b79fc3200,APTOS-P2888,APTOS 2019 (Aravind Eye Hospital),train_images/d02b79fc3200.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4229,0.1500,0.1558,0.1706,0.1007,TRUE,FALSE
-d0926ed2c8e5,APTOS-P2890,APTOS 2019 (Aravind Eye Hospital),train_images/d0926ed2c8e5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5015,0.1374,0.0948,0.1527,0.1136,TRUE,FALSE
-d1a60c3b9fe5,APTOS-P2907,APTOS 2019 (Aravind Eye Hospital),train_images/d1a60c3b9fe5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4209,0.0939,0.1604,0.1545,0.1703,TRUE,FALSE
-d26bb2ed6e71,APTOS-P2918,APTOS 2019 (Aravind Eye Hospital),train_images/d26bb2ed6e71.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6976,0.1143,0.0721,0.0706,0.0454,TRUE,FALSE
-d332d7b8a26e,APTOS-P2936,APTOS 2019 (Aravind Eye Hospital),train_images/d332d7b8a26e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.7019,0.0521,0.1108,0.0589,0.0763,TRUE,FALSE
-d4583e9525dc,APTOS-P2948,APTOS 2019 (Aravind Eye Hospital),train_images/d4583e9525dc.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5100,0.0752,0.1563,0.1207,0.1378,TRUE,FALSE
-d56d32a1d62d,APTOS-P2957,APTOS 2019 (Aravind Eye Hospital),train_images/d56d32a1d62d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5952,0.1113,0.0966,0.1000,0.0969,TRUE,FALSE
-d5c63a8d9e94,APTOS-P2962,APTOS 2019 (Aravind Eye Hospital),train_images/d5c63a8d9e94.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4232,0.1333,0.1203,0.1725,0.1507,TRUE,FALSE
-d6803e467592,APTOS-P2971,APTOS 2019 (Aravind Eye Hospital),train_images/d6803e467592.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4889,0.1430,0.0998,0.1133,0.1550,TRUE,FALSE
-d6dbb0820ea5,APTOS-P2973,APTOS 2019 (Aravind Eye Hospital),train_images/d6dbb0820ea5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6314,0.0840,0.1203,0.0629,0.1014,TRUE,FALSE
-d838d5b9f571,APTOS-P2991,APTOS 2019 (Aravind Eye Hospital),train_images/d838d5b9f571.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1125,0.5426,0.1382,0.1388,0.0679,FALSE,FALSE
-d844a7252f4e,APTOS-P2995,APTOS 2019 (Aravind Eye Hospital),train_images/d844a7252f4e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3959,0.1671,0.1792,0.1212,0.1366,TRUE,FALSE
-d881c04f01fe,APTOS-P3003,APTOS 2019 (Aravind Eye Hospital),train_images/d881c04f01fe.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6538,0.0575,0.0823,0.0955,0.1109,TRUE,FALSE
-d9c9b9786da3,APTOS-P3025,APTOS 2019 (Aravind Eye Hospital),train_images/d9c9b9786da3.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6023,0.0995,0.1481,0.0734,0.0767,TRUE,FALSE
-da9262d9f5d9,APTOS-P3036,APTOS 2019 (Aravind Eye Hospital),train_images/da9262d9f5d9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4622,0.1455,0.1006,0.1516,0.1401,TRUE,FALSE
-da9574d35b82,APTOS-P3038,APTOS 2019 (Aravind Eye Hospital),train_images/da9574d35b82.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6633,0.0838,0.0803,0.0525,0.1201,TRUE,FALSE
-dc0eea0b68a7,APTOS-P3054,APTOS 2019 (Aravind Eye Hospital),train_images/dc0eea0b68a7.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4709,0.0835,0.1073,0.1732,0.1651,TRUE,FALSE
-dce73d90c00c,APTOS-P3059,APTOS 2019 (Aravind Eye Hospital),train_images/dce73d90c00c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6290,0.1268,0.1021,0.0570,0.0851,TRUE,FALSE
-de2eb5c8aa83,APTOS-P3072,APTOS 2019 (Aravind Eye Hospital),train_images/de2eb5c8aa83.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5090,0.1466,0.1021,0.1480,0.0943,TRUE,FALSE
-dee31065f8fe,APTOS-P3083,APTOS 2019 (Aravind Eye Hospital),train_images/dee31065f8fe.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5676,0.0744,0.1134,0.1078,0.1368,TRUE,FALSE
-df0886f1e76b,APTOS-P3085,APTOS 2019 (Aravind Eye Hospital),train_images/df0886f1e76b.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6772,0.1067,0.0900,0.0605,0.0656,TRUE,FALSE
-e03a74e7d74f,APTOS-P3099,APTOS 2019 (Aravind Eye Hospital),train_images/e03a74e7d74f.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5622,0.0803,0.1116,0.1478,0.0981,TRUE,FALSE
-e06cccc08c59,APTOS-P3103,APTOS 2019 (Aravind Eye Hospital),train_images/e06cccc08c59.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1027,0.5457,0.1513,0.0798,0.1205,FALSE,FALSE
-e12df54e0d1e,APTOS-P3112,APTOS 2019 (Aravind Eye Hospital),train_images/e12df54e0d1e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6786,0.0592,0.0794,0.1372,0.0456,TRUE,FALSE
-e12f9f19d1be,APTOS-P3113,APTOS 2019 (Aravind Eye Hospital),train_images/e12f9f19d1be.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6232,0.0836,0.0923,0.1331,0.0678,TRUE,FALSE
-e135d7ba9a0e,APTOS-P2803,APTOS 2019 (Aravind Eye Hospital),train_images/e135d7ba9a0e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5599,0.1068,0.1713,0.0633,0.0987,TRUE,FALSE
-e16af45285e5,APTOS-P3118,APTOS 2019 (Aravind Eye Hospital),train_images/e16af45285e5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6521,0.1115,0.0767,0.0780,0.0817,TRUE,FALSE
-e2c39ed0c941,APTOS-P3142,APTOS 2019 (Aravind Eye Hospital),train_images/e2c39ed0c941.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5354,0.0822,0.0717,0.1230,0.1877,TRUE,FALSE
-e2ec22b3d07e,APTOS-P3143,APTOS 2019 (Aravind Eye Hospital),train_images/e2ec22b3d07e.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6385,0.0695,0.1114,0.1040,0.0766,TRUE,FALSE
-e3cd96cb094c,APTOS-P3156,APTOS 2019 (Aravind Eye Hospital),train_images/e3cd96cb094c.png,0,Grade 0: No Apparent DR,2,Grade 2: Moderate NPDR,0.1043,0.1177,0.5033,0.1414,0.1333,FALSE,FALSE
-e4a44f9158dc,APTOS-P3165,APTOS 2019 (Aravind Eye Hospital),train_images/e4a44f9158dc.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5797,0.1623,0.1071,0.0878,0.0631,TRUE,FALSE
-e50b0174690d,APTOS-P3172,APTOS 2019 (Aravind Eye Hospital),train_images/e50b0174690d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4420,0.1147,0.1023,0.1454,0.1956,TRUE,FALSE
-e529c5757d64,APTOS-P3174,APTOS 2019 (Aravind Eye Hospital),train_images/e529c5757d64.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6844,0.0467,0.0760,0.1173,0.0756,TRUE,FALSE
-e9ce5bf645ab,APTOS-P3236,APTOS 2019 (Aravind Eye Hospital),train_images/e9ce5bf645ab.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6389,0.0552,0.1203,0.0978,0.0878,TRUE,FALSE
-ea4ce9516144,APTOS-P3242,APTOS 2019 (Aravind Eye Hospital),train_images/ea4ce9516144.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4664,0.1321,0.1587,0.0867,0.1561,TRUE,FALSE
-ea7e21bab610,APTOS-P3248,APTOS 2019 (Aravind Eye Hospital),train_images/ea7e21bab610.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6255,0.0633,0.0725,0.0928,0.1459,TRUE,FALSE
-ec01f0862669,APTOS-P3267,APTOS 2019 (Aravind Eye Hospital),train_images/ec01f0862669.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4742,0.1085,0.1512,0.1557,0.1104,TRUE,FALSE
-ed2ef440d22c,APTOS-P3279,APTOS 2019 (Aravind Eye Hospital),train_images/ed2ef440d22c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4616,0.1444,0.0988,0.1505,0.1447,TRUE,FALSE
-ed648b9bcd95,APTOS-P3281,APTOS 2019 (Aravind Eye Hospital),train_images/ed648b9bcd95.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5112,0.1509,0.1132,0.1442,0.0805,TRUE,FALSE
-eda1d75cbcf0,APTOS-P3285,APTOS 2019 (Aravind Eye Hospital),train_images/eda1d75cbcf0.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5542,0.0666,0.1004,0.1548,0.1240,TRUE,FALSE
-ee3fe7809e6a,APTOS-P3293,APTOS 2019 (Aravind Eye Hospital),train_images/ee3fe7809e6a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5563,0.1098,0.0873,0.1384,0.1082,TRUE,FALSE
-eebd1e195952,APTOS-P3300,APTOS 2019 (Aravind Eye Hospital),train_images/eebd1e195952.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5814,0.0901,0.1002,0.0966,0.1317,TRUE,FALSE
-f0267c42907c,APTOS-P3320,APTOS 2019 (Aravind Eye Hospital),train_images/f0267c42907c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6367,0.0988,0.0729,0.0509,0.1407,TRUE,FALSE
-f252046c0fe6,APTOS-P3342,APTOS 2019 (Aravind Eye Hospital),train_images/f252046c0fe6.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6860,0.0611,0.0560,0.0838,0.1131,TRUE,FALSE
-f35d80bb1a22,APTOS-P3350,APTOS 2019 (Aravind Eye Hospital),train_images/f35d80bb1a22.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6086,0.0979,0.1250,0.0917,0.0768,TRUE,FALSE
-f3bb996b45ce,APTOS-P3359,APTOS 2019 (Aravind Eye Hospital),train_images/f3bb996b45ce.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1024,0.5845,0.0815,0.1434,0.0882,FALSE,FALSE
-f66c4ee86629,APTOS-P3398,APTOS 2019 (Aravind Eye Hospital),train_images/f66c4ee86629.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6653,0.0658,0.0453,0.1164,0.1072,TRUE,FALSE
-f71aca5a7dc3,APTOS-P3407,APTOS 2019 (Aravind Eye Hospital),train_images/f71aca5a7dc3.png,0,Grade 0: No Apparent DR,2,Grade 2: Moderate NPDR,0.1107,0.1009,0.5162,0.1222,0.1500,FALSE,FALSE
-f85fd4fac887,APTOS-P3422,APTOS 2019 (Aravind Eye Hospital),train_images/f85fd4fac887.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5209,0.0853,0.1558,0.0988,0.1392,TRUE,FALSE
-f994a3b07935,APTOS-P3433,APTOS 2019 (Aravind Eye Hospital),train_images/f994a3b07935.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.3720,0.1359,0.1665,0.1716,0.1540,TRUE,FALSE
-f9d52509c571,APTOS-P3436,APTOS 2019 (Aravind Eye Hospital),train_images/f9d52509c571.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5293,0.1258,0.1258,0.1378,0.0813,TRUE,FALSE
-fa6f3d8bb1d5,APTOS-P3443,APTOS 2019 (Aravind Eye Hospital),train_images/fa6f3d8bb1d5.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.4905,0.1690,0.1184,0.1312,0.0909,TRUE,FALSE
-fb1b8771c70a,APTOS-P3449,APTOS 2019 (Aravind Eye Hospital),train_images/fb1b8771c70a.png,0,Grade 0: No Apparent DR,2,Grade 2: Moderate NPDR,0.0896,0.0989,0.6396,0.0586,0.1133,FALSE,FALSE
-fb88d23fc5fe,APTOS-P3455,APTOS 2019 (Aravind Eye Hospital),train_images/fb88d23fc5fe.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6617,0.0781,0.0525,0.1195,0.0882,TRUE,FALSE
-fc782722a50c,APTOS-P3464,APTOS 2019 (Aravind Eye Hospital),train_images/fc782722a50c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6622,0.0829,0.1066,0.1011,0.0472,TRUE,FALSE
-fc8fce67fbf8,APTOS-P3466,APTOS 2019 (Aravind Eye Hospital),train_images/fc8fce67fbf8.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6026,0.1197,0.0600,0.1291,0.0886,TRUE,FALSE
-fca1a8738b8a,APTOS-P3467,APTOS 2019 (Aravind Eye Hospital),train_images/fca1a8738b8a.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6218,0.0922,0.0841,0.1121,0.0898,TRUE,FALSE
-fd0a70082e7c,APTOS-P3474,APTOS 2019 (Aravind Eye Hospital),train_images/fd0a70082e7c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6347,0.1070,0.0984,0.0851,0.0748,TRUE,FALSE
-fdc685055659,APTOS-P3480,APTOS 2019 (Aravind Eye Hospital),train_images/fdc685055659.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.0973,0.6398,0.1158,0.0946,0.0525,FALSE,FALSE
-fe06dad6851c,APTOS-P3483,APTOS 2019 (Aravind Eye Hospital),train_images/fe06dad6851c.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6316,0.1271,0.1018,0.0572,0.0823,TRUE,FALSE
-fe3f62695b2d,APTOS-P3488,APTOS 2019 (Aravind Eye Hospital),train_images/fe3f62695b2d.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6401,0.1293,0.0663,0.1206,0.0437,TRUE,FALSE
-fefded6bf135,APTOS-P3493,APTOS 2019 (Aravind Eye Hospital),train_images/fefded6bf135.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.6184,0.0968,0.0723,0.1647,0.0478,TRUE,FALSE
-ff1e940105f9,APTOS-P3495,APTOS 2019 (Aravind Eye Hospital),train_images/ff1e940105f9.png,0,Grade 0: No Apparent DR,0,Grade 0: No Apparent DR,0.5795,0.1297,0.0786,0.0996,0.1126,TRUE,FALSE
-ff4955e76894,APTOS-P3498,APTOS 2019 (Aravind Eye Hospital),train_images/ff4955e76894.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1243,0.5176,0.1089,0.0884,0.1608,FALSE,FALSE
-ffc04fed30e6,APTOS-P3505,APTOS 2019 (Aravind Eye Hospital),train_images/ffc04fed30e6.png,0,Grade 0: No Apparent DR,1,Grade 1: Mild NPDR,0.1192,0.4621,0.1339,0.1704,0.1144,FALSE,FALSE
-0684311afdfc,APTOS-P0081,APTOS 2019 (Aravind Eye Hospital),train_images/0684311afdfc.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1034,0.4875,0.1419,0.1456,0.1216,TRUE,FALSE
-0dc031c94225,APTOS-P0189,APTOS 2019 (Aravind Eye Hospital),train_images/0dc031c94225.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0865,0.4924,0.1149,0.1516,0.1546,TRUE,FALSE
-0f495d87656a,APTOS-P0206,APTOS 2019 (Aravind Eye Hospital),train_images/0f495d87656a.png,1,Grade 1: Mild NPDR,2,Grade 2: Moderate NPDR,0.1147,0.1157,0.5327,0.1293,0.1076,FALSE,FALSE
-1b329a127307,APTOS-P0367,APTOS 2019 (Aravind Eye Hospital),train_images/1b329a127307.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.6716,0.0966,0.0629,0.0729,0.0960,FALSE,TRUE
-1d11794057ff,APTOS-P0400,APTOS 2019 (Aravind Eye Hospital),train_images/1d11794057ff.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.6127,0.0918,0.0719,0.0964,0.1272,FALSE,TRUE
-200d947f75db,APTOS-P0452,APTOS 2019 (Aravind Eye Hospital),train_images/200d947f75db.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1756,0.5076,0.1083,0.0884,0.1201,TRUE,FALSE
-248139c423c4,APTOS-P0508,APTOS 2019 (Aravind Eye Hospital),train_images/248139c423c4.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1095,0.6127,0.0922,0.0760,0.1096,TRUE,FALSE
-2ecbc2e3f239,APTOS-P0650,APTOS 2019 (Aravind Eye Hospital),train_images/2ecbc2e3f239.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1022,0.4749,0.1588,0.1051,0.1590,TRUE,FALSE
-2f2e1949ad56,APTOS-P0656,APTOS 2019 (Aravind Eye Hospital),train_images/2f2e1949ad56.png,1,Grade 1: Mild NPDR,2,Grade 2: Moderate NPDR,0.1052,0.1183,0.6061,0.0874,0.0830,FALSE,FALSE
-2f4e81787d9b,APTOS-P0658,APTOS 2019 (Aravind Eye Hospital),train_images/2f4e81787d9b.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1080,0.5391,0.1217,0.1389,0.0923,TRUE,FALSE
-31cb39681f6a,APTOS-P0692,APTOS 2019 (Aravind Eye Hospital),train_images/31cb39681f6a.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1084,0.5760,0.1085,0.1228,0.0843,TRUE,FALSE
-36677b70b1ef,APTOS-P0750,APTOS 2019 (Aravind Eye Hospital),train_images/36677b70b1ef.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1345,0.4532,0.1334,0.1041,0.1748,TRUE,FALSE
-382752f6694a,APTOS-P0772,APTOS 2019 (Aravind Eye Hospital),train_images/382752f6694a.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1133,0.6421,0.0472,0.1205,0.0769,TRUE,FALSE
-3b73a3a4a734,APTOS-P0816,APTOS 2019 (Aravind Eye Hospital),train_images/3b73a3a4a734.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1876,0.4280,0.1182,0.1156,0.1506,TRUE,FALSE
-3c726de3ee90,APTOS-P0826,APTOS 2019 (Aravind Eye Hospital),train_images/3c726de3ee90.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.5631,0.0902,0.1319,0.1004,0.1144,FALSE,TRUE
-4393c5bc576a,APTOS-P0922,APTOS 2019 (Aravind Eye Hospital),train_images/4393c5bc576a.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1243,0.5824,0.1233,0.0885,0.0815,TRUE,FALSE
-495255c7492f,APTOS-P1003,APTOS 2019 (Aravind Eye Hospital),train_images/495255c7492f.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1450,0.4930,0.1334,0.0886,0.1400,TRUE,FALSE
-4e0656629d02,APTOS-P1085,APTOS 2019 (Aravind Eye Hospital),train_images/4e0656629d02.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1441,0.4647,0.1663,0.1010,0.1239,TRUE,FALSE
-4fa26d065ad3,APTOS-P1112,APTOS 2019 (Aravind Eye Hospital),train_images/4fa26d065ad3.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1143,0.5155,0.1151,0.1469,0.1082,TRUE,FALSE
-523b3f0fc646,APTOS-P1160,APTOS 2019 (Aravind Eye Hospital),train_images/523b3f0fc646.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0655,0.6261,0.0540,0.1097,0.1447,TRUE,FALSE
-531b39880c32,APTOS-P1180,APTOS 2019 (Aravind Eye Hospital),train_images/531b39880c32.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.5838,0.1003,0.1078,0.0794,0.1287,FALSE,TRUE
-5efa24b03d5e,APTOS-P1340,APTOS 2019 (Aravind Eye Hospital),train_images/5efa24b03d5e.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0910,0.6951,0.0467,0.0445,0.1227,TRUE,FALSE
-6377e23928f6,APTOS-P1392,APTOS 2019 (Aravind Eye Hospital),train_images/6377e23928f6.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0914,0.5889,0.0922,0.1491,0.0784,TRUE,FALSE
-6762b2b48ea5,APTOS-P1448,APTOS 2019 (Aravind Eye Hospital),train_images/6762b2b48ea5.png,1,Grade 1: Mild NPDR,2,Grade 2: Moderate NPDR,0.1037,0.1563,0.5749,0.0908,0.0743,FALSE,FALSE
-7005be54cab1,APTOS-P0852,APTOS 2019 (Aravind Eye Hospital),train_images/7005be54cab1.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.6162,0.0808,0.0777,0.1073,0.1180,FALSE,TRUE
-71c1a3cdbe47,APTOS-P1579,APTOS 2019 (Aravind Eye Hospital),train_images/71c1a3cdbe47.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.5879,0.1320,0.0739,0.0994,0.1068,FALSE,TRUE
-73881f55a3ec,APTOS-P1604,APTOS 2019 (Aravind Eye Hospital),train_images/73881f55a3ec.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0798,0.5348,0.0716,0.1727,0.1411,TRUE,FALSE
-756b0d6488bb,APTOS-P1625,APTOS 2019 (Aravind Eye Hospital),train_images/756b0d6488bb.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0891,0.6587,0.1072,0.0900,0.0550,TRUE,FALSE
-79ce83c07588,APTOS-P1579,APTOS 2019 (Aravind Eye Hospital),train_images/79ce83c07588.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0960,0.4967,0.1825,0.1340,0.0908,TRUE,FALSE
-7bf981d9c7fe,APTOS-P0750,APTOS 2019 (Aravind Eye Hospital),train_images/7bf981d9c7fe.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.4837,0.1387,0.1339,0.1651,0.0786,FALSE,TRUE
-80a02014b418,APTOS-P1780,APTOS 2019 (Aravind Eye Hospital),train_images/80a02014b418.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.4508,0.1446,0.1394,0.0855,0.1797,FALSE,TRUE
-80d24897669f,APTOS-P1785,APTOS 2019 (Aravind Eye Hospital),train_images/80d24897669f.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1253,0.4307,0.1848,0.1216,0.1376,TRUE,FALSE
-849a91e9ab28,APTOS-P1839,APTOS 2019 (Aravind Eye Hospital),train_images/849a91e9ab28.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1309,0.4128,0.1767,0.1308,0.1488,TRUE,FALSE
-8bbd7835e9aa,APTOS-P1940,APTOS 2019 (Aravind Eye Hospital),train_images/8bbd7835e9aa.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0648,0.6451,0.1079,0.0529,0.1293,TRUE,FALSE
-94111ed3d276,APTOS-P2052,APTOS 2019 (Aravind Eye Hospital),train_images/94111ed3d276.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1185,0.5432,0.0792,0.1446,0.1145,TRUE,FALSE
-98fbe56dcc2c,APTOS-P2113,APTOS 2019 (Aravind Eye Hospital),train_images/98fbe56dcc2c.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1175,0.4586,0.1229,0.1599,0.1411,TRUE,FALSE
-a19ecd0a706e,APTOS-P2242,APTOS 2019 (Aravind Eye Hospital),train_images/a19ecd0a706e.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.6023,0.1004,0.1220,0.0466,0.1287,FALSE,TRUE
-a32886cb31ab,APTOS-P2263,APTOS 2019 (Aravind Eye Hospital),train_images/a32886cb31ab.png,1,Grade 1: Mild NPDR,2,Grade 2: Moderate NPDR,0.1210,0.1110,0.5110,0.1589,0.0981,FALSE,FALSE
-a3d2a0c4cd17,APTOS-P2274,APTOS 2019 (Aravind Eye Hospital),train_images/a3d2a0c4cd17.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1390,0.5659,0.1100,0.1188,0.0663,TRUE,FALSE
-b50b30aa6e6c,APTOS-P2524,APTOS 2019 (Aravind Eye Hospital),train_images/b50b30aa6e6c.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1245,0.4856,0.1260,0.1024,0.1615,TRUE,FALSE
-bb45257258cc,APTOS-P2624,APTOS 2019 (Aravind Eye Hospital),train_images/bb45257258cc.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1367,0.5272,0.0683,0.1740,0.0938,TRUE,FALSE
-bb783d8e496f,APTOS-P2627,APTOS 2019 (Aravind Eye Hospital),train_images/bb783d8e496f.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1012,0.4859,0.0706,0.1884,0.1539,TRUE,FALSE
-c102db7634d8,APTOS-P2701,APTOS 2019 (Aravind Eye Hospital),train_images/c102db7634d8.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.2203,0.5874,0.0771,0.0746,0.0406,TRUE,FALSE
-c7b622ec8104,APTOS-P2780,APTOS 2019 (Aravind Eye Hospital),train_images/c7b622ec8104.png,1,Grade 1: Mild NPDR,2,Grade 2: Moderate NPDR,0.1515,0.1353,0.4041,0.1638,0.1453,FALSE,FALSE
-cb2f3c5d71a7,APTOS-P2828,APTOS 2019 (Aravind Eye Hospital),train_images/cb2f3c5d71a7.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0825,0.5233,0.1509,0.0980,0.1453,TRUE,FALSE
-db4ed1e07aa3,APTOS-P3046,APTOS 2019 (Aravind Eye Hospital),train_images/db4ed1e07aa3.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1192,0.4496,0.0848,0.1424,0.2040,TRUE,FALSE
-ea15a290eb96,APTOS-P0391,APTOS 2019 (Aravind Eye Hospital),train_images/ea15a290eb96.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0772,0.6545,0.0884,0.1131,0.0668,TRUE,FALSE
-ec4649213ccf,APTOS-P3270,APTOS 2019 (Aravind Eye Hospital),train_images/ec4649213ccf.png,1,Grade 1: Mild NPDR,2,Grade 2: Moderate NPDR,0.1353,0.1008,0.5820,0.0972,0.0847,FALSE,FALSE
-ef8109305128,APTOS-P3311,APTOS 2019 (Aravind Eye Hospital),train_images/ef8109305128.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1276,0.4031,0.1552,0.1709,0.1432,TRUE,FALSE
-f55e1d2a19e4,APTOS-P3378,APTOS 2019 (Aravind Eye Hospital),train_images/f55e1d2a19e4.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1457,0.5131,0.0871,0.1134,0.1407,TRUE,FALSE
-f5650eb52640,APTOS-P3379,APTOS 2019 (Aravind Eye Hospital),train_images/f5650eb52640.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.5539,0.1274,0.0435,0.1213,0.1539,FALSE,TRUE
-f762c272c522,APTOS-P3412,APTOS 2019 (Aravind Eye Hospital),train_images/f762c272c522.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1090,0.6203,0.1237,0.0638,0.0832,TRUE,FALSE
-fb6b8200b7f8,APTOS-P3452,APTOS 2019 (Aravind Eye Hospital),train_images/fb6b8200b7f8.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1230,0.5070,0.0948,0.1456,0.1296,TRUE,FALSE
-fca931da5c5e,APTOS-P3468,APTOS 2019 (Aravind Eye Hospital),train_images/fca931da5c5e.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.1146,0.5850,0.1039,0.0991,0.0974,TRUE,FALSE
-fe674c2f73f5,APTOS-P3489,APTOS 2019 (Aravind Eye Hospital),train_images/fe674c2f73f5.png,1,Grade 1: Mild NPDR,0,Grade 0: No Apparent DR,0.5624,0.1470,0.0958,0.0810,0.1138,FALSE,TRUE
-fea14b3d44b0,APTOS-P1785,APTOS 2019 (Aravind Eye Hospital),train_images/fea14b3d44b0.png,1,Grade 1: Mild NPDR,1,Grade 1: Mild NPDR,0.0807,0.5671,0.1190,0.1181,0.1151,TRUE,FALSE
-071435a218ec,APTOS-P0090,APTOS 2019 (Aravind Eye Hospital),train_images/071435a218ec.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1043,0.1710,0.4583,0.1307,0.1357,TRUE,FALSE
-07d8db76b301,APTOS-P0102,APTOS 2019 (Aravind Eye Hospital),train_images/07d8db76b301.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.1273,0.4907,0.1322,0.0948,0.1550,FALSE,FALSE
-08c17a2d95b7,APTOS-P0115,APTOS 2019 (Aravind Eye Hospital),train_images/08c17a2d95b7.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.0961,0.5489,0.1479,0.0629,0.1442,FALSE,FALSE
-0c2e2369dfff,APTOS-P0160,APTOS 2019 (Aravind Eye Hospital),train_images/0c2e2369dfff.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0796,0.0980,0.5956,0.1166,0.1102,TRUE,FALSE
-0ca0aee4d57e,APTOS-P0167,APTOS 2019 (Aravind Eye Hospital),train_images/0ca0aee4d57e.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1714,0.1634,0.4716,0.1020,0.0916,TRUE,FALSE
-0fffa73e2402,APTOS-P0217,APTOS 2019 (Aravind Eye Hospital),train_images/0fffa73e2402.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1428,0.1398,0.4890,0.1450,0.0834,TRUE,FALSE
-1124ffcd76c2,APTOS-P0238,APTOS 2019 (Aravind Eye Hospital),train_images/1124ffcd76c2.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0916,0.0790,0.5377,0.2099,0.0818,TRUE,FALSE
-12a82fc7d73e,APTOS-P0247,APTOS 2019 (Aravind Eye Hospital),train_images/12a82fc7d73e.png,2,Grade 2: Moderate NPDR,4,Grade 4: Proliferative DR,0.0722,0.0791,0.0850,0.1086,0.6551,FALSE,FALSE
-141735b57ec0,APTOS-P0267,APTOS 2019 (Aravind Eye Hospital),train_images/141735b57ec0.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0955,0.1589,0.5276,0.0960,0.1220,TRUE,FALSE
-1438288bb2e1,APTOS-P0268,APTOS 2019 (Aravind Eye Hospital),train_images/1438288bb2e1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1007,0.1653,0.4634,0.1718,0.0988,TRUE,FALSE
-1541226c5d72,APTOS-P0280,APTOS 2019 (Aravind Eye Hospital),train_images/1541226c5d72.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0725,0.1108,0.5883,0.0792,0.1492,TRUE,FALSE
-1594ca6c30d3,APTOS-P0284,APTOS 2019 (Aravind Eye Hospital),train_images/1594ca6c30d3.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1020,0.0686,0.6419,0.0945,0.0930,TRUE,FALSE
-17eb5d4ad740,APTOS-P0316,APTOS 2019 (Aravind Eye Hospital),train_images/17eb5d4ad740.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.1848,0.0782,0.1472,0.4977,0.0921,FALSE,FALSE
-18f1f979d30d,APTOS-P0338,APTOS 2019 (Aravind Eye Hospital),train_images/18f1f979d30d.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0651,0.0438,0.6813,0.1247,0.0851,TRUE,FALSE
-1e4b3b823b95,APTOS-P0426,APTOS 2019 (Aravind Eye Hospital),train_images/1e4b3b823b95.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1036,0.1651,0.4401,0.1483,0.1429,TRUE,FALSE
-1f4bf8e28b41,APTOS-P0441,APTOS 2019 (Aravind Eye Hospital),train_images/1f4bf8e28b41.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1228,0.0805,0.6163,0.0928,0.0876,TRUE,FALSE
-1f543a86c4d4,APTOS-P0443,APTOS 2019 (Aravind Eye Hospital),train_images/1f543a86c4d4.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1325,0.1365,0.5575,0.0791,0.0944,TRUE,FALSE
-203275daf46d,APTOS-P0456,APTOS 2019 (Aravind Eye Hospital),train_images/203275daf46d.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.1074,0.6118,0.0761,0.1040,0.1007,FALSE,FALSE
-20404ec7b518,APTOS-P0457,APTOS 2019 (Aravind Eye Hospital),train_images/20404ec7b518.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.1044,0.1614,0.1257,0.4858,0.1227,FALSE,FALSE
-23148a40ecb0,APTOS-P0488,APTOS 2019 (Aravind Eye Hospital),train_images/23148a40ecb0.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1180,0.1063,0.4980,0.1528,0.1249,TRUE,FALSE
-2376e5415458,APTOS-P0494,APTOS 2019 (Aravind Eye Hospital),train_images/2376e5415458.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.2022,0.1480,0.4651,0.0927,0.0920,TRUE,FALSE
-2608e1dac5b1,APTOS-P0528,APTOS 2019 (Aravind Eye Hospital),train_images/2608e1dac5b1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1347,0.0714,0.5434,0.1557,0.0948,TRUE,FALSE
-261c6bd63bff,APTOS-P0530,APTOS 2019 (Aravind Eye Hospital),train_images/261c6bd63bff.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0819,0.0983,0.5080,0.2166,0.0952,TRUE,FALSE
-26e231747848,APTOS-P0545,APTOS 2019 (Aravind Eye Hospital),train_images/26e231747848.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1130,0.0690,0.6942,0.0428,0.0810,TRUE,FALSE
-2776d70724d3,APTOS-P0553,APTOS 2019 (Aravind Eye Hospital),train_images/2776d70724d3.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.0826,0.1293,0.1196,0.5311,0.1374,FALSE,FALSE
-27fca9f12b3c,APTOS-P0561,APTOS 2019 (Aravind Eye Hospital),train_images/27fca9f12b3c.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1125,0.0537,0.6514,0.0598,0.1226,TRUE,FALSE
-28f93cad89c5,APTOS-P0574,APTOS 2019 (Aravind Eye Hospital),train_images/28f93cad89c5.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0621,0.1094,0.6898,0.0660,0.0727,TRUE,FALSE
-29580bed2f7d,APTOS-P0582,APTOS 2019 (Aravind Eye Hospital),train_images/29580bed2f7d.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0340,0.1280,0.7105,0.0593,0.0682,TRUE,FALSE
-2b07790a2422,APTOS-P0608,APTOS 2019 (Aravind Eye Hospital),train_images/2b07790a2422.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1324,0.0940,0.5721,0.1091,0.0924,TRUE,FALSE
-2fdffb6160a6,APTOS-P0668,APTOS 2019 (Aravind Eye Hospital),train_images/2fdffb6160a6.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1952,0.1499,0.4588,0.0797,0.1164,TRUE,FALSE
-310c27067ac0,APTOS-P0680,APTOS 2019 (Aravind Eye Hospital),train_images/310c27067ac0.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.1356,0.1317,0.1301,0.4979,0.1047,FALSE,FALSE
-314862758acf,APTOS-P0686,APTOS 2019 (Aravind Eye Hospital),train_images/314862758acf.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1479,0.1827,0.4267,0.1128,0.1299,TRUE,FALSE
-3428230bf1bd,APTOS-P0718,APTOS 2019 (Aravind Eye Hospital),train_images/3428230bf1bd.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1285,0.1309,0.4850,0.1052,0.1504,TRUE,FALSE
-36ec36c301c1,APTOS-P0545,APTOS 2019 (Aravind Eye Hospital),train_images/36ec36c301c1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1287,0.0578,0.5977,0.0715,0.1443,TRUE,FALSE
-39b5b05d6cd9,APTOS-P0793,APTOS 2019 (Aravind Eye Hospital),train_images/39b5b05d6cd9.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0808,0.0794,0.6508,0.0772,0.1118,TRUE,FALSE
-3a122851e526,APTOS-P0796,APTOS 2019 (Aravind Eye Hospital),train_images/3a122851e526.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0586,0.0601,0.6595,0.1395,0.0823,TRUE,FALSE
-3dbfbc11e105,APTOS-P0843,APTOS 2019 (Aravind Eye Hospital),train_images/3dbfbc11e105.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1300,0.0956,0.5593,0.1223,0.0928,TRUE,FALSE
-3fc219927a97,APTOS-P0867,APTOS 2019 (Aravind Eye Hospital),train_images/3fc219927a97.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0808,0.1208,0.6493,0.0632,0.0859,TRUE,FALSE
-4189d4e631ec,APTOS-P0890,APTOS 2019 (Aravind Eye Hospital),train_images/4189d4e631ec.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1276,0.1512,0.4928,0.1124,0.1160,TRUE,FALSE
-43fb6eda9b97,APTOS-P0927,APTOS 2019 (Aravind Eye Hospital),train_images/43fb6eda9b97.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1093,0.0991,0.5430,0.1215,0.1271,TRUE,FALSE
-453a1e2754b2,APTOS-P0952,APTOS 2019 (Aravind Eye Hospital),train_images/453a1e2754b2.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1097,0.1670,0.5008,0.1257,0.0968,TRUE,FALSE
-46f56c38051f,APTOS-P0974,APTOS 2019 (Aravind Eye Hospital),train_images/46f56c38051f.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.0559,0.6482,0.0915,0.1033,0.1011,FALSE,FALSE
-48afe8c47454,APTOS-P0992,APTOS 2019 (Aravind Eye Hospital),train_images/48afe8c47454.png,2,Grade 2: Moderate NPDR,0,Grade 0: No Apparent DR,0.6751,0.0555,0.0902,0.0669,0.1123,FALSE,FALSE
-4a0bba3b7d83,APTOS-P1016,APTOS 2019 (Aravind Eye Hospital),train_images/4a0bba3b7d83.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0899,0.1588,0.6076,0.0732,0.0705,TRUE,FALSE
-4b5ffea77373,APTOS-P1036,APTOS 2019 (Aravind Eye Hospital),train_images/4b5ffea77373.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0765,0.0642,0.6687,0.1082,0.0824,TRUE,FALSE
-4c52922f3bfd,APTOS-P1048,APTOS 2019 (Aravind Eye Hospital),train_images/4c52922f3bfd.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1514,0.1627,0.4845,0.1002,0.1012,TRUE,FALSE
-4c78d9d18da9,APTOS-P1056,APTOS 2019 (Aravind Eye Hospital),train_images/4c78d9d18da9.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.0619,0.0442,0.1019,0.6823,0.1097,FALSE,FALSE
-4da6e2089d57,APTOS-P1075,APTOS 2019 (Aravind Eye Hospital),train_images/4da6e2089d57.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1522,0.1539,0.4136,0.1124,0.1679,TRUE,FALSE
-4ed31cc07366,APTOS-P1100,APTOS 2019 (Aravind Eye Hospital),train_images/4ed31cc07366.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0866,0.1178,0.6164,0.0675,0.1117,TRUE,FALSE
-4f46d7ee61ed,APTOS-P1107,APTOS 2019 (Aravind Eye Hospital),train_images/4f46d7ee61ed.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0859,0.1166,0.6641,0.0475,0.0859,TRUE,FALSE
-50d8a8fb7737,APTOS-P1131,APTOS 2019 (Aravind Eye Hospital),train_images/50d8a8fb7737.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0912,0.0901,0.6325,0.0840,0.1022,TRUE,FALSE
-5152bf091152,APTOS-P1140,APTOS 2019 (Aravind Eye Hospital),train_images/5152bf091152.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1205,0.1196,0.4345,0.1528,0.1726,TRUE,FALSE
-52886bed8a07,APTOS-P1170,APTOS 2019 (Aravind Eye Hospital),train_images/52886bed8a07.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0963,0.1216,0.5815,0.1035,0.0971,TRUE,FALSE
-5327f88a1919,APTOS-P1183,APTOS 2019 (Aravind Eye Hospital),train_images/5327f88a1919.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1982,0.1105,0.5107,0.1103,0.0703,TRUE,FALSE
-54bbe3da103e,APTOS-P1204,APTOS 2019 (Aravind Eye Hospital),train_images/54bbe3da103e.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.1372,0.5976,0.1161,0.0964,0.0527,FALSE,FALSE
-54dc6e8107cd,APTOS-P1207,APTOS 2019 (Aravind Eye Hospital),train_images/54dc6e8107cd.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0712,0.1378,0.6118,0.1175,0.0617,TRUE,FALSE
-599b89048034,APTOS-P1264,APTOS 2019 (Aravind Eye Hospital),train_images/599b89048034.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1158,0.1512,0.4977,0.1128,0.1225,TRUE,FALSE
-59ee65760535,APTOS-P1266,APTOS 2019 (Aravind Eye Hospital),train_images/59ee65760535.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1675,0.0715,0.5321,0.0843,0.1446,TRUE,FALSE
-5b644a403e1f,APTOS-P1291,APTOS 2019 (Aravind Eye Hospital),train_images/5b644a403e1f.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.1282,0.0943,0.1213,0.5698,0.0864,FALSE,FALSE
-653534ded339,APTOS-P1413,APTOS 2019 (Aravind Eye Hospital),train_images/653534ded339.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1172,0.0693,0.6922,0.0480,0.0733,TRUE,FALSE
-6733544ae7a6,APTOS-P1444,APTOS 2019 (Aravind Eye Hospital),train_images/6733544ae7a6.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1240,0.2117,0.4531,0.1080,0.1032,TRUE,FALSE
-6810410187a0,APTOS-P1455,APTOS 2019 (Aravind Eye Hospital),train_images/6810410187a0.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0540,0.1080,0.6744,0.0986,0.0650,TRUE,FALSE
-681c3c115684,APTOS-P1456,APTOS 2019 (Aravind Eye Hospital),train_images/681c3c115684.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1645,0.0696,0.4736,0.1602,0.1321,TRUE,FALSE
-698d6e422a80,APTOS-P1473,APTOS 2019 (Aravind Eye Hospital),train_images/698d6e422a80.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1159,0.0997,0.5893,0.0728,0.1223,TRUE,FALSE
-69df7ade0575,APTOS-P1476,APTOS 2019 (Aravind Eye Hospital),train_images/69df7ade0575.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1255,0.1126,0.5131,0.1264,0.1224,TRUE,FALSE
-70ed3ec68b94,APTOS-P1570,APTOS 2019 (Aravind Eye Hospital),train_images/70ed3ec68b94.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1461,0.1150,0.4767,0.1165,0.1457,TRUE,FALSE
-7350c50667c5,APTOS-P1600,APTOS 2019 (Aravind Eye Hospital),train_images/7350c50667c5.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0553,0.1095,0.6549,0.0779,0.1024,TRUE,FALSE
-76c0c7e1b6cb,APTOS-P1644,APTOS 2019 (Aravind Eye Hospital),train_images/76c0c7e1b6cb.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1685,0.1773,0.4288,0.1315,0.0939,TRUE,FALSE
-77543f66a84a,APTOS-P1654,APTOS 2019 (Aravind Eye Hospital),train_images/77543f66a84a.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.0882,0.6561,0.1068,0.0591,0.0898,FALSE,FALSE
-7a0cff4c24b2,APTOS-P1689,APTOS 2019 (Aravind Eye Hospital),train_images/7a0cff4c24b2.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1676,0.1206,0.4341,0.1035,0.1742,TRUE,FALSE
-7bc2e0fa3f72,APTOS-P1715,APTOS 2019 (Aravind Eye Hospital),train_images/7bc2e0fa3f72.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1811,0.0841,0.5327,0.0943,0.1078,TRUE,FALSE
-7bda86d95c5b,APTOS-P1717,APTOS 2019 (Aravind Eye Hospital),train_images/7bda86d95c5b.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.1305,0.1020,0.1858,0.4972,0.0845,FALSE,FALSE
-7f84284598f5,APTOS-P1771,APTOS 2019 (Aravind Eye Hospital),train_images/7f84284598f5.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0959,0.1139,0.4796,0.1774,0.1332,TRUE,FALSE
-80b5a9519aec,APTOS-P1782,APTOS 2019 (Aravind Eye Hospital),train_images/80b5a9519aec.png,2,Grade 2: Moderate NPDR,4,Grade 4: Proliferative DR,0.0928,0.1122,0.0993,0.0439,0.6518,FALSE,FALSE
-80feb1f7ca5e,APTOS-P1791,APTOS 2019 (Aravind Eye Hospital),train_images/80feb1f7ca5e.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1832,0.1829,0.4292,0.1075,0.0972,TRUE,FALSE
-842d697884f6,APTOS-P1833,APTOS 2019 (Aravind Eye Hospital),train_images/842d697884f6.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1133,0.0530,0.5391,0.1364,0.1582,TRUE,FALSE
-855f0a5442b6,APTOS-P1848,APTOS 2019 (Aravind Eye Hospital),train_images/855f0a5442b6.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1532,0.1170,0.4788,0.0979,0.1531,TRUE,FALSE
-86baef833ae0,APTOS-P1689,APTOS 2019 (Aravind Eye Hospital),train_images/86baef833ae0.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1334,0.0957,0.5758,0.1154,0.0797,TRUE,FALSE
-86e7f98f73f1,APTOS-P1866,APTOS 2019 (Aravind Eye Hospital),train_images/86e7f98f73f1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1175,0.0830,0.5066,0.1359,0.1570,TRUE,FALSE
-878a3a097436,APTOS-P1791,APTOS 2019 (Aravind Eye Hospital),train_images/878a3a097436.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0937,0.1682,0.4297,0.1098,0.1986,TRUE,FALSE
-882a71de424e,APTOS-P1889,APTOS 2019 (Aravind Eye Hospital),train_images/882a71de424e.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1481,0.1058,0.4962,0.0894,0.1605,TRUE,FALSE
-8aab201c0691,APTOS-P1925,APTOS 2019 (Aravind Eye Hospital),train_images/8aab201c0691.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0851,0.0975,0.5992,0.1161,0.1021,TRUE,FALSE
-8ab8d9b3ce3f,APTOS-P1927,APTOS 2019 (Aravind Eye Hospital),train_images/8ab8d9b3ce3f.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1214,0.1139,0.5357,0.0959,0.1331,TRUE,FALSE
-8b26d3cd61e8,APTOS-P1934,APTOS 2019 (Aravind Eye Hospital),train_images/8b26d3cd61e8.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1019,0.1191,0.5946,0.1249,0.0595,TRUE,FALSE
-8dfa629ca74e,APTOS-P1967,APTOS 2019 (Aravind Eye Hospital),train_images/8dfa629ca74e.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1362,0.1624,0.5271,0.0713,0.1030,TRUE,FALSE
-9033f1493da1,APTOS-P1999,APTOS 2019 (Aravind Eye Hospital),train_images/9033f1493da1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1885,0.0558,0.5921,0.0979,0.0657,TRUE,FALSE
-932181b93b2f,APTOS-P2042,APTOS 2019 (Aravind Eye Hospital),train_images/932181b93b2f.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1891,0.0817,0.4681,0.0959,0.1652,TRUE,FALSE
-96c3e3db68bc,APTOS-P2080,APTOS 2019 (Aravind Eye Hospital),train_images/96c3e3db68bc.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.2057,0.4541,0.1830,0.0572,0.1000,FALSE,FALSE
-9785805af1b8,APTOS-P2092,APTOS 2019 (Aravind Eye Hospital),train_images/9785805af1b8.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.1219,0.5528,0.0944,0.0980,0.1329,FALSE,FALSE
-9a3c03a5ad0f,APTOS-P2135,APTOS 2019 (Aravind Eye Hospital),train_images/9a3c03a5ad0f.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0983,0.1274,0.5855,0.0614,0.1274,TRUE,FALSE
-9b418ce42c13,APTOS-P2150,APTOS 2019 (Aravind Eye Hospital),train_images/9b418ce42c13.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1667,0.1717,0.3939,0.1182,0.1495,TRUE,FALSE
-9b7b6e4db1d5,APTOS-P2154,APTOS 2019 (Aravind Eye Hospital),train_images/9b7b6e4db1d5.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1212,0.0898,0.5740,0.1193,0.0957,TRUE,FALSE
-9c088d2d1559,APTOS-P2162,APTOS 2019 (Aravind Eye Hospital),train_images/9c088d2d1559.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1473,0.0476,0.6786,0.0544,0.0721,TRUE,FALSE
-9cedf5c7016b,APTOS-P2171,APTOS 2019 (Aravind Eye Hospital),train_images/9cedf5c7016b.png,2,Grade 2: Moderate NPDR,0,Grade 0: No Apparent DR,0.4725,0.1394,0.1069,0.1472,0.1340,FALSE,FALSE
-9da74370835a,APTOS-P2179,APTOS 2019 (Aravind Eye Hospital),train_images/9da74370835a.png,2,Grade 2: Moderate NPDR,0,Grade 0: No Apparent DR,0.5759,0.0863,0.1016,0.1449,0.0913,FALSE,FALSE
-9f4132bd6ed6,APTOS-P2154,APTOS 2019 (Aravind Eye Hospital),train_images/9f4132bd6ed6.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1096,0.0709,0.5663,0.1323,0.1209,TRUE,FALSE
-9f5a8665cf2e,APTOS-P2199,APTOS 2019 (Aravind Eye Hospital),train_images/9f5a8665cf2e.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0835,0.1621,0.5025,0.1156,0.1363,TRUE,FALSE
-a04fb36db784,APTOS-P2213,APTOS 2019 (Aravind Eye Hospital),train_images/a04fb36db784.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0984,0.1734,0.5312,0.1037,0.0933,TRUE,FALSE
-a3802934bad7,APTOS-P2268,APTOS 2019 (Aravind Eye Hospital),train_images/a3802934bad7.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0671,0.1261,0.6345,0.0932,0.0791,TRUE,FALSE
-a3957df90a78,APTOS-P2271,APTOS 2019 (Aravind Eye Hospital),train_images/a3957df90a78.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0917,0.0851,0.6090,0.1051,0.1091,TRUE,FALSE
-a49b0b4484ea,APTOS-P2285,APTOS 2019 (Aravind Eye Hospital),train_images/a49b0b4484ea.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1407,0.0905,0.5628,0.1384,0.0676,TRUE,FALSE
-a56729de89e9,APTOS-P2293,APTOS 2019 (Aravind Eye Hospital),train_images/a56729de89e9.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1372,0.1095,0.4499,0.1595,0.1439,TRUE,FALSE
-a664d2055886,APTOS-P2305,APTOS 2019 (Aravind Eye Hospital),train_images/a664d2055886.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1417,0.1738,0.3996,0.1602,0.1247,TRUE,FALSE
-a804cef3e51f,APTOS-P2328,APTOS 2019 (Aravind Eye Hospital),train_images/a804cef3e51f.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1568,0.0537,0.5335,0.1517,0.1043,TRUE,FALSE
-a8652b2de23f,APTOS-P2336,APTOS 2019 (Aravind Eye Hospital),train_images/a8652b2de23f.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1121,0.1188,0.4759,0.1370,0.1562,TRUE,FALSE
-a879c3569552,APTOS-P2338,APTOS 2019 (Aravind Eye Hospital),train_images/a879c3569552.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1752,0.1231,0.5144,0.1029,0.0844,TRUE,FALSE
-a9d0c900b6a9,APTOS-P2365,APTOS 2019 (Aravind Eye Hospital),train_images/a9d0c900b6a9.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.1434,0.4264,0.1715,0.1149,0.1438,FALSE,FALSE
-aa841de1ee82,APTOS-P2376,APTOS 2019 (Aravind Eye Hospital),train_images/aa841de1ee82.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.1395,0.5959,0.0942,0.0680,0.1024,FALSE,FALSE
-aa9b8f05f4bf,APTOS-P2379,APTOS 2019 (Aravind Eye Hospital),train_images/aa9b8f05f4bf.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1107,0.0851,0.6274,0.1060,0.0708,TRUE,FALSE
-aa9cfe639ef1,APTOS-P2380,APTOS 2019 (Aravind Eye Hospital),train_images/aa9cfe639ef1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1203,0.1923,0.4274,0.1512,0.1088,TRUE,FALSE
-aad0c0ee9268,APTOS-P2383,APTOS 2019 (Aravind Eye Hospital),train_images/aad0c0ee9268.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1642,0.1158,0.4404,0.1761,0.1035,TRUE,FALSE
-add1d681d712,APTOS-P2429,APTOS 2019 (Aravind Eye Hospital),train_images/add1d681d712.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1675,0.1542,0.4556,0.1090,0.1137,TRUE,FALSE
-b033ab4fb723,APTOS-P2467,APTOS 2019 (Aravind Eye Hospital),train_images/b033ab4fb723.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1308,0.1329,0.5992,0.0467,0.0904,TRUE,FALSE
-b746a6681ba9,APTOS-P2561,APTOS 2019 (Aravind Eye Hospital),train_images/b746a6681ba9.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1948,0.1167,0.4284,0.1747,0.0854,TRUE,FALSE
-b8ac328009e0,APTOS-P2583,APTOS 2019 (Aravind Eye Hospital),train_images/b8ac328009e0.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.2085,0.1049,0.5191,0.0673,0.1002,TRUE,FALSE
-b927a9238434,APTOS-P2591,APTOS 2019 (Aravind Eye Hospital),train_images/b927a9238434.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1873,0.1238,0.4155,0.1296,0.1438,TRUE,FALSE
-be161517d3ac,APTOS-P2150,APTOS 2019 (Aravind Eye Hospital),train_images/be161517d3ac.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1231,0.1519,0.4316,0.1201,0.1733,TRUE,FALSE
-bfaa0080ab61,APTOS-P2683,APTOS 2019 (Aravind Eye Hospital),train_images/bfaa0080ab61.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.0881,0.5900,0.1062,0.0639,0.1518,FALSE,FALSE
-c3acf47700ea,APTOS-P2728,APTOS 2019 (Aravind Eye Hospital),train_images/c3acf47700ea.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1131,0.0477,0.5957,0.1474,0.0961,TRUE,FALSE
-c3e02d4a1798,APTOS-P2733,APTOS 2019 (Aravind Eye Hospital),train_images/c3e02d4a1798.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1469,0.1236,0.4616,0.1952,0.0727,TRUE,FALSE
-c406325360b1,APTOS-P2734,APTOS 2019 (Aravind Eye Hospital),train_images/c406325360b1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0553,0.1227,0.6838,0.0930,0.0452,TRUE,FALSE
-c48ae5da188e,APTOS-P2737,APTOS 2019 (Aravind Eye Hospital),train_images/c48ae5da188e.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1580,0.1133,0.5209,0.0966,0.1112,TRUE,FALSE
-c7e827fc7f41,APTOS-P2784,APTOS 2019 (Aravind Eye Hospital),train_images/c7e827fc7f41.png,2,Grade 2: Moderate NPDR,1,Grade 1: Mild NPDR,0.0982,0.6307,0.0833,0.0745,0.1133,FALSE,FALSE
-d18b1d8ac4de,APTOS-P2903,APTOS 2019 (Aravind Eye Hospital),train_images/d18b1d8ac4de.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1589,0.1274,0.4736,0.1532,0.0869,TRUE,FALSE
-d18e5b68f6d2,APTOS-P2904,APTOS 2019 (Aravind Eye Hospital),train_images/d18e5b68f6d2.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1864,0.1641,0.5069,0.0860,0.0566,TRUE,FALSE
-d1f1ea894da1,APTOS-P2912,APTOS 2019 (Aravind Eye Hospital),train_images/d1f1ea894da1.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1083,0.2023,0.4723,0.0974,0.1197,TRUE,FALSE
-d25b8a8ad3c4,APTOS-P2916,APTOS 2019 (Aravind Eye Hospital),train_images/d25b8a8ad3c4.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0868,0.0700,0.5882,0.0976,0.1574,TRUE,FALSE
-d473f6fafba0,APTOS-P2949,APTOS 2019 (Aravind Eye Hospital),train_images/d473f6fafba0.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1011,0.1168,0.5838,0.0977,0.1006,TRUE,FALSE
-d88806d9ece9,APTOS-P3004,APTOS 2019 (Aravind Eye Hospital),train_images/d88806d9ece9.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0826,0.0755,0.5039,0.1471,0.1909,TRUE,FALSE
-d91273efb92a,APTOS-P3009,APTOS 2019 (Aravind Eye Hospital),train_images/d91273efb92a.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1319,0.1261,0.4737,0.1340,0.1343,TRUE,FALSE
-d9311f7497cb,APTOS-P3011,APTOS 2019 (Aravind Eye Hospital),train_images/d9311f7497cb.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1567,0.0694,0.5679,0.1086,0.0974,TRUE,FALSE
-daeaa5d8cf70,APTOS-P3042,APTOS 2019 (Aravind Eye Hospital),train_images/daeaa5d8cf70.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0677,0.1792,0.5042,0.1478,0.1011,TRUE,FALSE
-e17507a4a1f5,APTOS-P3120,APTOS 2019 (Aravind Eye Hospital),train_images/e17507a4a1f5.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1191,0.0790,0.6452,0.0814,0.0753,TRUE,FALSE
-e265c870f9b3,APTOS-P3135,APTOS 2019 (Aravind Eye Hospital),train_images/e265c870f9b3.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1180,0.0925,0.5218,0.1401,0.1276,TRUE,FALSE
-e2856afe62c5,APTOS-P3138,APTOS 2019 (Aravind Eye Hospital),train_images/e2856afe62c5.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1708,0.1883,0.4610,0.0975,0.0824,TRUE,FALSE
-e34fa07bd64d,APTOS-P3150,APTOS 2019 (Aravind Eye Hospital),train_images/e34fa07bd64d.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0958,0.1203,0.5557,0.1119,0.1163,TRUE,FALSE
-e4e343eaae2a,APTOS-P0927,APTOS 2019 (Aravind Eye Hospital),train_images/e4e343eaae2a.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1207,0.1288,0.4676,0.1738,0.1091,TRUE,FALSE
-e96099b961b4,APTOS-P3230,APTOS 2019 (Aravind Eye Hospital),train_images/e96099b961b4.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0345,0.0548,0.7577,0.0294,0.1236,TRUE,FALSE
-eb1ad14dd281,APTOS-P3259,APTOS 2019 (Aravind Eye Hospital),train_images/eb1ad14dd281.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1112,0.1294,0.5814,0.0860,0.0920,TRUE,FALSE
-f0800723bc63,APTOS-P3325,APTOS 2019 (Aravind Eye Hospital),train_images/f0800723bc63.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0643,0.0869,0.6610,0.1095,0.0783,TRUE,FALSE
-f18abfa690ab,APTOS-P3335,APTOS 2019 (Aravind Eye Hospital),train_images/f18abfa690ab.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.2005,0.1163,0.4518,0.1043,0.1271,TRUE,FALSE
-f1a761c68559,APTOS-P3337,APTOS 2019 (Aravind Eye Hospital),train_images/f1a761c68559.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1495,0.0693,0.5469,0.1233,0.1110,TRUE,FALSE
-f583a722434c,APTOS-P3385,APTOS 2019 (Aravind Eye Hospital),train_images/f583a722434c.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.1149,0.0906,0.5780,0.0727,0.1438,TRUE,FALSE
-f8fc411092c7,APTOS-P3427,APTOS 2019 (Aravind Eye Hospital),train_images/f8fc411092c7.png,2,Grade 2: Moderate NPDR,3,Grade 3: Severe NPDR,0.1585,0.0897,0.1082,0.5663,0.0773,FALSE,FALSE
-f999c6921e6d,APTOS-P3434,APTOS 2019 (Aravind Eye Hospital),train_images/f999c6921e6d.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0676,0.0854,0.5760,0.1238,0.1472,TRUE,FALSE
-ff0740cb484a,APTOS-P2583,APTOS 2019 (Aravind Eye Hospital),train_images/ff0740cb484a.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0775,0.1177,0.7064,0.0525,0.0459,TRUE,FALSE
-ff52392372d3,APTOS-P3337,APTOS 2019 (Aravind Eye Hospital),train_images/ff52392372d3.png,2,Grade 2: Moderate NPDR,2,Grade 2: Moderate NPDR,0.0637,0.1154,0.6368,0.0841,0.1000,TRUE,FALSE
-05cd0178ccfe,APTOS-P0075,APTOS 2019 (Aravind Eye Hospital),train_images/05cd0178ccfe.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0877,0.2051,0.1153,0.4606,0.1313,TRUE,FALSE
-07a0e34c8d20,APTOS-P0098,APTOS 2019 (Aravind Eye Hospital),train_images/07a0e34c8d20.png,3,Grade 3: Severe NPDR,2,Grade 2: Moderate NPDR,0.1666,0.1238,0.4367,0.1454,0.1275,FALSE,FALSE
-1ab3f1c71a5f,APTOS-P0362,APTOS 2019 (Aravind Eye Hospital),train_images/1ab3f1c71a5f.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0928,0.0776,0.0645,0.5779,0.1872,TRUE,FALSE
-1b495ac025b7,APTOS-P0372,APTOS 2019 (Aravind Eye Hospital),train_images/1b495ac025b7.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1212,0.1066,0.0538,0.6625,0.0559,TRUE,FALSE
-1c9521878baf,APTOS-P0390,APTOS 2019 (Aravind Eye Hospital),train_images/1c9521878baf.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1374,0.1458,0.0842,0.5074,0.1252,TRUE,FALSE
-25b0e72705a8,APTOS-P0523,APTOS 2019 (Aravind Eye Hospital),train_images/25b0e72705a8.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0840,0.0870,0.1260,0.6326,0.0704,TRUE,FALSE
-2f42e20db938,APTOS-P0657,APTOS 2019 (Aravind Eye Hospital),train_images/2f42e20db938.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1852,0.1540,0.1345,0.3942,0.1321,TRUE,FALSE
-405b4f78658f,APTOS-P0879,APTOS 2019 (Aravind Eye Hospital),train_images/405b4f78658f.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1267,0.0680,0.0987,0.6167,0.0899,TRUE,FALSE
-6089fa333013,APTOS-P1350,APTOS 2019 (Aravind Eye Hospital),train_images/6089fa333013.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0993,0.1039,0.1711,0.5106,0.1151,TRUE,FALSE
-697538183db5,APTOS-P1471,APTOS 2019 (Aravind Eye Hospital),train_images/697538183db5.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1913,0.1384,0.1290,0.4257,0.1156,TRUE,FALSE
-72595230840c,APTOS-P1588,APTOS 2019 (Aravind Eye Hospital),train_images/72595230840c.png,3,Grade 3: Severe NPDR,2,Grade 2: Moderate NPDR,0.1900,0.1250,0.4661,0.1275,0.0914,FALSE,FALSE
-7d3835e4e63a,APTOS-P1736,APTOS 2019 (Aravind Eye Hospital),train_images/7d3835e4e63a.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0880,0.0444,0.0754,0.6638,0.1284,TRUE,FALSE
-80ca40196225,APTOS-P1784,APTOS 2019 (Aravind Eye Hospital),train_images/80ca40196225.png,3,Grade 3: Severe NPDR,4,Grade 4: Proliferative DR,0.1673,0.1388,0.1662,0.1223,0.4054,FALSE,FALSE
-8958a4d17b7e,APTOS-P1903,APTOS 2019 (Aravind Eye Hospital),train_images/8958a4d17b7e.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1298,0.1334,0.0933,0.5605,0.0830,TRUE,FALSE
-8a234d68b27e,APTOS-P1914,APTOS 2019 (Aravind Eye Hospital),train_images/8a234d68b27e.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0928,0.0952,0.1564,0.5399,0.1157,TRUE,FALSE
-910bfd38e2f5,APTOS-P2013,APTOS 2019 (Aravind Eye Hospital),train_images/910bfd38e2f5.png,3,Grade 3: Severe NPDR,4,Grade 4: Proliferative DR,0.1071,0.1207,0.1203,0.1089,0.5430,FALSE,FALSE
-913490237ad4,APTOS-P2016,APTOS 2019 (Aravind Eye Hospital),train_images/913490237ad4.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0922,0.1113,0.0688,0.6330,0.0947,TRUE,FALSE
-9b093fe95d6b,APTOS-P2147,APTOS 2019 (Aravind Eye Hospital),train_images/9b093fe95d6b.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0730,0.0649,0.0954,0.6022,0.1645,TRUE,FALSE
-a14bbd9a583e,APTOS-P2233,APTOS 2019 (Aravind Eye Hospital),train_images/a14bbd9a583e.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0897,0.0966,0.1994,0.5036,0.1107,TRUE,FALSE
-b5834ee64541,APTOS-P2533,APTOS 2019 (Aravind Eye Hospital),train_images/b5834ee64541.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1859,0.0780,0.1202,0.5095,0.1064,TRUE,FALSE
-c3cd0200df79,APTOS-P2731,APTOS 2019 (Aravind Eye Hospital),train_images/c3cd0200df79.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1061,0.0942,0.1260,0.6289,0.0448,TRUE,FALSE
-c5a9ebef1517,APTOS-P2753,APTOS 2019 (Aravind Eye Hospital),train_images/c5a9ebef1517.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1031,0.1541,0.1249,0.5392,0.0787,TRUE,FALSE
-d0079cc188e9,APTOS-P0843,APTOS 2019 (Aravind Eye Hospital),train_images/d0079cc188e9.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1176,0.0901,0.1571,0.4944,0.1408,TRUE,FALSE
-d868acdccb5b,APTOS-P3001,APTOS 2019 (Aravind Eye Hospital),train_images/d868acdccb5b.png,3,Grade 3: Severe NPDR,2,Grade 2: Moderate NPDR,0.0502,0.0662,0.6647,0.1064,0.1125,FALSE,FALSE
-dbb2c63f6f08,APTOS-P3050,APTOS 2019 (Aravind Eye Hospital),train_images/dbb2c63f6f08.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1169,0.1231,0.0654,0.5836,0.1110,TRUE,FALSE
-f080a22008be,APTOS-P3326,APTOS 2019 (Aravind Eye Hospital),train_images/f080a22008be.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.1105,0.0975,0.1438,0.5041,0.1441,TRUE,FALSE
-f64214bed40e,APTOS-P3396,APTOS 2019 (Aravind Eye Hospital),train_images/f64214bed40e.png,3,Grade 3: Severe NPDR,2,Grade 2: Moderate NPDR,0.1781,0.0949,0.4361,0.1296,0.1613,FALSE,FALSE
-f901d460517c,APTOS-P3428,APTOS 2019 (Aravind Eye Hospital),train_images/f901d460517c.png,3,Grade 3: Severe NPDR,3,Grade 3: Severe NPDR,0.0773,0.1546,0.0814,0.5568,0.1299,TRUE,FALSE
-08a3875063c3,APTOS-P0112,APTOS 2019 (Aravind Eye Hospital),train_images/08a3875063c3.png,4,Grade 4: Proliferative DR,3,Grade 3: Severe NPDR,0.0958,0.1121,0.0861,0.6245,0.0815,FALSE,FALSE
-165cd2070ebd,APTOS-P0304,APTOS 2019 (Aravind Eye Hospital),train_images/165cd2070ebd.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0870,0.1671,0.1029,0.0684,0.5746,TRUE,FALSE
-1a90fad9ffa2,APTOS-P0361,APTOS 2019 (Aravind Eye Hospital),train_images/1a90fad9ffa2.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1060,0.0839,0.1293,0.0742,0.6066,TRUE,FALSE
-2017cd92c63d,APTOS-P0453,APTOS 2019 (Aravind Eye Hospital),train_images/2017cd92c63d.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0622,0.0759,0.1406,0.0865,0.6348,TRUE,FALSE
-22895c89792f,APTOS-P0484,APTOS 2019 (Aravind Eye Hospital),train_images/22895c89792f.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1404,0.1431,0.1689,0.1264,0.4212,TRUE,FALSE
-247e98aba610,APTOS-P0507,APTOS 2019 (Aravind Eye Hospital),train_images/247e98aba610.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0602,0.1165,0.0496,0.0840,0.6897,TRUE,FALSE
-25d069089c5e,APTOS-P0525,APTOS 2019 (Aravind Eye Hospital),train_images/25d069089c5e.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1081,0.1497,0.1265,0.1522,0.4635,TRUE,FALSE
-26463a5fb949,APTOS-P0535,APTOS 2019 (Aravind Eye Hospital),train_images/26463a5fb949.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0681,0.0833,0.1260,0.0672,0.6554,TRUE,FALSE
-281d7b7c7676,APTOS-P0562,APTOS 2019 (Aravind Eye Hospital),train_images/281d7b7c7676.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1055,0.0925,0.0706,0.0748,0.6566,TRUE,FALSE
-3206171db5be,APTOS-P0693,APTOS 2019 (Aravind Eye Hospital),train_images/3206171db5be.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1291,0.1286,0.1217,0.1205,0.5001,TRUE,FALSE
-374535e0adb8,APTOS-P0762,APTOS 2019 (Aravind Eye Hospital),train_images/374535e0adb8.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1169,0.0571,0.1389,0.0831,0.6040,TRUE,FALSE
-37c4dfe03aba,APTOS-P0766,APTOS 2019 (Aravind Eye Hospital),train_images/37c4dfe03aba.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0724,0.0711,0.0997,0.1190,0.6378,TRUE,FALSE
-3ee4841936ef,APTOS-P0852,APTOS 2019 (Aravind Eye Hospital),train_images/3ee4841936ef.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1042,0.2095,0.0912,0.1014,0.4937,TRUE,FALSE
-4abca30b676b,APTOS-P1030,APTOS 2019 (Aravind Eye Hospital),train_images/4abca30b676b.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1213,0.0936,0.0930,0.0729,0.6192,TRUE,FALSE
-613028ede6a0,APTOS-P1360,APTOS 2019 (Aravind Eye Hospital),train_images/613028ede6a0.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0595,0.0721,0.1298,0.1167,0.6219,TRUE,FALSE
-61bbc11fe503,APTOS-P1368,APTOS 2019 (Aravind Eye Hospital),train_images/61bbc11fe503.png,4,Grade 4: Proliferative DR,2,Grade 2: Moderate NPDR,0.1015,0.0814,0.6165,0.1039,0.0967,FALSE,FALSE
-63b4d030b016,APTOS-P1394,APTOS 2019 (Aravind Eye Hospital),train_images/63b4d030b016.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0988,0.0760,0.0694,0.1391,0.6167,TRUE,FALSE
-6c250a30593b,APTOS-P1502,APTOS 2019 (Aravind Eye Hospital),train_images/6c250a30593b.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1053,0.1465,0.1450,0.0633,0.5399,TRUE,FALSE
-7270367410a1,APTOS-P1592,APTOS 2019 (Aravind Eye Hospital),train_images/7270367410a1.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1061,0.1026,0.0999,0.0706,0.6208,TRUE,FALSE
-7bc4dd99eee5,APTOS-P1716,APTOS 2019 (Aravind Eye Hospital),train_images/7bc4dd99eee5.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1191,0.1150,0.0530,0.0947,0.6182,TRUE,FALSE
-7c90ab025331,APTOS-P1725,APTOS 2019 (Aravind Eye Hospital),train_images/7c90ab025331.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1383,0.1273,0.0792,0.0828,0.5724,TRUE,FALSE
-857230f64a2e,APTOS-P1850,APTOS 2019 (Aravind Eye Hospital),train_images/857230f64a2e.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1339,0.1527,0.1338,0.1327,0.4469,TRUE,FALSE
-8785b71238d8,APTOS-P1880,APTOS 2019 (Aravind Eye Hospital),train_images/8785b71238d8.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1449,0.1175,0.0831,0.0942,0.5603,TRUE,FALSE
-8ac0c44bbf24,APTOS-P1928,APTOS 2019 (Aravind Eye Hospital),train_images/8ac0c44bbf24.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1144,0.0988,0.1878,0.0981,0.5009,TRUE,FALSE
-8af6a4e5396f,APTOS-P1932,APTOS 2019 (Aravind Eye Hospital),train_images/8af6a4e5396f.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1372,0.0972,0.1748,0.1407,0.4501,TRUE,FALSE
-8bed09514c3b,APTOS-P1944,APTOS 2019 (Aravind Eye Hospital),train_images/8bed09514c3b.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0708,0.1035,0.1395,0.1378,0.5484,TRUE,FALSE
-94ef1d14597f,APTOS-P2062,APTOS 2019 (Aravind Eye Hospital),train_images/94ef1d14597f.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0692,0.0903,0.1154,0.0835,0.6416,TRUE,FALSE
-97da093947e8,APTOS-P2098,APTOS 2019 (Aravind Eye Hospital),train_images/97da093947e8.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1159,0.1397,0.1491,0.1835,0.4118,TRUE,FALSE
-9c72ed6befa0,APTOS-P2167,APTOS 2019 (Aravind Eye Hospital),train_images/9c72ed6befa0.png,4,Grade 4: Proliferative DR,3,Grade 3: Severe NPDR,0.1718,0.1495,0.1665,0.3893,0.1229,FALSE,FALSE
-a6d45de20e4d,APTOS-P2312,APTOS 2019 (Aravind Eye Hospital),train_images/a6d45de20e4d.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0842,0.1093,0.1406,0.0798,0.5861,TRUE,FALSE
-b96b518596b3,APTOS-P2598,APTOS 2019 (Aravind Eye Hospital),train_images/b96b518596b3.png,4,Grade 4: Proliferative DR,3,Grade 3: Severe NPDR,0.0948,0.0800,0.1210,0.6154,0.0888,FALSE,FALSE
-bd5013540a13,APTOS-P0484,APTOS 2019 (Aravind Eye Hospital),train_images/bd5013540a13.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1225,0.0941,0.0891,0.0773,0.6170,TRUE,FALSE
-cc3d2e961768,APTOS-P2840,APTOS 2019 (Aravind Eye Hospital),train_images/cc3d2e961768.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0578,0.0385,0.1256,0.0928,0.6853,TRUE,FALSE
-d1a24527a15d,APTOS-P2906,APTOS 2019 (Aravind Eye Hospital),train_images/d1a24527a15d.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1772,0.0812,0.1071,0.0725,0.5620,TRUE,FALSE
-d2901144070c,APTOS-P2923,APTOS 2019 (Aravind Eye Hospital),train_images/d2901144070c.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0470,0.0550,0.0836,0.1124,0.7020,TRUE,FALSE
-d803598dabda,APTOS-P2988,APTOS 2019 (Aravind Eye Hospital),train_images/d803598dabda.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1340,0.1958,0.1395,0.0972,0.4335,TRUE,FALSE
-df84e7113003,APTOS-P3092,APTOS 2019 (Aravind Eye Hospital),train_images/df84e7113003.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0642,0.0844,0.0912,0.1096,0.6506,TRUE,FALSE
-e3ab63dc9a60,APTOS-P3154,APTOS 2019 (Aravind Eye Hospital),train_images/e3ab63dc9a60.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0778,0.1498,0.0912,0.0503,0.6309,TRUE,FALSE
-e62490b7d0e9,APTOS-P3188,APTOS 2019 (Aravind Eye Hospital),train_images/e62490b7d0e9.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1422,0.1000,0.1358,0.0856,0.5364,TRUE,FALSE
-f03d3c4ce7fb,APTOS-P2135,APTOS 2019 (Aravind Eye Hospital),train_images/f03d3c4ce7fb.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1224,0.1411,0.0902,0.1034,0.5429,TRUE,FALSE
-f5e6226bd2e0,APTOS-P3391,APTOS 2019 (Aravind Eye Hospital),train_images/f5e6226bd2e0.png,4,Grade 4: Proliferative DR,3,Grade 3: Severe NPDR,0.0623,0.0918,0.1088,0.6553,0.0818,FALSE,FALSE
-fa59221cf464,APTOS-P3442,APTOS 2019 (Aravind Eye Hospital),train_images/fa59221cf464.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.1781,0.0979,0.1521,0.1440,0.4279,TRUE,FALSE
-fce93caa4758,APTOS-P3472,APTOS 2019 (Aravind Eye Hospital),train_images/fce93caa4758.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0876,0.1193,0.0652,0.0588,0.6691,TRUE,FALSE
-ff8a0b45c789,APTOS-P3503,APTOS 2019 (Aravind Eye Hospital),train_images/ff8a0b45c789.png,4,Grade 4: Proliferative DR,4,Grade 4: Proliferative DR,0.0978,0.0606,0.1290,0.1069,0.6057,TRUE,FALSE
+image_id,true_grade,predicted_grade,score_grade_0,score_grade_1,score_grade_2,score_grade_3,score_grade_4
+005b95c28852,0,0,0.782452,0.049973,0.038883,0.067943,0.060749
+014508ccb9cb,0,0,0.993089,0.003941,0.001342,0.000553,0.001075
+0231642cf1c2,0,0,0.978874,0.003885,0.006541,0.008853,0.001846
+0232dfea7547,0,0,0.995803,0.002781,0.000723,0.00039,0.000303
+04efb1a284cc,0,0,0.986234,0.006728,0.002531,0.002688,0.001819
+07751b94a88a,0,0,0.977473,0.012317,0.004968,0.002758,0.002486
+07e827469099,0,0,0.991484,0.00417,0.001273,0.001635,0.001438
+08ee569d4721,0,0,0.766012,0.153077,0.044314,0.010637,0.02596
+0924cec998fa,0,0,0.985093,0.003128,0.002109,0.008003,0.001667
+09f1111a388a,0,0,0.962288,0.017325,0.006812,0.008303,0.005273
+0a85a1e8f9e9,0,0,0.955132,0.003802,0.018296,0.017413,0.005357
+0da321efbce6,0,0,0.996017,0.0028,0.000537,0.000413,0.000233
+0e0003ddd8df,0,0,0.997443,0.001614,0.000345,0.000322,0.000275
+0e94cd271c00,0,0,0.993925,0.00286,0.001096,0.001282,0.000837
+11d8e5eaee5b,0,0,0.987337,0.006924,0.001902,0.002023,0.001814
+12b57dac703e,0,0,0.683823,0.022164,0.264745,0.013088,0.016179
+150fc7127582,0,0,0.915886,0.044196,0.017358,0.013016,0.009544
+152db3de8120,0,0,0.996276,0.000898,0.000433,0.001964,0.000429
+15e24b73d4a7,0,0,0.96155,0.022598,0.007525,0.004356,0.003971
+164cd5a3a6cd,0,0,0.998575,0.000462,0.000403,0.000412,0.000149
+165634a6167e,0,0,0.997349,0.00052,0.000931,0.001048,0.000153
+1782142e17d9,0,0,0.998146,0.000892,0.000242,0.000482,0.000238
+178412895d5e,0,0,0.802147,0.001319,0.009656,0.183888,0.002991
+18ce0cdc473d,0,0,0.997145,0.00068,0.001143,0.000739,0.000293
+191cf5668f33,0,0,0.998708,0.000458,0.0002,0.000408,0.000225
+1b8701231c8f,0,0,0.979369,0.014905,0.00152,0.001913,0.002293
+1c7a013eeba7,0,0,0.972395,0.01475,0.006317,0.00292,0.003619
+1d0b93317aa8,0,0,0.969836,0.009339,0.005045,0.01126,0.004521
+1d37f1c8b6d8,0,0,0.994893,0.002457,0.000957,0.000914,0.00078
+1d46f1326394,0,0,0.964848,0.019276,0.007091,0.003384,0.005401
+1df1530b9b8d,0,0,0.997629,0.001335,0.000358,0.000461,0.000216
+1eee55494271,0,0,0.991335,0.00388,0.001569,0.001856,0.00136
+1f3f32efaf20,0,0,0.98553,0.00804,0.003324,0.00147,0.001636
+201f882365d3,0,0,0.998814,0.000484,0.00022,0.000352,0.00013
+2209daf71aab,0,0,0.99847,0.000993,0.000335,0.00011,9.2e-05
+226c6ceb9185,0,0,0.99361,0.002771,0.000798,0.001894,0.000928
+22d843b2bbd1,0,0,0.99701,0.00115,0.000292,0.001148,0.000399
+240b25a7debe,0,0,0.998767,0.000321,0.000269,0.000493,0.00015
+266fbefa58fb,0,0,0.992965,0.0038,0.001034,0.00134,0.00086
+27933cdbe0cc,0,0,0.996193,0.002327,0.000472,0.000529,0.000478
+2821998fc002,0,0,0.999609,0.000225,5.4e-05,6.5e-05,4.6e-05
+289a47dcbb82,0,0,0.976877,0.007095,0.004123,0.008989,0.002915
+2bb3c492d6d3,0,0,0.982757,0.005427,0.005587,0.004566,0.001663
+2c8101f14723,0,0,0.922924,0.030381,0.01966,0.022529,0.004505
+2d04cead4d3a,0,0,0.983025,0.006059,0.003025,0.005961,0.001929
+30db694bee42,0,0,0.998722,0.000354,0.000151,0.0006,0.000173
+318eb706a134,0,0,0.995613,0.002228,0.000865,0.000679,0.000615
+32d7d360d891,0,0,0.989474,0.006893,0.00224,0.000726,0.000667
+3323fd59782e,0,0,0.994787,0.003191,0.000978,0.000586,0.000457
+3325b1fe55d2,0,0,0.996496,0.001888,0.000687,0.000443,0.000485
+33b91def2035,0,0,0.995704,0.000712,0.000625,0.002449,0.00051
+33e7bf536fc5,0,0,0.990504,0.002477,0.005641,0.000699,0.000678
+342edf9b889d,0,0,0.981214,0.002548,0.002116,0.012089,0.002032
+34a7dbd3f05c,0,0,0.977545,0.002753,0.004937,0.011911,0.002854
+35cd9832fc0a,0,0,0.998302,0.000823,0.00024,0.000418,0.000217
+384e6c915722,0,0,0.997851,0.000856,0.000443,0.000711,0.000138
+3cab32dd6ef9,0,0,0.999415,0.000356,7.7e-05,9.3e-05,5.9e-05
+3fe282197c1c,0,0,0.994832,0.001957,0.00102,0.001421,0.00077
+405085b53d7b,0,0,0.998013,0.000953,0.000312,0.000454,0.000267
+4318b6adeb97,0,0,0.996691,0.001075,0.000498,0.00124,0.000496
+436e7a7af761,0,0,0.99758,0.000701,0.000709,0.000491,0.00052
+436fa3fd145a,0,0,0.93509,0.007922,0.011338,0.035331,0.01032
+43bc7c066dfb,0,0,0.996213,0.001493,0.000747,0.000558,0.000989
+441848e0f308,0,0,0.974668,0.015569,0.002433,0.002804,0.004525
+44a86263117b,0,0,0.990515,0.005618,0.001676,0.001337,0.000854
+4528fbbd43a3,0,0,0.778844,0.14452,0.038081,0.019198,0.019356
+454792eb6e05,0,0,0.943344,0.003668,0.021791,0.027106,0.004092
+46acc506fa61,0,0,0.999363,0.000462,5.5e-05,7.2e-05,4.8e-05
+475300735b7f,0,0,0.989,0.006205,0.002093,0.001448,0.001254
+4860f7813654,0,0,0.986118,0.004175,0.00637,0.002471,0.000866
+4926dea289f8,0,0,0.995323,0.002901,0.000615,0.000666,0.000495
+493d99f030e2,0,0,0.996223,0.001488,0.001254,0.000936,9.8e-05
+49e4b95ee2dc,0,0,0.836414,0.138131,0.021405,0.001159,0.00289
+4bcee3cbe232,0,0,0.996249,0.002202,0.000636,0.000585,0.000327
+4c17e85686f0,0,0,0.988318,0.006382,0.002657,0.001206,0.001437
+4cddfc22b0ad,0,0,0.993908,0.002846,0.001067,0.001122,0.001057
+4d167ca69ea8,0,0,0.998697,0.000748,0.000177,0.000235,0.000143
+4d1e7def7624,0,0,0.92103,0.014758,0.04617,0.011741,0.006301
+4e4a6224a04e,0,0,0.996085,0.001697,0.000828,0.000889,0.0005
+50f5201fd18a,0,0,0.99305,0.002124,0.001504,0.002468,0.000855
+511fd66b2df8,0,0,0.999094,0.000282,0.000178,0.000338,0.000108
+51a078d6d43a,0,0,0.999003,0.00058,0.000149,0.00016,0.000107
+51aa3361294c,0,0,0.981909,0.014087,0.001378,0.00157,0.001056
+521b5377a727,0,0,0.997493,0.001633,0.000277,0.000365,0.000232
+525d0dd8dc45,0,0,0.995242,0.002788,0.000647,0.000925,0.000398
+529906ff9dfa,0,0,0.996924,0.001566,0.000525,0.000546,0.000439
+54038e56131d,0,0,0.997641,0.000798,0.000376,0.000844,0.000342
+54b322c66d01,0,0,0.982836,0.009255,0.002659,0.002534,0.002715
+58eb3809f456,0,0,0.994962,0.001347,0.001115,0.00164,0.000936
+5a0fe0ee4301,0,0,0.966775,0.018797,0.004897,0.003309,0.006222
+5a179c123fd8,0,0,0.98967,0.006445,0.002185,0.000944,0.000756
+5b47043942f4,0,0,0.998604,0.000581,0.000133,0.000579,0.000104
+5db2e3a4594a,0,0,0.93513,0.030426,0.015914,0.011761,0.006769
+5f4a8c074bd5,0,0,0.996367,0.001985,0.000466,0.000818,0.000364
+60aa4e649abf,0,0,0.999256,0.000189,0.000172,0.000315,6.8e-05
+6107a2e9f60e,0,0,0.896942,0.004504,0.046995,0.042847,0.008713
+63c7b0265775,0,0,0.893792,0.027472,0.035882,0.032707,0.010148
+63e041a757eb,0,0,0.99387,0.001173,0.002901,0.001571,0.000485
+683023cda6a5,0,0,0.999185,0.000265,0.000146,0.000265,0.000139
+68987fb159ab,0,0,0.94841,0.028412,0.010709,0.0061,0.006369
+6966abf40b8c,0,0,0.994787,0.002545,0.001236,0.000549,0.000883
+6af071b0ac6e,0,0,0.991377,0.007272,0.001049,0.000195,0.000106
+6d6be4cfc73f,0,0,0.987775,0.006078,0.001484,0.003248,0.001415
+6e092caa065f,0,0,0.999535,0.000266,5.8e-05,0.0001,4.2e-05
+6e861bc3bd7b,0,0,0.998418,0.000442,0.000254,0.000689,0.000198
+6f0e5848d9ce,0,0,0.998429,0.000652,0.000232,0.000433,0.000253
+6f460f9968c7,0,0,0.904177,0.05443,0.025607,0.007319,0.008468
+6fe67fd7f5d1,0,0,0.989124,0.005733,0.001462,0.002076,0.001605
+7269a1d84a57,0,0,0.981572,0.003577,0.002801,0.009227,0.002823
+737ef6226677,0,0,0.996537,0.002021,0.000666,0.000494,0.000282
+73a07e2ea23e,0,0,0.990207,0.002965,0.001825,0.003644,0.001358
+7526cf435753,0,0,0.892433,0.094825,0.007159,0.001925,0.003658
+7569ac24762e,0,0,0.995093,0.001973,0.000698,0.001674,0.000562
+757e39293591,0,0,0.92747,0.030682,0.015067,0.006333,0.020449
+75c180e04f65,0,0,0.998415,0.000953,0.000274,0.000181,0.000178
+76b950c6ed5e,0,0,0.946862,0.016748,0.014926,0.014076,0.007387
+79ade634c633,0,0,0.994438,0.002176,0.00058,0.002222,0.000583
+7a6495a39d87,0,0,0.99559,0.000395,0.001177,0.002423,0.000414
+7ad0c4975890,0,0,0.504812,0.480809,0.010364,0.001133,0.002882
+7fdb177b8f7d,0,0,0.966151,0.019202,0.004772,0.005793,0.004083
+80dbeb0fdc75,0,0,0.996091,0.002219,0.000483,0.000649,0.000557
+80e6e425f966,0,0,0.967466,0.017031,0.006218,0.004473,0.004812
+80ed04a84a16,0,0,0.989143,0.003545,0.001277,0.004499,0.001535
+82d364726a58,0,0,0.921019,0.040872,0.028391,0.005167,0.004551
+83fda7c0500b,0,0,0.964767,0.009494,0.013321,0.008284,0.004135
+84b4da14bc23,0,0,0.994739,0.003203,0.000861,0.000582,0.000616
+881ec6186e68,0,0,0.996282,0.002096,0.000538,0.000623,0.000461
+88e4399d207c,0,0,0.99762,0.001143,0.000381,0.000553,0.000303
+894a37fc3738,0,0,0.996704,0.000949,0.000425,0.001343,0.00058
+895fe2bfc5b6,0,0,0.993608,0.002198,0.001243,0.001864,0.001086
+8ab3faa3701f,0,0,0.99921,0.000268,0.000122,0.000312,8.7e-05
+8acdf12f412a,0,0,0.986426,0.00688,0.00182,0.003047,0.001827
+8be6629a6039,0,0,0.990227,0.000962,0.002058,0.006072,0.000682
+8e2a3978c244,0,0,0.998804,0.000732,0.000226,0.000167,7.1e-05
+8ffa608170d3,0,0,0.978979,0.014385,0.001749,0.002317,0.002571
+92889b863ae6,0,0,0.995661,0.001333,0.001854,0.000595,0.000557
+93421787f520,0,0,0.985267,0.006116,0.002008,0.004295,0.002313
+946545473380,0,0,0.995833,0.002188,0.000598,0.000868,0.000512
+969f92a390db,0,0,0.998426,0.001008,0.000219,0.0002,0.000148
+96ce10a1dbd7,0,0,0.869194,0.049756,0.030008,0.018678,0.032364
+97f290d31813,0,0,0.997813,0.000538,0.000939,0.000335,0.000376
+9858cc2ae073,0,0,0.967361,0.009487,0.005932,0.013662,0.003558
+9910c827e2fe,0,0,0.986565,0.004609,0.003244,0.002644,0.002938
+9ac41b9a809e,0,0,0.92091,0.045363,0.017445,0.008477,0.007805
+9e2a8135f471,0,0,0.991004,0.006495,0.001283,0.00075,0.000467
+9e7a63b2fc6a,0,0,0.987683,0.001711,0.004497,0.004754,0.001356
+9f1b14dfa14c,0,0,0.941504,0.029995,0.010913,0.00926,0.008327
+9fa02dfb5553,0,0,0.999105,0.000454,0.000121,0.000226,9.4e-05
+a06a63d866b2,0,0,0.994137,0.003415,0.000882,0.000594,0.000972
+a07efb1ecfc0,0,0,0.943709,0.016401,0.022837,0.011329,0.005723
+a08a0133754a,0,0,0.966681,0.021967,0.004406,0.002179,0.004768
+a0fd94e2ad76,0,0,0.999455,0.000345,8.3e-05,6e-05,5.7e-05
+a11c62cb3f86,0,0,0.999294,0.000143,0.00034,0.000192,3.1e-05
+a26f50218b84,0,0,0.979173,0.009275,0.003743,0.005414,0.002396
+a3bd2e034614,0,0,0.98885,0.007343,0.003235,0.000346,0.000226
+a484bdf85b4c,0,0,0.978945,0.010187,0.006135,0.002145,0.002587
+a53d6d2472a6,0,0,0.999589,0.000234,4.7e-05,9.1e-05,3.9e-05
+a5bb85afc6e8,0,0,0.98611,0.007958,0.002366,0.001904,0.001662
+a654b25124c3,0,0,0.938524,0.034218,0.011362,0.009792,0.006104
+a77eb914b383,0,0,0.997475,0.000772,0.00102,0.000597,0.000137
+a8b3c0961d42,0,0,0.921511,0.038595,0.029644,0.007098,0.003153
+aabd867043cf,0,0,0.99396,0.003578,0.00102,0.000682,0.00076
+abe940882578,0,0,0.43478,0.338382,0.117036,0.01514,0.094663
+ac1667fac512,0,0,0.912453,0.050216,0.014723,0.012617,0.009992
+ad12cde115ab,0,0,0.991165,0.001447,0.001251,0.005039,0.001097
+ad1aa75d5630,0,0,0.987376,0.006241,0.003341,0.001826,0.001216
+ad20080452de,0,0,0.983939,0.011633,0.0019,0.001053,0.001476
+ad93d88c87ea,0,0,0.992264,0.003956,0.001288,0.001323,0.001169
+ae94ce412de9,0,0,0.965118,0.020047,0.010258,0.002808,0.001768
+ae975c43bd8b,0,0,0.990556,0.005918,0.001566,0.001046,0.000915
+aeccef0bdc26,0,0,0.983907,0.009273,0.002843,0.00246,0.001518
+af87d48ffe01,0,0,0.997543,0.000972,0.000351,0.000938,0.000196
+b0619ca93a5f,0,0,0.98943,0.005645,0.001974,0.001416,0.001535
+b0c9a492e068,0,0,0.994041,0.003085,0.002056,0.000554,0.000264
+b16dd4483ca5,0,0,0.988422,0.00127,0.001241,0.008168,0.000899
+b549af91bd30,0,0,0.999032,0.000481,0.000173,0.000192,0.000121
+b70e7c26f51e,0,0,0.995651,0.002108,0.0005,0.001175,0.000566
+b759cbef90c5,0,0,0.991159,0.005743,0.001086,0.001215,0.000797
+b7983cb3f270,0,0,0.998927,0.000618,0.00015,0.000196,0.000108
+b8e9a8f4617d,0,0,0.997351,0.001389,0.000596,0.000438,0.000225
+b92eacd1392a,0,0,0.99629,0.001768,0.00057,0.000827,0.000544
+ba0107fb1bfd,0,0,0.954989,0.024587,0.010253,0.005431,0.004739
+ba2ea9182090,0,0,0.978594,0.013933,0.003015,0.002238,0.00222
+ba4e62c11cc0,0,0,0.996211,0.002562,0.000499,0.000467,0.00026
+bab776139279,0,0,0.91303,0.01659,0.023018,0.028416,0.018945
+bb08949dd70a,0,0,0.998595,0.000766,0.000185,0.000296,0.000158
+bd375ba756b1,0,0,0.975752,0.006509,0.003635,0.009562,0.004542
+bdc6c60e9133,0,0,0.989859,0.001437,0.001838,0.005465,0.001401
+bed8296c8dfe,0,0,0.768306,0.034037,0.061156,0.108669,0.027832
+bff51afc76d4,0,0,0.965394,0.026382,0.006551,0.001205,0.000467
+c06024f05a16,0,0,0.987153,0.002021,0.004776,0.001704,0.004345
+c38dec54a9f7,0,0,0.962571,0.019058,0.008163,0.004661,0.005547
+c3c8fdda50c0,0,0,0.999274,0.000493,9.8e-05,8e-05,5.4e-05
+c5a6f432a1ec,0,0,0.989637,0.002564,0.001743,0.004582,0.001473
+c6a8f8f998a2,0,0,0.99362,0.003606,0.000999,0.001075,0.0007
+c704bd669f36,0,0,0.98068,0.009254,0.0029,0.003993,0.003174
+c7d0deb71576,0,0,0.50146,0.361548,0.083735,0.013992,0.039266
+c85b79d70079,0,0,0.89412,0.041658,0.035461,0.005845,0.022916
+c9e697117f3f,0,0,0.990605,0.005371,0.001262,0.001363,0.0014
+cad5b1a82e60,0,0,0.995592,0.001155,0.000574,0.001989,0.00069
+cd1c98ec48b1,0,0,0.995703,0.002527,0.00077,0.000589,0.000412
+ce6f33a81ad5,0,0,0.987858,0.006863,0.00156,0.002016,0.001704
+ce754234d760,0,0,0.987842,0.006612,0.002565,0.001782,0.001198
+cf8ae5501bd6,0,0,0.9555,0.021951,0.007492,0.008963,0.006095
+d02b79fc3200,0,0,0.994267,0.003456,0.0007,0.001112,0.000465
+d1f7ea924a01,0,0,0.995818,0.001447,0.000672,0.001648,0.000415
+d2afca74cbc3,0,0,0.993785,0.001974,0.00122,0.002405,0.000617
+d2dc86021c67,0,0,0.999014,0.000508,0.000166,0.000166,0.000145
+d332d7b8a26e,0,0,0.996906,0.001755,0.000512,0.000476,0.000351
+d3dfd0a2dee6,0,0,0.993909,0.001836,0.001022,0.002344,0.000889
+d436c06f0490,0,0,0.982292,0.011763,0.002747,0.001177,0.00202
+d6dbb0820ea5,0,0,0.997117,0.001751,0.000318,0.000502,0.000312
+d6df4fe492ec,0,0,0.981234,0.011458,0.003628,0.001565,0.002116
+d74ccc796517,0,0,0.988098,0.006705,0.001747,0.001885,0.001565
+d838d5b9f571,0,0,0.997703,0.001394,0.000285,0.000292,0.000326
+d911dd40c63b,0,0,0.99193,0.003638,0.001211,0.00192,0.001302
+d93b61dc8f64,0,0,0.961439,0.002357,0.014803,0.017127,0.004274
+d9e58e4d8689,0,1,0.00136,0.860901,0.090632,0.002513,0.044594
+da6389d129aa,0,1,0.076395,0.871866,0.048843,0.000564,0.002333
+db3cd58aa315,0,0,0.976452,0.004297,0.003009,0.013465,0.002776
+dd02d60bef14,0,0,0.960626,0.005581,0.007101,0.01995,0.006742
+dd285d9e97fe,0,0,0.992385,0.004652,0.001368,0.000969,0.000627
+de4cdabbce6d,0,0,0.996223,0.001119,0.00097,0.001342,0.000346
+de6210f88536,0,0,0.981104,0.01032,0.003208,0.003243,0.002125
+dec5595e6154,0,0,0.986906,0.005628,0.002727,0.002673,0.002066
+dee1031a76ae,0,0,0.990636,0.002527,0.002368,0.002708,0.001761
+df0886f1e76b,0,0,0.98968,0.003671,0.002101,0.003308,0.00124
+e01b7bac822b,0,0,0.990756,0.006938,0.000949,0.000654,0.000703
+e06cccc08c59,0,0,0.932653,0.039298,0.014105,0.007598,0.006347
+e087bd4b88f2,0,0,0.988611,0.002696,0.001543,0.005713,0.001437
+e1c02f6c3362,0,0,0.99912,0.000314,0.000121,0.000382,6.4e-05
+e29e54ff921e,0,0,0.986213,0.007565,0.002431,0.001903,0.001889
+e322acd46152,0,0,0.858319,0.030742,0.036506,0.051126,0.023307
+e3b47ed5b511,0,0,0.97162,0.01592,0.005862,0.003373,0.003224
+e5197d77ec68,0,0,0.975883,0.008696,0.005543,0.004566,0.005312
+e68bdd36e589,0,0,0.977469,0.002726,0.005639,0.01188,0.002285
+e9faf0296643,0,0,0.983864,0.001882,0.008546,0.003545,0.002162
+ea6a53e54d0f,0,0,0.960513,0.019276,0.006946,0.009507,0.003758
+ea9c41e1ced0,0,0,0.858942,0.059541,0.03318,0.026997,0.021341
+eabf421f94d0,0,0,0.968912,0.019467,0.004528,0.001735,0.005356
+eb050765b323,0,0,0.995819,0.001864,0.000602,0.001119,0.000596
+ebf4b22240f4,0,0,0.996057,0.001723,0.000707,0.000842,0.00067
+ec01f0862669,0,0,0.998742,0.000747,0.000223,0.000186,0.000103
+ed3ce1674761,0,0,0.997503,0.001636,0.00033,0.000245,0.000286
+eeaea2c5ff34,0,0,0.999012,0.000419,0.000165,0.000279,0.000124
+ef48780f5d5f,0,0,0.993382,0.002535,0.001201,0.001725,0.001157
+f0267c42907c,0,0,0.998502,0.000439,0.000291,0.000582,0.000187
+f0860c21533b,0,0,0.998711,0.000181,0.000842,0.000189,7.7e-05
+f233638e0e90,0,0,0.986648,0.006429,0.001609,0.003617,0.001697
+f298b7d05958,0,0,0.983923,0.009181,0.00245,0.002927,0.001519
+f2f569a64949,0,0,0.979698,0.010436,0.00421,0.003723,0.001933
+f58f0b2fd718,0,0,0.992204,0.003831,0.001342,0.00156,0.001063
+f66c4ee86629,0,0,0.99686,0.002559,0.0005,6.1e-05,2e-05
+f71aca5a7dc3,0,0,0.874362,0.049534,0.025937,0.03909,0.011077
+f86d1c404acb,0,0,0.988044,0.0029,0.002363,0.005419,0.001274
+f9d52509c571,0,0,0.985475,0.007825,0.003412,0.001443,0.001844
+f9d8ff3e6592,0,0,0.964218,0.011465,0.008427,0.010764,0.005125
+fb1b8771c70a,0,0,0.987518,0.006312,0.002345,0.002314,0.001511
+fb88d23fc5fe,0,0,0.998981,0.00059,0.000143,0.000158,0.000128
+fc782722a50c,0,0,0.944383,0.028061,0.011605,0.009151,0.006801
+fc8fce67fbf8,0,0,0.942999,0.010331,0.011104,0.026434,0.009132
+fca1a8738b8a,0,0,0.990974,0.005002,0.001569,0.001262,0.001194
+fd0a70082e7c,0,0,0.985096,0.008748,0.001716,0.001287,0.003153
+fdc685055659,0,0,0.99888,0.000731,0.000133,0.000155,0.000101
+fe06dad6851c,0,0,0.973799,0.012152,0.004631,0.005328,0.004089
+fe3f62695b2d,0,0,0.995124,0.003122,0.000827,0.000532,0.000395
+fefded6bf135,0,0,0.993746,0.001624,0.003436,0.000738,0.000457
+ff1e940105f9,0,0,0.960642,0.019884,0.007264,0.00357,0.00864
+ff4955e76894,0,1,0.004817,0.986617,0.006171,6e-05,0.002335
+ffc04fed30e6,0,0,0.979195,0.004756,0.002532,0.010249,0.003267
+0dc031c94225,1,1,0.001715,0.881124,0.088001,0.003323,0.025837
+0f495d87656a,1,1,0.001092,0.750037,0.224771,0.00073,0.02337
+10f36b0239fb,1,2,0.001058,0.217766,0.665446,0.020937,0.094792
+1a03a7970337,1,1,0.018282,0.948273,0.017022,0.001025,0.015398
+22a6da005395,1,1,0.000781,0.953222,0.045124,9.7e-05,0.000778
+2f2e1949ad56,1,1,0.000663,0.953451,0.037755,0.00074,0.00739
+30941b65348b,1,1,0.003665,0.781578,0.179223,0.005288,0.030246
+35aa7f5c2ec0,1,1,0.003081,0.659901,0.285995,0.028504,0.022518
+35d6c4c50072,1,1,0.001571,0.546178,0.250148,0.00679,0.195312
+36677b70b1ef,1,1,0.001773,0.90251,0.060005,0.001348,0.034364
+382752f6694a,1,2,0.000857,0.16733,0.8108,0.003608,0.017405
+384631079d1e,1,1,0.001844,0.661316,0.181418,0.002274,0.153149
+3ee17aa12e46,1,1,0.005013,0.93716,0.047067,0.002226,0.008534
+4661006f3ba6,1,1,0.00219,0.955606,0.030024,0.001466,0.010715
+47d1603a555b,1,1,0.000456,0.970576,0.02704,0.000254,0.001675
+495255c7492f,1,1,0.011988,0.4215,0.358434,0.032862,0.175215
+4d7d6928534a,1,2,0.008424,0.201009,0.519088,0.009317,0.262161
+4e82c3c8d31f,1,1,0.010876,0.484967,0.436303,0.002355,0.065499
+4fa26d065ad3,1,1,0.005556,0.939839,0.045986,0.001247,0.007374
+5090917a2676,1,0,0.500268,0.091574,0.215652,0.07351,0.118996
+51131b48f9d4,1,2,0.004998,0.303882,0.646046,0.022296,0.022778
+53704c80f0d8,1,1,0.100629,0.630761,0.233403,0.007522,0.027686
+59e5212f7139,1,1,0.004229,0.842059,0.134905,0.00203,0.016777
+5a091e8cd95c,1,1,0.00801,0.9699,0.016619,0.000233,0.005237
+5efa24b03d5e,1,1,0.135717,0.355978,0.22134,0.267829,0.019135
+6377e23928f6,1,2,0.012447,0.06857,0.86974,0.003495,0.045747
+6c6efb6b1358,1,1,0.000839,0.556634,0.426741,0.001628,0.014159
+6d292ca4c9ad,1,1,0.000681,0.970346,0.017204,0.000136,0.011633
+76e589911303,1,1,0.007779,0.971272,0.019337,0.000178,0.001434
+78bcdffb8785,1,1,0.014252,0.493589,0.400558,0.005394,0.086205
+7b20210d9120,1,1,0.000358,0.552423,0.426975,0.00374,0.016504
+7ea756985353,1,2,0.0023,0.383182,0.571762,0.012395,0.030361
+89ed6a0dd53f,1,2,0.000121,0.056999,0.891861,0.030484,0.020535
+8bc6716c2238,1,4,0.077313,0.291705,0.271108,0.019786,0.340088
+94111ed3d276,1,1,0.073087,0.733913,0.107919,0.012598,0.072482
+94372043d55b,1,1,0.00188,0.985823,0.009393,0.000134,0.00277
+94b1d8ad35ec,1,2,0.008424,0.201009,0.519088,0.009317,0.262161
+96a9706b8534,1,2,0.002438,0.12537,0.495852,0.020015,0.356325
+9eaf735cf01f,1,1,0.004103,0.710068,0.252594,0.013642,0.019593
+a19ecd0a706e,1,1,0.005266,0.849929,0.12666,0.003454,0.014691
+a5a2a7003d60,1,1,0.001233,0.947449,0.049318,0.00017,0.00183
+abdb365cacbc,1,2,0.000164,0.419117,0.499629,0.007556,0.073535
+ad3fc5076852,1,1,0.003225,0.942742,0.045684,0.001399,0.00695
+b576c5269ad1,1,1,0.004378,0.98557,0.009243,0.00016,0.000649
+b640e3bdff75,1,1,0.000487,0.994294,0.004652,2.1e-05,0.000547
+b7278b4f2448,1,1,0.002865,0.906856,0.071042,0.001193,0.018044
+b9b99dad668d,1,1,0.001508,0.864769,0.111571,0.001038,0.021114
+c1ebe785503a,1,1,0.002397,0.955994,0.033711,0.00081,0.007087
+ca6842bfcbc9,1,1,0.026469,0.834537,0.119367,0.001031,0.018595
+cb2f3c5d71a7,1,2,0.005559,0.260953,0.686172,0.014606,0.03271
+cd45bfa07d41,1,1,0.113425,0.51193,0.319029,0.005139,0.050477
+cfd1bd0fcbb4,1,0,0.698743,0.205874,0.072368,0.005609,0.017406
+d1cad012a254,1,1,0.00073,0.978664,0.019133,5.4e-05,0.001419
+e2a233493b90,1,1,0.003362,0.823601,0.162402,0.00283,0.007805
+fd62bd0db4f1,1,0,0.545341,0.298207,0.130406,0.00915,0.016896
+06024377d573,2,3,0.000565,0.02944,0.312688,0.473909,0.183398
+07d8db76b301,2,2,0.000703,0.148257,0.81445,0.000921,0.035669
+08c17a2d95b7,2,3,1.8e-05,9.5e-05,0.050585,0.857612,0.09169
+0c2e2369dfff,2,1,0.120844,0.629627,0.183697,0.007644,0.058188
+0ca0aee4d57e,2,4,0.000275,0.02276,0.04241,0.075512,0.859043
+0efc93ec838b,2,4,0.000284,0.002638,0.226705,0.028163,0.742211
+0fffa73e2402,2,1,0.001127,0.38639,0.328583,0.102705,0.181194
+1124ffcd76c2,2,2,0.00659,0.077301,0.70599,0.009027,0.201092
+141735b57ec0,2,1,0.00171,0.889238,0.074826,0.00122,0.033006
+1541226c5d72,2,2,0.003563,0.400864,0.570463,0.003278,0.021832
+1594ca6c30d3,2,4,0.00046,0.00556,0.371352,0.162016,0.460612
+188a9323be03,2,3,0.000413,0.012658,0.125813,0.818731,0.042386
+18f1f979d30d,2,2,0.000418,0.005714,0.546453,0.214378,0.233037
+1968183f0e61,2,2,0.000221,0.016657,0.603423,0.040833,0.338866
+1c0e5dd1b14c,2,2,0.001302,0.039128,0.567,0.106908,0.285662
+1e4b3b823b95,2,4,3.1e-05,0.001199,0.246297,0.151056,0.601416
+1f07dae3cadb,2,2,0.001853,0.199594,0.623043,0.00116,0.17435
+1f0e223b8055,2,4,2.7e-05,0.001642,0.350582,0.136271,0.511478
+1ffaa51a6245,2,2,0.015114,0.054998,0.927707,0.000753,0.001428
+203275daf46d,2,2,0.000431,0.422109,0.499638,0.003416,0.074406
+23148a40ecb0,2,1,0.002674,0.379817,0.349656,0.085164,0.18269
+234399352d36,2,4,1.4e-05,0.004336,0.306721,0.011744,0.677185
+2532613a584a,2,2,0.000266,0.100666,0.846344,0.016657,0.036067
+25dc1b41ed9c,2,0,0.870635,0.027552,0.087485,0.003984,0.010344
+26999ebc21de,2,1,0.001464,0.602445,0.358597,0.002723,0.034771
+26e231747848,2,2,0.001014,0.096578,0.816814,0.019703,0.065891
+272d9c043c81,2,3,3.7e-05,0.000746,0.129234,0.532549,0.337433
+27b68863349f,2,1,0.00095,0.484597,0.461954,0.014678,0.037821
+28824d12d31d,2,3,0.000564,0.021649,0.334497,0.557817,0.085473
+290ecdba359f,2,2,1.9e-05,0.001385,0.541414,0.172625,0.284557
+2c2aa057afc5,2,4,7.8e-05,0.000783,0.157815,0.36786,0.473464
+2e79041ef722,2,2,0.0009,0.02127,0.941785,0.005873,0.030172
+308f7fce6f0d,2,2,0.000238,0.017376,0.679681,0.156728,0.145978
+32a3eb37ff40,2,4,0.000796,0.19714,0.31488,0.071346,0.415837
+34723fae6475,2,3,0.000845,0.158629,0.24219,0.388659,0.209677
+388f12e8df0b,2,4,6.5e-05,0.001414,0.078625,0.038371,0.881525
+3cdda8b3df19,2,1,0.001742,0.533313,0.279416,0.063666,0.121864
+3d3e288d490e,2,2,0.002157,0.009352,0.466402,0.29377,0.22832
+3ddb86eb530e,2,3,0.003096,0.007497,0.06189,0.793401,0.134117
+3e6bfc4d5c65,2,2,0.039257,0.055408,0.65624,0.003869,0.245226
+3e86335bc2fd,2,2,0.00021,0.075645,0.624943,0.007961,0.291241
+3f47f83217b5,2,1,0.001238,0.921287,0.060278,0.003625,0.013571
+42a67337fa8e,2,4,7.3e-05,0.002475,0.435445,0.004028,0.55798
+42b08dca9b2f,2,1,0.000288,0.642547,0.354682,0.000413,0.002069
+43fb6eda9b97,2,1,0.002849,0.718565,0.260129,0.005849,0.012608
+44f4ae58990e,2,1,0.000799,0.484425,0.395733,0.004076,0.114968
+465c618f7b23,2,4,0.000341,0.014931,0.044223,0.07438,0.866125
+467b7d9d811c,2,2,0.001233,0.254568,0.33705,0.123811,0.283339
+4818672273af,2,4,0.000592,0.021055,0.161483,0.032889,0.783981
+48fda42bd5d4,2,2,5.8e-05,0.000714,0.779875,0.022267,0.197085
+49419f8d5cb4,2,2,0.00031,0.026836,0.841674,0.005989,0.12519
+49a4765f8822,2,2,0.000426,0.224478,0.756146,0.004649,0.014301
+4a44cc840ebe,2,4,0.000156,0.002396,0.094705,0.134113,0.76863
+4b5ffea77373,2,2,0.000145,0.015846,0.956016,0.007928,0.020065
+4d21ce39c905,2,2,0.00046,0.028905,0.908753,0.009693,0.052189
+4e7694eebb91,2,4,1.3e-05,0.010256,0.154158,0.031844,0.803728
+4f46d7ee61ed,2,2,0.000119,0.00139,0.620602,0.28614,0.09175
+51d0034d177d,2,2,0.00025,0.009967,0.402674,0.313795,0.273313
+521d3e264d71,2,4,0.000322,0.025623,0.349422,0.036988,0.587645
+525acfea47e8,2,2,6.6e-05,0.062039,0.775516,0.02519,0.137189
+5265dc9acdf8,2,4,3.2e-05,0.006913,0.377381,0.013215,0.60246
+594f69b503ad,2,1,0.00463,0.604186,0.245741,0.027181,0.118262
+5cde55f745af,2,1,0.00296,0.417071,0.413172,0.046375,0.120422
+5ed6dc419e4d,2,1,0.00429,0.573193,0.22135,0.067497,0.133669
+624fb7317106,2,2,0.002914,0.023345,0.356702,0.321339,0.2957
+63d217b059b6,2,2,0.000429,0.266381,0.471471,0.114656,0.147063
+66bae1ba227f,2,4,0.000929,0.059849,0.399834,0.034309,0.505079
+66d2ca47aa44,2,2,0.001737,0.032261,0.504248,0.056609,0.405145
+674057ab250c,2,3,0.00037,0.002107,0.314139,0.615778,0.067606
+6c2555a9cae4,2,1,0.004662,0.60967,0.367904,0.002029,0.015734
+6dfd80748e72,2,2,0.000577,0.246855,0.54286,0.065541,0.144167
+71e4130bf5c8,2,2,0.000965,0.062917,0.915797,0.013385,0.006936
+7356dd08b0ae,2,3,4.9e-05,0.000739,0.099612,0.65858,0.24102
+7550966ef777,2,1,0.006568,0.403649,0.380923,0.059763,0.149097
+76e6a9238570,2,4,0.00113,0.018315,0.400076,0.026335,0.554145
+7743f4e04a6d,2,2,0.005887,0.036761,0.867999,0.043256,0.046097
+77543f66a84a,2,3,0.001649,0.050577,0.401547,0.466002,0.080225
+7c52fe73e748,2,2,0.001417,0.133581,0.740218,0.01257,0.112213
+7d1b40fdbd86,2,2,0.045052,0.35891,0.528364,0.016053,0.051621
+80b5a9519aec,2,4,0.001138,0.012115,0.394784,0.026689,0.565274
+80feb1f7ca5e,2,2,0.000768,0.315291,0.668136,0.000377,0.015428
+82910bba4753,2,3,0.000377,0.000555,0.058961,0.909431,0.030677
+83b61051737f,2,2,0.000132,0.0044,0.732748,0.078423,0.184297
+85cc6d636898,2,2,0.000829,0.32008,0.662647,0.004277,0.012167
+869bbd3170cc,2,2,0.000384,0.169147,0.779837,0.001987,0.048645
+86b3a7929bec,2,2,0.000232,0.008122,0.578395,0.248002,0.16525
+89d2a7403a06,2,3,2.3e-05,0.000898,0.102317,0.873795,0.022966
+8cb6b5b2f19c,2,2,0.000482,0.04336,0.703401,0.009538,0.243219
+8dfff47b06b7,2,2,0.000711,0.029959,0.921451,0.001657,0.046222
+917f76f360b6,2,3,0.000133,0.00347,0.339286,0.463242,0.19387
+91cbe1c775ef,2,2,0.004808,0.146552,0.56872,0.03251,0.24741
+932181b93b2f,2,2,0.000674,0.388289,0.558124,0.006305,0.046609
+962cf85e4f6d,2,2,0.002791,0.126155,0.777096,0.026589,0.067369
+96c3e3db68bc,2,4,0.000532,0.0114,0.310312,0.048356,0.6294
+9785805af1b8,2,3,0.000166,0.004114,0.064943,0.871198,0.059579
+9a3c03a5ad0f,2,2,0.000502,0.096892,0.634746,0.022157,0.245703
+9cedf5c7016b,2,2,0.000377,0.031356,0.735232,0.067961,0.165074
+9d98a0b585f2,2,2,0.004207,0.291132,0.551143,0.024776,0.128741
+9f4132bd6ed6,2,2,0.00284,0.149581,0.740649,0.025919,0.081011
+9f436886e056,2,4,0.000496,0.032894,0.16933,0.047685,0.749595
+9faad91b6578,2,2,0.001797,0.047128,0.592603,0.311982,0.046491
+a0d04a19cf40,2,2,0.00034,0.014393,0.704687,0.143855,0.136725
+a125377fb985,2,2,0.000881,0.00756,0.94707,0.00515,0.039339
+a15470303941,2,1,0.002238,0.68181,0.272461,0.017672,0.025819
+a3475dc3ac80,2,1,0.00073,0.666273,0.055361,0.002151,0.275486
+a3957df90a78,2,2,0.004497,0.111483,0.798528,0.02327,0.062222
+a4359815f152,2,2,0.000165,0.003463,0.525293,0.390998,0.080081
+a45d77edf8d9,2,1,0.028125,0.416806,0.377197,0.008352,0.169521
+a64273801bde,2,2,4.3e-05,0.001013,0.49324,0.046786,0.458918
+a7b7dc8788b9,2,2,0.003009,0.089914,0.770088,0.023532,0.113458
+acc9f29538c4,2,2,0.000253,0.030897,0.679064,0.005854,0.283932
+ae8424cdb029,2,4,0.008625,0.140084,0.342958,0.125131,0.383201
+b402daa0864c,2,2,0.000374,0.002802,0.555596,0.164899,0.276329
+b746a6681ba9,2,2,0.000205,0.079498,0.740953,0.006996,0.172347
+b82d5f1f1145,2,4,0.001127,0.174207,0.284694,0.013126,0.526845
+b83a6eca125f,2,2,0.000254,0.002969,0.839025,0.053705,0.104047
+ba25f947f4ec,2,2,0.001038,0.006779,0.80396,0.016641,0.171582
+c2d2b4f536da,2,2,0.00107,0.029573,0.717666,0.005319,0.246372
+c406325360b1,2,1,0.257424,0.307054,0.293689,0.037746,0.104087
+c5431b81cbc9,2,4,0.000106,0.00079,0.177854,0.123656,0.697594
+c561bcd519e9,2,2,0.001183,0.10251,0.470477,0.228959,0.196871
+c613db1cab27,2,2,0.000103,0.015882,0.885843,0.00368,0.094492
+cd4e7f9fa1a9,2,2,0.000378,0.083417,0.905962,0.003776,0.006467
+ce887b196c23,2,2,0.000584,0.095366,0.868885,0.011589,0.023575
+d15ca3469b87,2,1,0.141431,0.639009,0.16601,0.010301,0.043249
+d3be5346684b,2,2,0.0023,0.02629,0.560238,0.051685,0.359488
+d6228d951958,2,2,0.00012,0.080162,0.893198,0.002642,0.023877
+d8cdb7d7283a,2,1,0.001772,0.677493,0.207915,0.011836,0.100984
+d91273efb92a,2,2,3.5e-05,0.013519,0.913684,0.004699,0.068063
+d95959798b57,2,2,0.001277,0.05294,0.383169,0.325206,0.237408
+d9a475dfe59a,2,4,0.001864,0.208909,0.263392,0.032173,0.493663
+dde43aa22ae6,2,2,0.000246,0.081927,0.65745,0.018628,0.241749
+de50dfa745f8,2,2,0.040438,0.292531,0.59828,0.02665,0.042101
+dee687c6e88a,2,2,0.0008,0.009598,0.895221,0.049283,0.045099
+df841a0440d8,2,2,0.000832,0.375237,0.450406,0.008756,0.164769
+e03e70bc8bba,2,1,0.006124,0.804539,0.151068,0.001736,0.036533
+e150935f66a6,2,0,0.427197,0.309804,0.182655,0.039891,0.040453
+e1e490773462,2,2,3.5e-05,0.028769,0.669676,0.002852,0.298669
+e4151feb8443,2,4,0.00049,0.061113,0.363018,0.012609,0.56277
+e65a2ff90494,2,1,0.000984,0.776527,0.144682,0.000876,0.076932
+e756495c11cb,2,3,0.000389,0.043818,0.264314,0.348816,0.342663
+e7defafeb957,2,2,0.000466,0.076638,0.902787,0.008231,0.011878
+e9129ce55fd7,2,0,0.52993,0.058976,0.325284,0.043697,0.042113
+ee02294cc3d9,2,2,0.000155,0.002424,0.66197,0.226909,0.108542
+f2094a20b275,2,1,0.033776,0.716287,0.226287,0.004157,0.019492
+f2ee81781411,2,2,0.004381,0.035443,0.916339,0.001979,0.041857
+f3b6b7ca1eb1,2,2,7e-05,0.040797,0.868197,0.023535,0.067401
+f61bf44c677c,2,4,0.000111,0.005568,0.365981,0.101967,0.526372
+fcc55ae641ae,2,2,0.000192,0.012156,0.966753,0.004048,0.016851
+ff52392372d3,2,2,0.000853,0.052071,0.76733,0.021931,0.157815
+07a0e34c8d20,3,3,3.4e-05,0.000425,0.017771,0.84779,0.133981
+1623e8e3adc4,3,2,0.001044,0.055797,0.555683,0.029764,0.357711
+166068a24416,3,4,0.001769,0.415889,0.03775,0.023035,0.521557
+3218a6d8eb2c,3,4,3e-05,0.000267,0.015826,0.288436,0.69544
+36865bbc64d6,3,1,0.018062,0.514418,0.234154,0.079745,0.153622
+3f49f8d100e9,3,3,1e-05,3.1e-05,0.004442,0.854301,0.141215
+498f143c0374,3,3,0.000355,0.00098,0.008156,0.571028,0.419482
+4f0866b90c27,3,3,0.006624,0.069701,0.09404,0.455848,0.373788
+50a2aef380c8,3,4,7.4e-05,0.002694,0.203941,0.049726,0.743566
+6735931000ec,3,2,0.001914,0.055229,0.812155,0.024963,0.105739
+6a244e855d0e,3,4,0.000193,0.009326,0.440593,0.010225,0.539663
+80ca40196225,3,2,0.000313,0.00409,0.399482,0.221639,0.374477
+8a9bef2fbd4e,3,3,3e-06,3.8e-05,0.029957,0.960726,0.009276
+910bfd38e2f5,3,4,0.000277,0.005315,0.389239,0.0847,0.520469
+91cf56d3d1af,3,3,0.000252,0.001558,0.033309,0.634249,0.330631
+996f57c86ba5,3,3,0.00011,0.000558,0.053735,0.563672,0.381924
+9bf060db8376,3,3,9.4e-05,0.003582,0.302294,0.663335,0.030695
+a80dab8eddf4,3,3,0.000296,0.005787,0.13194,0.655251,0.206726
+b310bd564329,3,3,1.2e-05,0.000817,0.357306,0.591258,0.050608
+b3d135bd3bb5,3,3,0.000223,0.008507,0.355188,0.355619,0.280463
+c3a82acb7d7a,3,4,0.000415,0.012734,0.09464,0.016105,0.876105
+c5a9ebef1517,3,3,2e-06,4e-06,0.002991,0.98594,0.011063
+d16398c971e9,3,3,0.000122,0.000876,0.012518,0.89524,0.091244
+dd3dad6ca78f,3,3,8.2e-05,0.000578,0.024362,0.821584,0.153395
+e19936582c61,3,2,0.000185,0.037199,0.938604,0.009493,0.014518
+e32a359be36d,3,3,3.6e-05,5e-05,0.007971,0.849148,0.142795
+e76a9cbb2a8c,3,3,9.4e-05,0.00019,0.005092,0.848326,0.146298
+f080a22008be,3,3,0.000253,0.004377,0.308723,0.543446,0.143202
+f6f433f3306f,3,4,8e-05,0.000697,0.040279,0.244925,0.714019
+0ceb222f6629,4,4,5.7e-05,0.00142,0.00805,0.01852,0.971952
+0e0fc1d9810c,4,4,2e-06,5.7e-05,0.000245,0.001796,0.997901
+1638404f385c,4,4,4.7e-05,0.00095,0.099325,0.028213,0.871465
+247e98aba610,4,4,0.006143,0.054269,0.066823,0.063165,0.8096
+25d069089c5e,4,3,0.000571,0.009591,0.288069,0.37841,0.323359
+2df07eb5779f,4,4,0.000633,0.012297,0.298116,0.24545,0.443504
+312694ea8e6a,4,3,7.2e-05,0.00098,0.02598,0.593683,0.379285
+3206171db5be,4,4,8e-06,0.000791,0.002941,0.0014,0.99486
+378963f9df22,4,2,0.000164,0.024718,0.852272,0.006433,0.116412
+4abca30b676b,4,2,0.003151,0.027845,0.592514,0.25234,0.12415
+4bd941611343,4,4,0.002809,0.160167,0.080569,0.017179,0.739276
+6194e0fff071,4,4,0.000553,0.006491,0.072264,0.06707,0.853624
+61e301bd3c25,4,2,0.001739,0.014608,0.624567,0.040468,0.318619
+62318d514160,4,4,6.1e-05,0.004014,0.012484,0.065177,0.918264
+63b4d030b016,4,1,0.004217,0.743661,0.110068,0.013895,0.128159
+65c958379680,4,4,0.000175,0.018166,0.248331,0.013378,0.71995
+69fff98cb32a,4,4,0.000211,0.018539,0.006032,0.011159,0.964059
+6d259b5b4c76,4,4,8.9e-05,0.001504,0.019244,0.03081,0.948353
+70d657f8f503,4,3,0.001321,0.00368,0.061269,0.741692,0.192038
+72d98188648f,4,2,0.001844,0.233944,0.585248,0.006092,0.172872
+789434d095d1,4,4,0.000394,0.006193,0.247263,0.030657,0.715493
+7c90ab025331,4,4,7.7e-05,0.000925,0.014894,0.002588,0.981516
+7d626a7ffe76,4,3,5e-06,3.2e-05,0.003119,0.624108,0.372737
+7efc91af4ae6,4,4,0.002359,0.0506,0.453637,0.016434,0.47697
+84c663f39632,4,4,0.002759,0.281066,0.115388,0.014117,0.586671
+875a2fc5fe23,4,3,0.000711,0.002303,0.040034,0.752763,0.204189
+95e732e043a1,4,4,0.000199,0.024595,0.200314,0.065787,0.709106
+97da093947e8,4,2,0.001458,0.168551,0.813981,0.003604,0.012406
+9a496b1e20f9,4,4,5.8e-05,0.000828,0.019596,0.009924,0.969594
+a11bf2edd470,4,4,0.000357,0.00425,0.069046,0.340896,0.58545
+b99afe7137fb,4,4,2e-05,2.9e-05,0.001661,0.003591,0.994699
+ba735b286d62,4,4,1.1e-05,8.3e-05,0.000945,0.023906,0.975055
+bd9904495ccd,4,4,4.5e-05,0.001503,0.426939,0.036188,0.535325
+bfefa7344e7d,4,3,0.000311,0.000927,0.014347,0.685497,0.298918
+c1896142a20a,4,3,0.0,5e-06,0.006256,0.89172,0.102019
+c3d12a23f451,4,4,4.3e-05,0.001129,0.05172,0.024639,0.92247
+c62585bd68fb,4,3,6e-06,3.6e-05,0.002035,0.96278,0.035144
+cb547e723a16,4,4,1.5e-05,0.000371,0.000805,0.028796,0.970012
+cd93a472e5cd,4,3,0.000332,0.000871,0.022916,0.893911,0.081971
+de16416220de,4,4,7.8e-05,0.005749,0.011145,0.025043,0.957985
+df4913ca3712,4,4,3e-06,0.000296,0.009888,0.006055,0.983756
+df84e7113003,4,2,9.2e-05,0.005005,0.910319,0.004339,0.080245
+e4730ddde408,4,2,0.000166,0.001356,0.766689,0.20057,0.031219
+ef26625121b3,4,4,0.000609,0.009117,0.026042,0.444888,0.519344
+f5e6226bd2e0,4,4,1.5e-05,0.000903,0.063984,0.402968,0.53213
