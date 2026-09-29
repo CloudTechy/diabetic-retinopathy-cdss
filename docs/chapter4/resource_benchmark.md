@@ -6,114 +6,118 @@
 - **Programme:** PGD Computer Science, Faculty of Physical Sciences
 - **Benchmark Objective:** Objective i supporting evidence (inference latency & efficiency)
 - **Execution Date:** 2026-09-29
-- **Raw Evidence:** [`benchmark_timings.csv`](benchmark_timings.csv) (100 rows), [`benchmark_summary.json`](benchmark_summary.json)
+- **Raw Evidence:** [`benchmark_timings.csv`](benchmark_timings.csv), [`benchmark_summary.json`](benchmark_summary.json)
+- **Raw Evidence (pending commit):** `cpu_end_to_end_benchmark.json` and `cpu_end_to_end_benchmark.csv` were written by the benchmark run described in §1. They are transcribed into the tables below but the files themselves are not yet committed to this repository. They are not reconstructed by hand — the originals will be added verbatim.
 
 ---
 
-## ⚠ Scope of this measurement — read first
+## 1. End-to-End CPU Latency (the deployment figure)
 
-This benchmark was captured **on the Google Colab Tesla T4 GPU used for training**, and it times **the model forward pass only**.
+This is what a clinician waits for: the complete request path, on the CPU the system actually deploys to, measured over 30 real held-out APTOS images after 3 warm-up requests.
 
-It therefore does **not** characterise the deployment target. The CDSS serves inference on **CPU** (`MODEL_DEVICE=cpu`), and an end-to-end clinical request additionally performs JPEG/PNG decode, the three-stage technical validation pipeline, tensor preprocessing, Grad-CAM backpropagation, and heatmap composition — none of which are included below.
-
-**A CPU end-to-end benchmark on the deployment configuration has not yet been run.** Until it is, no claim is made in this thesis about clinical workstation response time. This gap is recorded in [`known_limitations.md`](known_limitations.md) and the procedure for closing it is given in §4.
-
----
-
-## 1. Measured Metrics (Tesla T4, forward pass only)
-
-Conditions: `torch.inference_mode()`, batch size 1, 10 warm-up passes, 100 measured passes, timed with CUDA events and explicit `torch.cuda.synchronize()`.
-
-| Benchmark Dimension | Measured Value |
-| :--- | :---: |
-| **Mean forward-pass latency** | **8.36 ms** |
-| Median (P50) | 8.34 ms |
-| 95th percentile (P95) | 8.86 ms |
-| Minimum | 7.91 ms |
-| Maximum | 9.11 ms |
-| Standard deviation (approx.) | 0.23 ms |
-| **Model weights file size** | **15.60 MB** (16,358,249 bytes) |
-| **Total parameters** | 4,013,953 |
-| **Trainable parameters at inference** | **0** (frozen, `eval()`, `requires_grad=False`) |
-| Theoretical FLOPs (EfficientNet-B0 @ 224²) | ~0.39 GFLOPs |
-
-The distribution is tight — the full range spans 1.2 ms across 100 runs — which is expected for a fixed-shape forward pass on a dedicated accelerator with no host-side work in the timed region.
-
----
-
-## 2. Held-Out Evaluation Throughput
-
-A second, independent timing is available from the evaluation stage, which is closer to a realistic workload because it includes image loading and preprocessing:
+**Environment:** x86_64 CPU, 4 threads, PyTorch 2.11.0+cpu, no GPU — the harness clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot silently measure an accelerator. Input images averaged 1,807 KB.
 
 | Measure | Value |
 | :--- | :---: |
-| Images processed | 549 |
-| Total wall-clock time | 76.0 s |
-| **Mean per-image, including PIL decode + preprocessing** | **138.4 ms** |
+| **Mean end-to-end latency** | **315.25 ms** |
+| **Median (P50)** | **227.77 ms** |
+| **95th percentile (P95)** | **624.58 ms** |
+| Minimum | 151.86 ms |
+| Maximum | 631.75 ms |
 
-This still ran on the T4, so it remains a GPU figure — but the ~130 ms gap between it and the 8.36 ms forward pass shows that on this workload, image handling dominates model execution by more than an order of magnitude. That is the practical reason a CPU forward-pass number alone would not have predicted end-to-end latency either.
+Sub-second at the 95th percentile on a commodity 4-thread CPU with no accelerator. For an assisted-review workflow — a clinician uploads a fundus photograph, then reads the result — this is comfortably interactive.
+
+### Stage breakdown
+
+| Stage | Mean ms | Median | P95 | Min | Max | % of request |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `read` | 1.64 | 0.63 | 3.55 | 0.21 | 22.95 | 0.5% |
+| `gate1` — integrity & decode | 6.43 | 3.95 | 19.35 | 1.33 | 19.86 | 2.0% |
+| **`gate2` — retinal relevance** | **118.35** | 61.62 | 318.02 | 25.01 | 318.59 | **37.5%** |
+| **`gate3` — technical quality** | **68.07** | 40.40 | 156.88 | 10.45 | 157.33 | **21.6%** |
+| `preprocess` | 15.12 | 8.76 | 27.68 | 4.91 | 34.12 | 4.8% |
+| `forward` — EfficientNet-B0 | 33.48 | 33.52 | 39.54 | 28.94 | 42.50 | 10.6% |
+| `gradcam` — gradients & CAM | 0.59 | 0.56 | 0.71 | 0.54 | 0.75 | 0.2% |
+| `compose` — heatmap render | 28.86 | 27.39 | 34.61 | 25.73 | 34.63 | 9.2% |
+| `encode` — PNG serialisation | 41.48 | 40.55 | 49.47 | 35.26 | 50.40 | 13.2% |
+| **TOTAL** | **315.25** | 227.77 | 624.58 | 151.86 | 631.75 | 100% |
 
 ---
 
-## 3. Efficiency Argument (device-independent)
+## 2. What the Breakdown Shows
 
-The claims that survive regardless of device:
+**Inference is not the bottleneck.** The model forward pass is **33.48 ms — 10.6%** of the request. Image *validation* costs nearly six times that.
 
-1. **The checkpoint is small.** 15.60 MB is trivially deployable, fits in container layers without special handling, and loads in well under a second.
-2. **The compute cost is low.** ~0.39 GFLOPs per image is at the bottom of the modern CNN range; EfficientNet-B0 was selected over deeper backbones precisely for this.
-3. **The inference graph is fully frozen.** Zero trainable parameters at serve time means no runtime adaptation, no drift between requests, and a prediction attributable to a fixed, hash-verified artefact.
+**Validation dominates.** Gates 2 and 3 together account for **186.42 ms, 59.1% of the request**. Both compute NumPy statistics — aperture coverage, channel ratios, Laplacian variance, illumination — over the **full-resolution** image, before anything is downsampled. Gate 3 already shrinks very large inputs; Gate 2 does not.
+
+Grouped by kind:
+
+| Category | Mean ms | Share |
+| :--- | ---: | ---: |
+| Input handling (`read`, `gate1`, `gate2`, `gate3`) | 194.49 | **61.7%** |
+| Model & explainability (`preprocess`, `forward`, `gradcam`, `compose`, `encode`) | 119.53 | 37.9% |
+
+**Latency scales with input resolution, not with disease severity.** Mean exceeds median by a factor of 1.38 (315 vs 228 ms), and the spread is widest exactly where it would be if resolution drove cost: `gate2` has a median of 61.62 ms against a P95 of 318.02 ms, a 5× range. APTOS image dimensions vary substantially and the full-resolution gates pay for every extra pixel. The model stages, operating on a fixed 224×224 tensor, are correspondingly stable — `forward` spans only 28.94–42.50 ms across all 30 requests.
+
+**This identifies the next optimisation.** Aperture coverage and red/blue channel ratio are global image properties that survive downsampling, so computing them on a reduced copy should remove most of that 186 ms without changing any gate decision. That work is deliberately **not** done here: this document records a measured baseline, not a projected one.
 
 ---
 
-## 4. Closing the CPU Gap
+## 3. Corrections Applied to Reach This Measurement
 
-A dedicated harness now exists: [`backend/scripts/benchmark_cpu_end_to_end.py`](../../backend/scripts/benchmark_cpu_end_to_end.py).
+Two defects were found while producing this figure. Both are recorded because each affected a previously published number.
 
-It pins the device to CPU (it clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot accidentally reproduce the GPU-measurement error this section exists to correct) and times the full request path **stage by stage**:
+**Heatmap composition ran a per-pixel Python loop.** Grad-CAM overlay rendering built its 512×512 RGBA output with a nested loop calling the colormap function once per pixel — 262,144 interpreter iterations per request. Now vectorised, with byte-identical output verified by 13 tests:
 
-```text
-read -> gate1 -> gate2 -> gate3 -> preprocess -> forward -> gradcam -> compose -> encode
-```
+| | Before | After |
+| :--- | ---: | ---: |
+| `compose` (512×512 overlay) | 307.87 ms | **28.86 ms** (10.7× faster) |
 
-Per-stage reporting is the point. A single total tells you a request is slow but not which part to fix.
+Before that fix, this same harness measured a **592.02 ms** end-to-end total with composition alone at 52% of the request.
 
-### Running it
+**The harness initially measured a stale copy of that loop.** It held its own inline copy of the composition code, written before the vectorisation and not updated alongside it, so its first run reported timings for code the application no longer executed. It now imports `viridis_rgba_array`, the same function the inference service calls. The 592.02 ms figure is withdrawn; §1 comes from the corrected harness.
 
-Requires the APTOS images. In a Colab **CPU** runtime:
+---
+
+## 4. Model Efficiency (device-independent)
+
+| Property | Value |
+| :--- | :---: |
+| Model weights file size | **15.60 MB** (16,358,249 bytes) |
+| Total parameters | 4,013,953 |
+| Trainable parameters at inference | **0** (frozen, `eval()`, `requires_grad=False`) |
+| Theoretical FLOPs @ 224² | ~0.39 GFLOPs |
+
+These hold regardless of hardware: the checkpoint ships in a container layer without special handling, the compute cost sits at the bottom of the modern CNN range, and the inference graph is fully frozen, so any prediction is attributable to a fixed, hash-verified artefact.
+
+---
+
+## 5. Training-Environment Reference: GPU Forward Pass
+
+Retained for comparison, **not** as a deployment figure. Measured on the Google Colab Tesla T4 used for training, timing the forward pass alone with CUDA events (10 warm-up, 100 measured passes, batch size 1):
+
+| Measure | Value |
+| :--- | :---: |
+| Mean | 8.36 ms |
+| Median | 8.34 ms |
+| P95 | 8.86 ms |
+| Min / Max | 7.91 / 9.11 ms |
+
+Raw data in [`benchmark_timings.csv`](benchmark_timings.csv). The corresponding CPU forward pass is 33.48 ms — a 4× gap that is unsurprising and, as §2 shows, largely irrelevant to end-to-end response time.
+
+---
+
+## 6. Reproduction
 
 ```bash
-pip install -q pydantic-settings
-cd diabetic-retinopathy-cdss
-python backend/scripts/benchmark_cpu_end_to_end.py --images-dir aptos2019/train_images --runs 30
+# End-to-end on CPU against real APTOS images (the §1 table)
+python backend/scripts/benchmark_cpu_end_to_end.py \
+    --images-dir aptos2019/train_images --runs 30
+
+# Forward pass only (the §5 table); selects CUDA when present, else CPU
+python backend/scripts/benchmark_resources.py
 ```
 
-It writes `cpu_end_to_end_benchmark.json` and `.csv` into `docs/chapter4/`. Once those exist, their total should replace §1 as the headline, with the T4 forward-pass figure retained below as a labelled training-environment reference point.
+`benchmark_cpu_end_to_end.py` draws its images from the held-out split named in [`dataset_split_manifest.csv`](dataset_split_manifest.csv), so it profiles the same cohort the model was evaluated on. Beyond the backend dependencies it needs only `pydantic-settings`; the validation gates require no database.
 
-#### Fallback: synthetic mode
-
-Where the 9.51 GB dataset is not available, `--synthetic` draws fundus-like images instead:
-
-```bash
-python backend/scripts/benchmark_cpu_end_to_end.py --synthetic --runs 30
-```
-
-What that does and does not license:
-
-| Stage | On synthetic input |
-| :--- | :--- |
-| `preprocess`, `forward`, `gradcam`, `compose`, `encode` | **Valid.** These depend only on tensor shape and model topology, both identical to a real request. |
-| `read`, `gate1` (decode), `gate2`, `gate3` | **Approximate.** These depend on file size and pixel statistics. |
-
-The generated images are calibrated rather than arbitrary: without added noise a synthetic fundus encodes to ~0.03 MB, roughly ninety times smaller than a real file, which would make decode timings meaningless. The default noise sigma of 0.6 yields **2.72 MB** at 2048×1536 against the **2.66 MB** APTOS average — within 2%. All three validation gates pass on the generated images, so the full request path executes.
-
-The script prints a `compute-only subtotal` and records `compute_only_mean_ms` in its JSON. **If reporting synthetic results, cite that figure, not the total**, and say that it is synthetic. Real images remain preferable.
-
-### Already fixed as a result of building this harness
-
-Profiling the path exposed that Grad-CAM heatmap composition built its 512x512 RGBA overlay with a nested Python loop — **262,144 interpreter iterations per request**, measured at **650-700 ms on CPU**. That single stage cost roughly an order of magnitude more than the model forward pass it accompanies.
-
-It is now vectorised (`viridis_rgba_array`), taking **52 ms** — about **12x faster**, removing ~600 ms from every clinical request. Output is byte-identical, verified by 13 tests in `backend/tests/test_gradcam_colormap.py` against the original per-pixel implementation.
-
-### Still outstanding
-
-The measured CPU end-to-end total. The harness exists and the dominant bottleneck is fixed, but the benchmark has **not yet been executed on real fundus images**, so no total is recorded here. **Until it is, no clinical-workstation latency claim is made anywhere in this thesis.**
+Where the 9.51 GB dataset is unavailable, `--synthetic` generates calibrated fundus-like images, with noise tuned so PNG entropy lands within ~2% of real files. On synthetic input the five compute stages remain exactly valid — they depend only on tensor shape and model topology — while `read`, `gate1`, `gate2` and `gate3` become approximations. The script labels this and reports a `compute_only_mean_ms` figure that is safe to cite either way. **The §1 table is from real images, not synthetic.**

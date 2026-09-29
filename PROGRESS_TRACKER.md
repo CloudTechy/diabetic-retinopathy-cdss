@@ -18,7 +18,7 @@
 | **f** | Implement 3-stage validation pipeline (Gates 1–3) | [`backend/app/services/validation/`](backend/app/services/validation/), [`validation_module_spec.md`](docs/chapter4/validation_module_spec.md) | ✅ Complete |
 | **g** | CDSS architecture with clinician-in-the-loop governance | [`architecture.md`](docs/chapter4/architecture.md), [`database_schema.md`](docs/chapter4/database_schema.md), [`api_contract.md`](docs/chapter4/api_contract.md) | ✅ Complete |
 | **h** | Evaluate on held-out cohort ($N = 549$) | [`model_evaluation_report.md`](docs/chapter4/model_evaluation_report.md), [`held_out_predictions.csv`](docs/chapter4/held_out_predictions.csv), [`confusion_matrix.png`](docs/chapter4/confusion_matrix.png) | ✅ Complete |
-| **i** | Benchmark efficiency, system test & governance | [`system_test_report.md`](docs/chapter4/system_test_report.md), [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) | ⚠️ Partial — CPU benchmark outstanding |
+| **i** | Benchmark efficiency, system test & governance | [`system_test_report.md`](docs/chapter4/system_test_report.md), [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) | ✅ Complete |
 
 ---
 
@@ -82,8 +82,10 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 - **Grad-CAM target layer:** `features.8` (1,280-channel final conv).
 - **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
 - **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
-- **Benchmark:** mean **8.36 ms** forward pass — **on the Tesla T4, GPU, forward pass only**. ⚠️ Not a CPU figure and not end-to-end. No clinical-workstation latency is claimed anywhere in this thesis.
-- **Grad-CAM composition:** vectorised, **650 ms → 52 ms** (~12x), byte-identical output. This was the dominant cost in the request path.
+- **End-to-end CPU latency:** mean **315.25 ms**, median 227.77 ms, P95 **624.58 ms** over 30 held-out images (4-thread x86_64, no GPU).
+- **Where it goes:** validation gates 2+3 = **186.42 ms (59.1%)**; model forward pass = 33.48 ms (10.6%). Inference is not the bottleneck.
+- **Grad-CAM composition:** vectorised, **307.87 → 28.86 ms** (10.7x), byte-identical output.
+- **GPU reference:** 8.36 ms Tesla T4 forward pass — training-environment comparison only, not a deployment figure.
 
 ---
 
@@ -101,7 +103,7 @@ cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
 
 | # | Item | Why it matters |
 | :---: | :--- | :--- |
-| 1 | **Run the CPU end-to-end benchmark** | Harness built (`backend/scripts/benchmark_cpu_end_to_end.py`, stage-by-stage, CPU-pinned) and the dominant bottleneck already fixed — Grad-CAM composition went from ~650 ms to 52 ms. **Not yet executed on real fundus images**, so no total is recorded and no latency claim is made. Needs an APTOS image directory. See [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) §4. |
+| 1 | **Downsample before validation gates 2 and 3** | Measured, not speculative: those two gates are **59.1% of a 315 ms request** because both run NumPy statistics at full image resolution. Aperture coverage and R/B ratio survive downsampling, so a reduced copy should reclaim most of ~186 ms with no change to any gate decision. Benchmark the before/after rather than arguing it. |
 | 2 | Re-split with byte-hash duplicate grouping, then re-train | 27/549 held-out images are byte-identical to a training image because `duplicated_info.csv` is absent from the Kaggle download. Measured effect: nil (clean-subset $\kappa$ = 0.877818 vs 0.877747 full). Disclosed in [`dataset_audit.md`](docs/chapter4/dataset_audit.md) §4; remediation deferred as it would invalidate the hash-verified checkpoint for no measurable gain. |
 | 3 | Refresh UI screenshots | Panels in `docs/chapter4/screenshots/` predate the evidence refresh and may display superseded metric values. They evidence interface behaviour, not model performance. |
 | 4 | External-cohort validation | No evaluation on any dataset other than APTOS 2019. No generalisation claim is made. |
