@@ -8,9 +8,9 @@ interface SignInScreenProps {
 }
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) => {
-  const [email, setEmail] = useState<string>('dr.adaeze@retina-research.org');
+  const [email, setEmail] = useState<string>('dr.demo@research-prototype.local');
   const [password, setPassword] = useState<string>('••••••••••••');
-  const [facility, setFacility] = useState<string>('St. Jude Retinal Diagnostic Unit — Ward 4B');
+  const [facility, setFacility] = useState<string>('Research Prototype Environment');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -34,11 +34,11 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
 
   const handleQuickDemoFill = (role: 'consultant' | 'optometrist') => {
     if (role === 'consultant') {
-      setEmail('dr.adaeze@retina-research.org');
-      setFacility('St. Jude Retinal Diagnostic Unit — Ward 4B');
+      setEmail('dr.demo@research-prototype.local');
+      setFacility('Research Prototype Environment');
     } else {
-      setEmail('t.evans@community-eye-study.org');
-      setFacility('Community Optometry Screening Centre — Suite 2');
+      setEmail('optometrist.demo@research-prototype.local');
+      setFacility('Research Prototype Environment');
     }
   };
 
@@ -93,7 +93,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-clinical-primary focus:border-clinical-primary text-xs"
-                  placeholder="e.g. dr.adaeze@retina-research.org"
+                  placeholder="e.g. dr.demo@research-prototype.local"
                 />
               </div>
             </div>
@@ -129,14 +129,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   onChange={(e) => setFacility(e.target.value)}
                   className="block w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-clinical-primary focus:border-clinical-primary bg-white"
                 >
-                  <option value="St. Jude Retinal Diagnostic Unit — Ward 4B">
-                    St. Jude Retinal Diagnostic Unit — Ward 4B
-                  </option>
-                  <option value="Community Optometry Screening Centre — Suite 2">
-                    Community Optometry Screening Centre — Suite 2
-                  </option>
-                  <option value="Regional Eye Hospital — Vitreoretinal Service">
-                    Regional Eye Hospital — Vitreoretinal Service
+                  <option value="Research Prototype Environment">
+                    Research Prototype Environment
                   </option>
                 </select>
               </div>
@@ -185,7 +179,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   Consultant
                 </div>
                 <div className="text-[10px] text-slate-500 truncate">
-                  Dr. Adaeze Okonjo
+                  Dr. Demo Clinician (Simulated)
                 </div>
               </button>
 
@@ -199,7 +193,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   Optometrist
                 </div>
                 <div className="text-[10px] text-slate-500 truncate">
-                  T. Evans, MCOptom
+                  Demo Optometrist (Simulated)
                 </div>
               </button>
             </div>

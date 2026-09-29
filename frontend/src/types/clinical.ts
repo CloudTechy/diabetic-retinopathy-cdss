@@ -99,7 +99,7 @@ export interface ClinicianReview {
   certifiedGradeLabel: string;
   justificationNotes?: string;
   inconclusiveReason?: string;
-  referralPlan: string;
+  referralPlan: string; // Outside prototype scope — placeholder only
   clinicianName: string;
   licenseNumber: string;
   facility: string;

@@ -163,7 +163,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           </div>
         </div>
 
-        {/* Box B: Clinician Decision Domain (Authoritative Navy / Teal Container) */}
+        {/* Box B: Clinician Review Response */}
         <div
           role="region"
           aria-labelledby="clinician-domain-heading"
@@ -173,7 +173,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
             <div className="flex items-center justify-between border-b border-teal-200 pb-3">
               <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-teal-700 text-white">
                 <UserCheck className="w-3 h-3 mr-1" />
-                [Official Clinical Evaluation]
+                [Professional Review Response]
               </span>
               <span className="text-[10px] text-teal-800 font-mono font-bold">
                 SIGNED & IMMUTABLE
@@ -229,7 +229,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                 {/* Scope Notice */}
                 <div className="text-[11px] text-slate-500 p-2.5 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed">
                   <strong className="text-slate-700 block text-[11px]">Clinical Scope Boundary:</strong>
-                  <span>Independent professional assessment recorded. Decision-support findings do not constitute clinical diagnosis, referral dispatch, or patient management instructions.</span>
+                  <span>Independent professional assessment recorded. Decision-support findings do not constitute clinical diagnosis.</span>
                 </div>
               </div>
             ) : (

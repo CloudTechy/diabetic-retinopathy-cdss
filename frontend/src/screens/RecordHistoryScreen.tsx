@@ -273,7 +273,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                 <th scope="col" className="px-4 py-3">Eye</th>
                 <th scope="col" className="px-4 py-3">Acquired</th>
                 <th scope="col" className="px-4 py-3">Model Candidate Score</th>
-                <th scope="col" className="px-4 py-3">Certified Diagnosis</th>
+                <th scope="col" className="px-4 py-3">Professional Review Response</th>
                 <th scope="col" className="px-4 py-3">Agreement</th>
                 <th scope="col" className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -342,7 +342,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                       )}
                     </td>
 
-                    {/* Certified Diagnosis */}
+                    {/* Professional Review Response */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       {rec.clinicianReview ? (
                         <div>

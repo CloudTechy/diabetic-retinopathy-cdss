@@ -68,7 +68,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
         certifiedGradeLabel: ICDR_GRADES[finalGrade]?.label || 'Clinical Observation Recorded',
         justificationNotes: justificationNotes.trim() || undefined,
         inconclusiveReason: agreement === 'inconclusive' ? inconclusiveReason : undefined,
-        referralPlan: 'Scope limited to classification verification; clinical referral decisions remain the exclusive responsibility of attending medical personnel.',
+        referralPlan: 'Referral decisions are outside the scope of this research prototype.',
       });
 
       onReviewSubmitted(updated);
