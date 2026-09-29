@@ -25,11 +25,21 @@ Usage (Colab, CPU runtime):
 
     !pip install -q pydantic-settings
     %cd /content/diabetic-retinopathy-cdss
-    !python backend/scripts/benchmark_cpu_end_to_end.py --runs 30
 
-    # against your own image directory:
+    # Preferred: real APTOS images.
     !python backend/scripts/benchmark_cpu_end_to_end.py \
         --images-dir aptos2019/train_images --runs 30
+
+    # Fallback when the 9.51 GB dataset is not available.
+    !python backend/scripts/benchmark_cpu_end_to_end.py --synthetic --runs 30
+
+Synthetic mode draws fundus-like images rather than using real ones. The five
+compute stages (preprocess, forward, gradcam, compose, encode) depend only on
+tensor shape and model topology, so they are exactly as valid as on real input.
+The four input-handling stages (read, gate1 decode, gate2, gate3) depend on file
+size and pixel statistics, so they are approximations. The script labels this in
+its output and records a `compute_only_mean_ms` figure that is safe to cite
+regardless. Prefer real images when you can get them.
 
 Outputs docs/chapter4/cpu_end_to_end_benchmark.{json,csv}.
 """
@@ -70,12 +80,83 @@ def percentile(values, pct):
     return ordered[idx]
 
 
+def generate_synthetic_fundus(width, height, seed, noise_sigma=0.6):
+    """
+    Draw a fundus-like image for benchmarking when the real dataset is not to hand.
+
+    Geometry mirrors the generator the test suite already uses (circular aperture,
+    optic disc, macula, branching vessels) so the validation gates behave the way
+    they do on real input: Gate 2 sees plausible aperture coverage and R/B ratio,
+    Gate 3 sees enough high-frequency vessel detail to clear the blur threshold.
+
+    Gaussian noise is added on top, which is not cosmetic. Without it this image
+    encodes to roughly 0.03 MB, about ninety times smaller than a real APTOS
+    file, which would make the read and decode timings meaningless. The default
+    sigma of 0.6 was chosen by measurement: at 2048x1536 it yields ~2.5 MB
+    against the APTOS average of 2.66 MB (9.51 GB across 3,662 images).
+    """
+    import math
+    import numpy as np
+    from PIL import Image, ImageDraw
+
+    rng = np.random.default_rng(seed)
+    img = Image.new("RGB", (width, height), (5, 5, 5))
+    draw = ImageDraw.Draw(img)
+
+    # Circular aperture, jittered slightly per image
+    margin = int(width * (0.06 + 0.04 * rng.random()))
+    draw.ellipse([margin, margin, width - margin, height - margin], fill=(185, 65, 25))
+
+    disc_x = int(width * (0.30 + 0.10 * rng.random()))
+    disc_y = int(height * (0.45 + 0.10 * rng.random()))
+    disc_r = int(width * 0.07)
+    draw.ellipse([disc_x - disc_r, disc_y - disc_r, disc_x + disc_r, disc_y + disc_r],
+                 fill=(240, 210, 110))
+
+    fovea_x, fovea_y = int(width * 0.58), int(height * 0.52)
+    fovea_r = int(width * 0.04)
+    draw.ellipse([fovea_x - fovea_r, fovea_y - fovea_r, fovea_x + fovea_r, fovea_y + fovea_r],
+                 fill=(120, 30, 15))
+
+    # Branching vessels - the high-frequency content Gate 3 measures
+    vessel = (110, 20, 15)
+    branches = 14
+    for i in range(branches):
+        angle = (i / branches) * 2 * math.pi + rng.random() * 0.2
+        x_end = int(disc_x + math.cos(angle) * (width * 0.36))
+        y_end = int(disc_y + math.sin(angle) * (height * 0.36))
+        draw.line([disc_x, disc_y, x_end, y_end], fill=vessel, width=max(2, width // 700))
+        mx, my = (disc_x + x_end) // 2, (disc_y + y_end) // 2
+        step = max(12, width // 60)
+        draw.line([mx, my, mx + step, my - step], fill=vessel, width=max(1, width // 1000))
+        draw.line([mx, my, mx - step, my + step], fill=vessel, width=max(1, width // 1000))
+
+    arr = np.asarray(img).astype(np.float32)
+    arr += rng.normal(0, noise_sigma, arr.shape).astype(np.float32)
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), mode="RGB")
+
+
+def make_synthetic_images(count, width, height, out_dir, noise_sigma=0.6):
+    """Write `count` synthetic fundus PNGs and return their paths (cached on disk)."""
+    os.makedirs(out_dir, exist_ok=True)
+    paths = []
+    for n in range(count):
+        path = os.path.join(out_dir, f"synthetic_{n:03d}.png")
+        if not os.path.exists(path):
+            generate_synthetic_fundus(
+                width, height, seed=1000 + n, noise_sigma=noise_sigma
+            ).save(path, format="PNG")
+        paths.append(path)
+    return paths
+
+
 def resolve_images(images_dir, runs):
     """Prefer held-out test images named in the manifest; fall back to any PNG."""
     if not os.path.isdir(images_dir):
         raise SystemExit(
             f"Image directory not found: {images_dir}\n"
-            "Pass --images-dir pointing at your APTOS train_images/ directory."
+            "Pass --images-dir pointing at your APTOS train_images/ directory,\n"
+            "or use --synthetic to benchmark on generated fundus-like images."
         )
 
     wanted = []
@@ -115,7 +196,23 @@ def main():
     parser.add_argument("--runs", type=int, default=30, help="Measured requests (default 30)")
     parser.add_argument("--warmup", type=int, default=3, help="Warm-up requests (default 3)")
     parser.add_argument("--checkpoint", default=None, help="Override checkpoint path")
+    parser.add_argument("--synthetic", action="store_true",
+                        help="Benchmark on generated fundus-like images instead of APTOS. "
+                             "Compute stages stay valid; read/decode become approximate.")
+    parser.add_argument("--synthetic-size", default="2048x1536",
+                        help="WxH for synthetic images (default 2048x1536, APTOS-typical)")
+    parser.add_argument("--synthetic-dir", default=None,
+                        help="Where to write synthetic images (default: a temp directory)")
+    parser.add_argument("--synthetic-noise", type=float, default=0.6,
+                        help="Gaussian sigma controlling PNG entropy. Default 0.6 gives "
+                             "~2.5 MB at 2048x1536, against the APTOS average of 2.66 MB.")
     args = parser.parse_args()
+
+    if args.synthetic:
+        try:
+            syn_w, syn_h = (int(x) for x in args.synthetic_size.lower().split("x"))
+        except ValueError:
+            raise SystemExit(f"--synthetic-size must look like 2048x1536, got {args.synthetic_size!r}")
 
     import numpy as np
     import torch
@@ -212,7 +309,21 @@ def main():
         timings["encode"].append((t() - t0) * 1000)
         return True
 
-    paths = resolve_images(args.images_dir, args.runs + args.warmup)
+    need = args.runs + args.warmup
+    if args.synthetic:
+        import tempfile
+        syn_dir = args.synthetic_dir or os.path.join(
+            tempfile.gettempdir(), f"dr_cdss_synth_{syn_w}x{syn_h}")
+        print(f"Generating {need} synthetic fundus images at {syn_w}x{syn_h} ...")
+        paths = make_synthetic_images(need, syn_w, syn_h, syn_dir, args.synthetic_noise)
+        sizes = [os.path.getsize(p) for p in paths]
+        mean_kb = sum(sizes) / len(sizes) / 1024
+        image_source = f"synthetic ({syn_w}x{syn_h}, mean {mean_kb:.0f} KB PNG)"
+    else:
+        paths = resolve_images(args.images_dir, need)
+        sizes = [os.path.getsize(p) for p in paths]
+        mean_kb = sum(sizes) / len(sizes) / 1024
+        image_source = f"APTOS ({args.images_dir}, mean {mean_kb:.0f} KB)"
 
     print("=" * 78)
     print("DR-CDSS END-TO-END CPU LATENCY BENCHMARK")
@@ -220,7 +331,19 @@ def main():
     print(f"Device     : CPU ({platform.processor() or platform.machine()})")
     print(f"PyTorch    : {torch.__version__}   threads={torch.get_num_threads()}")
     print(f"Checkpoint : {os.path.basename(checkpoint)}")
+    print(f"Images     : {image_source}")
     print(f"Warm-up    : {args.warmup}    Measured: {args.runs}")
+    if args.synthetic:
+        print("-" * 78)
+        print("SYNTHETIC MODE - scope of what these numbers support:")
+        print("  VALID    : preprocess, forward, gradcam, compose, encode.")
+        print("             These depend on tensor shape and model topology, which are")
+        print("             identical to a real request, not on image content.")
+        print("  APPROX   : read, gate1 (decode), gate2, gate3. These depend on file size")
+        print("             and pixel statistics. Noise is added to keep PNG entropy in a")
+        print("             realistic range, but decode cost is an estimate, not a")
+        print("             measurement. Compare the mean KB above against your own APTOS")
+        print("             files to judge how close it lands.")
     print("-" * 78)
 
     scratch = {s: [] for s in STAGES}
@@ -286,8 +409,24 @@ def main():
                   "(262,144 iterations) calling generate_viridis_colormap per pixel.\n"
                   "      Vectorising it with numpy would remove most of this cost.")
 
+    compute_stages = ["preprocess", "forward", "gradcam", "compose", "encode"]
+    compute_total = sum(r["mean_ms"] for r in rows if r["stage"] in compute_stages)
+    if args.synthetic:
+        print(f"\nCompute-only subtotal (content-independent, fully valid on synthetic "
+              f"input): {compute_total:.1f} ms")
+        print("Cite that figure rather than the total if you report synthetic results.")
+
     summary = {
         "scope": "end-to-end request path (read -> gates -> preprocess -> forward -> Grad-CAM -> compose -> encode)",
+        "image_source": "synthetic" if args.synthetic else "aptos",
+        "image_source_detail": image_source,
+        "mean_image_bytes": int(sum(sizes) / len(sizes)),
+        "synthetic_caveat": (
+            "read/gate1/gate2/gate3 are approximations on synthetic input; "
+            "preprocess/forward/gradcam/compose/encode are content-independent and valid."
+            if args.synthetic else None
+        ),
+        "compute_only_mean_ms": round(compute_total, 3),
         "device": "cpu",
         "cpu": platform.processor() or platform.machine(),
         "torch_threads": torch.get_num_threads(),

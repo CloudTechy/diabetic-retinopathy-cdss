@@ -89,6 +89,25 @@ python backend/scripts/benchmark_cpu_end_to_end.py --images-dir aptos2019/train_
 
 It writes `cpu_end_to_end_benchmark.json` and `.csv` into `docs/chapter4/`. Once those exist, their total should replace §1 as the headline, with the T4 forward-pass figure retained below as a labelled training-environment reference point.
 
+#### Fallback: synthetic mode
+
+Where the 9.51 GB dataset is not available, `--synthetic` draws fundus-like images instead:
+
+```bash
+python backend/scripts/benchmark_cpu_end_to_end.py --synthetic --runs 30
+```
+
+What that does and does not license:
+
+| Stage | On synthetic input |
+| :--- | :--- |
+| `preprocess`, `forward`, `gradcam`, `compose`, `encode` | **Valid.** These depend only on tensor shape and model topology, both identical to a real request. |
+| `read`, `gate1` (decode), `gate2`, `gate3` | **Approximate.** These depend on file size and pixel statistics. |
+
+The generated images are calibrated rather than arbitrary: without added noise a synthetic fundus encodes to ~0.03 MB, roughly ninety times smaller than a real file, which would make decode timings meaningless. The default noise sigma of 0.6 yields **2.72 MB** at 2048×1536 against the **2.66 MB** APTOS average — within 2%. All three validation gates pass on the generated images, so the full request path executes.
+
+The script prints a `compute-only subtotal` and records `compute_only_mean_ms` in its JSON. **If reporting synthetic results, cite that figure, not the total**, and say that it is synthetic. Real images remain preferable.
+
 ### Already fixed as a result of building this harness
 
 Profiling the path exposed that Grad-CAM heatmap composition built its 512x512 RGBA overlay with a nested Python loop — **262,144 interpreter iterations per request**, measured at **650-700 ms on CPU**. That single stage cost roughly an order of magnitude more than the model forward pass it accompanies.
