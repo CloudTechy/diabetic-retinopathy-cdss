@@ -10,7 +10,6 @@ const TARGET_DIRS = [
   path.resolve('../docs/screenshots'),
   path.resolve('../docs/chapter4/screenshots'),
   path.resolve('../docs/chapter4_submission_package/screenshots'),
-  'C:\\Users\\USER\\.gemini\\antigravity\\brain\\4c03715b-d77f-4960-9f39-1c9fc499e344\\screenshots',
 ];
 
 for (const dir of TARGET_DIRS) {
