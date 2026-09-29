@@ -82,16 +82,17 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 - **Grad-CAM target layer:** `features.8` (1,280-channel final conv).
 - **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
 - **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
-- **End-to-end CPU latency:** mean **315.25 ms**, median 227.77 ms, P95 **624.58 ms** over 30 held-out images (4-thread x86_64, no GPU).
+- **End-to-end CPU latency:** mean **315.25 ms**, median 227.77 ms, P95 **624.58 ms** over 30 held-out images (4-thread x86_64, no GPU). ⚠️ This is the **pre-optimisation** baseline; gates 2/3 have since been sped up 2.7× and it has not been re-measured.
 - **Where it goes:** validation gates 2+3 = **186.42 ms (59.1%)**; model forward pass = 33.48 ms (10.6%). Inference is not the bottleneck.
 - **Grad-CAM composition:** vectorised, **307.87 → 28.86 ms** (10.7x), byte-identical output.
+- **Validation gates:** statistics computed on a nearest-neighbour subsample, **703.4 → 265.0 ms** combined (2.7x) on a 2048×1536 image, with 38 tests asserting verdicts are unchanged.
 - **GPU reference:** 8.36 ms Tesla T4 forward pass — training-environment comparison only, not a deployment figure.
 
 ---
 
 ## 5. Test Suite
 
-**58 passed, 1 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant and 13 asserting Grad-CAM render equivalence.
+**96 passed, 1 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
@@ -103,7 +104,7 @@ cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
 
 | # | Item | Why it matters |
 | :---: | :--- | :--- |
-| 1 | **Downsample before validation gates 2 and 3** | Measured, not speculative: those two gates are **59.1% of a 315 ms request** because both run NumPy statistics at full image resolution. Aperture coverage and R/B ratio survive downsampling, so a reduced copy should reclaim most of ~186 ms with no change to any gate decision. Benchmark the before/after rather than arguing it. |
+| 1 | **Re-run the end-to-end benchmark** | Gates 2 and 3 now subsample (2.7× combined, verdicts unchanged), but the 315.25 ms end-to-end total is the **pre-optimisation** measurement. Re-run `benchmark_cpu_end_to_end.py` to record the improved figure. Also run `verify_gate_downsampling.py` against real APTOS images to confirm zero verdict changes on a clinical corpus. |
 | 2 | Re-split with byte-hash duplicate grouping, then re-train | 27/549 held-out images are byte-identical to a training image because `duplicated_info.csv` is absent from the Kaggle download. Measured effect: nil (clean-subset $\kappa$ = 0.877818 vs 0.877747 full). Disclosed in [`dataset_audit.md`](docs/chapter4/dataset_audit.md) §4; remediation deferred as it would invalidate the hash-verified checkpoint for no measurable gain. |
 | 3 | Refresh UI screenshots | Panels in `docs/chapter4/screenshots/` predate the evidence refresh and may display superseded metric values. They evidence interface behaviour, not model performance. |
 | 4 | External-cohort validation | No evaluation on any dataset other than APTOS 2019. No generalisation claim is made. |

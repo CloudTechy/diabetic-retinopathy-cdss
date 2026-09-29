@@ -62,7 +62,7 @@ Grouped by kind:
 
 **Latency scales with input resolution, not with disease severity.** Mean exceeds median by a factor of 1.38 (315 vs 228 ms), and the spread is widest exactly where it would be if resolution drove cost: `gate2` has a median of 61.62 ms against a P95 of 318.02 ms, a 5× range. APTOS image dimensions vary substantially and the full-resolution gates pay for every extra pixel. The model stages, operating on a fixed 224×224 tensor, are correspondingly stable — `forward` spans only 28.94–42.50 ms across all 30 requests.
 
-**This identifies the next optimisation.** Aperture coverage and red/blue channel ratio are global image properties that survive downsampling, so computing them on a reduced copy should remove most of that 186 ms without changing any gate decision. That work is deliberately **not** done here: this document records a measured baseline, not a projected one.
+**This identified the next optimisation, which has since been applied.** See §3.3. The §1 table above remains the *pre-optimisation* baseline, kept because it is the measurement that motivated the change and because the post-optimisation end-to-end figure has not yet been measured.
 
 ---
 
@@ -79,6 +79,32 @@ Two defects were found while producing this figure. Both are recorded because ea
 Before that fix, this same harness measured a **592.02 ms** end-to-end total with composition alone at 52% of the request.
 
 **The harness initially measured a stale copy of that loop.** It held its own inline copy of the composition code, written before the vectorisation and not updated alongside it, so its first run reported timings for code the application no longer executed. It now imports `viridis_rgba_array`, the same function the inference service calls. The 592.02 ms figure is withdrawn; §1 comes from the corrected harness.
+
+### 3.3 Validation gates now analyse a subsample
+
+The §1 breakdown showed gates 2 and 3 costing 186.42 ms, 59.1% of the request, because both computed their pixel statistics over the full-resolution array.
+
+Those statistics — aperture coverage, channel means, contrast standard deviation, the proportion of extreme pixels — describe the pixel *distribution*, not any individual pixel, so a large uniform sample estimates them just as well. Both gates now compute them on a copy whose longest side is `VALIDATION_ANALYSIS_MAX_DIM` (default 512), sampled with **nearest-neighbour**.
+
+Nearest is a correctness choice, not a speed one. It samples pixels where bilinear and area resampling average them, and averaging would (a) smooth the aperture boundary into intermediate luminances that cross the foreground threshold, and (b) pull extreme values toward the mean — biasing exactly the statistics Gate 3 uses to detect washout and underexposure, in the unsafe direction. Measured across a threshold-spanning corpus, bilinear moved aperture coverage by up to 0.011 where nearest moved it by 0.0007.
+
+Measured on a 2048×1536 image:
+
+| | Full resolution | Subsampled | |
+| :--- | ---: | ---: | :--- |
+| `gate2` | 309.7 ms | **59.5 ms** | 5.2× |
+| `gate3` | 393.8 ms | **205.6 ms** | 1.9× |
+| combined | 703.4 ms | **265.0 ms** | **2.7×** |
+
+Gate 3 improves less because its Laplacian variance is deliberately excluded. Sharpness is a spatial derivative, so its value depends on resolution by definition and its 60.0 threshold is calibrated against its own existing 1024px path. That path is untouched, and a test asserts the variance does not move when the analysis resolution changes.
+
+**Decision preservation.** 38 unit tests assert that the accept/reject verdict is identical to full resolution across images placed deliberately near each threshold. Because those images are synthetic and the claim concerns real clinical images, [`backend/scripts/verify_gate_downsampling.py`](../../backend/scripts/verify_gate_downsampling.py) runs the same comparison over a real APTOS directory and fails on any changed verdict:
+
+```bash
+python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
+```
+
+**Not yet claimed:** the post-optimisation end-to-end total. §1 is the pre-optimisation baseline. Re-running the end-to-end harness is required before any improved figure is stated here.
 
 ---
 

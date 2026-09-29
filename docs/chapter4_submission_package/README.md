@@ -23,7 +23,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **82.4%**, NPV **97.1%** |
 | **Argmax contradictions** | 0 / 549 |
 | **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
-| **Test suite** | 58 passed, 1 skipped |
+| **Test suite** | 96 passed, 1 skipped |
 | **End-to-end CPU latency** | **315.25 ms** mean / 227.77 ms median / **624.58 ms** P95 |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
@@ -73,6 +73,7 @@ docs/chapter4_submission_package/
 ├── scripts/
 │   ├── colab_train_and_evaluate.py       # The pipeline that produced everything here
 │   ├── analyze_clinical_metrics.py       # Recomputes all metrics (stdlib only)
+│   ├── verify_gate_downsampling.py       # Proves the gate optimisation preserves verdicts
 │   ├── benchmark_cpu_end_to_end.py       # CPU stage-by-stage latency harness
 │   ├── train_efficientnet_b0.py
 │   ├── evaluate_model.py
