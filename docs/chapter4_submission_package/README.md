@@ -65,8 +65,10 @@ docs/chapter4_submission_package/
 │   ├── held_out_predictions.csv          # 549 rows, full softmax distributions
 │   ├── evaluation_summary.json           # Confusion matrix + headline metrics
 │   ├── clinical_metrics.json             # Operating points, CIs, leakage audit
-│   ├── benchmark_timings.csv             # 100 raw per-run timings
-│   ├── benchmark_summary.json            # Benchmark aggregate + device
+│   ├── cpu_end_to_end_benchmark.json    # CPU end-to-end latency, 9 stages, 30 runs
+│   ├── cpu_end_to_end_benchmark.csv     # the same stage table, flat
+│   ├── benchmark_timings.csv            # 100 raw per-run timings (T4 forward pass)
+│   ├── benchmark_summary.json           # T4 forward-pass aggregate + device
 │   └── validation_test_results.csv       # Gate behaviour across image types
 ├── scripts/
 │   ├── colab_train_and_evaluate.py       # The pipeline that produced everything here

@@ -6,8 +6,7 @@
 - **Programme:** PGD Computer Science, Faculty of Physical Sciences
 - **Benchmark Objective:** Objective i supporting evidence (inference latency & efficiency)
 - **Execution Date:** 2026-09-29
-- **Raw Evidence:** [`benchmark_timings.csv`](benchmark_timings.csv), [`benchmark_summary.json`](benchmark_summary.json)
-- **Raw Evidence (pending commit):** `cpu_end_to_end_benchmark.json` and `cpu_end_to_end_benchmark.csv` were written by the benchmark run described in §1. They are transcribed into the tables below but the files themselves are not yet committed to this repository. They are not reconstructed by hand — the originals will be added verbatim.
+- **Raw Evidence:** [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), [`cpu_end_to_end_benchmark.csv`](cpu_end_to_end_benchmark.csv), [`benchmark_timings.csv`](benchmark_timings.csv), [`benchmark_summary.json`](benchmark_summary.json)
 
 ---
 
@@ -41,6 +40,10 @@ Sub-second at the 95th percentile on a commodity 4-thread CPU with no accelerato
 | `compose` — heatmap render | 28.86 | 27.39 | 34.61 | 25.73 | 34.63 | 9.2% |
 | `encode` — PNG serialisation | 41.48 | 40.55 | 49.47 | 35.26 | 50.40 | 13.2% |
 | **TOTAL** | **315.25** | 227.77 | 624.58 | 151.86 | 631.75 | 100% |
+
+The stage means sum to 314.02 ms against a measured total of 315.25 ms. The 1.24 ms difference (0.4%) is work between the timed regions — registering and removing the Grad-CAM forward hook, the argmax, tensor indexing — which is attributed to no stage. `TOTAL` is wall-clock around the whole request and is the figure to cite; the stage rows account for 99.6% of it.
+
+Every value in this section is reproduced verbatim from [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), rounded to two decimals.
 
 ---
 
