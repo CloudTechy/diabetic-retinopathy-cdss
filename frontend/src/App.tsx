@@ -272,10 +272,10 @@ export const App: React.FC = () => {
       <footer className="bg-white border-t border-slate-200 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            Diabetic Retinopathy Clinical Decision Support System (DR-CDSS) © 2026 • Lead Researcher: Onyekelu Chukwuebuka Elochukwu (2024516020FN)
+            Diabetic Retinopathy Clinical Decision Support System (DR-CDSS) © 2026 • Researcher: Onyekelu Chukwuebuka Elochukwu (2024516020FN)
           </span>
           <span className="font-mono text-[11px] text-slate-400">
-            FDA SaMD Class II • NHS DTAC Guideline • WCAG 2.1 AA Compliant
+            MSc Academic Research Prototype • EfficientNet-B0 Decision Support • WCAG 2.1 AA
           </span>
         </div>
       </footer>

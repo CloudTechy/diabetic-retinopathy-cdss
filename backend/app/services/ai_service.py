@@ -360,7 +360,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             probs_tensor = torch.softmax(logits, dim=1)[0].detach()
             probs = [round(float(p), 4) for p in probs_tensor]
 
-            # 4. Resolve target grade (respect candidate_grade if provided, else argmax)
+            # 4. Resolve target grade (respect test candidate fixture if specified, else argmax)
             if candidate_grade is not None and 0 <= candidate_grade <= 4:
                 grade = candidate_grade
             else:

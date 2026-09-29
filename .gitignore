@@ -71,6 +71,7 @@ frontend/dist/
 frontend/build/
 frontend/.next/
 frontend/out/
+frontend/docs/
 .npm
 .yarn/
 npm-debug.log*

@@ -186,11 +186,11 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
 
             {review && certifiedGradeInfo ? (
               <div className="space-y-3">
-                {/* Certified Stage Card */}
+                {/* Professional Review Concurrence Card */}
                 <div className="p-3.5 bg-white rounded-xl border border-teal-300 shadow-xs space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-teal-800 uppercase font-bold">
-                      Certified Clinical Grade
+                      Professional Evaluation
                     </span>
                     <span
                       className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${
@@ -204,11 +204,13 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                       {review.agreement.toUpperCase()}
                     </span>
                   </div>
-                  <div className="font-black text-slate-900 text-base">
-                    {certifiedGradeInfo.label}
+                  <div className="font-bold text-slate-900 text-sm">
+                    {review.agreement === 'agree' && 'Concurred with Model Observation'}
+                    {review.agreement === 'disagree' && 'Clinician Disagreed with Automated Finding'}
+                    {review.agreement === 'inconclusive' && `Indeterminate (${review.inconclusiveReason || 'Quality Ambiguity'})`}
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    {certifiedGradeInfo.description}
+                    {certifiedGradeInfo.label}
                   </p>
                 </div>
 
@@ -216,7 +218,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                 {review.justificationNotes && (
                   <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
                     <strong className="text-slate-900 block text-[11px]">
-                      Clinician Justification:
+                      Clinician Observations:
                     </strong>
                     <p className="text-[11px] leading-relaxed italic">
                       "{review.justificationNotes}"
@@ -224,14 +226,14 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                   </div>
                 )}
 
-                {/* Management Plan */}
-                <div className="text-xs text-slate-700 space-y-0.5">
-                  <span className="font-bold text-slate-900 block">Referral & Recall Protocol:</span>
-                  <span className="text-slate-800">{review.referralPlan}</span>
+                {/* Scope Notice */}
+                <div className="text-[11px] text-slate-500 p-2.5 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed">
+                  <strong className="text-slate-700 block text-[11px]">Clinical Scope Boundary:</strong>
+                  <span>Independent professional assessment recorded. Decision-support findings do not constitute clinical diagnosis, referral dispatch, or patient management instructions.</span>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-500 italic">No certified review available.</p>
+              <p className="text-xs text-slate-500 italic">No professional review recorded.</p>
             )}
           </div>
 
@@ -239,12 +241,12 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           {review && (
             <div className="pt-3 border-t border-teal-200 text-[11px] space-y-1 text-teal-950 font-mono">
               <div className="flex justify-between">
-                <span>Clinician: {review.clinicianName}</span>
-                <span>{review.licenseNumber}</span>
+                <span>Reviewer: {review.clinicianName}</span>
+                <span>{review.facility}</span>
               </div>
               <div className="flex justify-between text-slate-500 text-[10px]">
-                <span>Signed: {new Date(review.signedAt).toLocaleString()}</span>
-                <span className="truncate max-w-[160px]">{review.signatureHash}</span>
+                <span>Recorded: {new Date(review.signedAt).toLocaleString()}</span>
+                <span className="truncate max-w-[160px]">Integrity ID: {review.signatureHash?.substring(0, 16)}...</span>
               </div>
             </div>
           )}

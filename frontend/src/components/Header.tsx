@@ -75,13 +75,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* TLS 1.3 Badge */}
+            {/* Session Indicator */}
             <span
               className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 text-teal-300 text-[10px] font-mono border border-slate-700"
-              title="TLS 1.3 End-to-End Encrypted Session"
+              title="Authenticated Workstation Session"
             >
               <Lock className="w-2.5 h-2.5 mr-1 text-teal-400" />
-              TLS 1.3 Secured
+              Authenticated Session
             </span>
 
             {/* Inactivity Countdown */}
@@ -220,8 +220,8 @@ export const Header: React.FC<HeaderProps> = ({
               </h3>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Per healthcare data protection standards (NHS Caldicott / HIPAA), your session will automatically terminate in{' '}
-              <span className="font-mono font-bold text-amber-600">{formatTime(secondsRemaining)}</span> due to workstation inactivity.
+              For clinical workstation privacy and access security, your session will automatically lock in{' '}
+              <span className="font-mono font-bold text-amber-600">{formatTime(secondsRemaining)}</span> due to inactivity.
             </p>
             <div className="flex justify-end space-x-3 pt-2">
               <button

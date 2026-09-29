@@ -82,3 +82,18 @@ flowchart TD
 | **MIME / Magic Bytes** | Browser File API header slice | Strict binary magic bytes verification |
 | **Spectral Check** | Subsampled $64 \times 64$ RGB analysis | Full-resolution floating point tensor analysis |
 | **Blur Variance** | Scaled discrete Laplacian convolution | Full-resolution discrete Laplacian variance |
+
+---
+
+## 4. Methodological Scope & Terminological Discipline
+
+To preserve rigorous clinical and academic integrity, the following terminological boundaries are strictly maintained:
+1. **Technical Acceptance vs. Diagnostic Gradability:**
+   - The three validation gates evaluate **technical image acceptance and physical suitability** (file integrity, aspect ratio, spectral reflectance, optical sharpness, and illumination range).
+   - The validation pipeline does **NOT** determine clinical gradability or diagnostic quality.
+2. **Clinical Limitations:**
+   - A photograph that passes all three gates is confirmed to be technically intact, retinal in geometry, and optically sharp enough for neural network convolution.
+   - However, technical acceptance does not guarantee that the fundus photograph is clinically adequate for diagnostic sign-off (e.g. subtle peripheral lesions outside the field of view).
+3. **Fail-Closed Safeguard:**
+   - The primary objective of the module is to prevent artifact processing, out-of-distribution confusion, and automation bias by failing closed on ungradable or corrupt inputs.
+

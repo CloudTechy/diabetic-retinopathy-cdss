@@ -133,7 +133,7 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
             Fail-Closed 3-Gate Validation Pipeline
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Validating input parameters prior to automated model inference. Failures strictly abort inference per SaMD safety requirements.
+            Validating input parameters prior to automated model inference. Failures strictly abort inference to preserve data integrity and prevent artifact analysis.
           </p>
         </div>
         <span className="inline-flex items-center px-2.5 py-1 rounded bg-blue-50 text-blue-800 text-xs font-mono font-semibold border border-blue-200">
@@ -213,9 +213,9 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
                 </p>
               </div>
 
-              {/* Regulatory Notice Banner */}
+              {/* Quality Safeguard Banner */}
               <div className="p-2.5 bg-rose-100/70 rounded text-[11px] text-rose-900 border border-rose-200">
-                <strong>Regulatory Notice (FDA SaMD Fail-Closed Principle):</strong> Image does not meet quality requirements. To prevent erroneous analysis or diagnostic drift, automated model evaluation has been aborted.
+                <strong>Quality Safeguard (Fail-Closed Image Technical Acceptance):</strong> Image does not meet technical quality requirements. To prevent artifact processing and model misclassification, automated evaluation has been aborted.
               </div>
             </div>
 

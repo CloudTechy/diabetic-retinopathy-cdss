@@ -678,20 +678,18 @@ Target Explainability:  ${assessment.modelObservation?.targetLayer || 'N/A'}
 Activation Region:      ${assessment.modelObservation?.topActivationRegion || 'N/A'}
 
 --------------------------------------------------------------------------------
-3. OFFICIAL CERTIFIED CLINICIAN EVALUATION [AUTHORITATIVE CLINICAL DECISION]
+3. INDEPENDENT PROFESSIONAL REVIEW RESPONSE
 --------------------------------------------------------------------------------
 Reviewing Clinician:    ${assessment.clinicianReview?.clinicianName || 'Pending'}
-Medical License / GMC:  ${assessment.clinicianReview?.licenseNumber || 'Pending'}
-Facility / Ward:        ${assessment.clinicianReview?.facility || 'Pending'}
-Clinical Agreement:     ${assessment.clinicianReview?.agreement.toUpperCase() || 'Pending'}
-Certified ICDR Stage:   ${assessment.clinicianReview?.certifiedGradeLabel || 'Pending'}
-Management Protocol:    ${assessment.clinicianReview?.referralPlan || 'Pending'}
-Clinical Justification: ${assessment.clinicianReview?.justificationNotes || 'None'}
-Digital Signature Hash: ${assessment.clinicianReview?.signatureHash || 'Pending'}
-Signature Timestamp:    ${assessment.clinicianReview?.signedAt || 'Pending'}
+Facility:               ${assessment.clinicianReview?.facility || 'Pending'}
+Review Concurrence:     ${assessment.clinicianReview?.agreement.toUpperCase() || 'Pending'}
+Observation Notes:      ${assessment.clinicianReview?.justificationNotes || 'None'}
+Review Timestamp:       ${assessment.clinicianReview?.signedAt || 'Pending'}
+Record Integrity Hash:  ${assessment.clinicianReview?.signatureHash || 'Pending'}
 
 ================================================================================
-This record is cryptographically bound and tamper-evident per FDA SaMD / NHS DTAC.
+Academic Research Prototype — Master of Science Thesis Project
+This assessment summary is for research and decision-support verification only.
 ================================================================================
       `.trim();
 

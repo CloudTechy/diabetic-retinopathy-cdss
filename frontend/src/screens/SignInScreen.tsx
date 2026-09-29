@@ -8,7 +8,7 @@ interface SignInScreenProps {
 }
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) => {
-  const [email, setEmail] = useState<string>('a.okonjo@retina-clinic.nhs.uk');
+  const [email, setEmail] = useState<string>('dr.adaeze@retina-research.org');
   const [password, setPassword] = useState<string>('••••••••••••');
   const [facility, setFacility] = useState<string>('St. Jude Retinal Diagnostic Unit — Ward 4B');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -34,10 +34,10 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
 
   const handleQuickDemoFill = (role: 'consultant' | 'optometrist') => {
     if (role === 'consultant') {
-      setEmail('a.okonjo@retina-clinic.nhs.uk');
+      setEmail('dr.adaeze@retina-research.org');
       setFacility('St. Jude Retinal Diagnostic Unit — Ward 4B');
     } else {
-      setEmail('t.evans@community-eye.nhs.uk');
+      setEmail('t.evans@community-eye-study.org');
       setFacility('Community Optometry Screening Centre — Suite 2');
     }
   };
@@ -82,7 +82,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="staff-id" className="block text-xs font-semibold text-slate-700">
-                Clinical Staff ID / NHS Email
+                Clinical Practitioner ID / Username
               </label>
               <div className="mt-1">
                 <input
@@ -93,14 +93,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-clinical-primary focus:border-clinical-primary text-xs"
-                  placeholder="e.g. a.okonjo@retina-clinic.nhs.uk"
+                  placeholder="e.g. dr.adaeze@retina-research.org"
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-xs font-semibold text-slate-700">
-                Password / SmartCard PIN
+                Password / Secure PIN
               </label>
               <div className="mt-1">
                 <input
@@ -142,11 +142,11 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
               </div>
             </div>
 
-            {/* Security Notice: TLS & Auto-timeout */}
+            {/* Session Notice: Auto-timeout */}
             <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
               <span className="flex items-center text-teal-700 font-mono font-medium">
                 <Lock className="w-3.5 h-3.5 mr-1 text-teal-600" />
-                TLS 1.3 Active
+                Authenticated Session
               </span>
               <span className="font-mono text-slate-500">
                 Timeout: 15 min inactivity
@@ -172,7 +172,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
           {/* Quick Credential Pre-fill for Demonstration */}
           <div className="pt-4 border-t border-slate-200">
             <p className="text-[11px] font-semibold text-slate-500 mb-2 uppercase tracking-wider text-center">
-              Quick Demonstration Roles
+              Demonstration Research Roles
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -206,9 +206,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
           </div>
         </div>
 
-        {/* Footer Regulatory Reference */}
+        {/* Footer Reference */}
         <p className="mt-4 text-center text-[11px] text-slate-400">
-          Medical Device Directive 93/42/EEC • NHS England DTAC Compliance
+          Academic Research Prototype • MSc Biomedical Software Engineering
         </p>
       </div>
     </div>

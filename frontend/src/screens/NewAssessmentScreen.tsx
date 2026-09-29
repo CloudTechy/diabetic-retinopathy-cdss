@@ -4,12 +4,10 @@ import {
   Eye,
   AlertTriangle,
   CheckCircle2,
-  Sparkles,
   ArrowRight,
   ShieldAlert
 } from 'lucide-react';
 import { EyeLaterality } from '../types/clinical';
-import { generateSyntheticFundus } from '../utils/syntheticFundus';
 import { analyzeRetinalImageOnCanvas, ClientValidationResult } from '../utils/retinalValidator';
 
 interface NewAssessmentScreenProps {
@@ -48,10 +46,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
   const [clientValidation, setClientValidation] = useState<ClientValidationResult | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-
-  // Simulation test mode (allows simulating Gate 1, 2, or 3 failure or selecting a preset pathology)
-  const [simulateGateFailure, setSimulateGateFailure] = useState<1 | 2 | 3 | null>(null);
-  const [candidateGrade, setCandidateGrade] = useState<number>(2);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,7 +87,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
         setClientValidation(analysis);
 
         if (!analysis.allPassed && analysis.failedGate) {
-          setSimulateGateFailure(analysis.failedGate);
           if (analysis.failedGate === 2) {
             setValidationWarning(
               analysis.gate2.rejectionReason ||
@@ -108,7 +101,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
             setFileError(analysis.gate1.rejectionReason || 'Invalid file format or size.');
           }
         } else {
-          setSimulateGateFailure(null);
           setValidationWarning(null);
         }
       };
@@ -134,19 +126,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
     setIsDragging(false);
   };
 
-  // Quick Preset Sample Retinal Images for seamless testing
-  const handleLoadSample = (grade: number, failGate?: 1 | 2 | 3) => {
-    setCandidateGrade(grade);
-    setSimulateGateFailure(failGate || null);
-    setClientValidation(null);
-    setValidationWarning(null);
-    const { fundusDataUrl } = generateSyntheticFundus(grade, laterality);
-    setPreviewUrl(fundusDataUrl);
-    setFileDimensions({ width: 2240, height: 1488 });
-    setFileError(null);
-    setSelectedFile(new File(['synthetic_blob'], `retinal_${laterality}_grade${grade}.jpg`, { type: 'image/jpeg' }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -169,8 +148,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
       imageDataUrl: previewUrl,
       fileSizeBytes: selectedFile?.size || 3400000,
       filename: selectedFile?.name || `fundus_${laterality}.jpg`,
-      simulateGateFailure,
-      candidateGrade,
       clientValidation: clientValidation || undefined,
     });
   };
@@ -215,7 +192,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                 className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg shadow-xs focus:ring-2 focus:ring-clinical-primary focus:border-clinical-primary font-mono uppercase"
               />
               <p className="text-[10px] text-slate-400 mt-1">
-                Anonymized alphanumeric token conforming to HIPAA / GDPR de-identification standards.
+                Anonymized alphanumeric study identifier ensuring research participant privacy.
               </p>
             </div>
 
@@ -293,7 +270,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
           {/* Clinical Notes */}
           <div>
             <label htmlFor="clinical-notes" className="block text-xs font-semibold text-slate-700">
-              Clinical Context / Referral Notes (Optional)
+              Clinical Context / Examination Indication (Optional)
             </label>
             <textarea
               id="clinical-notes"
@@ -433,57 +410,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
               <span>{fileError}</span>
             </div>
           )}
-
-          {/* Quick Sample Selector for Instant Verification & Research Demonstration */}
-          <div className="pt-3 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                Quick Clinical Test Presets (Instant Simulation)
-              </span>
-              <span className="text-[10px] text-slate-400">
-                Generates realistic anatomical retinal morphology
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => handleLoadSample(0)}
-                className="p-2 border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 rounded-lg text-left transition text-xs"
-              >
-                <span className="font-bold text-emerald-800 block">Grade 0: Normal</span>
-                <span className="text-[10px] text-slate-500">No DR lesions</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleLoadSample(2)}
-                className="p-2 border border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 rounded-lg text-left transition text-xs"
-              >
-                <span className="font-bold text-amber-800 block">Grade 2: Moderate</span>
-                <span className="text-[10px] text-slate-500">Exudates & hemorrhages</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleLoadSample(3)}
-                className="p-2 border border-slate-200 hover:border-orange-500 hover:bg-orange-50/50 rounded-lg text-left transition text-xs"
-              >
-                <span className="font-bold text-orange-800 block">Grade 3: Severe</span>
-                <span className="text-[10px] text-slate-500">4-2-1 criteria signs</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleLoadSample(1, 3)}
-                className="p-2 border border-slate-200 hover:border-rose-500 hover:bg-rose-50/50 rounded-lg text-left transition text-xs"
-              >
-                <span className="font-bold text-rose-800 block">Gate 3 Test (Blur)</span>
-                <span className="text-[10px] text-slate-500">Simulate Rejection</span>
-              </button>
-            </div>
-          </div>
         </section>
 
         {/* Action Controls */}

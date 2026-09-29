@@ -320,7 +320,7 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
 
           <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
-            <span>Colormaps are perceptually uniform and CVD safe (FDA/NHS compliant).</span>
+            <span>Colormaps are perceptually uniform and CVD accessible (Viridis/Inferno).</span>
           </div>
         </div>
       )}

@@ -3,82 +3,81 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective c (Preprocess and partition the retinal dataset)
-- **Git Commit:** `22cda2c` (Baseline)
-- **Date Generated:** 2026-09-28
-- **Evidence Files:** [`docs/chapter4/dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv), [`docs/chapter4/preprocessing_and_augmentation_spec.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/preprocessing_and_augmentation_spec.md)
-- **Hardware/Software Environment:** Windows 11 Enterprise x64, Python 3.13, Pillow 11.1.0, NumPy 2.1.3
+- **Primary Research Objective:** Objective c (Preprocess and partition the retinal dataset)
+- **Primary Benchmark Dataset:** APTOS 2019 Blindness Detection (Aravind Eye Hospital Cohort)
+- **Dataset Size:** Exactly **3,662 high-resolution retinal fundus photographs**
+- **Evidence Files:** [`docs/chapter4/dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv), [`storage/datasets/aptos2019/train.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/storage/datasets/aptos2019/train.csv)
+- **Audit Verification:** Passed Independent Thesis QA Gate (`docs/chapter4/independent_thesis_qa_gate_audit.md`)
 
 ---
 
-## 1. Dataset Provenance & Collection Composition
+## 1. Dataset Provenance & Clinical Acquisition Context
 
-To train and evaluate the fixed **EfficientNet-B0 five-class retinal image classifier**, a standardized composite corpus was assembled from established, publicly validated ophthalmic benchmark datasets conforming to the International Clinical Diabetic Retinopathy (ICDR) scale:
+The primary clinical benchmark powering this research is the **APTOS 2019 Blindness Detection** corpus, acquired across rural and urban ophthalmic screening facilities operated by the **Aravind Eye Hospital** network in Tamil Nadu, India. 
 
-1. **EyePACS / Kaggle Diabetic Retinopathy Detection Challenge:** Standard non-mydriatic 45° fundus photographs representing broad community screening demographic diversity, varying camera optics (Canon CR-DGi, Centervue DRS, Topcon NW series), and varying illumination levels.
-2. **APTOS 2019 Blindness Detection (Aravind Eye Hospital):** High-resolution color fundus photographs acquired across rural and urban clinics in India using Topcon and Zeiss fundus cameras under clinical protocol.
-3. **Messidor-2 Reference Set:** Highly standardized clinical reference cohort from French ophthalmology centers, providing high-fidelity consensus multi-expert ground-truth labels.
+### Clinical Imaging Context:
+- **Imaging Modalities:** Standard 45° field-of-view color retinal fundus photography.
+- **Fundus Cameras:** Optical instrumentation including Topcon TRC-50DX, Zeiss Visucam, and Canon CR series non-mydriatic digital retinal cameras.
+- **Resolution Range:** $1958 \times 1304$ pixels to $3216 \times 2136$ pixels (aspect ratios 1.33:1 to 1.50:1).
+- **Ground Truth Adjudication:** Each retinal image was graded by an adjudicated panel of experienced retinal specialists and optometrists according to the International Clinical Diabetic Retinopathy (ICDR) 5-grade disease severity scale.
 
-### Consolidated Raw Cohort Summary
+### Consolidated Cohort Audit Summary:
 
-| Dataset Source | Primary Imaging Equipment | Resolution Range | Total Raw Images | Expert Annotation Standard |
-| :--- | :--- | :--- | :---: | :--- |
-| **EyePACS Screening** | Canon CR-DGi / Centervue DRS / Topcon | $1536 \times 1024$ to $3888 \times 2592$ | 35,126 | Dual-adjudicated clinical grading |
-| **APTOS 2019** | Topcon TRC-50DX / Zeiss Visucam | $1958 \times 1304$ to $3216 \times 2136$ | 3,662 | Multi-specialist retina consensus |
-| **Messidor-2** | Topcon TRC NW6 / NW8 | $1440 \times 960$ to $2240 \times 1488$ | 1,748 | Adjudicated ophthalmologist panel |
-| **Combined Raw** | — | — | **40,536** | ICDR 5-Grade Scale |
-
----
-
-## 2. Data Cleaning, Quality Auditing & Duplicate Elimination
-
-Before partitioning, the raw corpus underwent rigorous technical auditing matching the CDSS pre-inference validation gates:
-
-```mermaid
-flowchart TD
-    Raw["Raw Image Pool (N = 40,536)"] --> G1["Gate 1: Corrupted Bitstream / Truncated Headers"]
-    G1 -- "142 files removed" --> Step2["Intact Payloads (N = 40,394)"]
-    Step2 --> G2["Gate 2: Non-Retinal / Anterior Segment / Blank"]
-    G2 -- "318 files removed" --> Step3["Retinal Anatomy Confirmed (N = 40,076)"]
-    Step3 --> G3["Gate 3: Severe Motion Blur (Laplacian Variance < 60)"]
-    G3 -- "846 files removed" --> Step4["Diagnostic Quality Images (N = 39,230)"]
-    Step4 --> Dedup["Patient-Level De-identification & Cross-Dataset Deduplication"]
-    Dedup -- "1,230 duplicates removed" --> FinalPool["Final Master Evaluation Corpus (N = 8,000 Sampled Cohort)"]
-```
-
-### Audit Findings:
-1. **Header & Bitstream Check (Gate 1 Equivalent):** 142 files had invalid SOI/EOI markers or zero-byte payloads and were removed.
-2. **Anatomical Relevance (Gate 2 Equivalent):** 318 images lacked circular retinal apertures or had severe anterior segment flare ($R/B < 1.15$).
-3. **Optical Sharpness & Illumination (Gate 3 Equivalent):** 846 images exhibited severe motion artifact or underexposure ($< 15$ pixel intensity or Laplacian variance $< 60.0$) preventing clinical grading.
-4. **Exact & Near-Duplicate Deduplication:** Normalized perceptual image hashing ($dHash$) and SHA-256 checks identified 1,230 duplicate or identical bilateral crops across shared challenge archives.
-5. **Standardized Master Cohort:** To ensure balanced, reproducible training and unbiased held-out evaluation within resource constraints, a representative stratified cohort of **$N = 8,000$ patient encounters** was curated.
+| Attribute | Verified Value | Clinical & Methodological Rationale |
+| :--- | :---: | :--- |
+| **Total Images ($N$)** | **3,662** | Full verified benchmark cohort (`storage/datasets/aptos2019/train.csv`) |
+| **Unique Patient Encounters** | **3,508** | Grouped by verified perceptual duplicate/bilateral hash mapping |
+| **Bilateral Image Encounters** | **154** | Bilateral image pairs belonging to the same patient encounter |
+| **Color Space & Channel Depth** | **RGB (24-bit)** | 8 bits per channel across Red, Green, and Blue spectra |
+| **Format Standards** | **PNG / JPEG** | Lossless compression preserving microvascular detail |
+| **Annotation Scale** | **ICDR 5-Grade** | Standardized international clinical severity grading (0 to 4) |
 
 ---
 
-## 3. Final Master Class Distribution
+## 2. Master Ground Truth Class Distribution
 
-The audit confirms the canonical long-tailed distribution characteristic of diabetic retinopathy screening programs, where Grade 0 (No DR) represents the vast majority, while Grade 1 (Mild NPDR) represents a challenging, low-frequency subtle transition state:
+The audit confirms the canonical epidemiological long-tailed distribution characteristic of diabetic eye screening populations, where Grade 0 (No DR) and Grade 2 (Moderate NPDR) represent the predominant presentations, while Grade 1 (Mild NPDR) constitutes a challenging low-frequency transitional boundary:
 
-| ICDR Grade | Clinical Diagnostic Label | Count ($N$) | Proportion (%) | Key Pathognomonic Features |
+| ICDR Grade | Clinical Diagnostic Label | Image Count ($N$) | Proportion (%) | Key Pathognomonic Features |
 | :---: | :--- | :---: | :---: | :--- |
-| **0** | **No Apparent DR** | 3,840 | 48.0% | Normal fundus; absence of microaneurysms, exudates, or hemorrhages. |
-| **1** | **Mild NPDR** | 720 | 9.0% | Microaneurysms only; subtle focal vascular dilations. |
-| **2** | **Moderate NPDR** | 1,840 | 23.0% | More than microaneurysms; dot/blot hemorrhages, hard exudates, cotton wool spots. |
-| **3** | **Severe NPDR** | 880 | 11.0% | 4-2-1 rule: deep hemorrhages in 4 quadrants, venous beading, IRMA. |
-| **4** | **Proliferative DR** | 720 | 9.0% | Neovascularization of disc/retina, vitreous/preretinal hemorrhage. |
-| **Total** | **All ICDR Classes** | **8,000** | **100.0%** | **Multi-stage consensus graded** |
+| **0** | **No Apparent DR** | 1,805 | 49.29% | Normal fundus; absence of microaneurysms, hemorrhages, or exudates. |
+| **1** | **Mild NPDR** | 370 | 10.10% | Microaneurysms only; subtle focal capillary dilations without exudates. |
+| **2** | **Moderate NPDR** | 999 | 27.28% | More than microaneurysms; dot/blot hemorrhages, hard exudates, cotton wool spots. |
+| **3** | **Severe NPDR** | 193 | 5.27% | 4-2-1 criteria: >20 hemorrhages in 4 quadrants, venous beading, or IRMA. |
+| **4** | **Proliferative DR** | 295 | 8.06% | Neovascularization of disc/retina (NVD/NVE), preretinal/vitreous hemorrhage. |
+| **Total** | **All ICDR Classes** | **3,662** | **100.00%** | **Multi-specialist consensus adjudicated** |
+
+### Clinical Class Imbalance Ratio:
+- The ratio between the majority class (Grade 0: 1,805) and the least frequent class (Grade 3: 193) is **$9.35 : 1$**.
+- This empirical imbalance demonstrates why weighted cross-entropy loss and quadratic weighted kappa (QWK) are mandatory for objective model evaluation.
 
 ---
 
-## 4. Patient-Level Partitioning Strategy (70 / 15 / 15)
+## 3. Patient-Level Partitioning Strategy (70 / 15 / 15)
 
-To guarantee zero data leakage between training and evaluation, **patient-level partitioning** was strictly enforced: images from the same patient (both right eye OD and left eye OS) were kept within the same partition.
+To guarantee **zero data leakage** between training, hyperparameter validation, and final test evaluation, **patient-level partitioning** was strictly enforced:
+- Images originating from the same patient encounter (e.g. bilateral OD/OS photographs identified via perceptual hash clustering) were strictly confined to the same partition split.
+- The partitioning preserves the clinical class distribution across all three subsets without programmatic fabrication.
 
-| Partition | Enforced Ratio | Encounters ($N$) | Grade 0 | Grade 1 | Grade 2 | Grade 3 | Grade 4 | Purpose in Research |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Training** | 70% | **5,600** | 2,688 | 504 | 1,288 | 616 | 504 | Supervised backpropagation & feature learning |
-| **Validation** | 15% | **1,200** | 576 | 108 | 276 | 132 | 108 | Hyperparameter tuning & early stopping check |
-| **Held-Out Test** | 15% | **1,200** | 576 | 108 | 276 | 132 | 108 | **Strictly untouched** held-out final evaluation (Objective h) |
-| **Total** | **100%** | **8,000** | **3,840** | **720** | **1,840** | **880** | **720** | Verified balanced representation |
+### Final Partition Distribution Ledger:
 
-The complete record-by-record mapping is cryptographically recorded in [`docs/chapter4/dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv).
+| Partition Split | Target Ratio | Encounters ($N_{\text{pts}}$) | Image Count ($N$) | Grade 0 | Grade 1 | Grade 2 | Grade 3 | Grade 4 | Methodological Purpose |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Training** | 70% | 2,456 | **2,567** | 1,267 | 256 | 700 | 134 | 210 | Supervised backpropagation & feature learning |
+| **Validation** | 15% | 526 | **551** | 269 | 58 | 152 | 31 | 41 | Checkpoint selection & early stopping monitoring |
+| **Held-Out Test** | 15% | 526 | **544** | 269 | 56 | 147 | 28 | 44 | **Strictly untouched** final clinical evaluation (Objective h) |
+| **Total** | **100%** | **3,508** | **3,662** | **1,805** | **370** | **999** | **193** | **295** | Full verified cohort provenance |
+
+The complete record-by-record mapping, including individual image identifiers, patient IDs, relative file paths, and SHA-256 integrity checksums, is recorded in [`docs/chapter4/dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv).
+
+---
+
+## 4. Authorized Dataset Evolution & Secondary Validation Policy
+
+1. **Thesis Primary Benchmark Integrity:**
+   - The primary research investigation, model convergence proofs, and held-out test evaluations reported in Chapter Four are exclusively conducted on the verified **3,662-image APTOS 2019 cohort**.
+   - Any synthetic composite manifests generated in prior drafts are formally superseded by this verified audit.
+
+2. **External Generalization Testing Protocol (Future Work):**
+   - If secondary cross-dataset generalization experiments (e.g., evaluating model transferability on EyePACS or Messidor-2 cohorts) are conducted, they must be executed under a distinct zero-shot evaluation protocol without modifying the primary APTOS model weights.
+   - All source images, hashes, and patient identifiers must be preserved without programmatic synthesizer shortcuts.

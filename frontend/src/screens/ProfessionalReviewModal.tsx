@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   HelpCircle,
-  Lock,
   UserCheck,
   ShieldCheck,
   FileCheck
@@ -35,55 +34,46 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
   const [certifiedGrade, setCertifiedGrade] = useState<number | null>(null);
   const [justificationNotes, setJustificationNotes] = useState<string>('');
   const [inconclusiveReason, setInconclusiveReason] = useState<string>('Media Opacity / Cataract');
-  const [referralPlan, setReferralPlan] = useState<string>('Routine 12-month diabetic eye screening recall.');
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  // Anti-Automation Bias Verification Dialog State
-  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
 
   const modelGrade = assessment.modelObservation?.primaryClassGrade ?? 2;
 
-  // Validation rules: Per supervisor directive, observation rationale is optional and arbitrary 15-char restriction is removed
-  const isGradeSelected = certifiedGrade !== null;
-  const canProceed = agreement !== null && isGradeSelected;
+  // Validation: Clinician must select Agree/Disagree/Unable to determine and check confirmation
+  const canProceed = agreement !== null && isConfirmed;
 
   const handleSelectAgreement = (type: AgreementType) => {
     setAgreement(type);
     if (type === 'agree') {
-      // Pre-fill with the candidate grade when agreeing
+      setCertifiedGrade(modelGrade);
+    } else if (type === 'inconclusive') {
       setCertifiedGrade(modelGrade);
     } else if (type === 'disagree') {
-      // If disagreeing, clear if it matches model grade to force conscious human selection
       if (certifiedGrade === modelGrade) {
         setCertifiedGrade(null);
       }
     }
   };
 
-  const handleOpenConfirm = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canProceed) return;
-    setShowConfirmDialog(true);
-  };
-
-  const handleConfirmAndSign = async () => {
-    if (certifiedGrade === null || agreement === null) return;
     setIsSubmitting(true);
 
     try {
+      const finalGrade = certifiedGrade ?? modelGrade;
       const updated = await clinicalApi.submitReview(assessment.id, {
         agreement,
-        certifiedGrade,
-        certifiedGradeLabel: ICDR_GRADES[certifiedGrade].label,
+        certifiedGrade: finalGrade,
+        certifiedGradeLabel: ICDR_GRADES[finalGrade]?.label || 'Clinical Observation Recorded',
         justificationNotes: justificationNotes.trim() || undefined,
         inconclusiveReason: agreement === 'inconclusive' ? inconclusiveReason : undefined,
-        referralPlan,
+        referralPlan: 'Scope limited to classification verification; clinical referral decisions remain the exclusive responsibility of attending medical personnel.',
       });
 
       onReviewSubmitted(updated);
     } finally {
       setIsSubmitting(false);
-      setShowConfirmDialog(false);
     }
   };
 
@@ -103,7 +93,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
             </div>
             <div>
               <h2 id="review-modal-title" className="text-base font-bold leading-tight">
-                Official Clinical Evaluation & Sign-off
+                Professional Review & Concurrence
               </h2>
               <p className="text-xs text-teal-200 font-mono">
                 {assessment.id} • Patient {assessment.patientId} ({assessment.laterality})
@@ -120,11 +110,11 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
         </header>
 
         {/* Modal Scrollable Body */}
-        <form onSubmit={handleOpenConfirm} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
           {/* AI Model Baseline Observation for Comparison */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              Reference AI Computational Observation:
+              Preliminary Model Attribution & Classification:
             </span>
             <div className="flex items-center justify-between text-slate-800">
               <span className="font-bold text-sm">
@@ -134,18 +124,18 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
                 Score: {assessment.modelObservation?.primaryScore.toFixed(2)}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">
-              Target region: {assessment.modelObservation?.topActivationRegion}
+            <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded border border-slate-100 leading-relaxed">
+              Note: The visual attribution highlights image regions that influenced the model output. It does not constitute verified lesion localisation or clinical interpretation.
             </p>
           </div>
 
-          {/* Section 1: Clinical Agreement Tri-State Selector */}
+          {/* Section 1: Professional Review Response */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
-              1. Clinician Agreement with Preliminary Model Observation *
+              1. Professional Assessment Response *
             </label>
             <p className="text-[11px] text-slate-500">
-              Select your clinical assessment agreement. (Anti-automation bias: no pre-selected default).
+              Record your independent evaluation of the automated finding.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1" role="radiogroup">
@@ -171,7 +161,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
                     Concur
                   </span>
                 </div>
-                <div className="font-bold text-slate-900">Agree with AI Observation</div>
+                <div className="font-bold text-slate-900">Agree</div>
                 <p className="text-[11px] text-slate-500">
                   Retinal findings concur with model candidate class.
                 </p>
@@ -199,9 +189,9 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
                     Override
                   </span>
                 </div>
-                <div className="font-bold text-slate-900">Disagree / Override</div>
+                <div className="font-bold text-slate-900">Disagree</div>
                 <p className="text-[11px] text-slate-500">
-                  Clinician identifies a different ICDR clinical stage.
+                  Clinician identifies alternate retinal findings.
                 </p>
               </button>
 
@@ -229,41 +219,9 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
                 </div>
                 <div className="font-bold text-slate-900">Unable to Determine</div>
                 <p className="text-[11px] text-slate-500">
-                  Clinical artifacts, opacity, or ungradable ambiguity.
+                  Image artifacts, opacity, or ungradable ambiguity.
                 </p>
               </button>
-            </div>
-          </div>
-
-          {/* Section 2: Certified Classification (ICDR 5-Grade) */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
-              2. Clinician Certified Classification (ICDR 5-Grade) *
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2" role="radiogroup">
-              {Object.values(ICDR_GRADES).map((item) => {
-                const isSelected = certifiedGrade === item.grade;
-                return (
-                  <button
-                    key={item.grade}
-                    type="button"
-                    onClick={() => setCertifiedGrade(item.grade)}
-                    className={`p-3 rounded-lg border text-left transition focus-visible:ring-2 focus-visible:ring-clinical-primary ${
-                      isSelected
-                        ? 'border-teal-600 bg-teal-50 ring-2 ring-teal-500 font-bold'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                    role="radio"
-                    aria-checked={isSelected}
-                  >
-                    <span className="block text-xs font-bold text-slate-900">Grade {item.grade}</span>
-                    <span className="block text-[11px] text-slate-600 truncate mt-0.5">
-                      {item.label.split(':')[1]?.trim() || item.label}
-                    </span>
-                  </button>
-                );
-              })}
             </div>
           </div>
 
@@ -287,14 +245,14 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
             </div>
           )}
 
-          {/* Clinical Observation Rationale (Optional per supervisor directive) */}
+          {/* Clinical Observation Notes (Optional per supervisor directive) */}
           <div className="space-y-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
             <div className="flex items-center justify-between">
               <label htmlFor="justification-text" className="block text-xs font-bold text-slate-800">
-                Clinical Observation Rationale (Optional)
+                Professional Observation Notes (Optional)
               </label>
               <span className="text-[10px] text-slate-400 font-mono">
-                Optional observation notes
+                Optional clinical commentary
               </span>
             </div>
             <textarea
@@ -302,48 +260,36 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
               rows={2}
               value={justificationNotes}
               onChange={(e) => setJustificationNotes(e.target.value)}
-              placeholder="Enter optional clinical findings or override rationale (e.g., Focal microaneurysms noted in macular zone, or 4-2-1 rule verification)..."
+              placeholder="Enter optional clinical findings or observations (e.g., Microaneurysm cluster noted in temporal macula, or artifact on lens)..."
               className="w-full text-xs p-2.5 border border-slate-300 rounded-lg bg-white shadow-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
             />
           </div>
 
-          {/* Section 3: Management & Referral Protocol */}
-          <div className="space-y-2">
-            <label htmlFor="referral-plan" className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
-              3. Management & Referral Recommendation Protocol *
+          {/* Review Confirmation Checkbox (Anti-Automation Bias Guardrail) */}
+          <div className="p-3 bg-teal-50/60 rounded-xl border border-teal-200 flex items-start gap-2.5">
+            <input
+              id="confirm-checkbox"
+              type="checkbox"
+              checked={isConfirmed}
+              onChange={(e) => setIsConfirmed(e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-clinical-primary rounded border-slate-300 focus:ring-clinical-primary"
+            />
+            <label htmlFor="confirm-checkbox" className="text-xs text-teal-950 font-medium cursor-pointer leading-relaxed">
+              I confirm that I have evaluated the preliminary model observation and visual attribution, and this submission reflects my independent professional assessment.
             </label>
-            <select
-              id="referral-plan"
-              value={referralPlan}
-              onChange={(e) => setReferralPlan(e.target.value)}
-              className="w-full text-xs p-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-clinical-primary"
-            >
-              <option value="Routine 12-month diabetic eye screening recall.">
-                Routine 12-month recall (No or mild DR without macular edema)
-              </option>
-              <option value="Repeat photograph & clinical assessment in 3–6 months.">
-                Repeat photograph & assessment in 3–6 months (Stable moderate NPDR)
-              </option>
-              <option value="Referral to secondary care / hospital medical retina clinic.">
-                Referral to medical retina clinic (Moderate to severe NPDR / DMO)
-              </option>
-              <option value="Urgent vitreoretinal / anti-VEGF referral within 2 weeks.">
-                Urgent referral within 2 weeks (PDR, vitreous hemorrhage, active NVD)
-              </option>
-            </select>
           </div>
 
-          {/* Clinician Digital Signature Preview */}
+          {/* Reviewer Information Preview */}
           <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-slate-600 flex items-center justify-between text-[11px]">
             <div>
-              <span className="font-bold text-slate-800 block">Signatory: {currentUser.name}</span>
+              <span className="font-bold text-slate-800 block">Reviewer: {currentUser.name}</span>
               <span className="font-mono text-slate-500">
-                Lic: {currentUser.licenseNumber} • {currentUser.facility}
+                {currentUser.facility}
               </span>
             </div>
             <div className="flex items-center text-teal-700 font-mono font-semibold">
-              <Lock className="w-3.5 h-3.5 mr-1 text-teal-600" />
-              Professional Review Sign-off
+              <ShieldCheck className="w-4 h-4 mr-1 text-teal-600" />
+              Independent Professional Review
             </div>
           </div>
 
@@ -362,84 +308,12 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
               disabled={!canProceed || isSubmitting}
               className="px-6 py-2.5 text-xs font-bold text-white bg-clinical-primary hover:bg-clinical-primary-hover rounded-lg shadow-sm transition disabled:opacity-40 flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-clinical-primary"
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Review and Confirm Sign-off</span>
+              <FileCheck className="w-4 h-4" />
+              <span>{isSubmitting ? 'Recording Review...' : 'Submit Professional Review'}</span>
             </button>
           </div>
         </form>
       </div>
-
-      {/* Explicit Confirmation Dialog (Anti-Automation Bias Guardrail) */}
-      {showConfirmDialog && certifiedGrade !== null && (
-        <div
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="confirm-dialog-title"
-          className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-start space-x-3 text-teal-800">
-              <FileCheck className="w-6 h-6 text-clinical-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 id="confirm-dialog-title" className="text-base font-bold text-slate-900">
-                  Confirm Official Clinical Certification
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Mandatory explicit verification checkpoint prior to signing.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Patient Reference:</span>
-                <span className="font-bold text-slate-900">{assessment.patientId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Eye Laterality:</span>
-                <span className="font-bold text-slate-900">
-                  {assessment.laterality === 'OD' ? 'OD (Right Eye)' : 'OS (Left Eye)'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Model Candidate Class:</span>
-                <span className="font-mono text-slate-700">
-                  {assessment.modelObservation?.primaryClassLabel} ({assessment.modelObservation?.primaryScore.toFixed(2)})
-                </span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-slate-200">
-                <span className="font-bold text-slate-800">Certified Human Diagnosis:</span>
-                <span className="font-bold text-teal-800 font-mono">
-                  {ICDR_GRADES[certifiedGrade].label}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
-              <strong>Medical-Legal Traceability Notice:</strong> Once signed, this record becomes an immutable clinical document tied to your GMC/professional registration. It cannot be altered without an addendum audit entry.
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg border border-slate-300"
-              >
-                Return to Edit
-              </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleConfirmAndSign}
-                className="px-5 py-2 text-xs font-bold text-white bg-clinical-primary hover:bg-clinical-primary-hover rounded-lg shadow-sm flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-clinical-primary"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Confirm and Sign Record</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
