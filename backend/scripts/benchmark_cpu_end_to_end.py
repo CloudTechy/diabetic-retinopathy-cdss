@@ -223,7 +223,7 @@ def main():
     from app.services.validation.gate1_integrity import evaluate_gate1
     from app.services.validation.gate2_relevance import evaluate_gate2
     from app.services.validation.gate3_quality import evaluate_gate3
-    from app.services.ai_service import generate_viridis_colormap
+    from app.services.ai_service import viridis_rgba_array
 
     torch.set_grad_enabled(True)   # Grad-CAM needs gradients
     device = torch.device("cpu")
@@ -295,11 +295,11 @@ def main():
         cam_pil = Image.fromarray((cam * 255).astype(np.uint8)).resize(
             (512, 512), Image.Resampling.BILINEAR)
         cam_arr = np.array(cam_pil, dtype=np.float32) / 255.0
-        rgba = np.zeros((512, 512, 4), dtype=np.uint8)
-        for i in range(512):
-            for j in range(512):
-                rgba[i, j] = generate_viridis_colormap(float(cam_arr[i, j]))
-        heatmap = Image.fromarray(rgba, mode="RGBA")
+        # Call the production composition function. This stage previously held a
+        # copy of the per-pixel loop, which silently kept measuring code that
+        # ai_service no longer runs. Import it; never reimplement it.
+        rgba = viridis_rgba_array(cam_arr)
+        heatmap = Image.fromarray(rgba)
         timings["compose"].append((t() - t0) * 1000)
 
         t0 = t()
@@ -404,10 +404,24 @@ def main():
         worst = max(rows, key=lambda r: r["mean_ms"])
         print(f"\nDominant stage: '{worst['stage']}' at {worst['mean_ms']:.1f} ms "
               f"({worst['pct_of_total']}% of the request).")
-        if worst["stage"] == "compose":
-            print("Note: heatmap composition runs a 512x512 nested Python loop "
-                  "(262,144 iterations) calling generate_viridis_colormap per pixel.\n"
-                  "      Vectorising it with numpy would remove most of this cost.")
+        hints = {
+            "gate2": "Gate 2 computes aperture coverage and channel ratios over the "
+                     "FULL-resolution image; downsampling first would cut this sharply.",
+            "gate3": "Gate 3 computes Laplacian variance and illumination over the "
+                     "FULL-resolution image; lowering its resize ceiling would help.",
+            "compose": "Heatmap composition. If this is large, confirm it is calling "
+                       "viridis_rgba_array and not a per-pixel loop.",
+            "encode": "PNG serialisation of the 512x512 overlay; a lower compress_level "
+                      "trades file size for speed.",
+            "forward": "Model forward pass - this is the irreducible floor.",
+        }
+        if worst["stage"] in hints:
+            print(f"Note: {hints[worst['stage']]}")
+
+        gates = sum(r["mean_ms"] for r in rows if r["stage"] in ("gate2", "gate3"))
+        if gates > 0:
+            print(f"Validation gates 2+3 together: {gates:.1f} ms "
+                  f"({100 * gates / mean_total:.0f}% of the request).")
 
     compute_stages = ["preprocess", "forward", "gradcam", "compose", "encode"]
     compute_total = sum(r["mean_ms"] for r in rows if r["stage"] in compute_stages)

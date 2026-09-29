@@ -224,7 +224,7 @@ def create_mock_gradcam_heatmap(
     # Convert to RGBA image with Viridis palette
     rgba_arr = viridis_rgba_array(activation)
 
-    return Image.fromarray(rgba_arr, mode="RGBA")
+    return Image.fromarray(rgba_arr)
 
 
 class MockInferenceService(BaseInferenceService):
@@ -498,7 +498,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
             rgba_arr = viridis_rgba_array(cam_arr)
 
-            gradcam_img = Image.fromarray(rgba_arr, mode="RGBA")
+            gradcam_img = Image.fromarray(rgba_arr)
 
             # Fallback if CAM is completely empty
             if np.max(cam) == 0:
