@@ -35,7 +35,10 @@ from app.schemas.assessment import (
     AuditEventSchema,
 )
 from app.services.validation.pipeline import ValidationPipeline, ValidationPipelineResult
-from app.services.ai_service import default_ai_service, ICDR_CLASS_METADATA
+from app.services.ai_service import (
+    get_active_inference_service,
+    ICDR_CLASS_METADATA,
+)
 
 
 class InvalidStateTransitionError(Exception):
@@ -295,7 +298,7 @@ class AssessmentService:
 
         # Call AI Inference Engine
         start_time = datetime.datetime.now(timezone.utc)
-        inference_out = default_ai_service.predict(
+        inference_out = get_active_inference_service().predict(
             pil_image=pil_img,
             laterality=assessment.eye_laterality,
             candidate_grade=candidate_grade,

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.core.config import settings
+from app.services.ai_service import get_inference_health
 
 router = APIRouter(tags=["Health"])
 
@@ -14,6 +15,9 @@ class HealthResponse(BaseModel):
     environment: str
     timestamp: str
     storage_accessible: bool
+    inference_ready: bool
+    inference_engine: str
+    inference_detail: str
     version: str = "1.0.0"
 
 
@@ -23,11 +27,18 @@ async def health_check():
     # Check if storage paths exist or are creatable
     storage_accessible = os.path.exists(settings.STORAGE_BASE_PATH) or os.path.exists("./storage")
 
+    # Surface inference readiness here so a missing or unverified checkpoint is
+    # observable, rather than only discovered when a clinician submits a scan.
+    inference = get_inference_health()
+
     return HealthResponse(
-        status="healthy",
+        status="healthy" if inference["ready"] else "degraded",
         app_name=settings.APP_NAME,
         environment=settings.APP_ENV,
         timestamp=datetime.now(timezone.utc).isoformat(),
         storage_accessible=storage_accessible,
+        inference_ready=inference["ready"],
+        inference_engine=inference["engine"],
+        inference_detail=inference["detail"],
         version="1.0.0",
     )
