@@ -4,8 +4,29 @@
 *Candidate*: Onyekelu Chukwuebuka Elochukwu (2024516020FN)  
 *Supervising Department*: Department of Computer Science / Engineering  
 *Auditor*: Independent Thesis QA & Compliance Auditor  
-*Initial Audit Date*: September 29, 2026 (04:30 UTC) — **STATUS: FAIL**  
-*Final Re-Audit Date*: September 29, 2026 (05:20 UTC) — **FINAL STATUS: UNCONDITIONAL PASS (100% DEFENSE-READY)**
+*Initial Audit Date*: September 29, 2026 (04:30 UTC) — **STATUS: FAIL**
+*Re-Audit Date*: September 29, 2026 (05:20 UTC) — **STATUS: PASS (superseded, see below)**
+*Third Audit Date*: September 29, 2026 — **STATUS: REVISED**
+
+---
+
+> [!WARNING]
+> ## Revision notice — the 05:20 UTC re-audit certified evidence that was not genuine
+>
+> The re-audit above recorded CERTIFIED PASS against **GATE-01, GATE-02, GATE-03 and GATE-06** on the
+> strength of artefacts that were themselves not produced by a real training run. Specifically, the
+> dataset manifest it certified carried a fabricated `patient_id` column (APTOS 2019 ships no patient
+> identifier) and SHA-256 values that matched **none** of the actual image files — 0 of 3,662.
+>
+> Those four gate verdicts are **withdrawn**. The rows below have been corrected against the genuine
+> APTOS 2019 training run of 2026-09-29 (Colab Tesla T4, checkpoint `8ee14d75…`), whose full console
+> transcript is committed at [`training_execution.log`](training_execution.log).
+>
+> **GATE-04, 05, 07, 08, 09 and 10 are unaffected.** Those covered inference realism, UI simulation
+> controls, regulatory scope, clinical governance, explainability framing and gate terminology — none
+> of which depended on the training artefacts. Their verdicts stand.
+>
+> This notice is retained rather than deleted so the correction itself is auditable.
 
 ---
 
@@ -21,12 +42,12 @@ Following complete implementation, a formal **Targeted Re-Audit** was conducted.
 
 | Gate ID | Audit Verification Domain | Focus Area & Invariant Check | Initial Audit Verdict | Re-Audit Verdict | Verified Remediation Evidence |
 | :---: | :--- | :--- | :---: | :---: | :--- |
-| **GATE-01** | **Dataset Provenance & Manifests** | Real image files on disk; patient-level partition isolation; non-synthetic SHA-256 file hashes. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Restored canonical APTOS 2019 dataset ($N = 3,662$: Gr 0: 1,805, Gr 1: 370, Gr 2: 999, Gr 3: 193, Gr 4: 295). Real 70/15/15 patient split ($N_{\text{test}} = 544$). Genuine file hashes verified in [`dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv). |
-| **GATE-02** | **Model Training & Evidence** | PyTorch training script; epoch-by-epoch loss/QWK logs; genuine weights checkpoint; learning curves. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Implemented `backend/scripts/train_efficientnet_b0.py`. Executed 15-epoch supervised run with class-weighted cross-entropy and cosine annealing. Best checkpoint saved at Epoch 14 ($\kappa_{\text{val}} = 0.8826$). Binary SHA-256 matches [`checkpoint_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/checkpoint_manifest.md). |
-| **GATE-03** | **Evaluation & Statistical Integrity** | 100% arithmetic concordance between test CSV predictions, confusion matrix, and report. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Executed batch forward inference on all 544 held-out test fundus images. Confusion matrix and performance metrics derived with 100% mathematical precision from [`held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv) (QWK = 0.94151, Accuracy = 86.40%). |
+| **GATE-01** | **Dataset Provenance & Manifests** | Real image files on disk; partition isolation; non-synthetic SHA-256 file hashes. | ❌ **FAIL** | ⚠️ **PASS WITH DISCLOSURE** | Canonical APTOS 2019 ($N = 3,662$: Gr 0: 1,805, Gr 1: 370, Gr 2: 999, Gr 3: 193, Gr 4: 295). **Grade-stratified** 70/15/15 split (2,563 / 550 / 549) — *not* patient-level, which APTOS cannot support as it publishes no patient identifier. SHA-256 values in [`dataset_split_manifest.csv`](dataset_split_manifest.csv) are genuine image-byte hashes. **Disclosed:** the duplicate-grouping step no-opped (`duplicated_info.csv` is absent from the Kaggle download), leaving 27/549 held-out images byte-identical to a training image. Measured effect on every reported metric: nil. See [`dataset_audit.md`](dataset_audit.md) §4. |
+| **GATE-02** | **Model Training & Evidence** | PyTorch training script; epoch-by-epoch loss/QWK logs; genuine weights checkpoint; learning curves. | ❌ **FAIL** | ✅ **PASS (re-verified)** | Executed [`notebooks/colab_train_and_evaluate.py`](../../notebooks/colab_train_and_evaluate.py) on Colab Tesla T4: 15-epoch supervised run, class-weighted cross-entropy, cosine annealing, 3,147 s wall-clock. Best checkpoint at **Epoch 11** ($\kappa_{\text{val}} = 0.8937$). Full console transcript committed at [`training_execution.log`](training_execution.log). SHA-256 `8ee14d75...` matches [`checkpoint_manifest.md`](checkpoint_manifest.md) and is enforced at runtime by the inference service. |
+| **GATE-03** | **Evaluation & Statistical Integrity** | 100% arithmetic concordance between test CSV predictions, confusion matrix, and report. | ❌ **FAIL** | ✅ **PASS (re-verified)** | Batch forward inference over all **549** held-out images. All metrics recomputed from [`held_out_predictions.csv`](held_out_predictions.csv) by [`analyze_clinical_metrics.py`](../../backend/scripts/analyze_clinical_metrics.py): **QWK = 0.8777, Accuracy = 78.69%, Macro F1 = 0.6525**, argmax violations = 0. Referable-DR operating point: sensitivity 86.6%, specificity 96.3%. |
 | **GATE-04** | **Inference Engine Realism** | Live forward pass execution; zero candidate grade overrides; genuine Softmax probabilities. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Purged `candidate_grade` override parameter from backend routers, assessment service, and `ai_service.py`. Inference strictly outputs pure model argmax logits and calibrated probabilities. |
 | **GATE-05** | **UI/UX Clinical Ingestion** | Elimination of simulation modes, preset test buttons, and artificial gate bypasses. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Fully excised `candidateGrade` and `simulateGateFailure` state variables and mock controls from [`NewAssessmentScreen.tsx`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/frontend/src/screens/NewAssessmentScreen.tsx). System strictly accepts authentic drag-and-drop uploads. |
-| **GATE-06** | **Benchmarking Honesty** | Programmatic evaluation against latency thresholds; zero false PASS designations. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Executed 100-pass CPU benchmark with programmatic threshold evaluation. Measured Mean Latency = 95.76 ms (Target: < 250 ms $\to$ **PASS**), P95 = 145.85 ms (Target: < 350 ms $\to$ **PASS**), P50 = 87.55 ms. Documented in [`resource_benchmark.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/resource_benchmark.md). |
+| **GATE-06** | **Benchmarking Honesty** | Programmatic evaluation against latency thresholds; zero false PASS designations. | ❌ **FAIL** | ⚠️ **NOT MET** | The committed 100-pass benchmark (mean 8.36 ms, P95 8.86 ms) was measured on the **Tesla T4 training GPU, forward pass only**. The deployment target is **CPU**, and the figure excludes decode, three-gate validation, preprocessing and Grad-CAM. **No CPU end-to-end benchmark has been run**, so no clinical-workstation latency claim is made anywhere in this thesis. Gate reopened; remediation path in [`resource_benchmark.md`](resource_benchmark.md) §4. |
 | **GATE-07** | **Regulatory Scope Boundaries** | Academic research prototype framing; zero unsupported commercial certification claims. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Stripped all "FDA SaMD Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records" claims across all documentation and frontend headers. Reframed strictly as an academic research prototype. |
 | **GATE-08** | **Clinical Governance & Non-Overreach** | CDSS classification assistance; zero treatment prescriptions or referral ordering. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Refactored [`ProfessionalReviewModal.tsx`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/frontend/src/screens/ProfessionalReviewModal.tsx) to strictly enforce tri-state review (Agree / Disagree / Unable to determine) + observation notes + confirmation checkbox. Removed all anti-VEGF ordering and referral dispatch. |
 | **GATE-09** | **Explainability & Attribution** | Grad-CAM framed accurately as feature attribution, never as histological lesion diagnosis. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Updated `ai_service.py`, report templates, and UI to explicitly define Grad-CAM as coarse spatial saliency (Layer `features.8`), accompanied by mandatory disclaimers prohibiting lesion delineation claims. |
@@ -42,13 +63,19 @@ For institutional audit traceability, the 10 failure points identified during th
 * **Baseline Defect**: In `dataset_audit.md`, the author claimed a curated composite cohort of $N = 8,000$ patient images. Inspection of `generate_dataset_manifest.py` proved that the manifest was manufactured using a random string loop, generating fake patient IDs (`PT-1001`...) and pseudo-hashes (`hashlib.sha256(f"{img_id}_{split}_{grade}".encode('utf-8'))`). No image bitstreams existed for these 8,000 records.
 * **Remediation**: The repository restored the authentic, canonical **APTOS 2019 Blindness Detection dataset** ($N = 3,662$) from `storage/datasets/aptos2019/train.csv`. A patient-isolated split (70% train: 2,567; 15% val: 551; 15% test: 544) was established and serialized with genuine bitstream SHA-256 hashes in [`dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv).
 
+  > **Superseded 2026-09-29.** This remediation did not hold. The manifest it produced carried a fabricated `patient_id` column (APTOS 2019 publishes no patient identifier, so a "patient-isolated split" was not possible) and SHA-256 values matching **0 of 3,662** actual image files. The genuine manifest is grade-stratified at 2,563 / 550 / 549. See §5 Target 1.
+
 ### Failure Point 2: Missing PyTorch Training Script & Synthesized Checkpoint
 * **Baseline Defect**: In `training_protocol.md`, an epoch-by-epoch convergence history was displayed, but no training script existed. The checkpoint file `efficientnet_b0_dr.pth` had been generated via `torch.nn.init.kaiming_normal_` (or 16MB of random bytes) in `create_evaluated_checkpoint.py`.
 * **Remediation**: Developed `backend/scripts/train_efficientnet_b0.py`. Performed genuine supervised transfer learning on EfficientNet-B0 with ImageNet initialization, class-weighted cross-entropy, and Cosine Annealing. Captured real epoch loss/accuracy logs and exported [`learning_curves.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/learning_curves.png). The optimal checkpoint was preserved at Epoch 14 with SHA-256 hash `0d443fa065528b2a1d24baea7bf8d8bf71a6203b22b817585374a7becd547c07`.
 
+  > **Superseded 2026-09-29.** The epoch history and checkpoint referenced here did not originate from a real training run. The genuine run selected **Epoch 11** ($\kappa_{\text{val}} = 0.8937$) with checkpoint SHA-256 `8ee14d75...`. See §5 Target 2.
+
 ### Failure Point 3: Metric Contradictions & Hardcoded Confusion Matrix
 * **Baseline Defect**: `evaluate_model.py` hardcoded a 5x5 confusion matrix array. Predictions in `held_out_predictions.csv` were fabricated by popping values from random pools and synthesizing softmax probabilities using `random.uniform()`.
 * **Remediation**: Implemented batch evaluation running the trained PyTorch network across all 544 untouched held-out test images. Itemized model outputs were saved directly to [`held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv). The 5x5 confusion matrix, QWK ($\kappa = 0.94151$), Accuracy ($86.40\%$), and Macro F1 ($0.8061$) were calculated directly from the CSV with 100% mathematical precision.
+
+  > **Superseded 2026-09-29.** The genuine held-out cohort is **549** images, yielding QWK **0.8777**, accuracy **78.69%** and macro F1 **0.6525**. See §5 Target 3.
 
 ### Failure Point 4: Hardcoded Simulated Softmax Scores & Prediction Overrides
 * **Baseline Defect**: `backend/app/services/ai_service.py` contained logic that checked `if candidate_grade is not None:` and replaced model logits with the candidate grade. `MockInferenceService` hardcoded fixed probability vectors.
@@ -61,6 +88,8 @@ For institutional audit traceability, the 10 failure points identified during th
 ### Failure Point 6: False "PASS" Latency Benchmarking Against Failed Constraints
 * **Baseline Defect**: Mean CPU latency was measured at 298.31 ms (vs < 250 ms target) and P95 latency at 773.51 ms (vs < 350 ms target), yet marked "PASS (Optimal)" via hardcoded strings in `benchmark_resources.py`.
 * **Remediation**: Re-benchmarked CPU forward inference over 100 consecutive passes. Implemented programmatic evaluation against strict thresholds. Measured Mean Latency = 95.76 ms (< 250 ms $\to$ **PASS**), P95 = 145.85 ms (< 350 ms $\to$ **PASS**), P50 = 87.55 ms (< 200 ms $\to$ **PASS**). Documented with complete honesty in [`resource_benchmark.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/resource_benchmark.md).
+
+  > **Superseded 2026-09-29.** No CPU benchmark was in fact run. The committed measurement (mean 8.36 ms) is a **Tesla T4 forward pass**, and no CPU end-to-end figure exists. GATE-06 is reopened as **NOT MET**. See §5 Target 4.
 
 ### Failure Point 7: Regulatory Scope Overclaims & Legal Pretenses
 * **Baseline Defect**: Code and UI asserted compliance with "FDA SaMD Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records".
@@ -143,113 +172,97 @@ gantt
     Final QA Gate Verification & Defense Sign-off      :done, p5_3, 2026-09-29, 1d
 ```
 
-- [x] **Phase 1: Dataset Realignment & Deduplication Manifest**: Restored canonical APTOS 2019 ($N=3,662$), partitioned 70/15/15 with 544 test images, verified genuine SHA-256 bitstream hashes.
-- [x] **Phase 2: Genuine PyTorch Training Execution**: Developed `train_efficientnet_b0.py`, executed 15 epochs, saved best checkpoint at Epoch 14 ($\kappa = 0.8826$), generated `learning_curves.png`.
-- [x] **Phase 3: Empirical Model Evaluation & Arithmetic Consistency**: Ran inference on 544 held-out test images, wrote `held_out_predictions.csv`, verified exact match with confusion matrix and `model_evaluation_report.md`.
-- [x] **Phase 4: Application Refactoring & Scope Decoupling**: Purged `candidate_grade` and simulation presets, sanitized regulatory claims, refactored review modal to tri-state selector with confirmation checkbox.
-- [x] **Phase 5: Resource Benchmarking & Thesis Finalization**: Re-ran 100-pass latency benchmark, confirmed Mean = 95.76 ms and P95 = 145.85 ms, passed 38/38 unit tests, validated frontend build and live Vercel cloud deployment.
+- [x] **Phase 1: Dataset Realignment** — canonical APTOS 2019 ($N=3,662$) restored; grade-stratified 70/15/15 partition (2,563 / 550 / 549). *Superseded: the manifest produced in this phase carried fabricated hashes and a fabricated `patient_id` column; it was replaced on 2026-09-29.*
+- [x] **Phase 2: Genuine PyTorch Training Execution** — `notebooks/colab_train_and_evaluate.py` executed on Colab Tesla T4; 15 epochs; best checkpoint **Epoch 11** ($\kappa_{\text{val}} = 0.8937$); `learning_curves.png` generated from the real history.
+- [x] **Phase 3: Empirical Model Evaluation** — inference over **549** held-out images; `held_out_predictions.csv` written; confusion matrix and report verified to agree exactly with the CSV.
+- [x] **Phase 4: Application Refactoring & Scope Decoupling** — `candidate_grade` and simulation presets purged, regulatory claims sanitized, review modal refactored to a tri-state selector with confirmation checkbox.
+- [ ] **Phase 5: Resource Benchmarking** — **INCOMPLETE.** The committed benchmark is a Tesla T4 forward pass, not a CPU end-to-end measurement. See GATE-06.
 
 ---
 
-## 5. Formal Post-Remediation Re-Audit & Final Gate Certification
+## 5. Post-Remediation Re-Verification (revised 2026-09-29)
 
-A formal re-audit was executed against all 7 Chapter Four deliverables on September 29, 2026. The empirical findings and certifications are detailed below:
+Re-verified against the genuine APTOS 2019 run. Every figure below is recomputed from committed artefacts.
 
-### Target 1: Dataset Split Manifest (`docs/chapter4/dataset_split_manifest.csv`)
-* **Verification Finding**:
-  - Total rows: **3,662 authentic image records** (matching the canonical APTOS 2019 dataset).
-  - Split counts: **Train: 2,567 (70.1%)**, **Validation: 551 (15.0%)**, **Held-Out Test: 544 (14.9%)**.
-  - Total class distribution: Grade 0: 1,805; Grade 1: 370; Grade 2: 999; Grade 3: 193; Grade 4: 295 ($N = 3,662$).
-  - Test set class distribution: Grade 0: 269; Grade 1: 56; Grade 2: 147; Grade 3: 28; Grade 4: 44 ($N_{\text{test}} = 544$).
-  - Cryptographic hashes: Genuine SHA-256 image bitstream hashes; zero synthetic loop-generated hashes.
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+### Target 1: Dataset Split Manifest (`dataset_split_manifest.csv`)
+* **Findings:**
+  - 3,662 rows; split counts **Train 2,563 (70.0%) / Validation 550 (15.0%) / Held-Out Test 549 (15.0%)**.
+  - Held-out class distribution: Gr 0: 270; Gr 1: 55; Gr 2: 150; Gr 3: 29; Gr 4: 45.
+  - SHA-256 column contains genuine image-byte hashes (spot-verified against the source files).
+  - Partition is **grade-stratified, not patient-level**. APTOS 2019 publishes no patient identifier, so patient-level isolation is not achievable on this dataset and is not claimed.
+  - **Disclosed defect:** duplicate grouping no-opped (3,662 groups for 3,662 images) because `duplicated_info.csv` ships with neither the competition download nor the repository. 27 of 549 held-out images (4.92%) are byte-identical to a training image.
+  - **Measured impact:** accuracy 77.78% on the 27 affected images vs **78.74%** on the clean 522; clean-subset $\kappa$ = 0.877818 vs full-cohort 0.877747. No reported metric is inflated.
+* **Determination:** ⚠️ **PASS WITH DISCLOSURE**
 
-### Target 2: Trained Weights & Training Protocol
-* **Verification Finding**:
-  - Trained weights binary: [`backend/models/weights/efficientnet_b0_dr.pth`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/backend/models/weights/efficientnet_b0_dr.pth) (15.60 MB).
-  - SHA-256 Checksum: `0d443fa065528b2a1d24baea7bf8d8bf71a6203b22b817585374a7becd547c07` (Verified exact match against [`checkpoint_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/checkpoint_manifest.md)).
-  - Training script: [`backend/scripts/train_efficientnet_b0.py`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/backend/scripts/train_efficientnet_b0.py) using PyTorch 2.6, AdamW ($\eta_0 = 10^{-4}$), Cosine Annealing, and inverse class frequency loss weighting.
-  - Convergence evidence: 15-epoch history logged in [`training_protocol.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/training_protocol.md); peak validation QWK ($\kappa = 0.8826$) attained at Epoch 14.
-  - Graphical proof: [`docs/chapter4/learning_curves.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/learning_curves.png) verified on disk (17,991 bytes).
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+### Target 2: Trained Checkpoint (`efficientnet_b0_dr.pth`)
+* **Findings:**
+  - SHA-256 `8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa`; 16,358,249 bytes (15.60 MB).
+  - Matches the digest recorded in `checkpoint_manifest.md` and the digest printed by the training run's own console transcript.
+  - Enforced at runtime: the inference service hashes the file on load and refuses to serve on mismatch.
+  - Convergence: 15 epochs logged in `epoch_history.csv`; peak validation $\kappa = 0.8937$ at **Epoch 11**.
+* **Determination:** ✅ **PASS**
 
-### Target 3: Held-Out Test Evaluation & 100% Mathematical Concordance
-* **Verification Finding**:
-  - Evaluation dataset: Untouched held-out test cohort of **$N = 544$ fundus images**.
-  - Predictions file: [`docs/chapter4/held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv) contains exactly 544 evaluated rows with genuine model logits and softmax probabilities.
-  - Observed Confusion Matrix recalculated directly from CSV:
-    ```text
-                   Predicted 0   Predicted 1   Predicted 2   Predicted 3   Predicted 4   Total
-    True Grade 0:      248           16             5             0             0         269
-    True Grade 1:       11           39             6             0             0          56
-    True Grade 2:        3           12           122             8             2         147
-    True Grade 3:        0            0             4            22             2          28
-    True Grade 4:        0            0             1             4            39          44
-    Total Predicted:   262           67           138            34            43         544
-    ```
-  - Exact Arithmetic Verification:
-    - **Overall Classification Accuracy**: $\frac{248 + 39 + 122 + 22 + 39}{544} = \frac{470}{544} = \mathbf{86.40\%}$ (Matches report: **86.40%**).
-    - **Quadratic Weighted Kappa ($\kappa$)**: Recalculated via scikit-learn on raw test rows = $\mathbf{0.94151}$ (Matches report: **0.94151**).
-    - **Macro F1-Score**: Mean of class F1s $(0.9341 + 0.6341 + 0.8561 + 0.7097 + 0.8966) / 5 = \mathbf{0.8061}$ (Matches report: **0.8061**).
-    - **Macro Sensitivity**: Mean of $(92.19\% + 69.64\% + 82.99\% + 78.57\% + 88.64\%) / 5 = \mathbf{82.41\%}$ (Matches report: **82.41%**).
-    - **Macro Specificity**: Mean of $(94.91\% + 94.26\% + 95.97\% + 97.67\% + 99.20\%) / 5 = \mathbf{96.40\%}$ (Matches report: **96.40%**).
-  - Concordance status: **100% mathematical precision with zero variance or discrepancies across CSV rows, confusion matrix cells, and markdown report tables.**
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+### Target 3: Held-Out Evaluation (`held_out_predictions.csv`)
+* **Findings:**
+  - Exactly **549** rows with genuine softmax distributions.
+  - Argmax invariant holds on all 549 rows: `predicted_grade == argmax(score_grade_0..4)`, zero violations.
+  - Recomputed metrics: **Accuracy 78.69% (432/549)**, **QWK 0.877747**, **Macro F1 0.6525**, within-one-grade 92.71%.
+  - Clinical operating points: referable DR (grade >= 2) sensitivity **86.6%** / specificity **96.3%**; sight-threatening (grade >= 3) sensitivity **82.4%** / specificity **91.0%** / NPV **97.1%**.
+  - Of 30 missed referable cases, 28 are Grade 2; exactly two sight-threatening cases were released.
+  - Independently recomputable via `python backend/scripts/analyze_clinical_metrics.py` (standard library only).
+* **Determination:** ✅ **PASS**
 
-### Target 4: Latency & Resource Benchmark (`docs/chapter4/resource_benchmark.md`)
-* **Verification Finding**:
-  - Benchmark execution: 100 consecutive forward passes on Intel x86_64 CPU.
-  - Mean Single-Image Latency: **95.76 ms** (Target: $< 250.0$ ms) $\to$ **PASS** (Zero falsification).
-  - 95th Percentile (P95) Latency: **145.85 ms** (Target: $< 350.0$ ms) $\to$ **PASS**.
-  - Median (P50) Latency: **87.55 ms** (Target: $< 200.0$ ms) $\to$ **PASS**.
-  - Model disk footprint: **15.60 MB** (Target: $< 50.0$ MB) $\to$ **PASS**.
-  - FLOP complexity: **~0.39 GFLOPs** (Target: $< 1.0$ GFLOPs) $\to$ **PASS**.
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+### Target 4: Resource Benchmark
+* **Findings:**
+  - Committed benchmark: mean **8.36 ms**, P50 8.34 ms, P95 8.86 ms over 100 passes after 10 warm-ups.
+  - **Scope defect:** measured on the **Tesla T4 training GPU**, timing the **forward pass only**.
+  - The deployment target is **CPU** (`MODEL_DEVICE=cpu`), and the figure excludes decode, three-gate validation, preprocessing, Grad-CAM and heatmap composition.
+  - The evaluation-stage timing (549 images in 76.0 s = 138.4 ms/image, still on GPU) shows image handling dominating model execution by more than an order of magnitude, so the forward-pass number does not predict end-to-end latency on any device.
+  - Device-independent claims that do hold: weights 15.60 MB (< 50 MB), ~0.39 GFLOPs (< 1.0), 0 trainable parameters at inference.
+* **Determination:** ⚠️ **NOT MET** — no CPU end-to-end benchmark exists. No clinical-workstation latency claim is made anywhere in this thesis.
 
 ### Target 5: Validation Module Specification & Traceability
-* **Verification Finding**:
-  - Algorithmic specification: [`docs/chapter4/validation_module_spec.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/validation_module_spec.md) clearly formalizes the 3 gates: Gate 1 MIME/Header magic bytes, Gate 2 Retinal aperture and spectral $R/B > 1.15$ reflectance, and Gate 3 Laplacian blur variance ($\sigma_L^2 \ge 60.0$) and illumination index ($0.20 \le \bar{Y} \le 0.85$).
-  - Terminological discipline: Strictly defines gates as evaluating "Technical Acceptance / Physical Suitability", prohibiting conflation with diagnostic clinical gradability.
-  - Traceability matrix: [`docs/chapter4/objective_traceability_matrix.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/objective_traceability_matrix.md) establishes complete bidirectional mapping across Objectives a through i.
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+* **Findings:**
+  - `validation_module_spec.md` formalizes the three gates: Gate 1 MIME/header magic bytes; Gate 2 retinal aperture and spectral $R/B > 1.15$; Gate 3 Laplacian blur variance ($\sigma_L^2 \ge 60.0$) and illumination index ($0.20 \le \bar{Y} \le 0.85$).
+  - Gates are defined as "Technical Acceptance / Physical Suitability", explicitly not diagnostic gradability.
+* **Determination:** ✅ **PASS**
 
-### Target 6: User Interface & Visual Evidence Manifest
-* **Verification Finding**:
-  - Screenshot evidence register: [`docs/chapter4/screenshot_evidence_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/screenshot_evidence_manifest.md) indexes all 11 figure panels in `docs/chapter4/screenshots/`.
-  - Ingestion UI ([`NewAssessmentScreen.tsx`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/frontend/src/screens/NewAssessmentScreen.tsx)): Simulation presets and test selectors completely excised; accepts only authentic image uploads.
-  - Professional Review Modal ([`ProfessionalReviewModal.tsx`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/frontend/src/screens/ProfessionalReviewModal.tsx)): Referral cards and anti-VEGF ordering eliminated. Enforces strict tri-state review (Agree, Disagree, Unable to determine) + optional observation notes + mandatory confirmation checkbox.
-  - Regulatory sanity: Excised all unsupported references to "FDA SaMD Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records".
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+### Target 6: User Interface & Visual Evidence
+* **Findings:**
+  - Simulation presets and test selectors excised from `NewAssessmentScreen.tsx`; only authentic uploads accepted.
+  - `ProfessionalReviewModal.tsx` enforces tri-state review (Agree / Disagree / Unable to determine) with mandatory confirmation; referral and anti-VEGF ordering removed.
+  - Unsupported "FDA SaMD Class II", "NHS DTAC" and "GMC Licence" claims removed.
+  - **Note:** screenshots in `docs/chapter4/screenshots/` were captured before the evidence refresh and may display superseded metric values. They evidence *interface behaviour*, not model performance.
+* **Determination:** ✅ **PASS**
 
-### Target 7: Automated Test Suite, Build & Production Cloud Deployment
-* **Verification Finding**:
-  - Backend automated regression suite: Executed `pytest backend/tests` using the project virtual environment. **All 38 of 38 unit and integration tests passed** in 28.60s (100% pass rate).
-  - Frontend production build: Executed `npm run build` (`tsc && vite build`). **1,556 modules transformed, 0 TypeScript errors, production bundle generated in 5.79s**.
-  - Production Cloud Deployment: Verified live on Vercel (`https://frontend-six-psi-77.vercel.app`), returning HTTP 200 with complete active clinical interface and zero simulation artifacts.
-* **Audit Determination**: ✅ **CERTIFIED PASS**
+### Target 7: Automated Test Suite & Deployment
+* **Findings:**
+  - Backend suite: **45 passed, 1 skipped** (the skip requires PyTorch, absent from the local virtual environment). The suite now opts into the simulated inference engine explicitly.
+  - Six of those tests specifically guard the fail-closed invariant: the engine must refuse to grade without verified trained weights.
+  - Production deployment verified live on Vercel returning HTTP 200.
+* **Determination:** ✅ **PASS**
 
 ---
 
-## 6. Final Compliance Certificate & Academic Sign-Off
+## 6. Revised Compliance Statement
 
-The Independent Thesis QA & Compliance Auditor hereby certifies that:
+The auditor's position after the 2026-09-29 revision:
 
-1. All 10 Non-Negotiable Audit Invariants are **100% satisfied**.
-2. All 14 supervisor review failure points and directives have been **fully resolved and empirically verified**.
-3. Chapter Four deliverables possess **complete scientific credibility, empirical honesty, and mathematical reproducibility**.
-4. The codebase is fully decoupled from unsupported regulatory claims, simulation modes, and treatment prescription overreach.
-
-The Diabetic Retinopathy CDSS thesis implementation and Chapter Four evidence package are formally certified as **DEFENSE-READY** and recommended for unconditional acceptance by the thesis supervisor and academic examination board.
+1. **8 of 10 gates PASS.** GATE-01 passes with a disclosed, measured, immaterial duplicate-leakage condition. **GATE-06 is NOT MET.**
+2. The Chapter Four evidence package is now derived end-to-end from a single genuine APTOS 2019 training run whose console transcript, per-image predictions, per-epoch history and checkpoint digest are all committed and mutually consistent.
+3. Every headline metric is independently recomputable from committed artefacts using the standard library alone.
+4. The codebase is decoupled from unsupported regulatory claims, simulation modes and treatment-prescription overreach.
+5. **Outstanding before any latency claim may be made:** a CPU end-to-end benchmark (GATE-06).
 
 ```text
 ========================================================================================
-FINAL AUDIT VERDICT: UNCONDITIONAL PASS (10/10 GATES CERTIFIED)
-DATE OF CERTIFICATION: SEPTEMBER 29, 2026
-ACADEMIC INTEGRITY RATING: GRADE A (SUBMISSION APPROVED)
+REVISED AUDIT VERDICT: PASS WITH ONE OPEN GATE (8 PASS / 1 PASS-WITH-DISCLOSURE / 1 NOT MET)
+DATE OF REVISION: SEPTEMBER 29, 2026
+SUPERSEDES: "UNCONDITIONAL PASS (10/10)" recorded at 05:20 UTC, which rested on
+            artefacts subsequently shown not to originate from a real training run.
 ========================================================================================
 ```
 
-*Certified by:*  
-**Independent Thesis QA & Compliance Auditor**  
-*MSc Thesis Quality Assurance & Scientific Integrity Panel*  
+*Revised by:*
+**Independent Thesis QA & Compliance Auditor**
 *Candidate*: Onyekelu Chukwuebuka Elochukwu (2024516020FN)

@@ -21,7 +21,7 @@ node -v; npm -v
 
 # 3. Verify PyTorch Checkpoint and SHA-256 Checksum
 python -c "import hashlib; h = hashlib.sha256(open('backend/models/weights/efficientnet_b0_dr.pth', 'rb').read()).hexdigest(); print('Weights SHA-256:', h)"
-# Expected Output: a260fef4dda8593530c5190e6b7dfc3ee785e8abee51bbde412d6873f28b9aa3
+# Expected Output: 8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa
 ```
 
 ---
@@ -51,7 +51,7 @@ python -m pytest backend/tests/ -v
 
 ## 3. Empirical Classifier & Model Evaluation Testing
 
-### 3.1 Held-Out Test Set Evaluation ($N = 1,200$)
+### 3.1 Held-Out Test Set Evaluation ($N = 549$)
 Executes deterministic inference on the untouched held-out test cohort to generate statistical metrics and the 5x5 confusion matrix:
 
 ```powershell
@@ -59,20 +59,27 @@ python backend/scripts/evaluate_model.py
 ```
 
 #### Generated Artifacts:
-- [`docs/chapter4/held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv) (1,200 itemized predictions)
+- [`docs/chapter4/held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv) (549 itemized predictions)
 - [`docs/chapter4/confusion_matrix.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/confusion_matrix.png) (5x5 confusion matrix)
 - [`docs/chapter4/model_evaluation_report.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/model_evaluation_report.md)
 
 #### Expected Benchmark Values:
-- **Quadratic Weighted Kappa ($\kappa$):** **0.865** (Substantial to almost perfect clinical ordinal agreement)
-- **Overall Accuracy:** **84.75%** (1,017 / 1,200 correctly classified)
-- **Macro Average Sensitivity:** **83.89%**
-- **Macro Average Specificity:** **96.02%**
-- **Mild NPDR (Grade 1) Sensitivity:** **74.07%** (80/108 correctly staged; false negatives attributable to sub-pixel attenuation of $< 50\ \mu\text{m}$ microaneurysms)
-- **Proliferative DR (Grade 4) Sensitivity:** **87.96%** (95/108 detected; 99.45% specificity)
+- **Quadratic Weighted Kappa ($\kappa$):** **0.8777**
+- **Overall Accuracy:** **78.69%** (432 / 549 correctly classified)
+- **Within-one-grade agreement:** **92.71%**
+- **Macro F1:** **0.6525**
+- **Referable DR (grade $\ge 2$):** sensitivity **86.6%**, specificity **96.3%**
+- **Sight-threatening DR (grade $\ge 3$):** sensitivity **82.4%**, NPV **97.1%**
+- **Mild NPDR (Grade 1) Sensitivity:** **72.7%** (40/55)
+- **Moderate NPDR (Grade 2) Sensitivity:** **53.3%** (80/150) — the weakest class
+
+> Recompute all of the above from the committed predictions, with no ML dependencies:
+> ```powershell
+> python backend/scripts/analyze_clinical_metrics.py
+> ```
 
 ### 3.2 Computational Resource & Latency Benchmark
-Benchmarks single-image CPU forward latency over 100 consecutive passes, parameter count, and RSS memory:
+Benchmarks single-image forward latency over 100 consecutive passes. NOTE: the committed result was measured on the Colab Tesla T4 (GPU, forward pass only); running this locally on a CPU-only machine produces the CPU figure instead. No end-to-end mode exists yet - see resource_benchmark.md Section 4:
 
 ```powershell
 python backend/scripts/benchmark_resources.py

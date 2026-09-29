@@ -1,81 +1,121 @@
 # Diabetic Retinopathy CDSS — Engineering Progress Tracker
 
-**Research Project**: AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy  
-**Researcher / Author**: Onyekelu Chukwuebuka Elochukwu (2024516020FN)  
-**Supervisor Review Status**: Approved for Chapter 4 Finalization & Defense Evidence  
-**Overall Completion**: **100% Complete (All 15 Supervisor Directives & 22 Evidence Documents Delivered)**
+**Research Project**: AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
+**Researcher / Author**: Onyekelu Chukwuebuka Elochukwu (2024516020FN)
+**Programme**: PGD Computer Science, Faculty of Physical Sciences
+**Evidence Basis**: Genuine APTOS 2019 training run, 2026-09-29 (Colab Tesla T4, checkpoint `8ee14d75…`)
+**Status**: Chapter 4 evidence complete and internally consistent. **One open item: CPU end-to-end benchmark.**
 
 ---
 
-## 1. Research Objectives Traceability & Completion Matrix
+## 1. Research Objectives Traceability
 
-| Objective | Scope & Focus | Evidence & Implementation Files | Status |
+| Objective | Scope & Focus | Evidence | Status |
 | :---: | :--- | :--- | :---: |
-| **c** | Collect & categorize retinal fundus image datasets (EyePACS, APTOS, Messidor) | [`docs/chapter4/dataset_audit.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_audit.md), [`docs/chapter4/dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv) | ✅ **Completed** |
-| **d** | Design EfficientNet-B0 architecture for 5-grade ICDR classification | [`docs/chapter4/preprocessing_and_augmentation_spec.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/preprocessing_and_augmentation_spec.md), [`docs/chapter4/architecture.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/architecture.md) | ✅ **Completed** |
-| **e** | Implement CNN model with compound scaling & parameter freezing | [`backend/models/weights/efficientnet_b0_dr.pth`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/backend/models/weights/efficientnet_b0_dr.pth), [`docs/chapter4/checkpoint_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/checkpoint_manifest.md) | ✅ **Completed** |
-| **f** | Implement sequential 3-stage validation pipeline (Gates 1, 2, 3) | [`backend/app/services/validation/`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/backend/app/services/validation/), [`docs/chapter4/validation_module_spec.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/validation_module_spec.md), [`docs/chapter4/validation_test_results.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/validation_test_results.csv) | ✅ **Completed** |
-| **g** | Design CDSS software architecture with clinician-in-the-loop governance | [`docs/chapter4/architecture.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/architecture.md), [`docs/chapter4/database_schema.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/database_schema.md), [`docs/chapter4/api_contract.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/api_contract.md) | ✅ **Completed** |
-| **h** | Evaluate model performance on held-out test cohort ($N = 1,200$) | [`docs/chapter4/model_evaluation_report.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/model_evaluation_report.md), [`docs/chapter4/held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv), [`docs/chapter4/confusion_matrix.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/confusion_matrix.png) | ✅ **Completed** |
-| **i** | Benchmark computational efficiency, system test & clinical governance | [`docs/chapter4/resource_benchmark.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/resource_benchmark.md), [`docs/chapter4/system_test_report.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/system_test_report.md), [`docs/chapter4/requirements_test_matrix.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/requirements_test_matrix.md) | ✅ **Completed** |
+| **c** | Collect & partition retinal fundus dataset | [`dataset_audit.md`](docs/chapter4/dataset_audit.md), [`dataset_split_manifest.csv`](docs/chapter4/dataset_split_manifest.csv) | ✅ Complete (with disclosure) |
+| **d** | Design EfficientNet-B0 for 5-grade ICDR classification | [`preprocessing_and_augmentation_spec.md`](docs/chapter4/preprocessing_and_augmentation_spec.md), [`architecture.md`](docs/chapter4/architecture.md) | ✅ Complete |
+| **e** | Implement CNN with compound scaling & frozen inference | [`efficientnet_b0_dr.pth`](backend/models/weights/efficientnet_b0_dr.pth), [`checkpoint_manifest.md`](docs/chapter4/checkpoint_manifest.md) | ✅ Complete |
+| **f** | Implement 3-stage validation pipeline (Gates 1–3) | [`backend/app/services/validation/`](backend/app/services/validation/), [`validation_module_spec.md`](docs/chapter4/validation_module_spec.md) | ✅ Complete |
+| **g** | CDSS architecture with clinician-in-the-loop governance | [`architecture.md`](docs/chapter4/architecture.md), [`database_schema.md`](docs/chapter4/database_schema.md), [`api_contract.md`](docs/chapter4/api_contract.md) | ✅ Complete |
+| **h** | Evaluate on held-out cohort ($N = 549$) | [`model_evaluation_report.md`](docs/chapter4/model_evaluation_report.md), [`held_out_predictions.csv`](docs/chapter4/held_out_predictions.csv), [`confusion_matrix.png`](docs/chapter4/confusion_matrix.png) | ✅ Complete |
+| **i** | Benchmark efficiency, system test & governance | [`system_test_report.md`](docs/chapter4/system_test_report.md), [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) | ⚠️ Partial — CPU benchmark outstanding |
 
 ---
 
-## 2. Empirical Statistical Metrics Summary ($N = 1,200$ Held-Out Test Set)
+## 2. Empirical Results ($N = 549$ held-out cohort)
 
-- **Quadratic Weighted Kappa ($\kappa$):** **0.865** (Substantial to almost perfect clinical ordinal agreement)
-- **Overall Accuracy:** **84.75%** (1,017 / 1,200 correctly classified)
-- **Macro Average Sensitivity:** **83.89%**
-- **Macro Average Specificity:** **96.02%**
-- **Macro Average F1-Score:** **0.814**
-- **Mild NPDR (Grade 1) Sensitivity:** **74.07%** (80/108 detected; error analysis documented in [`docs/chapter4/known_limitations.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/known_limitations.md))
-- **Proliferative DR (Grade 4) Sensitivity:** **87.96%** (95/108 detected; 99.45% specificity)
+### Primary metrics
 
----
+| Metric | Value |
+| :--- | :---: |
+| **Quadratic Weighted Kappa ($\kappa$)** | **0.8777** |
+| Exact 5-class accuracy | 78.69% (432 / 549) |
+| Within-one-grade agreement | 92.71% |
+| Macro F1 | 0.6525 |
 
-## 3. Computational Benchmark Results (CPU Clinical Workstation)
+### Clinical operating points — the numbers to lead with
 
-- **Model Topology:** Compound-scaled EfficientNet-B0 with 5-class linear classifier head
-- **Total Parameters:** **4,013,953** (4.01 Million total parameters)
-- **Trainable Parameters in Inference:** **0** (Strictly frozen, `eval()`, `requires_grad=False`)
-- **Weights File Footprint:** **15.60 MB** (`backend/models/weights/efficientnet_b0_dr.pth`)
-- **Weights SHA-256 Checksum:** `a260fef4dda8593530c5190e6b7dfc3ee785e8abee51bbde412d6873f28b9aa3`
-- **Mean Single-Image CPU Latency:** **298.31 ms** (Over 100 consecutive passes)
-- **95th Percentile Latency (P95):** **773.51 ms**
-- **Peak RSS Memory Footprint:** **328.86 MB**
-- **Target Explainability Layer:** `features.8` (Final inverted residual bottleneck)
+| Endpoint | Sensitivity | Specificity | NPV |
+| :--- | :---: | :---: | :---: |
+| **Referable DR** (grade $\ge$ 2) | **86.6%** (81.5–90.5) | **96.3%** (93.7–97.9) | 91.2% |
+| **Sight-threatening DR** (grade $\ge$ 3) | **82.4%** (72.2–89.4) | 91.0% (88.0–93.2) | **97.1%** |
+| Any DR (grade $\ge$ 1) | 97.8% | 98.9% | 97.8% |
 
----
+Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest referable grade). Exactly **two** sight-threatening cases were released as non-referable.
 
-## 4. Chapter 4 Dedicated Evidence Artifacts Register (`docs/chapter4/`)
+### Per-class sensitivity
 
-1. [`docs/chapter4/implementation_status.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/implementation_status.md) — Executive implementation status and objective mapping.
-2. [`docs/chapter4/objective_traceability_matrix.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/objective_traceability_matrix.md) — Comprehensive bidirectional objective traceability.
-3. [`docs/chapter4/dataset_audit.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_audit.md) — Multi-cohort clinical dataset breakdown ($N=8,000$).
-4. [`docs/chapter4/dataset_split_manifest.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv) — Exact stratified split ledger (5,600 train / 1,200 val / 1,200 test).
-5. [`docs/chapter4/preprocessing_and_augmentation_spec.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/preprocessing_and_augmentation_spec.md) — Image normalization and augmentation protocol.
-6. [`docs/chapter4/training_protocol.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/training_protocol.md) — Hyperparameters, loss functions, optimizer, and convergence profile.
-7. [`docs/chapter4/training_environment.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/training_environment.md) — Hardware, libraries, CUDA, and environment specification.
-8. [`backend/models/weights/efficientnet_b0_dr.pth`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/backend/models/weights/efficientnet_b0_dr.pth) — Evaluated PyTorch weights binary (15.60 MB).
-9. [`docs/chapter4/checkpoint_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/checkpoint_manifest.md) — Parameter count, layer topology, and SHA-256 ledger.
-10. [`docs/chapter4/held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv) — 1,200 itemized predictions on held-out test cohort.
-11. [`docs/chapter4/confusion_matrix.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/confusion_matrix.png) — High-resolution 5x5 empirical confusion matrix.
-12. [`docs/chapter4/model_evaluation_report.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/model_evaluation_report.md) — Kappa, sensitivity, specificity, Mild NPDR error analysis.
-13. [`docs/chapter4/resource_benchmark.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/resource_benchmark.md) — CPU latency distribution and memory footprint benchmark.
-14. [`docs/chapter4/validation_module_spec.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/validation_module_spec.md) — Algorithmic specification of Gates 1, 2, and 3.
-15. [`docs/chapter4/validation_test_results.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/validation_test_results.csv) — Test case execution results across 12 image types.
-16. [`docs/chapter4/requirements_test_matrix.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/requirements_test_matrix.md) — Traceability matrix covering FR-01–FR-10 and NFR-01–NFR-08.
-17. [`docs/chapter4/system_test_report.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/system_test_report.md) — Complete automated test report (**38/38 tests passing, 100%**).
-18. [`docs/chapter4/architecture.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/architecture.md) — System architecture and corrected DFD with square-corner offset rectangles.
-19. [`docs/chapter4/database_schema.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/database_schema.md) — 9-entity relational schema with domain separation.
-20. [`docs/chapter4/api_contract.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/api_contract.md) — OpenAPI specification for all `/api/v1/` endpoints.
-21. [`docs/chapter4/reproducibility_runbook.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/reproducibility_runbook.md) — Complete reproducibility instructions for external review.
-22. [`docs/chapter4/known_limitations.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/known_limitations.md) — Analysis of Mild NPDR sub-pixel resolution, OCT, and field boundaries.
-23. [`docs/chapter4/screenshot_evidence_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/screenshot_evidence_manifest.md) — Register of all 11 figure panels in `docs/chapter4/screenshots/`.
+| Grade | Class | Support | Sensitivity | 95% CI |
+| :---: | :--- | :---: | :---: | :---: |
+| 0 | No Apparent DR | 270 | **98.9%** | 96.8–99.6 |
+| 1 | Mild NPDR | 55 | 72.7% | 59.8–82.7 |
+| 2 | Moderate NPDR | 150 | **53.3%** | 45.4–61.1 |
+| 3 | Severe NPDR | 29 | 58.6% | 40.7–74.5 |
+| 4 | Proliferative DR | 45 | 62.2% | 47.6–74.9 |
+
+> Recompute every figure above from committed artefacts, standard library only:
+> ```bash
+> python backend/scripts/analyze_clinical_metrics.py
+> ```
 
 ---
 
-## 5. Live Production Deployments & Access
+## 3. Training Run
 
-- **Production Cloud Frontend (Vercel):** `https://frontend-six-psi-77.vercel.app`
-- **Git Commit Baseline:** `22cda2c` (Baseline)
+| Property | Value |
+| :--- | :--- |
+| Dataset | APTOS 2019 — 3,662 images, split 2,563 / 550 / 549 (grade-stratified) |
+| Initialisation | EfficientNet-B0, ImageNet `IMAGENET1K_V1` |
+| Epochs | 15; **best = epoch 11** (val $\kappa$ = 0.8937) |
+| Optimiser | AdamW, lr $10^{-4}$, wd $10^{-4}$, CosineAnnealingLR |
+| Loss | Class-weighted cross-entropy |
+| Hardware | Google Colab Tesla T4, PyTorch 2.11.0+cu128 |
+| Wall-clock | 3,147 s (~210 s/epoch) |
+| Checkpoint SHA-256 | `8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa` |
+| Checkpoint size | 15.60 MB (16,358,249 bytes) |
+| Total parameters | 4,013,953 (0 trainable at inference) |
+
+---
+
+## 4. Model & Runtime
+
+- **Grad-CAM target layer:** `features.8` (1,280-channel final conv).
+- **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
+- **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
+- **Benchmark:** mean **8.36 ms** forward pass — **on the Tesla T4, GPU, forward pass only**. ⚠️ Not a CPU figure and not end-to-end. No clinical-workstation latency is claimed anywhere in this thesis.
+
+---
+
+## 5. Test Suite
+
+**45 passed, 1 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant.
+
+```bash
+cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
+```
+
+---
+
+## 6. Open Items
+
+| # | Item | Why it matters |
+| :---: | :--- | :--- |
+| 1 | **CPU end-to-end benchmark** | The committed 8.36 ms is a T4 forward pass. The deployment target is CPU, and the figure excludes decode, validation, preprocessing and Grad-CAM. Until measured, no latency claim is defensible. See [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md) §4. |
+| 2 | Re-split with byte-hash duplicate grouping, then re-train | 27/549 held-out images are byte-identical to a training image because `duplicated_info.csv` is absent from the Kaggle download. Measured effect: nil (clean-subset $\kappa$ = 0.877818 vs 0.877747 full). Disclosed in [`dataset_audit.md`](docs/chapter4/dataset_audit.md) §4; remediation deferred as it would invalidate the hash-verified checkpoint for no measurable gain. |
+| 3 | Refresh UI screenshots | Panels in `docs/chapter4/screenshots/` predate the evidence refresh and may display superseded metric values. They evidence interface behaviour, not model performance. |
+| 4 | External-cohort validation | No evaluation on any dataset other than APTOS 2019. No generalisation claim is made. |
+
+---
+
+## 7. Evidence Register (`docs/chapter4/`)
+
+**Raw artefacts from the training run** — [`training_execution.log`](docs/chapter4/training_execution.log), [`epoch_history.csv`](docs/chapter4/epoch_history.csv), [`training_summary.json`](docs/chapter4/training_summary.json), [`held_out_predictions.csv`](docs/chapter4/held_out_predictions.csv), [`evaluation_summary.json`](docs/chapter4/evaluation_summary.json), [`benchmark_timings.csv`](docs/chapter4/benchmark_timings.csv), [`benchmark_summary.json`](docs/chapter4/benchmark_summary.json), [`dataset_split_manifest.csv`](docs/chapter4/dataset_split_manifest.csv), [`clinical_metrics.json`](docs/chapter4/clinical_metrics.json), [`confusion_matrix.png`](docs/chapter4/confusion_matrix.png), [`learning_curves.png`](docs/chapter4/learning_curves.png)
+
+**Analysis documents** — [`dataset_audit.md`](docs/chapter4/dataset_audit.md), [`preprocessing_and_augmentation_spec.md`](docs/chapter4/preprocessing_and_augmentation_spec.md), [`training_protocol.md`](docs/chapter4/training_protocol.md), [`training_environment.md`](docs/chapter4/training_environment.md), [`checkpoint_manifest.md`](docs/chapter4/checkpoint_manifest.md), [`model_evaluation_report.md`](docs/chapter4/model_evaluation_report.md), [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md), [`known_limitations.md`](docs/chapter4/known_limitations.md), [`validation_module_spec.md`](docs/chapter4/validation_module_spec.md), [`system_test_report.md`](docs/chapter4/system_test_report.md), [`requirements_test_matrix.md`](docs/chapter4/requirements_test_matrix.md), [`architecture.md`](docs/chapter4/architecture.md), [`database_schema.md`](docs/chapter4/database_schema.md), [`api_contract.md`](docs/chapter4/api_contract.md), [`reproducibility_runbook.md`](docs/chapter4/reproducibility_runbook.md), [`objective_traceability_matrix.md`](docs/chapter4/objective_traceability_matrix.md), [`implementation_status.md`](docs/chapter4/implementation_status.md), [`independent_thesis_qa_gate_audit.md`](docs/chapter4/independent_thesis_qa_gate_audit.md)
+
+---
+
+## 8. Deployment
+
+- **Frontend (Vercel):** `https://frontend-six-psi-77.vercel.app`
+- **Scope:** research prototype supporting a PGD dissertation. Not a medical device; no regulatory clearance; not for patient care.
