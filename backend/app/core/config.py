@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     RETINAL_MIN_COVERAGE: float = 0.20
     RETINAL_MAX_COVERAGE: float = 0.98
     RETINAL_RED_RATIO_MIN: float = 1.15
+    # Longest side used when computing Gate 2/3 DISTRIBUTION statistics
+    # (coverage ratios, channel means, contrast std, extreme-pixel proportions).
+    # Nearest-neighbour subsampling leaves these unbiased while removing ~59%
+    # of end-to-end request latency. Set to 0 to analyse at full resolution.
+    # Gate 3's Laplacian variance is a spatial derivative and is NOT affected
+    # by this; it keeps its own separate 1024px resize.
+    VALIDATION_ANALYSIS_MAX_DIM: int = 512
 
     # AI Model
     # Must match where the weights actually land inside the container: compose

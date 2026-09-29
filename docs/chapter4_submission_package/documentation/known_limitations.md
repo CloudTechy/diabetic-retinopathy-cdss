@@ -89,7 +89,7 @@ The structure of that number is the limitation worth stating. The model forward 
 Two consequences:
 
 1. **Latency scales with camera resolution, not with disease severity.** `gate2` ranges from a 61.62 ms median to a 318.02 ms P95 across APTOS's varied image dimensions, while the fixed-tensor `forward` stage stays within 28.94–42.50 ms. A site with higher-resolution cameras will see proportionally slower responses, with no change in diagnostic behaviour.
-2. **Most of the cost is removable and has not been removed.** Aperture coverage and red/blue ratio are global properties that survive downsampling, so computing them on a reduced copy should reclaim most of that 186 ms without altering a gate decision. This is identified, not implemented, and is recorded here rather than claimed as achieved.
+2. **Most of that cost has since been removed.** Both gates now compute their distribution statistics on a nearest-neighbour subsample (`VALIDATION_ANALYSIS_MAX_DIM`, default 512), measured at 2.7× faster combined, with 38 tests asserting the accept/reject verdict is unchanged. Gate 3's Laplacian variance is deliberately excluded, being a resolution-dependent spatial derivative. The **end-to-end** figure quoted above is the pre-optimisation measurement; it has not been re-measured, so no improved total is claimed. Verification on real images is run with `backend/scripts/verify_gate_downsampling.py`.
 
 The measurement was taken on a shared 4-thread cloud CPU. A dedicated clinical workstation would likely be faster, but no such machine was benchmarked, so no figure for one is offered.
 
