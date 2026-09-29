@@ -17,6 +17,7 @@ from app.schemas.assessment import (
     GateResultSchema,
     ModelObservationSchema,
 )
+from app.services.ai_service import ModelCheckpointError
 from app.services.assessment_service import (
     AssessmentService,
     InvalidStateTransitionError,
@@ -104,6 +105,13 @@ async def upload_assessment_image(
             actor=current_user,
         )
         return AssessmentService.to_record_response(assessment)
+    except ModelCheckpointError as e:
+        # Fail closed: the engine has no verified weights, so no grade is
+        # produced. 503 signals a service-side defect, not a bad upload.
+        raise HTTPException(
+            status_code=503,
+            detail=f"Inference engine unavailable: {e}",
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except InvalidStateTransitionError as e:

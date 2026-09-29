@@ -1,6 +1,7 @@
 import abc
 import datetime
 from datetime import timezone
+import hashlib
 import io
 import math
 import os
@@ -11,6 +12,16 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import settings
+
+
+class ModelCheckpointError(RuntimeError):
+    """
+    Raised when the trained checkpoint is missing, corrupt, structurally
+    incompatible, or fails provenance verification.
+
+    This is deliberately fatal rather than recoverable: the alternative is
+    returning diabetic retinopathy grades from an untrained network.
+    """
 
 
 # The 5 ICDR-standard Diabetic Retinopathy stages
@@ -282,44 +293,108 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         self._initialized = False
 
     def load_model(self):
-        """Prepare model structure with parameters frozen (no runtime fine-tuning)."""
+        """
+        Load the frozen trained checkpoint, or fail closed.
+
+        A clinical decision-support engine must never serve grades from an
+        untrained graph. If the checkpoint is absent, unreadable, or does not
+        match the expected SHA-256 digest, this raises and the service is left
+        uninitialised — it does not silently fall back to random ImageNet-less
+        weights or to the simulated engine.
+        """
+        # Cheap, dependency-free checks first, so a misconfigured path reports
+        # the real cause rather than an unrelated import failure.
+        if not os.path.exists(self.checkpoint_path):
+            raise ModelCheckpointError(
+                f"Model checkpoint not found at '{self.checkpoint_path}'. "
+                "Refusing to serve inference from an untrained network. "
+                "Set MODEL_CHECKPOINT_PATH to the trained weights, or set "
+                "AI_INFERENCE_ENGINE=mock to run the simulated engine explicitly."
+            )
+
+        self._verify_checkpoint_digest()
+
         try:
             import torch
             import torchvision.models as models
+        except ImportError as exc:
+            raise ModelCheckpointError(
+                "PyTorch is not installed in this environment, so the trained "
+                f"engine cannot be served ({exc}). Install backend/requirements.txt, "
+                "or set AI_INFERENCE_ENGINE=mock to run the simulated engine "
+                "explicitly. The simulated engine is never selected implicitly."
+            ) from exc
 
-            device = torch.device(settings.MODEL_DEVICE if torch.cuda.is_available() else "cpu")
-            model = models.efficientnet_b0(weights=None)
-            in_features = model.classifier[1].in_features
-            model.classifier = torch.nn.Sequential(
-                torch.nn.Dropout(p=0.2, inplace=False),
-                torch.nn.Linear(in_features=in_features, out_features=5, bias=True)
+        device = torch.device(settings.MODEL_DEVICE if torch.cuda.is_available() else "cpu")
+        model = models.efficientnet_b0(weights=None)
+        in_features = model.classifier[1].in_features
+        model.classifier = torch.nn.Sequential(
+            torch.nn.Dropout(p=0.2, inplace=False),
+            torch.nn.Linear(in_features=in_features, out_features=5, bias=True)
+        )
+
+        try:
+            state_dict = torch.load(self.checkpoint_path, map_location=device, weights_only=True)
+        except Exception as exc:
+            raise ModelCheckpointError(
+                f"Checkpoint at '{self.checkpoint_path}' could not be deserialised: {exc}"
+            ) from exc
+
+        if isinstance(state_dict, dict) and "state_dict" in state_dict:
+            state_dict = state_dict["state_dict"]
+        clean_dict = {
+            (k[7:] if k.startswith("module.") else k): v
+            for k, v in state_dict.items()
+        }
+
+        try:
+            model.load_state_dict(clean_dict, strict=True)
+        except Exception as exc:
+            raise ModelCheckpointError(
+                f"Checkpoint at '{self.checkpoint_path}' does not match the "
+                f"EfficientNet-B0 5-class topology: {exc}"
+            ) from exc
+
+        model.eval()
+        for p in model.parameters():
+            p.requires_grad = False
+        model.to(device)
+
+        self._model = model
+        self._device = device
+        self._initialized = True
+        logger.info(
+            "Loaded frozen EfficientNet-B0 weights from %s (device=%s)",
+            self.checkpoint_path, device,
+        )
+
+    def _verify_checkpoint_digest(self):
+        """
+        Confirm the checkpoint bytes match the expected SHA-256, when one is
+        configured. This is the runtime half of the provenance claim made in
+        docs/chapter4/checkpoint_manifest.md: the graded weights on disk are
+        demonstrably the weights that were evaluated.
+        """
+        expected = (settings.MODEL_CHECKPOINT_SHA256 or "").strip().lower()
+        if not expected:
+            logger.warning(
+                "MODEL_CHECKPOINT_SHA256 is not set; serving %s without "
+                "provenance verification.", self.checkpoint_path,
             )
+            return
 
-            if os.path.exists(self.checkpoint_path):
-                state_dict = torch.load(self.checkpoint_path, map_location=device, weights_only=True)
-                if isinstance(state_dict, dict) and "state_dict" in state_dict:
-                    state_dict = state_dict["state_dict"]
-                clean_dict = {
-                    (k[7:] if k.startswith("module.") else k): v
-                    for k, v in state_dict.items()
-                }
-                model.load_state_dict(clean_dict, strict=True)
-                logger.info(f"Loaded PyTorch weights from {self.checkpoint_path}")
+        digest = hashlib.sha256()
+        with open(self.checkpoint_path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+                digest.update(chunk)
+        actual = digest.hexdigest()
 
-            model.eval()
-            for p in model.parameters():
-                p.requires_grad = False
-            model.to(device)
-
-            self._model = model
-            self._device = device
-            self._initialized = True
-        except ImportError:
-            logger.warning("PyTorch not installed in environment. Operating in mock inference mode.")
-            self._initialized = False
-        except Exception as e:
-            logger.error(f"Error loading PyTorch checkpoint: {e}. Falling back to mock inference.")
-            self._initialized = False
+        if actual != expected:
+            raise ModelCheckpointError(
+                f"Checkpoint digest mismatch for '{self.checkpoint_path}'. "
+                f"Expected {expected}, found {actual}. Refusing to serve "
+                "inference from unverified weights."
+            )
 
     def predict(
         self,
@@ -328,7 +403,10 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         candidate_grade: Optional[int] = None,
     ) -> InferenceOutput:
         if not self._initialized or self._model is None:
-            return MockInferenceService().predict(pil_image, laterality, candidate_grade)
+            raise ModelCheckpointError(
+                "Inference requested before a verified checkpoint was loaded. "
+                "The service refuses to grade from an uninitialised model."
+            )
 
         import torch
         import torchvision.transforms as transforms
@@ -449,17 +527,62 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
 def get_ai_inference_service() -> BaseInferenceService:
     """
-    Factory resolving the active inference service based on application configuration.
-    Defaults to real PyTorch EfficientNet-B0 if weights checkpoint exists.
+    Resolve the active inference engine from configuration.
+
+    The simulated engine is only ever returned when it has been asked for by
+    name (AI_INFERENCE_ENGINE=mock). A failure to load the real checkpoint
+    propagates: it must not be silently downgraded to simulated grades, because
+    the two are indistinguishable to a clinician reading the result.
     """
     engine_type = os.getenv("AI_INFERENCE_ENGINE", "pytorch").strip().lower()
-    if engine_type == "pytorch":
-        service = EfficientNetB0InferenceService(checkpoint_path=settings.MODEL_CHECKPOINT_PATH)
-        service.load_model()
-        if service._initialized:
-            return service
-    return MockInferenceService()
+
+    if engine_type == "mock":
+        logger.warning(
+            "AI_INFERENCE_ENGINE=mock — serving SIMULATED diabetic retinopathy "
+            "grades. This engine is for development and interface testing only."
+        )
+        return MockInferenceService()
+
+    service = EfficientNetB0InferenceService(checkpoint_path=settings.MODEL_CHECKPOINT_PATH)
+    service.load_model()
+    return service
 
 
-# Global service singleton instance
-default_ai_service: BaseInferenceService = get_ai_inference_service()
+_service_singleton: Optional[BaseInferenceService] = None
+
+
+def get_active_inference_service() -> BaseInferenceService:
+    """
+    Return the process-wide inference engine, loading it on first use.
+
+    Resolution is lazy so that a missing or unverified checkpoint surfaces as a
+    handled 503 on the assessment endpoint rather than an import-time crash
+    loop with no diagnostics. The error is raised on every call until the
+    checkpoint is corrected — it is never cached away or downgraded.
+    """
+    global _service_singleton
+    if _service_singleton is None:
+        _service_singleton = get_ai_inference_service()
+    return _service_singleton
+
+
+def get_inference_health() -> Dict[str, Any]:
+    """Report engine readiness for the health endpoint without raising."""
+    try:
+        service = get_active_inference_service()
+    except ModelCheckpointError as exc:
+        return {"ready": False, "engine": "pytorch", "detail": str(exc)}
+    except Exception as exc:  # pragma: no cover - defensive
+        return {"ready": False, "engine": "unknown", "detail": str(exc)}
+
+    if isinstance(service, MockInferenceService):
+        return {
+            "ready": True,
+            "engine": "mock",
+            "detail": "SIMULATED grades — not a trained model.",
+        }
+    return {
+        "ready": True,
+        "engine": "pytorch",
+        "detail": f"EfficientNet-B0 checkpoint loaded from {service.checkpoint_path}",
+    }

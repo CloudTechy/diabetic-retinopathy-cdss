@@ -64,9 +64,16 @@ class Settings(BaseSettings):
     RETINAL_RED_RATIO_MIN: float = 1.15
 
     # AI Model
-    MODEL_CHECKPOINT_PATH: str = "/app/models/checkpoints/efficientnet_b0_dr.pth"
+    # Must match where the weights actually land inside the container: compose
+    # mounts ./backend at /app, so backend/models/weights/ -> /app/models/weights/.
+    MODEL_CHECKPOINT_PATH: str = "/app/models/weights/efficientnet_b0_dr.pth"
     MODEL_DEVICE: str = "cpu"
     MODEL_SCORE_THRESHOLD: float = 0.5
+    # SHA-256 of the evaluated checkpoint. When set, the engine refuses to load
+    # any other weights, tying served predictions to the graded artefact.
+    MODEL_CHECKPOINT_SHA256: str = (
+        "8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

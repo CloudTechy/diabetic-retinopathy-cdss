@@ -1,5 +1,13 @@
 import io
 import math
+import os
+
+# The suite exercises the clinical journey against the SIMULATED inference
+# engine. This opt-in is explicit and must stay explicit: the production code
+# path fails closed rather than silently substituting simulated grades, so
+# without this the assessment endpoints correctly return 503.
+os.environ.setdefault("AI_INFERENCE_ENGINE", "mock")
+
 import numpy as np
 import pytest
 import pytest_asyncio
