@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import settings
+from app.services.validation.downsample import downsample_for_analysis
 
 
 class Gate3Result:
@@ -68,24 +69,40 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
       3. Illumination uniformity avoiding severe shadows, flash washout, or extreme underexposure.
     """
     rgb_image = pil_image.convert("RGB")
-    img_arr = np.asarray(rgb_image, dtype=np.float32)
-    # Grayscale conversion
-    gray = 0.299 * img_arr[:, :, 0] + 0.587 * img_arr[:, :, 1] + 0.114 * img_arr[:, :, 2]
+    width, height = rgb_image.size
+
+    # Contrast and illumination are distribution statistics over the whole
+    # image, so they are computed on a nearest-neighbour subsample. Nearest
+    # SAMPLES pixels where bilinear would AVERAGE them; averaging would pull
+    # extreme values toward the mean and bias the washout/underexposure checks
+    # below in the unsafe direction. See downsample.py.
+    analysis_image = downsample_for_analysis(rgb_image, settings.VALIDATION_ANALYSIS_MAX_DIM)
+    analysis_arr = np.asarray(analysis_image, dtype=np.float32)
+    gray = (0.299 * analysis_arr[:, :, 0]
+            + 0.587 * analysis_arr[:, :, 1]
+            + 0.114 * analysis_arr[:, :, 2])
 
     # Retinal mask (ignore camera black outer frame)
     foreground_mask = gray > 15.0
     fg_pixels = gray[foreground_mask] if np.any(foreground_mask) else gray.ravel()
 
     # 1. Laplacian blur variance
-    # Resize slightly if image is massive to keep compute deterministic and fast
-    h, w = gray.shape
-    if max(h, w) > 1024:
-        scale = 1024.0 / max(h, w)
-        scaled_img = pil_image.convert("L").resize((int(w * scale), int(h * scale)), Image.Resampling.BILINEAR)
+    # UNCHANGED. Laplacian variance is a spatial derivative: its value depends
+    # on resolution by definition, and the 60.0 threshold is calibrated against
+    # this specific path. It keeps its own resize and its own full-resolution
+    # branch, and must not be folded into the analysis subsample above.
+    if max(height, width) > 1024:
+        scale = 1024.0 / max(height, width)
+        scaled_img = pil_image.convert("L").resize(
+            (int(width * scale), int(height * scale)), Image.Resampling.BILINEAR)
         scaled_gray = np.asarray(scaled_img, dtype=np.float32)
         laplacian_var = compute_laplacian_variance(scaled_gray)
     else:
-        laplacian_var = compute_laplacian_variance(gray)
+        full_arr = np.asarray(rgb_image, dtype=np.float32)
+        full_gray = (0.299 * full_arr[:, :, 0]
+                     + 0.587 * full_arr[:, :, 1]
+                     + 0.114 * full_arr[:, :, 2])
+        laplacian_var = compute_laplacian_variance(full_gray)
 
     laplacian_var = round(laplacian_var, 1)
 

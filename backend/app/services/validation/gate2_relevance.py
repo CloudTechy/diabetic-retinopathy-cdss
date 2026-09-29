@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import settings
+from app.services.validation.downsample import downsample_for_analysis
 
 
 class Gate2Result:
@@ -69,15 +70,21 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
             clinical_action="Please provide uncropped, standard fundus photographs from an ophthalmic fundus camera.",
         )
 
-    # Convert to numpy array
-    img_arr = np.asarray(rgb_image, dtype=np.float32)
+    # Every check below this point is a ratio or a mean over the whole image,
+    # so it is computed on a nearest-neighbour subsample rather than the full
+    # array. See downsample.py for why nearest and not bilinear. The aspect
+    # ratio above deliberately uses the ORIGINAL dimensions.
+    analysis_image = downsample_for_analysis(rgb_image, settings.VALIDATION_ANALYSIS_MAX_DIM)
+    analysis_width, analysis_height = analysis_image.size
+
+    img_arr = np.asarray(analysis_image, dtype=np.float32)
     # Luminance calculation (standard ITU-R BT.601)
     luminance = 0.299 * img_arr[:, :, 0] + 0.587 * img_arr[:, :, 1] + 0.114 * img_arr[:, :, 2]
 
     # 2. Circular Aperture / Foreground Mask Detection
     # Background in retinal cameras is dark (< 15 intensity)
     foreground_mask = luminance > 15.0
-    total_pixels = width * height
+    total_pixels = analysis_width * analysis_height
     foreground_pixels = int(np.sum(foreground_mask))
     mask_coverage = round(foreground_pixels / float(total_pixels), 4)
 
