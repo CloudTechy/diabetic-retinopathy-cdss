@@ -80,11 +80,18 @@ Measured effect: accuracy 77.78% on the affected images vs 78.74% on the clean 5
 
 ---
 
-## 6. Latency on the deployment target is unmeasured
+## 6. Validation, not inference, dominates response time
 
-The committed benchmark (8.36 ms) is a **Tesla T4 forward pass**, measured in the training environment. The CDSS deploys on **CPU** and performs decode, three-gate validation, preprocessing, Grad-CAM and heatmap composition around the forward pass — none of which that figure includes.
+End-to-end CPU latency is **315.25 ms mean / 624.58 ms P95** over 30 held-out images on a 4-thread x86_64 CPU ([`resource_benchmark.md`](resource_benchmark.md) §1).
 
-**No claim is made in this thesis about clinical workstation response time.** See [`resource_benchmark.md`](resource_benchmark.md) §4 for what remains to be run.
+The structure of that number is the limitation worth stating. The model forward pass is only **33.48 ms (10.6%)**; validation gates 2 and 3 cost **186.42 ms (59.1%)** because both compute NumPy statistics over the **full-resolution** image before any downsampling. Gate 3 shrinks very large inputs; Gate 2 does not.
+
+Two consequences:
+
+1. **Latency scales with camera resolution, not with disease severity.** `gate2` ranges from a 61.62 ms median to a 318.02 ms P95 across APTOS's varied image dimensions, while the fixed-tensor `forward` stage stays within 28.94–42.50 ms. A site with higher-resolution cameras will see proportionally slower responses, with no change in diagnostic behaviour.
+2. **Most of the cost is removable and has not been removed.** Aperture coverage and red/blue ratio are global properties that survive downsampling, so computing them on a reduced copy should reclaim most of that 186 ms without altering a gate decision. This is identified, not implemented, and is recorded here rather than claimed as achieved.
+
+The measurement was taken on a shared 4-thread cloud CPU. A dedicated clinical workstation would likely be faster, but no such machine was benchmarked, so no figure for one is offered.
 
 ---
 
