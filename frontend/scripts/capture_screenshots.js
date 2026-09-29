@@ -5,11 +5,16 @@ import path from 'path';
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const BASE_URL = 'http://127.0.0.1:4173';
 
-const DOCS_DIR = path.resolve('docs/screenshots');
-const ARTIFACTS_DIR = 'C:\\Users\\USER\\.gemini\\antigravity\\brain\\4c03715b-d77f-4960-9f39-1c9fc499e344\\screenshots';
+const TARGET_DIRS = [
+  path.resolve('docs/screenshots'),
+  path.resolve('../docs/screenshots'),
+  path.resolve('../docs/chapter4/screenshots'),
+  'C:\\Users\\USER\\.gemini\\antigravity\\brain\\4c03715b-d77f-4960-9f39-1c9fc499e344\\screenshots',
+];
 
-fs.mkdirSync(DOCS_DIR, { recursive: true });
-fs.mkdirSync(ARTIFACTS_DIR, { recursive: true });
+for (const dir of TARGET_DIRS) {
+  fs.mkdirSync(dir, { recursive: true });
+}
 
 const screens = [
   { hash: '#signin', name: '01_signin_screen.png', title: 'Screen 1: Clinical Sign-In & Authentication', waitMs: 1500 },
@@ -41,17 +46,19 @@ async function capture() {
     // Allow canvas/WebGL or stepper animation to finish
     await new Promise(r => setTimeout(r, s.waitMs));
 
-    const docsPath = path.join(DOCS_DIR, s.name);
-    const artifactsPath = path.join(ARTIFACTS_DIR, s.name);
+    const primaryPath = path.join(TARGET_DIRS[0], s.name);
+    await page.screenshot({ path: primaryPath, fullPage: false });
 
-    await page.screenshot({ path: docsPath, fullPage: false });
-    fs.copyFileSync(docsPath, artifactsPath);
-    console.log(`   ✅ Saved to: ${docsPath}`);
+    for (let i = 1; i < TARGET_DIRS.length; i++) {
+      const destPath = path.join(TARGET_DIRS[i], s.name);
+      fs.copyFileSync(primaryPath, destPath);
+    }
+    console.log(`   ✅ Saved ${s.name} to all ${TARGET_DIRS.length} destination folders`);
     await page.close();
   }
 
   await browser.close();
-  console.log('🎉 All 9 clinical UI screenshots successfully captured!');
+  console.log('🎉 All 9 clinical UI screenshots successfully captured and refreshed!');
 }
 
 capture().catch(err => {

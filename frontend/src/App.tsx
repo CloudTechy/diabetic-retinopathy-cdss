@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClinicianUser, AssessmentRecord, EyeLaterality } from './types/clinical';
 import { clinicalApi, DEFAULT_CLINICIAN } from './services/api';
+import { browserStorage } from './services/storage';
 import { Header } from './components/Header';
 import { SignInScreen } from './screens/SignInScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
@@ -21,11 +22,17 @@ export type ScreenState =
   | 'history';
 
 export const App: React.FC = () => {
-  // Authentication State
-  const [currentUser, setCurrentUser] = useState<ClinicianUser | null>(DEFAULT_CLINICIAN);
-  const [activeScreen, setActiveScreen] = useState<ScreenState>('dashboard');
+  // Authentication State with persistent storage
+  const [currentUser, setCurrentUser] = useState<ClinicianUser | null>(() => {
+    return browserStorage.getStoredUser() || DEFAULT_CLINICIAN;
+  });
 
-  // Currently Active Assessment
+  // Active Screen and Assessment State with persistent restoration
+  const [activeScreen, setActiveScreen] = useState<ScreenState>(() => {
+    const session = browserStorage.getSessionState();
+    return (session.activeScreen as ScreenState) || 'dashboard';
+  });
+
   const [activeAssessment, setActiveAssessment] = useState<AssessmentRecord | null>(null);
 
   // Review Modal Visibility (Screen 6)
@@ -39,51 +46,98 @@ export const App: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Support URL Hash navigation (e.g. #signin, #dashboard, #decision_support, #review, #completed, #history, #validation, #rejected)
+  // Helper for synchronized persistent navigation
+  const navigateTo = (screen: ScreenState, assessment?: AssessmentRecord | null) => {
+    setActiveScreen(screen);
+    if (assessment !== undefined) {
+      setActiveAssessment(assessment);
+    }
+    const currentAss = assessment !== undefined ? assessment : activeAssessment;
+    const assId = currentAss?.id || null;
+    browserStorage.saveSessionState(screen, assId);
+
+    const hashSuffix = (screen === 'decision_support' || screen === 'completed_assessment' || screen === 'validation') && assId
+      ? `/${assId}`
+      : '';
+    window.location.hash = `#${screen}${hashSuffix}`;
+  };
+
+  // Synchronize URL Hash and persist across page reloads
   useEffect(() => {
     const handleHash = async () => {
-      const hash = window.location.hash.replace('#', '').toLowerCase();
+      const rawHash = window.location.hash.replace('#', '').trim();
       const records = await clinicalApi.getWorklist();
+
+      if (rawHash === 'signin') {
+        setCurrentUser(null);
+        browserStorage.saveStoredUser(null);
+        setActiveScreen('signin');
+        setShowReviewModal(false);
+        return;
+      }
+
+      // Check stored clinician session
+      const storedUser = browserStorage.getStoredUser();
+      if (storedUser) {
+        setCurrentUser(storedUser);
+      } else if (!currentUser) {
+        setCurrentUser(DEFAULT_CLINICIAN);
+      }
+
+      const session = browserStorage.getSessionState();
+      const [hashScreen, hashRecordId] = rawHash.split('/');
+
+      let targetScreen: string = hashScreen || session.activeScreen || 'dashboard';
+      if (targetScreen === 'completed') targetScreen = 'completed_assessment';
+
+      // Look up target assessment
+      const targetRecordId = hashRecordId || session.activeAssessmentId;
+      let targetRecord: AssessmentRecord | null = null;
+      if (targetRecordId) {
+        targetRecord = await clinicalApi.getAssessmentById(targetRecordId);
+      }
+
       const pendingRecord = records.find(r => r.status === 'needs_review') || records[0];
       const completedRecord = records.find(r => r.status === 'completed') || records[1];
       const rejectedRecord = records.find(r => r.status === 'rejected') || records[3] || records[0];
 
-      if (hash === 'signin') {
-        setCurrentUser(null);
-        setActiveScreen('signin');
+      if (targetScreen === 'dashboard') {
+        setActiveScreen('dashboard');
+        setShowReviewModal(false);
+      } else if (targetScreen === 'new_assessment') {
+        setActiveScreen('new_assessment');
+        setShowReviewModal(false);
+      } else if (targetScreen === 'validation') {
+        const ass = targetRecord || pendingRecord;
+        setActiveAssessment(ass);
+        setActiveScreen('validation');
+        setShowReviewModal(false);
+      } else if (targetScreen === 'rejected') {
+        const ass = targetRecord || rejectedRecord;
+        setActiveAssessment(ass);
+        setActiveScreen('validation');
+        setShowReviewModal(false);
+      } else if (targetScreen === 'decision_support') {
+        const ass = targetRecord || pendingRecord;
+        setActiveAssessment(ass);
+        setActiveScreen('decision_support');
+        setShowReviewModal(false);
+      } else if (targetScreen === 'review') {
+        const ass = targetRecord || pendingRecord;
+        setActiveAssessment(ass);
+        setActiveScreen('decision_support');
+        setShowReviewModal(true);
+      } else if (targetScreen === 'completed_assessment') {
+        const ass = targetRecord || completedRecord;
+        setActiveAssessment(ass);
+        setActiveScreen('completed_assessment');
+        setShowReviewModal(false);
+      } else if (targetScreen === 'history') {
+        setActiveScreen('history');
         setShowReviewModal(false);
       } else {
-        setCurrentUser(DEFAULT_CLINICIAN);
-        if (hash === 'dashboard' || !hash) {
-          setActiveScreen('dashboard');
-          setShowReviewModal(false);
-        } else if (hash === 'new_assessment') {
-          setActiveScreen('new_assessment');
-          setShowReviewModal(false);
-        } else if (hash === 'validation') {
-          setActiveAssessment(pendingRecord);
-          setActiveScreen('validation');
-          setShowReviewModal(false);
-        } else if (hash === 'rejected') {
-          setActiveAssessment(rejectedRecord);
-          setActiveScreen('validation');
-          setShowReviewModal(false);
-        } else if (hash === 'decision_support') {
-          setActiveAssessment(pendingRecord);
-          setActiveScreen('decision_support');
-          setShowReviewModal(false);
-        } else if (hash === 'review') {
-          setActiveAssessment(pendingRecord);
-          setActiveScreen('decision_support');
-          setShowReviewModal(true);
-        } else if (hash === 'completed') {
-          setActiveAssessment(completedRecord);
-          setActiveScreen('completed_assessment');
-          setShowReviewModal(false);
-        } else if (hash === 'history') {
-          setActiveScreen('history');
-          setShowReviewModal(false);
-        }
+        setActiveScreen('dashboard');
+        setShowReviewModal(false);
       }
     };
 
@@ -99,7 +153,7 @@ export const App: React.FC = () => {
         if (showReviewModal) setShowReviewModal(false);
       } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
-        setActiveScreen('dashboard');
+        navigateTo('dashboard');
       }
     };
     window.addEventListener('keydown', handleGlobalKeys);
@@ -109,13 +163,17 @@ export const App: React.FC = () => {
   // Screen 1: Sign in handler
   const handleSignInSuccess = (user: ClinicianUser) => {
     setCurrentUser(user);
-    setActiveScreen('dashboard');
+    browserStorage.saveStoredUser(user);
+    navigateTo('dashboard', null);
     showToast(`Welcome back, ${user.name}`);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setActiveAssessment(null);
+    browserStorage.saveStoredUser(null);
+    browserStorage.saveSessionState('signin', null);
+    window.location.hash = '#signin';
     setActiveScreen('signin');
     setShowReviewModal(false);
     showToast('Signed out of clinical session.');
@@ -123,18 +181,18 @@ export const App: React.FC = () => {
 
   // Navigation from Header
   const handleNavigate = (screen: 'dashboard' | 'new_assessment' | 'history' | 'signin') => {
-    setActiveScreen(screen);
+    navigateTo(screen);
   };
 
   // Screen 2 Worklist select assessment
   const handleSelectAssessmentFromWorklist = (assessment: AssessmentRecord) => {
     setActiveAssessment(assessment);
     if (assessment.status === 'completed') {
-      setActiveScreen('completed_assessment');
+      navigateTo('completed_assessment', assessment);
     } else if (assessment.status === 'rejected') {
-      setActiveScreen('validation');
+      navigateTo('validation', assessment);
     } else {
-      setActiveScreen('decision_support');
+      navigateTo('decision_support', assessment);
     }
   };
 
@@ -148,13 +206,11 @@ export const App: React.FC = () => {
     imageDataUrl: string;
     fileSizeBytes: number;
     filename: string;
-    simulateGateFailure?: 1 | 2 | 3 | null;
-    candidateGrade?: number;
+    clientValidation?: any;
   }) => {
     try {
       const created = await clinicalApi.createAssessment(payload);
-      setActiveAssessment(created);
-      setActiveScreen('validation');
+      navigateTo('validation', created);
     } catch {
       showToast('Error uploading assessment image.');
     }
@@ -163,10 +219,10 @@ export const App: React.FC = () => {
   // Screen 4 Validation Complete
   const handleValidationComplete = (passed: boolean) => {
     if (passed && activeAssessment) {
-      setActiveScreen('decision_support');
+      navigateTo('decision_support', activeAssessment);
       showToast('All 3 validation gates passed. Decision-support generated.');
     } else {
-      setActiveScreen('dashboard');
+      navigateTo('dashboard', null);
     }
   };
 
@@ -174,7 +230,7 @@ export const App: React.FC = () => {
   const handleReviewSubmitted = (updated: AssessmentRecord) => {
     setActiveAssessment(updated);
     setShowReviewModal(false);
-    setActiveScreen('completed_assessment');
+    navigateTo('completed_assessment', updated);
     showToast('Clinical certification signed and locked. Record is immutable.');
   };
 

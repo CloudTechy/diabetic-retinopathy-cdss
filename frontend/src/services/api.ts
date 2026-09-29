@@ -11,6 +11,7 @@ import {
 } from '../types/clinical';
 import { generateSyntheticFundus, generateSyntheticGradCam } from '../utils/syntheticFundus';
 import { ClientValidationResult } from '../utils/retinalValidator';
+import { browserStorage } from './storage';
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -371,10 +372,29 @@ function createInitialRecords(): AssessmentRecord[] {
 
 class ClinicalApiService {
   private records: AssessmentRecord[] = [];
+  private defaultRecords: AssessmentRecord[] = [];
   private currentUser: ClinicianUser = DEFAULT_CLINICIAN;
+  private initPromise: Promise<void>;
 
   constructor() {
-    this.records = createInitialRecords();
+    this.defaultRecords = createInitialRecords();
+    this.records = [...this.defaultRecords];
+    this.initPromise = this.initPersistentStorage();
+  }
+
+  private async initPersistentStorage(): Promise<void> {
+    try {
+      const stored = await browserStorage.loadAssessments(this.defaultRecords);
+      if (stored && stored.length > 0) {
+        this.records = stored;
+      }
+      const storedUser = browserStorage.getStoredUser();
+      if (storedUser) {
+        this.currentUser = storedUser;
+      }
+    } catch (err) {
+      console.error('Failed to initialize persistent storage:', err);
+    }
   }
 
   getCurrentUser(): ClinicianUser {
@@ -385,6 +405,7 @@ class ClinicalApiService {
     try {
       const res = await apiClient.post('/auth/login', credentials);
       this.currentUser = res.data;
+      browserStorage.saveStoredUser(this.currentUser);
       return res.data;
     } catch {
       // Mock fallback
@@ -395,14 +416,21 @@ class ClinicalApiService {
         licenseNumber: credentials.licenseNumber || DEFAULT_CLINICIAN.licenseNumber,
         loginTime: new Date().toISOString(),
       };
+      browserStorage.saveStoredUser(this.currentUser);
       return this.currentUser;
     }
   }
 
+  async logout(): Promise<void> {
+    this.currentUser = DEFAULT_CLINICIAN;
+    browserStorage.saveStoredUser(null);
+  }
+
   async getWorklist(): Promise<AssessmentRecord[]> {
+    await this.initPromise;
     try {
       const res = await apiClient.get('/assessments');
-      if (Array.isArray(res.data)) {
+      if (Array.isArray(res.data) && res.data.length > 0) {
         return res.data;
       }
       return [...this.records];
@@ -413,6 +441,7 @@ class ClinicalApiService {
   }
 
   async getAssessmentById(id: string): Promise<AssessmentRecord | null> {
+    await this.initPromise;
     try {
       const res = await apiClient.get(`/assessments/${id}`);
       return res.data;
@@ -544,6 +573,7 @@ class ClinicalApiService {
     }
 
     this.records.unshift(record);
+    browserStorage.saveAssessment(record).catch(console.error);
     return record;
   }
 
@@ -551,6 +581,7 @@ class ClinicalApiService {
     assessmentId: string,
     review: Omit<ClinicianReview, 'signatureHash' | 'signedAt' | 'clinicianName' | 'licenseNumber' | 'facility'>
   ): Promise<AssessmentRecord> {
+    await this.initPromise;
     const record = this.records.find((r) => r.id === assessmentId);
     if (!record) throw new Error('Assessment not found');
 
@@ -587,10 +618,18 @@ class ClinicalApiService {
       // Mock fallback
     }
 
+    browserStorage.saveAssessment(record).catch(console.error);
     return { ...record };
   }
 
+  async resetToDefaultRecords(): Promise<AssessmentRecord[]> {
+    await browserStorage.resetToDefaults(this.defaultRecords);
+    this.records = [...this.defaultRecords];
+    return [...this.records];
+  }
+
   async searchRecords(filters: WorklistFilter): Promise<AssessmentRecord[]> {
+    await this.initPromise;
     try {
       const res = await apiClient.get('/assessments/search', { params: filters });
       if (Array.isArray(res.data)) {
