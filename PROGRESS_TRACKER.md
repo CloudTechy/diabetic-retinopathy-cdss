@@ -82,10 +82,11 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 - **Grad-CAM target layer:** `features.8` (1,280-channel final conv).
 - **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
 - **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
-- **End-to-end CPU latency:** mean **315.25 ms**, median 227.77 ms, P95 **624.58 ms** over 30 held-out images (4-thread x86_64, no GPU). ⚠️ This is the **pre-optimisation** baseline; gates 2/3 have since been sped up 2.7× and it has not been re-measured.
-- **Where it goes:** validation gates 2+3 = **186.42 ms (59.1%)**; model forward pass = 33.48 ms (10.6%). Inference is not the bottleneck.
+- **End-to-end CPU latency:** mean **164.79 ms**, median 137.21 ms, P95 **277.31 ms** over 30 held-out images (4-thread x86_64, no GPU).
+- **vs the 315.25 ms pre-optimisation baseline:** raw 1.91×, but the two runs were on different Colab CPUs — unchanged-code stages were themselves 1.14–1.40× faster. Attributable improvement is **~1.4–1.7×**. Immune to that caveat: validation fell from **59.1% to 43.9%** of the request.
+- **Where it goes:** validation gates 2+3 = **72.42 ms (43.9%)**; PNG encode = 30.18 ms (18.3%); model forward pass = 29.24 ms (17.7%). Inference is not the bottleneck.
 - **Grad-CAM composition:** vectorised, **307.87 → 28.86 ms** (10.7x), byte-identical output.
-- **Validation gates:** statistics computed on a nearest-neighbour subsample, **703.4 → 265.0 ms** combined (2.7x) on a 2048×1536 image, with 38 tests asserting verdicts are unchanged.
+- **Validation gates:** statistics on a nearest-neighbour subsample. In the deployment benchmark gates 2+3 went **186.42 → 72.42 ms**. **Verified on all 3,662 real APTOS images: zero verdict changes, Laplacian deviation exactly 0.0.**
 - **GPU reference:** 8.36 ms Tesla T4 forward pass — training-environment comparison only, not a deployment figure.
 
 ---
@@ -111,7 +112,7 @@ cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
 
 | # | Item | Why it matters |
 | :---: | :--- | :--- |
-| 1 | **Re-run the end-to-end benchmark** | Gates 2 and 3 now subsample (2.7× combined, verdicts unchanged), but the 315.25 ms end-to-end total is the **pre-optimisation** measurement. Re-run `benchmark_cpu_end_to_end.py` to record the improved figure. Also run `verify_gate_downsampling.py` against real APTOS images to confirm zero verdict changes on a clinical corpus. |
+| 1 | **Decode once, share one reduced copy across gates 1–3** | `gate2` is still the largest stage at 56.06 ms (34.0%). The residual is not the statistics — it is the reduction itself, plus each gate independently converting the full-resolution image. Measured, not speculative. |
 | 2 | Re-split with byte-hash duplicate grouping, then re-train | 27/549 held-out images are byte-identical to a training image because `duplicated_info.csv` is absent from the Kaggle download. Measured effect: nil (clean-subset $\kappa$ = 0.877818 vs 0.877747 full). Disclosed in [`dataset_audit.md`](docs/chapter4/dataset_audit.md) §4; remediation deferred as it would invalidate the hash-verified checkpoint for no measurable gain. |
 | 3 | ~~Refresh UI screenshots~~ **DONE** | Recaptured 2026-09-30 from the current build with sanitised demo identity, and the displayed sharpness threshold corrected to match the backend. The score values shown remain demonstration fixtures: these figures evidence interface behaviour, not model performance. |
 | 4 | External-cohort validation | No evaluation on any dataset other than APTOS 2019. No generalisation claim is made. |

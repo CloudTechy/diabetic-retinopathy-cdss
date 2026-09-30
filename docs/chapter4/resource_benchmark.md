@@ -12,57 +12,93 @@
 
 ## 1. End-to-End CPU Latency (the deployment figure)
 
-This is what a clinician waits for: the complete request path, on the CPU the system actually deploys to, measured over 30 real held-out APTOS images after 3 warm-up requests.
+The complete request path, on the CPU the system deploys to, over 30 real held-out APTOS images after 3 warm-up requests.
 
 **Environment:** x86_64 CPU, 4 threads, PyTorch 2.11.0+cpu, no GPU — the harness clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot silently measure an accelerator. Input images averaged 1,807 KB.
 
 | Measure | Value |
 | :--- | :---: |
-| **Mean end-to-end latency** | **315.25 ms** |
-| **Median (P50)** | **227.77 ms** |
-| **95th percentile (P95)** | **624.58 ms** |
-| Minimum | 151.86 ms |
-| Maximum | 631.75 ms |
+| **Mean end-to-end latency** | **164.79 ms** |
+| **Median (P50)** | **137.21 ms** |
+| **95th percentile (P95)** | **277.31 ms** |
+| Minimum | 105.50 ms |
+| Maximum | 282.86 ms |
 
-Sub-second at the 95th percentile on a commodity 4-thread CPU with no accelerator. For an assisted-review workflow — a clinician uploads a fundus photograph, then reads the result — this is comfortably interactive.
+Comfortably interactive for an assisted-review workflow on a commodity 4-thread CPU with no accelerator.
 
 ### Stage breakdown
 
 | Stage | Mean ms | Median | P95 | Min | Max | % of request |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `read` | 1.64 | 0.63 | 3.55 | 0.21 | 22.95 | 0.5% |
-| `gate1` — integrity & decode | 6.43 | 3.95 | 19.35 | 1.33 | 19.86 | 2.0% |
-| **`gate2` — retinal relevance** | **118.35** | 61.62 | 318.02 | 25.01 | 318.59 | **37.5%** |
-| **`gate3` — technical quality** | **68.07** | 40.40 | 156.88 | 10.45 | 157.33 | **21.6%** |
-| `preprocess` | 15.12 | 8.76 | 27.68 | 4.91 | 34.12 | 4.8% |
-| `forward` — EfficientNet-B0 | 33.48 | 33.52 | 39.54 | 28.94 | 42.50 | 10.6% |
-| `gradcam` — gradients & CAM | 0.59 | 0.56 | 0.71 | 0.54 | 0.75 | 0.2% |
-| `compose` — heatmap render | 28.86 | 27.39 | 34.61 | 25.73 | 34.63 | 9.2% |
-| `encode` — PNG serialisation | 41.48 | 40.55 | 49.47 | 35.26 | 50.40 | 13.2% |
-| **TOTAL** | **315.25** | 227.77 | 624.58 | 151.86 | 631.75 | 100% |
+| `read` | 0.46 | 0.43 | 0.79 | 0.24 | 0.86 | 0.3% |
+| `gate1` — integrity & decode | 2.10 | 1.36 | 6.17 | 0.57 | 6.32 | 1.3% |
+| **`gate2` — retinal relevance** | **56.06** | 32.33 | 142.99 | 13.92 | 144.50 | **34.0%** |
+| `gate3` — technical quality | 16.36 | 14.47 | 26.36 | 5.51 | 26.41 | 9.9% |
+| `preprocess` | 10.54 | 6.78 | 20.85 | 3.78 | 21.29 | 6.4% |
+| `forward` — EfficientNet-B0 | 29.24 | 28.79 | 32.10 | 26.49 | 36.49 | 17.7% |
+| `gradcam` — gradients & CAM | 0.60 | 0.59 | 0.74 | 0.53 | 0.77 | 0.4% |
+| `compose` — heatmap render | 17.89 | 17.43 | 20.67 | 15.25 | 21.55 | 10.9% |
+| **`encode` — PNG serialisation** | **30.18** | 29.30 | 36.06 | 25.75 | 38.91 | **18.3%** |
+| **TOTAL** | **164.79** | 137.21 | 277.31 | 105.50 | 282.86 | 100% |
 
-The stage means sum to 314.02 ms against a measured total of 315.25 ms. The 1.24 ms difference (0.4%) is work between the timed regions — registering and removing the Grad-CAM forward hook, the argmax, tensor indexing — which is attributed to no stage. `TOTAL` is wall-clock around the whole request and is the figure to cite; the stage rows account for 99.6% of it.
+Stage means sum to 163.44 ms against a measured total of 164.79 ms. The 1.35 ms difference (0.8%) is work between the timed regions — Grad-CAM hook registration and removal, the argmax, tensor indexing — belonging to no stage. `TOTAL` is wall-clock around the whole request and is the figure to cite.
 
-Every value in this section is reproduced verbatim from [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), rounded to two decimals.
+Every value here is reproduced verbatim from [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), rounded to two decimals.
+
+---
+
+## 1a. Comparison With the Pre-Optimisation Baseline — read the caveat
+
+An earlier run of this harness, before the validation gates were optimised, measured **315.25 ms** mean. Comparing the two naively gives 1.91×, and that number would be misleading.
+
+**The two runs were not on the same machine.** Colab allocates different CPUs between sessions. The seven stages whose code did not change between the runs were themselves faster the second time:
+
+| Reference set | Baseline | Current | Apparent factor |
+| :--- | ---: | ---: | ---: |
+| `forward` alone (fixed 224² tensor, no I/O — most stable) | 33.48 ms | 29.24 ms | **1.14×** |
+| Fixed-size pure compute (`forward`, `gradcam`, `compose`) | 62.92 ms | 47.74 ms | 1.32× |
+| All seven unchanged stages | 127.59 ms | 91.02 ms | 1.40× |
+| `read` + `gate1` (disk-cache dominated) | 8.07 ms | 2.57 ms | 3.14× |
+
+The spread — 1.14× to 3.14× — shows the difference is not a single scalar, and that the I/O-bound stages benefited most from a warmer page cache.
+
+**Honest bounds.** Taking 1.14×–1.40× as the plausible machine factor, the current run normalised back onto the baseline hardware lands between **189 ms and 231 ms**, giving an attributable end-to-end improvement of roughly **1.4× to 1.7×** rather than 1.91×.
+
+For gates 2 and 3 specifically:
+
+| | Baseline | Current | Raw | Machine-normalised |
+| :--- | ---: | ---: | ---: | ---: |
+| `gate2` + `gate3` | 186.42 ms | **72.42 ms** | 2.57× | **~1.8×–2.3×** |
+| Share of the request | 59.1% | **43.9%** | | |
+
+**What is unambiguous**, because it is internal to a single run and therefore immune to hardware variation: validation fell from **59.1%** of the request to **43.9%**, and `gate3` fell from 21.6% to 9.9%.
+
+### Gate 2 is still the largest stage, and the reason is instructive
+
+At 56.06 ms it remains 34.0% of the request, far more than the 5.2× local speedup predicted. The residual is not the statistics — those now run on a 512px subsample — it is **the downsampling itself**. Reducing a 3216×2136 image requires reading every source pixel once, and `rgb_image = pil_image.convert("RGB")` runs at full resolution before that.
+
+Gates 1, 2 and 3 each decode or convert the full-resolution image independently. Decoding once and sharing a single reduced copy across all three is the next available gain, and it is **not** implemented. `gate2` also retains the widest spread in the run (32.33 ms median against a 142.99 ms P95), consistent with cost tracking source resolution.
 
 ---
 
 ## 2. What the Breakdown Shows
 
-**Inference is not the bottleneck.** The model forward pass is **33.48 ms — 10.6%** of the request. Image *validation* costs nearly six times that.
+**Inference is still not the bottleneck.** The model forward pass is **29.24 ms — 17.7%** of the request. Input handling costs more than twice that.
 
-**Validation dominates.** Gates 2 and 3 together account for **186.42 ms, 59.1% of the request**. Both compute NumPy statistics — aperture coverage, channel ratios, Laplacian variance, illumination — over the **full-resolution** image, before anything is downsampled. Gate 3 already shrinks very large inputs; Gate 2 does not.
+**Validation still leads, though by much less.** Gates 2 and 3 account for **72.42 ms, 43.9%** of the request, down from 59.1% before the optimisation.
 
 Grouped by kind:
 
 | Category | Mean ms | Share |
 | :--- | ---: | ---: |
-| Input handling (`read`, `gate1`, `gate2`, `gate3`) | 194.49 | **61.7%** |
-| Model & explainability (`preprocess`, `forward`, `gradcam`, `compose`, `encode`) | 119.53 | 37.9% |
+| Input handling (`read`, `gate1`, `gate2`, `gate3`) | 74.98 | **45.5%** |
+| Model & explainability (`preprocess`, `forward`, `gradcam`, `compose`, `encode`) | 88.46 | 53.7% |
 
-**Latency scales with input resolution, not with disease severity.** Mean exceeds median by a factor of 1.38 (315 vs 228 ms), and the spread is widest exactly where it would be if resolution drove cost: `gate2` has a median of 61.62 ms against a P95 of 318.02 ms, a 5× range. APTOS image dimensions vary substantially and the full-resolution gates pay for every extra pixel. The model stages, operating on a fixed 224×224 tensor, are correspondingly stable — `forward` spans only 28.94–42.50 ms across all 30 requests.
+The balance has crossed over: model and explainability work is now the larger half. **PNG serialisation of the Grad-CAM overlay (`encode`, 30.18 ms, 18.3%) is now the second-largest stage** and costs more than the forward pass. A lower `compress_level`, or emitting the overlay at the resolution the viewer actually blends it at, would reduce it; neither is implemented.
 
-**This identified the next optimisation, which has since been applied.** See §3.3. The §1 table above remains the *pre-optimisation* baseline, kept because it is the measurement that motivated the change and because the post-optimisation end-to-end figure has not yet been measured.
+**Latency scales with input resolution, not with disease severity.** Mean exceeds median by a factor of 1.20 (164.79 vs 137.21 ms), and the spread is still widest where resolution drives cost: `gate2` runs a 32.33 ms median against a 142.99 ms P95, a 4.4× range, because the reduction step must still read every source pixel. The model stages, operating on a fixed 224×224 tensor, are correspondingly stable — `forward` spans only 26.49–36.49 ms across all 30 requests.
+
+**The optimisation this identified has been applied and measured.** See §3.3 for the change and §1a for what it did and did not achieve.
 
 ---
 
@@ -104,7 +140,20 @@ Gate 3 improves less because its Laplacian variance is deliberately excluded. Sh
 python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
 ```
 
-**Not yet claimed:** the post-optimisation end-to-end total. §1 is the pre-optimisation baseline. Re-running the end-to-end harness is required before any improved figure is stated here.
+**Verified on the full clinical corpus.** `verify_gate_downsampling.py` was run against all **3,662 APTOS images** (790.7 s). Recorded in [`gate_downsampling_verification.json`](gate_downsampling_verification.json):
+
+| | |
+| :--- | :--- |
+| Images checked | **3,662** |
+| Gate 2 verdict changes | **0** |
+| Gate 3 verdict changes | **0** |
+| Laplacian variance deviation | **exactly 0.000000** |
+
+Largest metric deviations: aperture coverage 0.0032 (thresholds 0.20 / 0.98), contrast std 0.30 (threshold 18.0), extreme-pixel ratio 0.014 (threshold 0.35).
+
+**One deviation needs explaining rather than glossing over.** The red/blue ratio shows a maximum absolute deviation of **127.85**, which looks alarming beside a threshold of 1.15. That metric is $r_{	ext{mean}} / (b_{	ext{mean}} + 10^{-6})$: on a very dark image with almost no blue signal it takes enormous values, so a small change in $b_{	ext{mean}}$ moves it a long way in absolute terms while leaving it orders of magnitude clear of the cutoff. A deviation that large can only arise where the ratio is already far above 1.15, which is why no verdict changed. The verifier now also reports deviation restricted to images *near* each threshold, plus the closest margin any image came to a boundary, so a future run demonstrates this directly instead of resting on the argument.
+
+The end-to-end consequence is measured in §1 and §1a.
 
 ---
 

@@ -82,9 +82,9 @@ Measured effect: accuracy 77.78% on the affected images vs 78.74% on the clean 5
 
 ## 6. Validation, not inference, dominates response time
 
-End-to-end CPU latency is **315.25 ms mean / 624.58 ms P95** over 30 held-out images on a 4-thread x86_64 CPU ([`resource_benchmark.md`](resource_benchmark.md) §1).
+End-to-end CPU latency is **164.79 ms mean / 277.31 ms P95** over 30 held-out images on a 4-thread x86_64 CPU ([`resource_benchmark.md`](resource_benchmark.md) §1).
 
-The structure of that number is the limitation worth stating. The model forward pass is only **33.48 ms (10.6%)**; validation gates 2 and 3 cost **186.42 ms (59.1%)** because both compute NumPy statistics over the **full-resolution** image before any downsampling. Gate 3 shrinks very large inputs; Gate 2 does not.
+The structure of that number is the limitation worth stating. The model forward pass is **29.24 ms (17.7%)**; validation gates 2 and 3 cost **72.42 ms (43.9%)**, down from 59.1% before the gates were optimised but still the largest single category.
 
 Two consequences:
 

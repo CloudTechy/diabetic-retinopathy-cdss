@@ -70,6 +70,20 @@ def main():
 
     g2_flips, g3_flips = [], []
     worst = {"coverage": 0.0, "rb": 0.0, "contrast": 0.0, "extreme": 0.0, "laplacian": 0.0}
+
+    # A raw maximum deviation can be alarming and meaningless at the same time.
+    # The red/blue ratio is r_mean / (b_mean + 1e-6): on a very dark image with
+    # almost no blue signal it takes enormous values, so a tiny change in
+    # b_mean moves it by a lot in absolute terms while leaving it orders of
+    # magnitude clear of the 1.15 threshold. What matters is the deviation on
+    # images that are actually near a decision boundary, so track that
+    # separately, along with how close any image came to flipping.
+    NEAR = {"rb": (1.15, 0.5), "coverage_lo": (0.20, 0.05),
+            "coverage_hi": (0.98, 0.05), "contrast": (18.0, 5.0),
+            "extreme": (0.35, 0.1)}
+    near_worst = {k: 0.0 for k in NEAR}
+    near_counts = {k: 0 for k in NEAR}
+    min_margin = {k: float("inf") for k in NEAR}
     checked = 0
     t0 = time.perf_counter()
 
@@ -106,6 +120,24 @@ def main():
                                abs(f3.extreme_pixel_ratio - r3.extreme_pixel_ratio))
         worst["laplacian"] = max(worst["laplacian"],
                                  abs(f3.laplacian_variance - r3.laplacian_variance))
+
+        # Margin to each threshold, and the deviation seen near one.
+        for key, value, deviation in (
+            ("rb", f2.red_to_blue_ratio, abs(f2.red_to_blue_ratio - r2.red_to_blue_ratio)),
+            ("coverage_lo", f2.mask_coverage, abs(f2.mask_coverage - r2.mask_coverage)),
+            ("coverage_hi", f2.mask_coverage, abs(f2.mask_coverage - r2.mask_coverage)),
+            ("contrast", f3.contrast_dynamic_range,
+             abs(f3.contrast_dynamic_range - r3.contrast_dynamic_range)),
+            ("extreme", f3.extreme_pixel_ratio,
+             abs(f3.extreme_pixel_ratio - r3.extreme_pixel_ratio)),
+        ):
+            threshold, band = NEAR[key]
+            margin = abs(value - threshold)
+            min_margin[key] = min(min_margin[key], margin)
+            if margin <= band:
+                near_counts[key] += 1
+                near_worst[key] = max(near_worst[key], deviation)
+
         checked += 1
         if n % 250 == 0:
             print(f"  {n}/{len(files)} ...")
@@ -122,6 +154,20 @@ def main():
     print(f"  contrast std         {worst['contrast']:.5f}   (threshold 18.0)")
     print(f"  extreme pixel ratio  {worst['extreme']:.5f}   (threshold 0.35)")
     print(f"  laplacian variance   {worst['laplacian']:.5f}   (must be exactly 0.0)")
+    print()
+    print("Deviation among images NEAR a threshold - the figure that matters:")
+    print(f"  {'metric':<14}{'threshold':>10}{'near':>7}{'max dev':>12}{'closest margin':>17}")
+    for key in NEAR:
+        threshold, band = NEAR[key]
+        margin = min_margin[key]
+        margin_txt = "n/a" if margin == float("inf") else f"{margin:.4f}"
+        print(f"  {key:<14}{threshold:>10}{near_counts[key]:>7}"
+              f"{near_worst[key]:>12.5f}{margin_txt:>17}")
+    print()
+    print("  A large raw deviation with a tiny near-threshold deviation is benign:")
+    print("  the red/blue ratio is r_mean/(b_mean + 1e-6), so on a near-black image")
+    print("  it takes huge values that move a lot in absolute terms while staying")
+    print("  orders of magnitude clear of the 1.15 cutoff.")
     print("=" * 84)
 
     out = os.path.join(REPO_ROOT, "docs", "chapter4", "gate_downsampling_verification.json")
@@ -137,6 +183,17 @@ def main():
             "gate2_flips": g2_flips,
             "gate3_flips": g3_flips,
             "max_abs_deviation": {k: round(v, 6) for k, v in worst.items()},
+            "near_threshold": {
+                k: {
+                    "threshold": NEAR[k][0],
+                    "band": NEAR[k][1],
+                    "images_in_band": near_counts[k],
+                    "max_abs_deviation": round(near_worst[k], 6),
+                    "closest_margin": (None if min_margin[k] == float("inf")
+                                       else round(min_margin[k], 6)),
+                }
+                for k in NEAR
+            },
             "elapsed_s": round(elapsed, 1),
         }, fh, indent=2)
     print(f"Written: {out}")
