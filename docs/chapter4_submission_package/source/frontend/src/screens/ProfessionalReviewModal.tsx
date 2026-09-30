@@ -31,7 +31,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
 }) => {
   // Friction engineering: NO pre-selected default
   const [agreement, setAgreement] = useState<AgreementType | null>(null);
-  const [certifiedGrade, setCertifiedGrade] = useState<number | null>(null);
+  const [reviewerAssessedGrade, setCertifiedGrade] = useState<number | null>(null);
   const [justificationNotes, setJustificationNotes] = useState<string>('');
   const [inconclusiveReason, setInconclusiveReason] = useState<string>('Media Opacity / Cataract');
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -49,7 +49,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
     } else if (type === 'inconclusive') {
       setCertifiedGrade(modelGrade);
     } else if (type === 'disagree') {
-      if (certifiedGrade === modelGrade) {
+      if (reviewerAssessedGrade === modelGrade) {
         setCertifiedGrade(null);
       }
     }
@@ -61,14 +61,13 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
     setIsSubmitting(true);
 
     try {
-      const finalGrade = certifiedGrade ?? modelGrade;
+      const finalGrade = reviewerAssessedGrade ?? modelGrade;
       const updated = await clinicalApi.submitReview(assessment.id, {
         agreement,
-        certifiedGrade: finalGrade,
-        certifiedGradeLabel: ICDR_GRADES[finalGrade]?.label || 'Clinical Observation Recorded',
+        reviewerAssessedGrade: finalGrade,
+        reviewerAssessedGradeLabel: ICDR_GRADES[finalGrade]?.label || 'Clinical Observation Recorded',
         justificationNotes: justificationNotes.trim() || undefined,
         inconclusiveReason: agreement === 'inconclusive' ? inconclusiveReason : undefined,
-        referralPlan: 'Referral decisions are outside the scope of this research prototype.',
       });
 
       onReviewSubmitted(updated);

@@ -29,7 +29,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const review = assessment.clinicianReview;
-  const certifiedGradeInfo = review ? ICDR_GRADES[review.certifiedGrade] : null;
+  const reviewerGradeInfo = review ? ICDR_GRADES[review.reviewerAssessedGrade] : null;
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -184,7 +184,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
               Professional Review Response
             </h3>
 
-            {review && certifiedGradeInfo ? (
+            {review && reviewerGradeInfo ? (
               <div className="space-y-3">
                 {/* Professional Review Concurrence Card */}
                 <div className="p-3.5 bg-white rounded-xl border border-teal-300 shadow-xs space-y-1">
@@ -210,7 +210,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                     {review.agreement === 'inconclusive' && `Indeterminate (${review.inconclusiveReason || 'Quality Ambiguity'})`}
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    {certifiedGradeInfo.label}
+                    {reviewerGradeInfo.label}
                   </p>
                 </div>
 
@@ -268,7 +268,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           gradcamUrl={assessment.gradcamUrl}
           laterality={assessment.laterality}
           nativeResolution={assessment.qualityMetrics.nativeResolution}
-          grade={review?.certifiedGrade ?? assessment.modelObservation?.primaryClassGrade ?? 2}
+          grade={review?.reviewerAssessedGrade ?? assessment.modelObservation?.primaryClassGrade ?? 2}
         />
       </div>
 

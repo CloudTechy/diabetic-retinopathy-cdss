@@ -260,13 +260,15 @@ class ReportService:
                     Paragraph("<strong>Clinical Agreement:</strong>", body_style),
                     Paragraph(agreement_label, body_style),
                     Paragraph("<strong>Reviewer's Assessed Grade:</strong>", body_style),
-                    Paragraph(f"<strong>{rev.certified_grade_label}</strong>", body_style),
+                    Paragraph(f"<strong>{rev.reviewer_assessed_grade_label}</strong>", body_style),
                 ],
                 [
                     Paragraph("<strong>Clinical Notes / Rationale:</strong>", body_style),
                     Paragraph(rev.justification_notes or "No additional observations recorded.", body_style),
                     Paragraph("<strong>Scope Note:</strong>", body_style),
-                    Paragraph(rev.referral_plan, body_style),
+                    Paragraph("This report records a preliminary model observation and the "
+                              "reviewing professional's response. It determines no diagnosis, "
+                              "referral or treatment.", body_style),
                 ],
                 [
                     Paragraph("<strong>Signature Timestamp:</strong>", body_style),
@@ -299,7 +301,7 @@ class ReportService:
         elements.append(
             Paragraph(
                 "<strong>CONFIDENTIAL CLINICAL CONSULTATION RECORD:</strong> This document is generated for clinical decision support. "
-                "The certified diagnosis and management decisions are solely the legal and medical responsibility of the named reviewing practitioner. "
+                "The reviewer's assessed grade and management decisions are solely the legal and medical responsibility of the named reviewing practitioner. "
                 "Original photographic evidence cryptographically anchored via SHA-256 digest.",
                 disclaimer_style,
             )

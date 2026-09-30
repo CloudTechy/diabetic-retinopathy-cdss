@@ -218,7 +218,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
                   onClick={onViewCompleted}
                   className="w-full py-2.5 px-4 text-xs font-bold text-white bg-clinical-primary hover:bg-clinical-primary-hover rounded-lg shadow-sm transition"
                 >
-                  View Final Certified Clinical Report
+                  View Assessment Report
                 </button>
               </div>
             ) : (

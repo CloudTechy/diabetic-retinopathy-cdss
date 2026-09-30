@@ -98,9 +98,8 @@ class TestAssessmentEndpoints:
             f"/api/v1/assessments/{assessment_id}/review",
             json={
                 "agreement": "agree",
-                "certifiedGrade": 2,
-                "certifiedGradeLabel": "Grade 2: Moderate NPDR",
-                "referralPlan": "Routine recall in 6 months.",
+                "reviewerAssessedGrade": 2,
+                "reviewerAssessedGradeLabel": "Grade 2: Moderate NPDR",
                 "justificationNotes": "Confirmed presence of parafoveal microaneurysms.",
             },
         )
@@ -166,8 +165,7 @@ class TestAssessmentEndpoints:
             f"/api/v1/assessments/{assessment_id}/review",
             json={
                 "agreement": "disagree",
-                "certifiedGrade": 0,
-                "referralPlan": "No referral.",
+                "reviewerAssessedGrade": 0,
                 "justificationNotes": "Too short",  # 9 chars < 15
             },
         )
@@ -179,8 +177,7 @@ class TestAssessmentEndpoints:
             f"/api/v1/assessments/{assessment_id}/review",
             json={
                 "agreement": "disagree",
-                "certifiedGrade": 1,
-                "referralPlan": "Review again in 12 months.",
+                "reviewerAssessedGrade": 1,
                 "justificationNotes": "Microaneurysms only. No blot hemorrhages seen in 4 quadrants.",
             },
         )

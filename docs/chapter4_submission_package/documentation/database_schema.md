@@ -117,7 +117,7 @@ erDiagram
 | `disclaimer` | TEXT | NO | Mandated non-diagnostic boundary notice. |
 
 ### 6. `professional_reviews`
-*Authoritative human-in-the-loop clinical evaluation and legal sign-off.*
+*Professional review response recorded alongside the model observation. Not a diagnosis, referral or legal instrument.*
 
 | Column | Type | Nullable | Description / Constraint |
 | :--- | :--- | :---: | :--- |

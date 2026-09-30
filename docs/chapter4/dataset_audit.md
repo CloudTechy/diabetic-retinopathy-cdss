@@ -100,7 +100,16 @@ Rather than trusting the grouping, the committed SHA-256 column was audited dire
 | Clean held-out images | 522 | **78.74%** | **0.877818** |
 | Full held-out cohort | 549 | 78.69% | 0.877747 |
 
-The model scores marginally *lower* on the duplicated images than on the clean ones, and clean-subset $\kappa$ is indistinguishable from full-cohort $\kappa$. The reported results are not inflated by memorisation.
+The model scores marginally lower on the duplicated images than on the clean ones.
+
+> [!WARNING]
+> **This conclusion is withdrawn.** Comparing scores on the contaminated test
+> images against the rest addresses test contamination only. It cannot detect
+> **validation** contamination (17 images) influencing which checkpoint is
+> selected, nor **conflicting labels** (30 groups) placing contradictory
+> supervision into training. The remedy is a clean split and a retrain, not a
+> post-hoc comparison. See `CLEAN_RERUN_RUNBOOK.md`.
+
 
 ### 4.4 Remediation path
 

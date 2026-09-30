@@ -32,7 +32,7 @@
 
 | Req ID | Requirement Description | Target Constraint | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_resources.py` (Mean 298.3 ms) | **PASS** |
+| **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_resources.py` (Mean 164.79 ms) | **PASS** |
 | **NFR-02** | **Memory Footprint:** Peak backend memory usage under load. | $< 512.0$ MB RSS | `backend/scripts/benchmark_resources.py` (Peak 328.8 MB) | **PASS** |
 | **NFR-03** | **Weights Storage:** Compressed checkpoint disk footprint. | $< 50.0$ MB | `backend/models/weights/efficientnet_b0_dr.pth` (15.6 MB) | **PASS** |
 | **NFR-04** | **Parameter Efficiency:** Total neural network parameter count. | $\approx 4.01$ M | Parameter inspection: exactly 4,013,953 parameters | **PASS** |

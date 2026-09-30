@@ -377,7 +377,7 @@ class AssessmentService:
     ) -> Assessment:
         """
         Commits clinician review and finalizes assessment into 'completed' status.
-        Enforces FDA/NHS friction controls and cryptographic digital signature.
+        Enforces review-confirmation controls and cryptographic digital signature.
         """
         stmt = select(Assessment).where(Assessment.id == assessment_id).options(
             selectinload(Assessment.image_asset),
@@ -417,15 +417,15 @@ class AssessmentService:
         facility = review_input.facility or (reviewer.facility if reviewer else "Research Prototype Environment")
 
         # Map grade label
-        grade_meta = ICDR_CLASS_METADATA[review_input.certifiedGrade]
-        certified_label = f"Grade {review_input.certifiedGrade}: {grade_meta['label']}"
+        grade_meta = ICDR_CLASS_METADATA[review_input.reviewerAssessedGrade]
+        certified_label = f"Grade {review_input.reviewerAssessedGrade}: {grade_meta['label']}"
 
         # Generate cryptographic SHA-256 digital signature
         now = datetime.datetime.now(timezone.utc)
         sig_payload = (
             f"{assessment.id}|{assessment.patient_id}|"
             f"{assessment.image_asset.sha256_hash if assessment.image_asset else ''}|"
-            f"{review_input.agreement}|{review_input.certifiedGrade}|"
+            f"{review_input.agreement}|{review_input.reviewerAssessedGrade}|"
             f"{clinician_name}|{license_num}|{now.isoformat()}"
         )
         sig_hash = f"SIG-SHA256-{hashlib.sha256(sig_payload.encode('utf-8')).hexdigest()[:24]}"
@@ -435,11 +435,10 @@ class AssessmentService:
             assessment_id=assessment.id,
             reviewer_id=reviewer.id if reviewer else None,
             agreement=review_input.agreement,
-            certified_grade=review_input.certifiedGrade,
-            certified_grade_label=certified_label,
+            reviewer_assessed_grade=review_input.reviewerAssessedGrade,
+            reviewer_assessed_grade_label=certified_label,
             justification_notes=review_input.justificationNotes,
             inconclusive_reason=review_input.inconclusiveReason,
-            referral_plan=review_input.referralPlan,
             clinician_name=clinician_name,
             license_number=license_num,
             facility=facility,
@@ -459,7 +458,7 @@ class AssessmentService:
         audit = AuditEvent(
             assessment_id=assessment.id,
             user_id=reviewer.id if reviewer else None,
-            action="Clinician Certified Review Finalized",
+            action="Clinician Professional Review Finalized",
             actor=clinician_name,
             details=f"Clinician signed record. Classification: {certified_label}. Agreement: {review_input.agreement.upper()}.",
             badge_type=badge,
@@ -562,7 +561,7 @@ class AssessmentService:
         for a in all_matches:
             if grade is not None and grade != "all":
                 target_grade = int(grade)
-                actual_grade = a.professional_review.certified_grade if a.professional_review else (
+                actual_grade = a.professional_review.reviewer_assessed_grade if a.professional_review else (
                     a.ai_result.primary_class_grade if a.ai_result else None
                 )
                 if actual_grade != target_grade:
@@ -677,11 +676,10 @@ class AssessmentService:
             rev = assessment.professional_review
             clinician_review = ClinicianReviewResponse(
                 agreement=rev.agreement,
-                certifiedGrade=rev.certified_grade,
-                certifiedGradeLabel=rev.certified_grade_label,
+                reviewerAssessedGrade=rev.reviewer_assessed_grade,
+                reviewerAssessedGradeLabel=rev.reviewer_assessed_grade_label,
                 justificationNotes=rev.justification_notes,
                 inconclusiveReason=rev.inconclusive_reason,
-                referralPlan=rev.referral_plan,
                 clinicianName=rev.clinician_name,
                 licenseNumber=rev.license_number,
                 facility=rev.facility,
