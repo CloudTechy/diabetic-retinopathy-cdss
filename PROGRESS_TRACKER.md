@@ -102,11 +102,18 @@ cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
 
 ## 6. Open Items
 
+> **Resolved 2026-09-30:** the three scripts that generated the original fabricated evidence
+> (`create_evaluated_checkpoint.py`, `generate_dataset_manifest.py`, `prepare_submission_package.py`)
+> have been deleted. Two of them wrote to paths holding genuine evidence, so running either would have
+> silently destroyed it. Package assembly is now `assemble_submission_package.py`, which only copies
+> committed artefacts and verifies the checkpoint digest.
+
+
 | # | Item | Why it matters |
 | :---: | :--- | :--- |
 | 1 | **Re-run the end-to-end benchmark** | Gates 2 and 3 now subsample (2.7× combined, verdicts unchanged), but the 315.25 ms end-to-end total is the **pre-optimisation** measurement. Re-run `benchmark_cpu_end_to_end.py` to record the improved figure. Also run `verify_gate_downsampling.py` against real APTOS images to confirm zero verdict changes on a clinical corpus. |
 | 2 | Re-split with byte-hash duplicate grouping, then re-train | 27/549 held-out images are byte-identical to a training image because `duplicated_info.csv` is absent from the Kaggle download. Measured effect: nil (clean-subset $\kappa$ = 0.877818 vs 0.877747 full). Disclosed in [`dataset_audit.md`](docs/chapter4/dataset_audit.md) §4; remediation deferred as it would invalidate the hash-verified checkpoint for no measurable gain. |
-| 3 | Refresh UI screenshots | Panels in `docs/chapter4/screenshots/` predate the evidence refresh and may display superseded metric values. They evidence interface behaviour, not model performance. |
+| 3 | ~~Refresh UI screenshots~~ **DONE** | Recaptured 2026-09-30 from the current build with sanitised demo identity, and the displayed sharpness threshold corrected to match the backend. The score values shown remain demonstration fixtures: these figures evidence interface behaviour, not model performance. |
 | 4 | External-cohort validation | No evaluation on any dataset other than APTOS 2019. No generalisation claim is made. |
 
 ---

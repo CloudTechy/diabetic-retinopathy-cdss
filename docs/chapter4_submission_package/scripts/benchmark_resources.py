@@ -1,172 +1,202 @@
+#!/usr/bin/env python3
+"""
+EfficientNet-B0 Inference Benchmark — Real Forward Pass Timing
+PGD Computer Science, Faculty of Physical Sciences
+
+Loads the actual trained checkpoint, opens a real test image,
+and times 100 individual forward passes. Records every measurement
+to CSV along with system metadata.
+"""
+
 import os
+import csv
+import sys
+import json
 import time
-import math
-import statistics
+import platform
 import hashlib
+from pathlib import Path
+from datetime import datetime
+
 import torch
+import torch.nn as nn
 import torchvision.models as models
+import torchvision.transforms as transforms
+from PIL import Image
 
-def benchmark_resources():
-    print("=" * 70)
-    print("MSc Thesis DR-CDSS: Resource & Computational Efficiency Benchmark")
-    print("Author: Onyekelu Chukwuebuka Elochukwu (2024516020FN)")
-    print("=" * 70)
+NUM_CLASSES = 5
+IMAGE_SIZE = 224
+WARMUP_PASSES = 10
+MEASUREMENT_PASSES = 100
 
-    # 1. Load Architecture
-    weights_path = "backend/models/weights/efficientnet_b0_dr.pth"
+
+def get_transforms():
+    return transforms.Compose([
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
+        ),
+    ])
+
+
+def benchmark():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print("=" * 72)
+    print("PGD Computer Science — EfficientNet-B0 Inference Benchmark")
+    print(f"Device: {device}")
+    print(f"PyTorch: {torch.__version__}")
+    print(f"Python: {sys.version}")
+    print(f"Platform: {platform.platform()}")
+    print(f"Processor: {platform.processor()}")
+    print(f"CPU threads: {os.cpu_count()}")
+    if torch.cuda.is_available():
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print("=" * 72)
+
+    # --- Paths ---
+    root = Path(__file__).resolve().parents[2]
+    checkpoint_path = root / "backend" / "models" / "weights" / "efficientnet_b0_dr.pth"
+    manifest_path = root / "docs" / "chapter4" / "dataset_split_manifest.csv"
+    images_dir = root / "storage" / "datasets" / "aptos2019" / "train_images"
+    output_dir = root / "docs" / "chapter4"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- Load model ---
+    print("\nLoading checkpoint...")
     model = models.efficientnet_b0(weights=None)
     in_features = model.classifier[1].in_features
-    model.classifier = torch.nn.Sequential(
-        torch.nn.Dropout(p=0.20, inplace=False),
-        torch.nn.Linear(in_features=in_features, out_features=5, bias=True)
+    model.classifier = nn.Sequential(
+        nn.Dropout(p=0.2, inplace=False),
+        nn.Linear(in_features, NUM_CLASSES),
     )
-
-    if os.path.exists(weights_path):
-        state_dict = torch.load(weights_path, map_location="cpu", weights_only=True)
-        model.load_state_dict(state_dict)
-        print(f"Loaded weights from {weights_path}")
-    else:
-        print("Model checkpoint missing; benchmarking architecture topology.")
-
+    state_dict = torch.load(str(checkpoint_path), map_location=device, weights_only=True)
+    model.load_state_dict(state_dict)
+    model.to(device)
     model.eval()
-    for p in model.parameters():
-        p.requires_grad = False
+    print("Model loaded and set to eval mode.")
 
-    # Count parameters
-    total_params = sum(p.numel() for p in model.parameters())
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    weights_size_mb = os.path.getsize(weights_path) / (1024 * 1024) if os.path.exists(weights_path) else 15.60
+    # --- Find a real test image ---
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        records = list(csv.DictReader(f))
+    test_recs = [r for r in records if r["split"] == "test"]
 
-    print(f"Total Parameters: {total_params:,}")
-    print(f"Trainable in Eval: {trainable_params}")
-    print(f"Model File Footprint: {weights_size_mb:.2f} MB")
+    test_image_path = None
+    for rec in test_recs:
+        p = images_dir / f"{rec['image_id']}.png"
+        if p.exists():
+            test_image_path = p
+            break
+        p = images_dir / f"{rec['image_id']}.jpg"
+        if p.exists():
+            test_image_path = p
+            break
 
-    # 2. Latency Benchmarking (10 Warm-up + 100 Consecutive Iterations)
-    dummy_input = torch.randn(1, 3, 224, 224)
-    print("\nWarming up execution pipeline (10 runs)...")
-    with torch.no_grad():
-        for _ in range(10):
-            _ = model(dummy_input)
+    if test_image_path is None:
+        raise FileNotFoundError("No test images found on disk. Download APTOS 2019 dataset first.")
 
-    print("Executing 100 timed CPU inference passes...")
-    latencies_ms = []
-    with torch.no_grad():
-        for i in range(100):
-            t0 = time.perf_counter()
-            _ = model(dummy_input)
-            t1 = time.perf_counter()
-            latencies_ms.append((t1 - t0) * 1000.0)
+    print(f"Benchmark image: {test_image_path}")
+    print(f"Image size on disk: {test_image_path.stat().st_size:,} bytes")
 
-    # Latency percentiles
-    latencies_ms.sort()
-    mean_lat = statistics.mean(latencies_ms)
-    std_lat = statistics.stdev(latencies_ms)
-    min_lat = min(latencies_ms)
-    max_lat = max(latencies_ms)
-    p25 = latencies_ms[24]
-    p50 = latencies_ms[49]
-    p75 = latencies_ms[74]
-    p95 = latencies_ms[94]
-    p99 = latencies_ms[98]
+    # --- Prepare input tensor ---
+    transform = get_transforms()
+    image = Image.open(test_image_path).convert("RGB")
+    input_tensor = transform(image).unsqueeze(0).to(device)
 
-    print("\n--- Latency Percentile Summary (ms) ---")
-    print(f"  Mean:   {mean_lat:.2f} ms")
-    print(f"  StdDev: ±{std_lat:.2f} ms")
-    print(f"  Min:    {min_lat:.2f} ms")
-    print(f"  P25:    {p25:.2f} ms")
-    print(f"  P50:    {p50:.2f} ms (Median)")
-    print(f"  P75:    {p75:.2f} ms")
-    print(f"  P95:    {p95:.2f} ms")
-    print(f"  P99:    {p99:.2f} ms")
-    print(f"  Max:    {max_lat:.2f} ms")
+    # --- Warmup ---
+    print(f"\nWarm-up: {WARMUP_PASSES} passes...")
+    with torch.inference_mode():
+        for _ in range(WARMUP_PASSES):
+            _ = model(input_tensor)
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
 
-    # Target comparisons with 100% honesty
-    edge_target_mean = 250.0
-    interactive_target_mean = 500.0
-    edge_target_p95 = 350.0
+    # --- Timed measurement ---
+    print(f"Measurement: {MEASUREMENT_PASSES} passes...")
+    timings = []
 
-    mean_status = "TARGET EXCEEDED (+{:.1f} ms) — Within Interactive Threshold (<500 ms)".format(mean_lat - edge_target_mean) if mean_lat > edge_target_mean else "PASS"
-    p95_status = "TARGET EXCEEDED (+{:.1f} ms)".format(p95 - edge_target_p95) if p95 > edge_target_p95 else "PASS"
-    p50_status = "PASS (< 200 ms)" if p50 < 200.0 else "EXCEEDED"
+    with torch.inference_mode():
+        for run_idx in range(1, MEASUREMENT_PASSES + 1):
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+                start = torch.cuda.Event(enable_timing=True)
+                end = torch.cuda.Event(enable_timing=True)
+                start.record()
+                _ = model(input_tensor)
+                end.record()
+                torch.cuda.synchronize()
+                elapsed_ms = start.elapsed_time(end)
+            else:
+                start = time.perf_counter_ns()
+                _ = model(input_tensor)
+                elapsed_ns = time.perf_counter_ns() - start
+                elapsed_ms = elapsed_ns / 1_000_000.0
 
-    # Write resource_benchmark.md
-    write_resource_benchmark_doc(
-        mean_lat=mean_lat,
-        std_lat=std_lat,
-        min_lat=min_lat,
-        p25=p25,
-        p50=p50,
-        p75=p75,
-        p95=p95,
-        p99=p99,
-        max_lat=max_lat,
-        total_params=total_params,
-        weights_size_mb=weights_size_mb,
-        mean_status=mean_status,
-        p95_status=p95_status,
-        p50_status=p50_status
-    )
+            timings.append({
+                "run": run_idx,
+                "inference_time_ms": round(elapsed_ms, 4),
+            })
 
-def write_resource_benchmark_doc(mean_lat, std_lat, min_lat, p25, p50, p75, p95, p99, max_lat, total_params, weights_size_mb, mean_status, p95_status, p50_status):
-    md = f"""# Computational Efficiency & System Resource Benchmark
+    # --- Statistics ---
+    times_ms = [t["inference_time_ms"] for t in timings]
+    times_ms_sorted = sorted(times_ms)
+    mean_ms = sum(times_ms) / len(times_ms)
+    median_ms = times_ms_sorted[len(times_ms_sorted) // 2]
+    p95_ms = times_ms_sorted[int(0.95 * len(times_ms_sorted))]
+    p99_ms = times_ms_sorted[int(0.99 * len(times_ms_sorted))]
+    min_ms = min(times_ms)
+    max_ms = max(times_ms)
 
-## Metadata & Traceability
-- **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
-- **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Primary Research Objective:** Objective i (Benchmark computational efficiency)
-- **Evaluation Date:** 2026-09-29
-- **Benchmark Platform:** Intel Core Processor x86_64 (CPU Single-Threaded Inference)
-- **Software Runtime:** Python 3.13, PyTorch 2.6, Torchvision
-- **Audit Verification:** Evaluated with rigorous target comparison and arithmetic honesty.
+    print(f"\n{'='*72}")
+    print("BENCHMARK RESULTS")
+    print(f"{'='*72}")
+    print(f"Runs:   {MEASUREMENT_PASSES}")
+    print(f"Mean:   {mean_ms:.2f} ms = {mean_ms/1000:.5f} s")
+    print(f"Median: {median_ms:.2f} ms")
+    print(f"P95:    {p95_ms:.2f} ms")
+    print(f"P99:    {p99_ms:.2f} ms")
+    print(f"Min:    {min_ms:.2f} ms")
+    print(f"Max:    {max_ms:.2f} ms")
+    print(f"Threshold (250 ms): {'PASS' if mean_ms < 250 else 'FAIL'}")
 
----
+    # --- Save timings CSV ---
+    timings_path = output_dir / "benchmark_timings.csv"
+    with open(timings_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["run", "inference_time_ms"])
+        writer.writeheader()
+        writer.writerows(timings)
+    print(f"\nSaved {MEASUREMENT_PASSES} timings to {timings_path}")
 
-## 1. Executive Benchmark Summary
+    # --- Save benchmark summary ---
+    summary = {
+        "measurement_scope": "model forward pass only (inference_mode, batch_size=1)",
+        "warmup_passes": WARMUP_PASSES,
+        "measurement_passes": MEASUREMENT_PASSES,
+        "mean_ms": round(mean_ms, 4),
+        "median_ms": round(median_ms, 4),
+        "p95_ms": round(p95_ms, 4),
+        "p99_ms": round(p99_ms, 4),
+        "min_ms": round(min_ms, 4),
+        "max_ms": round(max_ms, 4),
+        "threshold_ms": 250.0,
+        "threshold_pass": mean_ms < 250,
+        "device": str(device),
+        "pytorch_version": torch.__version__,
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "processor": platform.processor(),
+        "cpu_count": os.cpu_count(),
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A",
+        "benchmark_image": str(test_image_path),
+        "timestamp": datetime.now().isoformat(),
+    }
+    summary_path = output_dir / "benchmark_summary.json"
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    print(f"Saved benchmark summary to {summary_path}")
 
-EfficientNet-B0 was selected specifically to satisfy the computational and memory constraints of primary healthcare facilities lacking dedicated GPU hardware. The empirical benchmark confirms that the complete forward inference pass executes comfortably within sub-second interactive thresholds on commodity hardware:
-
-| Evaluation Metric | Measured Value | Strict Edge Target | Clinical Interactive Limit | Empirical Assessment |
-| :--- | :---: | :---: | :---: | :--- |
-| **Mean Single-Image CPU Latency** | **{mean_lat:.2f} ms** | $< 250.0$ ms | $< 500.0$ ms | **{mean_status}** |
-| **95th Percentile (P95) Latency** | **{p95:.2f} ms** | $< 350.0$ ms | $< 1,000.0$ ms | **{p95_status}** |
-| **Median (P50) Latency** | **{p50:.2f} ms** | $< 200.0$ ms | $< 300.0$ ms | **{p50_status}** |
-| **Standard Deviation** | **±{std_lat:.2f} ms** | Minimal jitter | — | **VARIABLE (Reflects OS scheduling)** |
-| **Total Model Parameters** | **{total_params:,}** | $\\approx 4.01$ Million | — | **VERIFIED (4,013,953 parameters)** |
-| **Trainable Parameters in Eval** | **0** | 0 (Frozen `eval()`) | — | **VERIFIED (Frozen)** |
-| **Weights Disk Footprint** | **{weights_size_mb:.2f} MB** | $< 50.0$ MB | — | **PASS (Ultra-compact: 15.6 MB)** |
-| **Estimated FLOPs** | **~0.39 GFLOPs** | $< 1.0$ GFLOPs | — | **PASS (0.39 GFLOPs)** |
-
----
-
-## 2. Latency Distribution Over 100 Consecutive CPU Passes
-
-```text
-Latency Distribution Percentiles (ms):
-  Min:  {min_lat:.2f} ms
-  P25:  {p25:.2f} ms
-  P50:  {p50:.2f} ms (Median)
-  P75:  {p75:.2f} ms
-  P95:  {p95:.2f} ms
-  P99:  {p99:.2f} ms
-  Max:  {max_lat:.2f} ms
-```
-
----
-
-## 3. Honest Engineering Interpretation & Discussion
-
-1. **Edge Latency Target Analysis:**
-   - The measured mean latency of **{mean_lat:.2f} ms** (~0.30 seconds) exceeds the aggressive low-power edge target of $< 250.0$ ms by {mean_lat - 250.0:.1f} ms.
-   - However, for an interactive clinical decision-support workstation where consultations typically last 10–15 minutes, sub-second execution (< 500 ms) provides instantaneous responsiveness to attending clinicians.
-2. **Tail Latency & CPU Jitter (P95):**
-   - The 95th percentile latency reached **{p95:.2f} ms** with a standard deviation of **±{std_lat:.2f} ms** and a maximum spike of {max_lat:.2f} ms.
-   - This variability is typical of CPU-bound inference in multi-tasking desktop operating systems (Windows/Linux) where background thread context switches occur.
-3. **Clinical Feasibility for Low-Resource Settings:**
-   - With an ultra-compact memory footprint of **15.60 MB** and floating-point complexity of only **0.39 GFLOPs**, EfficientNet-B0 eliminates the requirement for expensive NVIDIA GPU hardware, making deployment feasible on standard primary care PCs.
-"""
-    with open("docs/chapter4/resource_benchmark.md", mode="w", encoding="utf-8") as f:
-        f.write(md)
-    print("Saved resource benchmark report to docs/chapter4/resource_benchmark.md")
 
 if __name__ == "__main__":
-    benchmark_resources()
+    benchmark()
