@@ -103,7 +103,7 @@ clean-split builder.
 
 ### Cell 3 — inspect the split BEFORE training on it
 ```python
-!python backend/scripts/build_clean_split.py aptos2019/train_images     --out output/dataset_split_manifest.csv
+!python backend/scripts/build_clean_split.py aptos2019/train_images --out output/dataset_split_manifest.csv
 ```
 
 Stop and report if these three lines do not appear:
@@ -135,7 +135,7 @@ deviation of **exactly 0.0**.
 
 ### Cell 6 — CPU latency against the NEW checkpoint
 ```python
-!python backend/scripts/benchmark_cpu_end_to_end.py     --images-dir aptos2019/train_images     --checkpoint output/efficientnet_b0_dr.pth     --runs 30
+!python backend/scripts/benchmark_cpu_end_to_end.py --images-dir aptos2019/train_images --checkpoint output/efficientnet_b0_dr.pth --runs 30
 ```
 
 `--checkpoint` is required: the freshly trained weights are in `output/`, not
