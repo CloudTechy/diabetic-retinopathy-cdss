@@ -1,0 +1,18 @@
+{
+  "images_dir": "aptos2019/train_images",
+  "images_checked": 3662,
+  "analysis_max_dim": 512,
+  "resampling": "nearest",
+  "gate2_verdict_changes": 0,
+  "gate3_verdict_changes": 0,
+  "gate2_flips": [],
+  "gate3_flips": [],
+  "max_abs_deviation": {
+    "coverage": 0.0032,
+    "rb": 127.85,
+    "contrast": 0.3,
+    "extreme": 0.014,
+    "laplacian": 0.0
+  },
+  "elapsed_s": 790.7
+}

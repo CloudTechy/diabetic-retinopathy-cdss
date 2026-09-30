@@ -55,6 +55,7 @@ LAYOUT = [
     ("docs/chapter4/benchmark_summary.json", "logs_and_metrics/benchmark_summary.json"),
     ("docs/chapter4/cpu_end_to_end_benchmark.json", "logs_and_metrics/cpu_end_to_end_benchmark.json"),
     ("docs/chapter4/cpu_end_to_end_benchmark.csv", "logs_and_metrics/cpu_end_to_end_benchmark.csv"),
+    ("docs/chapter4/gate_downsampling_verification.json", "logs_and_metrics/gate_downsampling_verification.json"),
     ("docs/chapter4/validation_test_results.csv", "logs_and_metrics/validation_test_results.csv"),
 
     # Figures
@@ -76,6 +77,7 @@ LAYOUT = [
     ("docs/chapter4/system_test_report.md", "documentation/system_test_report.md"),
     ("docs/chapter4/screenshot_evidence_manifest.md", "documentation/screenshot_evidence_manifest.md"),
     ("docs/chapter4/independent_thesis_qa_gate_audit.md", "documentation/independent_thesis_qa_gate_audit.md"),
+    ("docs/chapter4/evidence_provenance.md", "PROVENANCE.md"),
 
     # Scripts that produce the evidence
     ("notebooks/colab_train_and_evaluate.py", "scripts/colab_train_and_evaluate.py"),
@@ -83,10 +85,24 @@ LAYOUT = [
     ("backend/scripts/benchmark_cpu_end_to_end.py", "scripts/benchmark_cpu_end_to_end.py"),
     ("backend/scripts/benchmark_resources.py", "scripts/benchmark_resources.py"),
     ("backend/scripts/verify_gate_downsampling.py", "scripts/verify_gate_downsampling.py"),
+    ("backend/scripts/generate_validation_evidence.py", "scripts/generate_validation_evidence.py"),
+    ("backend/scripts/integrity_gate.py", "scripts/integrity_gate.py"),
+    ("backend/tests/test_editor_integrity_gate.py", "scripts/test_editor_integrity_gate.py"),
+    ("backend/tests/test_spec_doc_consistency.py", "scripts/test_spec_doc_consistency.py"),
     ("backend/scripts/evaluate_model.py", "scripts/evaluate_model.py"),
     ("backend/scripts/train_efficientnet_b0.py", "scripts/train_efficientnet_b0.py"),
     ("backend/scripts/generate_aptos_manifest.py", "scripts/generate_aptos_manifest.py"),
 ]
+
+# Artefacts that require the APTOS dataset to regenerate. Their absence is
+# reported but does not fail assembly, so a package can be built on a machine
+# without the 9.51 GB download. They are never substituted or invented.
+PENDING_WITHOUT_DATASET = {
+    "logs_and_metrics/validation_test_results.csv":
+        "regenerate with: python scripts/generate_validation_evidence.py <aptos>/train_images",
+    "logs_and_metrics/gate_downsampling_verification.json":
+        "regenerate with: python scripts/verify_gate_downsampling.py <aptos>/train_images",
+}
 
 SCREENSHOTS_SRC = os.path.join(CHAPTER4, "screenshots")
 SCREENSHOTS_DST = os.path.join(PACKAGE, "screenshots")
@@ -126,14 +142,19 @@ def main():
         print(f"[ABORT] Checkpoint not found at {ckpt}")
         return 1
 
-    copied = updated = unchanged = missing = 0
+    copied = updated = unchanged = missing = pending = 0
     for rel_src, rel_dst in LAYOUT:
         src = os.path.join(REPO_ROOT, rel_src)
         dst = os.path.join(PACKAGE, rel_dst)
 
         if not os.path.exists(src):
-            print(f"  [MISSING] {rel_src}")
-            missing += 1
+            if rel_dst in PENDING_WITHOUT_DATASET:
+                print(f"  [PENDING] {rel_dst}")
+                print(f"            {PENDING_WITHOUT_DATASET[rel_dst]}")
+                pending += 1
+            else:
+                print(f"  [MISSING] {rel_src}")
+                missing += 1
             continue
 
         if os.path.exists(dst) and sha256_file(src) == sha256_file(dst):
@@ -170,7 +191,7 @@ def main():
 
     print("-" * 78)
     print(f"added {copied}   updated {updated}   unchanged {unchanged}   "
-          f"screenshots synced {shots}   missing {missing}")
+          f"screenshots synced {shots}   pending {pending}   missing {missing}")
 
     if missing:
         print(f"\n[INCOMPLETE] {missing} artefact(s) absent. Produce them with the scripts named")

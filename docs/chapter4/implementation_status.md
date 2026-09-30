@@ -46,7 +46,7 @@ docs/chapter4/
 ├── confusion_matrix.png                    <-- 5x5 normalized confusion matrix heatmap
 ├── resource_benchmark.md                   <-- Empirical CPU/GPU latency, RAM RSS, FLOPs
 ├── validation_module_spec.md               <-- Formal Gate 1, Gate 2, Gate 3 algorithms
-├── validation_test_results.csv             <-- Empirical pass/fail gate test outputs
+├── evidence_provenance.md                  <-- Which script produced which artefact/fail gate test outputs
 ├── system_test_report.md                   <-- Automated regression & end-to-end test run
 ├── requirements_test_matrix.md             <-- FR/NFR traceability matrix
 ├── screenshot_evidence_manifest.md         <-- 11 required interface figures & captions
