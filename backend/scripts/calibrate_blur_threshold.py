@@ -68,6 +68,10 @@ def main():
     parser.add_argument("--sample", type=int, default=0,
                         help="Measure a random sample of N images (0 = all)")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--out", default=OUT,
+                        help="Where to write the report (default: the evidence folder)")
+    parser.add_argument("--force", action="store_true",
+                        help="Write to the evidence folder even from a small corpus")
     args = parser.parse_args()
 
     import numpy as np
@@ -180,10 +184,26 @@ def main():
                  "by this script; the operating point is a judgement that must be "
                  "made and justified explicitly."),
     }
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as fh:
+    # A calibration derived from a handful of images is not evidence, and the
+    # default destination is the Chapter Four evidence folder. A smoke test on
+    # a dozen generated images once wrote there; refusing small corpora by
+    # default is cheaper than noticing afterwards.
+    MIN_CORPUS = 500
+    destination = args.out
+    if destination == OUT and len(values) < MIN_CORPUS and not args.force:
+        destination = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "blur_threshold_calibration.SMALL_CORPUS.json")
+        print()
+        print(f"REFUSING to write the evidence folder: only {len(values)} images "
+              f"measured (minimum {MIN_CORPUS}).")
+        print("A calibration from this few images is not a percentile estimate.")
+        print(f"Writing to {destination} instead. Pass --force to override.")
+
+    os.makedirs(os.path.dirname(os.path.abspath(destination)), exist_ok=True)
+    with open(destination, "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2)
-    print(f"\nWritten: {OUT}")
+    print(f"\nWritten: {destination}")
     return 0
 
 
