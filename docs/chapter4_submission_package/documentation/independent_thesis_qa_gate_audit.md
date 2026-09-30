@@ -27,6 +27,26 @@
 > of which depended on the training artefacts. Their verdicts stand.
 >
 > This notice is retained rather than deleted so the correction itself is auditable.
+>
+> ## Follow-up 2026-09-30: the tooling that produced the fabrications has been removed
+>
+> Correcting the artefacts left the scripts that generated them in the repository, executable. Three
+> were deleted:
+>
+> | Script | What it did |
+> | :--- | :--- |
+> | `create_evaluated_checkpoint.py` | Built a **randomly initialised** EfficientNet-B0 (Kaiming init), described it as a "reproducible trained state", and saved it to the production weights path. This produced the `0d443fa0…` checkpoint. |
+> | `generate_dataset_manifest.py` | Invented the $N = 8{,}000$ multi-cohort manifest with fabricated patient IDs and EyePACS/Messidor provenance for images that did not exist. |
+> | `prepare_submission_package.py` | Synthesised 100 benchmark timings with `np.random.normal`, inserted fake "OS context switch spikes" at hardcoded indices 12, 47 and 88, rescaled the series so its mean was exactly 95.76 ms, and wrote evaluation documents quoting 86.40% accuracy and $\kappa = 0.9415$. |
+>
+> Two of them wrote to paths holding genuine evidence, so running either would have silently destroyed
+> it — `create_evaluated_checkpoint.py` overwrites the trained checkpoint, `prepare_submission_package.py`
+> overwrites the submission package.
+>
+> `prepare_submission_package.py` is replaced by `assemble_submission_package.py`, which copies committed
+> artefacts and computes checksums. It generates nothing, verifies the checkpoint digest before packaging,
+> reports missing inputs instead of inventing them, and has a `--check` mode that fails if the package has
+> drifted from its sources.
 
 ---
 

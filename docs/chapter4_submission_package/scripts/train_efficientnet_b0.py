@@ -1,347 +1,386 @@
+#!/usr/bin/env python3
+"""
+EfficientNet-B0 Training Script — Genuine Image-Based Training
+PGD Computer Science, Faculty of Physical Sciences
+
+Trains on ACTUAL APTOS 2019 retinal fundus images using:
+- torchvision EfficientNet-B0 with ImageNet pretrained weights (transfer learning)
+- Proper Dataset/DataLoader with real image I/O
+- Class-weighted CrossEntropyLoss
+- AdamW + CosineAnnealingLR
+- Real validation metrics (loss, accuracy, QWK, F1) from genuine predictions
+"""
+
 import os
 import csv
+import sys
 import time
-import math
+import json
 import random
 import hashlib
+import logging
+from pathlib import Path
 from collections import Counter
+from datetime import datetime
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 import torchvision.models as models
-from PIL import Image, ImageDraw, ImageFont
+import torchvision.transforms as transforms
+from PIL import Image
+from sklearn.metrics import (
+    cohen_kappa_score,
+    f1_score,
+    confusion_matrix as sk_confusion_matrix,
+)
 
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+SEED = 42
+EPOCHS = 15
+BATCH_SIZE = 32
+LR = 1e-4
+WEIGHT_DECAY = 1e-4
+NUM_WORKERS = 4
+IMAGE_SIZE = 224
+NUM_CLASSES = 5
+
+
+def seed_everything(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+# ---------------------------------------------------------------------------
+# Dataset
+# ---------------------------------------------------------------------------
+class APTOSDataset(Dataset):
+    """Reads actual APTOS 2019 retinal fundus images from disk."""
+
+    def __init__(self, records: list, images_dir: str, transform=None):
+        self.records = records
+        self.images_dir = Path(images_dir)
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.records)
+
+    def __getitem__(self, idx):
+        rec = self.records[idx]
+        img_id = rec["image_id"]
+        label = int(rec["true_grade"])
+
+        img_path = self.images_dir / f"{img_id}.png"
+        if not img_path.exists():
+            # Try .jpg fallback
+            img_path = self.images_dir / f"{img_id}.jpg"
+
+        image = Image.open(img_path).convert("RGB")
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label, img_id
+
+
+# ---------------------------------------------------------------------------
+# Transforms
+# ---------------------------------------------------------------------------
+def get_train_transforms():
+    return transforms.Compose([
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.5),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
+        ),
+    ])
+
+
+def get_val_transforms():
+    return transforms.Compose([
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
+        ),
+    ])
+
+
+# ---------------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------------
+def compute_qwk(y_true, y_pred, num_classes=5):
+    """Quadratic Weighted Kappa using scikit-learn."""
+    return cohen_kappa_score(y_true, y_pred, weights="quadratic")
+
+
+def compute_macro_f1(y_true, y_pred):
+    return f1_score(y_true, y_pred, average="macro", zero_division=0)
+
+
+# ---------------------------------------------------------------------------
+# Training
+# ---------------------------------------------------------------------------
 def train_model():
-    print("=" * 70)
-    print("MSc Thesis DR-CDSS: PyTorch EfficientNet-B0 Training Pipeline")
-    print("Author: Onyekelu Chukwuebuka Elochukwu (2024516020FN)")
-    print("=" * 70)
-
-    # 1. Deterministic Seeding for Absolute Scientific Reproducibility
-    torch.manual_seed(42)
-    random.seed(42)
+    seed_everything(SEED)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Compute Execution Hardware: {device}")
 
-    # 2. Load Verified Dataset Split Manifest
-    manifest_path = "docs/chapter4/dataset_split_manifest.csv"
-    if not os.path.exists(manifest_path):
-        raise FileNotFoundError(f"Manifest {manifest_path} not found. Run generate_aptos_manifest.py first.")
+    print("=" * 72)
+    print("PGD Computer Science — EfficientNet-B0 Training on APTOS 2019")
+    print(f"Device: {device}")
+    print(f"PyTorch: {torch.__version__}")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print("=" * 72)
 
-    with open(manifest_path, mode="r", encoding="utf-8") as f:
-        records = list(csv.DictReader(f))
+    # --- Paths ---
+    root = Path(__file__).resolve().parents[2]
+    manifest_path = root / "docs" / "chapter4" / "dataset_split_manifest.csv"
+    images_dir = root / "storage" / "datasets" / "aptos2019" / "train_images"
+    weights_dir = root / "backend" / "models" / "weights"
+    output_dir = root / "docs" / "chapter4"
+    weights_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    train_recs = [r for r in records if r["split"] == "train"]
-    val_recs = [r for r in records if r["split"] == "val"]
-    test_recs = [r for r in records if r["split"] == "test"]
+    if not manifest_path.exists():
+        raise FileNotFoundError(
+            f"{manifest_path} not found. Run generate_aptos_manifest.py first."
+        )
 
-    print(f"Loaded verified manifest: Train={len(train_recs)}, Val={len(val_recs)}, Test={len(test_recs)} (Total={len(records)})")
+    # --- Load manifest ---
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        all_records = list(csv.DictReader(f))
 
-    # 3. Model Architecture Topology
-    print("\n--- Constructing EfficientNet-B0 Architecture ---")
-    model = models.efficientnet_b0(weights=None)
+    train_recs = [r for r in all_records if r["split"] == "train"]
+    val_recs = [r for r in all_records if r["split"] == "val"]
+
+    print(f"\nManifest loaded: Train={len(train_recs)}, Val={len(val_recs)}")
+
+    # Verify at least some images exist
+    sample_path = images_dir / f"{train_recs[0]['image_id']}.png"
+    if not sample_path.exists():
+        raise FileNotFoundError(
+            f"Image {sample_path} not found. Ensure APTOS 2019 images are in {images_dir}"
+        )
+
+    # --- Datasets & DataLoaders ---
+    train_dataset = APTOSDataset(train_recs, images_dir, get_train_transforms())
+    val_dataset = APTOSDataset(val_recs, images_dir, get_val_transforms())
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=NUM_WORKERS,
+        pin_memory=True,
+        drop_last=False,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
+        pin_memory=True,
+    )
+
+    print(f"Train batches: {len(train_loader)}, Val batches: {len(val_loader)}")
+
+    # --- Model ---
+    print("\nConstructing EfficientNet-B0 with ImageNet pretrained weights...")
+    model = models.efficientnet_b0(
+        weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1
+    )
     in_features = model.classifier[1].in_features  # 1280
     model.classifier = nn.Sequential(
-        nn.Dropout(p=0.20, inplace=False),
-        nn.Linear(in_features=in_features, out_features=5, bias=True)
+        nn.Dropout(p=0.2, inplace=False),
+        nn.Linear(in_features, NUM_CLASSES),
     )
     model.to(device)
 
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"Total Parameters: {total_params:,} (Trainable: {trainable_params:,})")
+    print(f"Total params: {total_params:,}  Trainable: {trainable_params:,}")
 
-    # 4. Class-Weighted Cross-Entropy Loss
+    # --- Class-weighted loss ---
     train_counts = Counter(int(r["true_grade"]) for r in train_recs)
-    N_train = len(train_recs)
-    weights = [N_train / (5.0 * train_counts[c]) for c in range(5)]
-    class_weights_tensor = torch.tensor(weights, dtype=torch.float32).to(device)
-    criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
+    n_train = len(train_recs)
+    class_weights = [n_train / (NUM_CLASSES * train_counts[c]) for c in range(NUM_CLASSES)]
+    weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
+    criterion = nn.CrossEntropyLoss(weight=weights_tensor)
 
-    print("\n--- Inverse Class Frequency Weights ---")
-    for c in range(5):
-        print(f"  Class {c} (N={train_counts[c]:4d}): Weight = {weights[c]:.4f}")
+    print("\nClass weights (inverse frequency):")
+    for c in range(NUM_CLASSES):
+        print(f"  Grade {c} (N={train_counts[c]}): weight={class_weights[c]:.4f}")
 
-    # 5. Optimizer & Cosine Annealing Learning Rate Scheduler
-    initial_lr = 1e-4
-    weight_decay = 1e-4
-    epochs = 15
-    optimizer = optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
+    # --- Optimizer & Scheduler ---
+    optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=1e-6)
 
-    # 6. Training Execution Loop
-    weights_dir = "backend/models/weights"
-    os.makedirs(weights_dir, exist_ok=True)
-    best_checkpoint_path = os.path.join(weights_dir, "efficientnet_b0_dr.pth")
-
+    # --- Training loop ---
     best_val_qwk = -1.0
     best_epoch = 0
-    training_history = []
+    checkpoint_path = weights_dir / "efficientnet_b0_dr.pth"
+    history = []
 
-    print(f"\n--- Initiating Supervised Training ({epochs} Epochs) ---")
-    print(f"{'Epoch':<7} | {'Train Loss':<11} | {'Val Loss':<9} | {'Val Acc':<8} | {'Val QWK':<8} | {'Val F1':<8} | {'LR':<9} | {'Status'}")
-    print("-" * 75)
+    log_path = output_dir / "training_execution.log"
+    log_file = open(log_path, "w", encoding="utf-8")
 
-    # Training loop execution
-    for epoch in range(1, epochs + 1):
+    def log(msg):
+        print(msg)
+        log_file.write(msg + "\n")
+        log_file.flush()
+
+    log(f"\nTraining started at {datetime.now().isoformat()}")
+    log(f"{'Epoch':>5} | {'Train Loss':>10} | {'Val Loss':>8} | {'Val Acc':>7} | "
+        f"{'Val QWK':>7} | {'Val F1':>7} | {'LR':>10} | Status")
+    log("-" * 80)
+
+    training_start = time.time()
+
+    for epoch in range(1, EPOCHS + 1):
+        epoch_start = time.time()
+
+        # --- Train phase ---
         model.train()
-        train_loss_accum = 0.0
-        
-        # Determine batches
-        batch_size = 32
-        n_batches = 6
-        
-        # Real forward and backward passes
-        for b_idx in range(n_batches):
-            batch_slice = train_recs[b_idx * batch_size : (b_idx + 1) * batch_size]
-            if not batch_slice:
-                continue
-            batch_labels = torch.tensor([int(r["true_grade"]) for r in batch_slice], dtype=torch.long).to(device)
-            
-            x = torch.randn(len(batch_labels), 3, 224, 224, device=device)
-            for i, l in enumerate(batch_labels):
-                x[i, :, :, :] += float(l) * 0.12
+        running_loss = 0.0
+        n_batches = 0
+
+        for images, labels, _ in train_loader:
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
             optimizer.zero_grad()
-            logits = model(x)
-            loss = criterion(logits, batch_labels)
+            logits = model(images)
+            loss = criterion(logits, labels)
             loss.backward()
             optimizer.step()
-            train_loss_accum += loss.item()
 
-        avg_train_loss = train_loss_accum / max(1, n_batches)
-        
-        decay_factor = math.exp(-epoch / 5.0)
-        sim_val_loss = 0.38 + 1.25 * decay_factor + random.uniform(-0.015, 0.015)
-        sim_val_acc = 0.88 - 0.40 * decay_factor + random.uniform(-0.008, 0.008)
-        sim_val_qwk = 0.91 - 0.48 * decay_factor + random.uniform(-0.006, 0.006)
-        sim_val_f1 = 0.84 - 0.42 * decay_factor + random.uniform(-0.008, 0.008)
-        
-        current_lr = scheduler.get_last_lr()[0]
+            running_loss += loss.item()
+            n_batches += 1
+
+        avg_train_loss = running_loss / max(1, n_batches)
+
+        # --- Validation phase ---
+        model.eval()
+        val_loss_accum = 0.0
+        val_batches = 0
+        all_preds = []
+        all_labels = []
+
+        with torch.inference_mode():
+            for images, labels, _ in val_loader:
+                images = images.to(device, non_blocking=True)
+                labels = labels.to(device, non_blocking=True)
+
+                logits = model(images)
+                loss = criterion(logits, labels)
+                val_loss_accum += loss.item()
+                val_batches += 1
+
+                preds = logits.argmax(dim=1).cpu().numpy()
+                all_preds.extend(preds.tolist())
+                all_labels.extend(labels.cpu().numpy().tolist())
+
+        avg_val_loss = val_loss_accum / max(1, val_batches)
+        val_acc = sum(p == t for p, t in zip(all_preds, all_labels)) / len(all_labels)
+        val_qwk = compute_qwk(all_labels, all_preds)
+        val_f1 = compute_macro_f1(all_labels, all_preds)
+
+        current_lr = optimizer.param_groups[0]["lr"]
         scheduler.step()
 
-        status_flag = ""
-        if sim_val_qwk > best_val_qwk:
-            best_val_qwk = sim_val_qwk
-            best_epoch = epoch
-            status_flag = "[*] BEST"
-            # Save best checkpoint state dict
-            torch.save(model.state_dict(), best_checkpoint_path)
+        epoch_time = time.time() - epoch_start
 
-        training_history.append({
+        # --- Checkpoint ---
+        status = ""
+        if val_qwk > best_val_qwk:
+            best_val_qwk = val_qwk
+            best_epoch = epoch
+            torch.save(model.state_dict(), checkpoint_path)
+            status = f"[BEST] saved ({epoch_time:.1f}s)"
+        else:
+            status = f"({epoch_time:.1f}s)"
+
+        history.append({
             "epoch": epoch,
-            "train_loss": round(avg_train_loss, 4),
-            "val_loss": round(sim_val_loss, 4),
-            "val_acc": round(sim_val_acc, 4),
-            "val_qwk": round(sim_val_qwk, 4),
-            "val_f1": round(sim_val_f1, 4),
+            "train_loss": round(avg_train_loss, 6),
+            "val_loss": round(avg_val_loss, 6),
+            "val_accuracy": round(val_acc, 6),
+            "val_qwk": round(val_qwk, 6),
+            "val_f1": round(val_f1, 6),
             "lr": f"{current_lr:.2e}",
-            "is_best": status_flag != ""
         })
 
-        print(f"Ep {epoch:02d}/15 | {avg_train_loss:10.4f}  | {sim_val_loss:8.4f}  | {sim_val_acc*100:6.2f}%  | {sim_val_qwk:8.4f} | {sim_val_f1:8.4f} | {current_lr:.2e} | {status_flag}")
+        log(f"{epoch:5d} | {avg_train_loss:10.6f} | {avg_val_loss:8.6f} | "
+            f"{val_acc*100:6.2f}% | {val_qwk:7.4f} | {val_f1:7.4f} | "
+            f"{current_lr:.2e} | {status}")
 
-    # 7. Checkpoint Verification & SHA-256
-    with open(best_checkpoint_path, "rb") as f:
-        sha256 = hashlib.sha256(f.read()).hexdigest()
-    ckpt_size_mb = os.path.getsize(best_checkpoint_path) / (1024 * 1024)
+    total_time = time.time() - training_start
+    log(f"\nTraining completed in {total_time:.1f}s ({total_time/60:.1f} min)")
+    log(f"Best epoch: {best_epoch} (Val QWK = {best_val_qwk:.4f})")
 
-    print("\n" + "=" * 70)
-    print("TRAINING COMPLETE & BEST CHECKPOINT SAVED")
-    print(f"Optimal Checkpoint Selected at Epoch: {best_epoch} (Val QWK = {best_val_qwk:.4f})")
-    print(f"Saved Checkpoint Path: {best_checkpoint_path}")
-    print(f"Weights File Size: {ckpt_size_mb:.2f} MB")
-    print(f"SHA-256 Cryptographic Checksum: {sha256}")
-    print("=" * 70)
+    # --- Checkpoint verification ---
+    with open(checkpoint_path, "rb") as f:
+        ckpt_hash = hashlib.sha256(f.read()).hexdigest()
+    ckpt_size_mb = checkpoint_path.stat().st_size / (1024 * 1024)
 
-    # 8. Render Learning Curves PNG
-    render_learning_curves(training_history, "docs/chapter4/learning_curves.png")
+    log(f"\nCheckpoint: {checkpoint_path}")
+    log(f"Size: {ckpt_size_mb:.2f} MB")
+    log(f"SHA-256: {ckpt_hash}")
+    log_file.close()
 
-    # 9. Update docs/chapter4/training_protocol.md
-    write_training_protocol(training_history, best_epoch, best_val_qwk, sha256, ckpt_size_mb)
-    write_checkpoint_manifest(sha256, ckpt_size_mb, best_epoch, best_val_qwk)
+    # --- Write epoch_history.csv ---
+    history_path = output_dir / "epoch_history.csv"
+    with open(history_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(history[0].keys()))
+        writer.writeheader()
+        writer.writerows(history)
+    print(f"\nSaved epoch history to {history_path}")
 
-def render_learning_curves(history, out_path):
-    width, height = 1000, 500
-    img = Image.new("RGB", (width, height), color=(255, 255, 255))
-    draw = ImageDraw.Draw(img)
+    # --- Write training summary ---
+    summary = {
+        "model": "EfficientNet-B0",
+        "pretrained": "ImageNet (EfficientNet_B0_Weights.IMAGENET1K_V1)",
+        "epochs": EPOCHS,
+        "batch_size": BATCH_SIZE,
+        "optimizer": "AdamW",
+        "lr": LR,
+        "weight_decay": WEIGHT_DECAY,
+        "scheduler": "CosineAnnealingLR",
+        "best_epoch": best_epoch,
+        "best_val_qwk": best_val_qwk,
+        "checkpoint_sha256": ckpt_hash,
+        "checkpoint_size_mb": round(ckpt_size_mb, 2),
+        "total_training_time_seconds": round(total_time, 1),
+        "device": str(device),
+        "pytorch_version": torch.__version__,
+        "cuda_available": torch.cuda.is_available(),
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A",
+        "train_samples": len(train_recs),
+        "val_samples": len(val_recs),
+        "seed": SEED,
+    }
+    summary_path = output_dir / "training_summary.json"
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    print(f"Saved training summary to {summary_path}")
 
-    # Title
-    draw.text((width // 2, 25), "PyTorch EfficientNet-B0 Convergence Curves (20 Epochs)", fill=(15, 23, 42), anchor="ms")
-    draw.text((width // 2, 45), "Supervised Training on APTOS 2019 Partition — Weighted Cross-Entropy Loss & AdamW", fill=(71, 85, 105), anchor="ms")
+    return history, best_epoch, best_val_qwk, ckpt_hash
 
-    # Plot 1: Loss (Left)
-    l_box = (80, 80, 480, 420)
-    draw.rectangle(l_box, outline=(203, 213, 225), fill=(248, 250, 252))
-    draw.text((280, 70), "Training vs Validation Loss", fill=(30, 41, 59), anchor="ms")
-
-    # Plot 2: Metrics (Right)
-    r_box = (560, 80, 960, 420)
-    draw.rectangle(r_box, outline=(203, 213, 225), fill=(248, 250, 252))
-    draw.text((760, 70), "Validation Quadratic Weighted Kappa & F1", fill=(30, 41, 59), anchor="ms")
-
-    epochs = [h["epoch"] for h in history]
-    n_pts = len(epochs)
-
-    # Scale helpers
-    def get_pt(box, ep_idx, val, min_v, max_v):
-        bx0, by0, bx1, by1 = box
-        px = bx0 + (ep_idx / (n_pts - 1)) * (bx1 - bx0)
-        norm_v = (val - min_v) / (max_v - min_v) if max_v != min_v else 0.5
-        py = by1 - norm_v * (by1 - by0)
-        return (px, py)
-
-    # Draw Loss curves
-    t_losses = [h["train_loss"] for h in history]
-    v_losses = [h["val_loss"] for h in history]
-    max_l = max(max(t_losses), max(v_losses)) * 1.1
-    min_l = 0.0
-
-    for i in range(n_pts - 1):
-        p1 = get_pt(l_box, i, t_losses[i], min_l, max_l)
-        p2 = get_pt(l_box, i + 1, t_losses[i + 1], min_l, max_l)
-        draw.line([p1, p2], fill=(225, 29, 72), width=2)
-
-        pv1 = get_pt(l_box, i, v_losses[i], min_l, max_l)
-        pv2 = get_pt(l_box, i + 1, v_losses[i + 1], min_l, max_l)
-        draw.line([pv1, pv2], fill=(13, 148, 136), width=2)
-
-    # Draw QWK & F1 curves
-    qwks = [h["val_qwk"] for h in history]
-    f1s = [h["val_f1"] for h in history]
-    for i in range(n_pts - 1):
-        pq1 = get_pt(r_box, i, qwks[i], 0.3, 1.0)
-        pq2 = get_pt(r_box, i + 1, qwks[i + 1], 0.3, 1.0)
-        draw.line([pq1, pq2], fill=(15, 118, 110), width=3)
-
-        pf1 = get_pt(r_box, i, f1s[i], 0.3, 1.0)
-        pf2 = get_pt(r_box, i + 1, f1s[i + 1], 0.3, 1.0)
-        draw.line([pf1, pf2], fill=(59, 130, 246), width=2)
-
-    # Legend
-    draw.line([(100, 445), (130, 445)], fill=(225, 29, 72), width=2)
-    draw.text((140, 445), "Train Loss", fill=(71, 85, 105), anchor="lm")
-    draw.line([(240, 445), (270, 445)], fill=(13, 148, 136), width=2)
-    draw.text((280, 445), "Validation Loss", fill=(71, 85, 105), anchor="lm")
-
-    draw.line([(580, 445), (610, 445)], fill=(15, 118, 110), width=3)
-    draw.text((620, 445), "Val QWK (Target: >0.85)", fill=(71, 85, 105), anchor="lm")
-    draw.line([(780, 445), (810, 445)], fill=(59, 130, 246), width=2)
-    draw.text((820, 445), "Val Macro F1", fill=(71, 85, 105), anchor="lm")
-
-    img.save(out_path, format="PNG")
-    print(f"Saved learning curves plot to {out_path}")
-
-def write_training_protocol(history, best_epoch, best_qwk, sha256, size_mb):
-    md = f"""# Model Training Protocol & Empirical Convergence Ledger
-
-## Metadata & Traceability
-- **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
-- **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Primary Research Objective:** Objective e (Train and optimize the EfficientNet-B0 model)
-- **Execution Date:** 2026-09-29
-- **Trained Checkpoint Path:** `backend/models/weights/efficientnet_b0_dr.pth`
-- **Integrity Checksum (SHA-256):** `{sha256}`
-- **Best Validation Epoch:** Epoch {best_epoch} of {len(history)}
-- **Peak Validation QWK:** **{best_qwk:.4f}**
-- **Supporting Visualization:** [`docs/chapter4/learning_curves.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/learning_curves.png)
-
----
-
-## 1. Hyperparameter Specification
-
-| Hyperparameter | Value | Scientific & Clinical Rationale |
-| :--- | :---: | :--- |
-| **Model Topology** | EfficientNet-B0 | Compound scaled CNN architecture ($4,013,953$ parameters) |
-| **Input Tensor Resolution** | $224 \times 224 \times 3$ | RGB channels normalized with ImageNet priors ($\mu, \sigma$) |
-| **Batch Size** | 32 | Optimal gradient stability across patient clusters |
-| **Optimization Algorithm** | AdamW | Decoupled weight decay regularization ($\lambda = 10^{{-4}}$) |
-| **Initial Learning Rate ($\eta_0$)** | $1.0 \times 10^{{-4}}$ | Prevents destructive gradient updates during transfer learning |
-| **LR Scheduler** | CosineAnnealingLR | Gradual smooth annealing from $\eta_0$ to $\eta_{{\min}} = 10^{{-6}}$ |
-| **Loss Function** | Class-Weighted Cross-Entropy | Weighted by inverse class frequencies to mitigate 9.35:1 imbalance |
-| **Regularization** | Dropout ($p = 0.20$) | Prevents over-indexing on majority Grade 0 features |
-| **Early Stopping Metric** | Validation QWK | Monitored with patience of 5 epochs to prevent validation divergence |
-
----
-
-## 2. Class Weighting Matrix
-
-To prevent the classifier from collapsing into majority Grade 0 predictions, class weights were computed according to $w_c = \\frac{{N_{{\\text{{train}}}}}}{{5 \\cdot N_{{c,\\text{{train}}}}}}$:
-
-| ICDR Grade | Class Name | Train Count ($N$) | Loss Weight ($w_c$) |
-| :---: | :--- | :---: | :---: |
-| **0** | No Apparent DR | 1,267 | **0.4052** |
-| **1** | Mild NPDR | 256 | **2.0055** |
-| **2** | Moderate NPDR | 700 | **0.7334** |
-| **3** | Severe NPDR | 134 | **3.8313** |
-| **4** | Proliferative DR | 210 | **2.4448** |
-
----
-
-## 3. Epoch-by-Epoch Convergence History
-
-| Epoch | Train Loss | Val Loss | Val Accuracy | Val QWK | Val Macro F1 | Learning Rate | Checkpoint Status |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-"""
-    for h in history:
-        flag = "**BEST CHECKPOINT**" if h["is_best"] else "—"
-        md += f"| {h['epoch']:02d} | {h['train_loss']:.4f} | {h['val_loss']:.4f} | {h['val_acc']*100:.2f}% | **{h['val_qwk']:.4f}** | {h['val_f1']:.4f} | `{h['lr']}` | {flag} |\n"
-
-    md += f"""
----
-
-## 4. Best Checkpoint Selection Record
-- **Selection Criterion:** Maximization of validation Quadratic Weighted Kappa (QWK), which penalizes multi-grade clinical discrepancies quadratically.
-- **Optimal Checkpoint:** Checkpoint state captured at **Epoch {best_epoch}** achieved peak $\\kappa = {best_qwk:.4f}$.
-- **Storage Path:** `backend/models/weights/efficientnet_b0_dr.pth` ({size_mb:.2f} MB).
-- **Integrity Verified:** Cryptographic hash matches [`docs/chapter4/checkpoint_manifest.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/checkpoint_manifest.md).
-"""
-    with open("docs/chapter4/training_protocol.md", mode="w", encoding="utf-8") as f:
-        f.write(md)
-    print("Saved training protocol to docs/chapter4/training_protocol.md")
-
-def write_checkpoint_manifest(sha256, size_mb, best_epoch, best_qwk):
-    md = f"""# Checkpoint Manifest & Cryptographic Integrity Ledger
-
-## Metadata & Traceability
-- **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
-- **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective d (Design CNN architecture) & Objective e (Implement CNN model)
-- **Date Verified:** 2026-09-29
-- **Checkpoint File Path:** `backend/models/weights/efficientnet_b0_dr.pth`
-- **Integrity Checksum (SHA-256):** `{sha256}`
-- **Training Epoch Selected:** Epoch {best_epoch} (Validation QWK: {best_qwk:.4f})
-- **Weights Binary Size:** **{size_mb:.2f} MB**
-
----
-
-## 1. Architectural Topology Summary
-
-| Specification Parameter | Value | Architectural Details |
-| :--- | :---: | :--- |
-| **Model Family** | EfficientNet-B0 | Compound-scaled lightweight CNN backbone |
-| **Total Parameter Count** | **4,013,953** | 4.01 Million total parameters |
-| **Trainable Parameters** | **4,013,953** (Trained) | Fully optimized parameters saved in state dict |
-| **Floating-Point Complexity** | **~0.39 GFLOPs** | Multiply-Accumulate operations per $224 \\times 224$ input |
-| **Input Shape** | `(B, 3, 224, 224)` | RGB channels normalized with ImageNet prior |
-| **Output Logits Shape** | `(B, 5)` | 5 unnormalized logits mapped via Softmax |
-| **Target Saliency Layer** | `features.8` | Final 320-channel inverted residual bottleneck |
-
----
-
-## 2. Checkpoint Verification Command
-To verify the cryptographic integrity of the weights binary file:
-```bash
-# Windows PowerShell
-Get-FileHash -Path backend/models/weights/efficientnet_b0_dr.pth -Algorithm SHA256
-
-# Expected Checksum:
-# {sha256}
-```
-"""
-    with open("docs/chapter4/checkpoint_manifest.md", mode="w", encoding="utf-8") as f:
-        f.write(md)
-    print("Saved checkpoint manifest to docs/chapter4/checkpoint_manifest.md")
 
 if __name__ == "__main__":
     train_model()
