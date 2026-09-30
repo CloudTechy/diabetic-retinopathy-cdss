@@ -10,12 +10,12 @@ class TestAuthEndpoints:
         # 1. Login
         login_res = test_client.post(
             "/api/v1/auth/login",
-            json={"username": "dr.adaeze", "password": "dr_secure_password_2026"},
+            json={"username": "demo.clinician", "password": "dr_secure_password_2026"},
         )
         assert login_res.status_code == 200
         data = login_res.json()
         assert "access_token" in data
-        assert data["user"]["name"] == "Dr. Adaeze Okonjo, MBChB, FRCOphth"
+        assert data["user"]["name"] == "Dr. Demo Clinician (Simulated)"
 
         token = data["access_token"]
 
@@ -26,8 +26,8 @@ class TestAuthEndpoints:
         )
         assert me_res.status_code == 200
         me_data = me_res.json()
-        assert me_data["email"] == "a.okonjo@retina-clinic.nhs.uk"
-        assert me_data["role"] == "Consultant Medical Ophthalmologist"
+        assert me_data["email"] == "demo.clinician@research-prototype.invalid"
+        assert me_data["role"] == "Simulated Reviewer — Research Prototype"
 
 
 class TestAssessmentEndpoints:

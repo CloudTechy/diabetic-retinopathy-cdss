@@ -124,7 +124,7 @@ sequenceDiagram
 
     rect rgb(255, 250, 240)
         Note over Pipeline: Gate 2: Retinal Relevance
-        Pipeline->>Pipeline: Retinal circular aperture mask >= 50%<br/>Spectral red/blue ratio >= 1.15, Aspect ratio 0.75-1.33
+        Pipeline->>Pipeline: Retinal circular aperture mask 20%-98%<br/>Spectral red/blue ratio >= 1.15, Aspect ratio 0.65-1.65
         alt Gate 2 Fails
             Pipeline-->>API: Status: REJECTED (Gate 2 Failed, Gate 3 Pending)
             API->>DB: Save Assessment (status='rejected', failed_gate=2)

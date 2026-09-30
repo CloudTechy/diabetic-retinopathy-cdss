@@ -241,7 +241,7 @@ class ReportService:
         elements.append(Spacer(1, 10))
 
         # --- Section B: Professional Review Response ---
-        elements.append(Paragraph("3. Professional Review Response (Authoritative Human-in-the-Loop)", h2_style))
+        elements.append(Paragraph("3. Professional Review Response", h2_style))
         elements.append(Spacer(1, 4))
 
         if rev:
@@ -253,19 +253,19 @@ class ReportService:
                 [
                     Paragraph("<strong>Reviewing Clinician:</strong>", body_style),
                     Paragraph(rev.clinician_name, body_style),
-                    Paragraph("<strong>License / GMC Number:</strong>", body_style),
-                    Paragraph(rev.license_number or "GMC-7492104", body_style),
+                    Paragraph("<strong>Registration Number (simulated):</strong>", body_style),
+                    Paragraph(rev.license_number or "SIM-000001", body_style),
                 ],
                 [
                     Paragraph("<strong>Clinical Agreement:</strong>", body_style),
                     Paragraph(agreement_label, body_style),
-                    Paragraph("<strong>Certified ICDR Grade:</strong>", body_style),
+                    Paragraph("<strong>Reviewer's Assessed Grade:</strong>", body_style),
                     Paragraph(f"<strong>{rev.certified_grade_label}</strong>", body_style),
                 ],
                 [
                     Paragraph("<strong>Clinical Notes / Rationale:</strong>", body_style),
-                    Paragraph(rev.justification_notes or "Corroborated with clear fundus examination.", body_style),
-                    Paragraph("<strong>Management / Referral:</strong>", body_style),
+                    Paragraph(rev.justification_notes or "No additional observations recorded.", body_style),
+                    Paragraph("<strong>Scope Note:</strong>", body_style),
                     Paragraph(rev.referral_plan, body_style),
                 ],
                 [
