@@ -29,4 +29,4 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 ---
 
 ## 2. Empirical Verification
-The empirical validation results across genuine, blurry, non-retinal, and corrupted test cases are catalogued in [`validation_test_results.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/validation_test_results.csv).
+**Note:** the previous `validation_test_results.csv` was fabricated — zero of its ten rows cited an actual held-out image, six used identifiers absent from APTOS entirely, and its metrics were demonstration constants. It has been removed. Regenerate genuine results with `backend/scripts/generate_validation_evidence.py <aptos>/train_images`, which runs the real gate functions over real held-out images plus negatives derived by a stated transformation. Until then, gate behaviour is evidenced by the automated suite (`backend/tests/test_validation_pipeline.py` and the 38 gate-downsampling tests).
