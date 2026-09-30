@@ -24,7 +24,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Argmax contradictions** | 0 / 549 |
 | **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
 | **Test suite** | 96 passed, 1 skipped |
-| **End-to-end CPU latency** | **315.25 ms** mean / 227.77 ms median / **624.58 ms** P95 |
+| **End-to-end CPU latency** | **164.79 ms** mean / 137.21 ms median / **277.31 ms** P95 |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
 
@@ -32,7 +32,7 @@ Every artefact in this package derives from a single genuine training run whose 
 
 1. **Duplicate leakage (measured, immaterial).** 27 of 549 held-out images are byte-identical to a training image, because APTOS's `duplicated_info.csv` is absent from the Kaggle download and the grouping step silently no-opped. Effect: accuracy 77.78% on the affected images vs 78.74% on the clean 522; clean-subset $\kappa$ = 0.877818 vs 0.877747. No metric is inflated. See `documentation/dataset_audit.md` §4.
 
-2. **Latency is dominated by validation, not inference.** End-to-end CPU latency is **315.25 ms mean / 624.58 ms P95** over 30 held-out images. Within that, validation gates 2+3 cost **186.42 ms (59.1%)** because both run at full image resolution, while the model forward pass is only **33.48 ms (10.6%)**. The removable cost is identified but **not removed**; see `documentation/resource_benchmark.md` §2. Latency therefore scales with camera resolution, not with disease severity.
+2. **Latency is dominated by input handling, not inference.** End-to-end CPU latency is **164.79 ms mean / 277.31 ms P95**. Validation gates 2+3 cost **72.42 ms (43.9%)**, reduced from 59.1% by subsampling their statistics — verified decision-preserving across all 3,662 APTOS images — while the model forward pass is **29.24 ms (17.7%)**. Latency scales with camera resolution, not with disease severity. Further reducible cost is identified but **not removed**; see `documentation/resource_benchmark.md` §2.
 
 ---
 
