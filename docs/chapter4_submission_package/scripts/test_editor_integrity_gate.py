@@ -715,3 +715,20 @@ def test_programme_is_described_consistently():
             if "MSc" in line:
                 offenders.append(f"{rel}:{lineno}")
     assert not offenders, "Incorrect programme description (MSc):\n  " + "\n  ".join(offenders)
+
+
+def test_withdrawn_qa_audit_is_archived_not_presented_as_current_evidence():
+    """
+    The QA audit narrates withdrawn 544-image / 86.40% results. It belongs in
+    archive/, not documentation/. A hand-move was silently undone by the next
+    package assembly because the layout still pointed at documentation/, so
+    this asserts the outcome rather than the intent.
+    """
+    pkg = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package")
+    if not os.path.isdir(pkg):
+        pytest.skip("package not built")
+    name = "independent_thesis_qa_gate_audit.md"
+    assert not os.path.exists(os.path.join(pkg, "documentation", name)), (
+        f"{name} is in documentation/, where it reads as current evidence")
+    assert os.path.exists(os.path.join(pkg, "archive", name)), (
+        f"{name} should be retained in archive/ as a correction record")

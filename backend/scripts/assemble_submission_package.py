@@ -76,7 +76,12 @@ LAYOUT = [
     ("docs/chapter4/objective_traceability_matrix.md", "documentation/objective_traceability_matrix.md"),
     ("docs/chapter4/system_test_report.md", "documentation/system_test_report.md"),
     ("docs/chapter4/screenshot_evidence_manifest.md", "documentation/screenshot_evidence_manifest.md"),
-    ("docs/chapter4/independent_thesis_qa_gate_audit.md", "documentation/independent_thesis_qa_gate_audit.md"),
+    # Historical correction record. Mapped to archive/, NOT documentation/, so
+    # it is not presented as current evidence: it narrates the withdrawn
+    # 544-image / 86.40% results. An earlier fix moved the file by hand and the
+    # next assemble put it straight back, because the layout still pointed at
+    # documentation/. Fixing the layout is the durable correction.
+    ("docs/chapter4/independent_thesis_qa_gate_audit.md", "archive/independent_thesis_qa_gate_audit.md"),
     ("docs/chapter4/evidence_provenance.md", "PROVENANCE.md"),
     ("docs/chapter4/CLEAN_RERUN_RUNBOOK.md", "CLEAN_RERUN_RUNBOOK.md"),
     ("docs/chapter4/architecture.md", "documentation/architecture.md"),
