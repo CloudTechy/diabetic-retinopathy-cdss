@@ -25,11 +25,37 @@ import math
 import os
 from collections import Counter, defaultdict
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(_HERE))
+
+
+def _locate(filename, subdirs):
+    """
+    Find an artefact whether this script runs from the repository or from a
+    standalone submission package.
+
+    In the repository the artefacts live in docs/chapter4/. In the package they
+    are split across logs_and_metrics/ and dataset_sample_and_manifest/, and
+    this script sits in scripts/ beside them. The README tells a reviewer to
+    run it from the package, so it has to work there.
+    """
+    candidates = [os.path.join(REPO_ROOT, "docs", "chapter4", filename)]
+    package_root = os.path.dirname(_HERE)
+    for sub in subdirs:
+        candidates.append(os.path.join(package_root, sub, filename))
+    candidates.append(os.path.join(package_root, filename))
+
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return candidates[0]  # report the canonical location in the error
+
+
 CHAPTER4 = os.path.join(REPO_ROOT, "docs", "chapter4")
-PREDICTIONS = os.path.join(CHAPTER4, "held_out_predictions.csv")
-MANIFEST = os.path.join(CHAPTER4, "dataset_split_manifest.csv")
-OUT_JSON = os.path.join(CHAPTER4, "clinical_metrics.json")
+PREDICTIONS = _locate("held_out_predictions.csv", ["logs_and_metrics"])
+MANIFEST = _locate("dataset_split_manifest.csv",
+                   ["dataset_sample_and_manifest", "logs_and_metrics"])
+OUT_JSON = os.path.join(os.path.dirname(PREDICTIONS), "clinical_metrics.json")
 
 ICDR = [
     "Grade 0: No Apparent DR",

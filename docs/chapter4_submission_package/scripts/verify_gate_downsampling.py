@@ -170,7 +170,12 @@ def main():
     print("  orders of magnitude clear of the 1.15 cutoff.")
     print("=" * 84)
 
-    out = os.path.join(REPO_ROOT, "docs", "chapter4", "gate_downsampling_verification.json")
+    # Write beside the other artefacts, whichever layout this is running from.
+    repo_target = os.path.join(REPO_ROOT, "docs", "chapter4")
+    package_target = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                  "logs_and_metrics")
+    target = repo_target if os.path.isdir(repo_target) else package_target
+    out = os.path.join(target, "gate_downsampling_verification.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as fh:
         json.dump({
