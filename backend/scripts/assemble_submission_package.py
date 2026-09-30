@@ -36,7 +36,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 CHAPTER4 = os.path.join(REPO_ROOT, "docs", "chapter4")
 PACKAGE = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package")
 
-EXPECTED_CHECKPOINT_SHA256 = "8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa"
+EXPECTED_CHECKPOINT_SHA256 = "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
 
 # (source relative to repo root, destination relative to the package)
 LAYOUT = [

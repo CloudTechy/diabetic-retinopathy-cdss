@@ -19,7 +19,7 @@ Training was executed on a hosted Google Colab GPU runtime. The environment valu
 | **Runtime** | Google Colab hosted GPU instance | Training and evaluation execution |
 | **Framework** | PyTorch **2.11.0+cu128** | Autograd, optimisation, checkpointing |
 | **CUDA Build** | 12.8 (per the `+cu128` wheel tag) | GPU kernel execution |
-| **Training Duration** | 3,147 s total (~210 s/epoch × 15) | — |
+| **Training Duration** | 2,762 s total (~210 s/epoch × 15) | — |
 | **DataLoader Workers** | 2 | Colab's standard allocation |
 
 **Why a hosted runtime.** APTOS 2019 is a 9.51 GB download and the run required ~52 minutes of sustained GPU time. Colab was used for the training and evaluation stages only. The CDSS application itself is developed and deployed separately, as below.

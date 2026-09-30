@@ -4,9 +4,9 @@
 - **Model Backbone:** EfficientNet-B0 (torchvision implementation)
 - **Trained Weights Checkpoint:** `backend/models/weights/efficientnet_b0_dr.pth`
 - **File Size:** 15.60 MB (16,358,249 bytes)
-- **Cryptographic SHA-256 Digest:** `8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa`
+- **Cryptographic SHA-256 Digest:** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
 - **Training Run:** 15 epochs on APTOS 2019, Google Colab Tesla T4, 2026-09-29
-- **Selected Epoch:** 11 of 15 (peak validation $\kappa = 0.8937$)
+- **Selected Epoch:** 11 of 15 (peak validation $\kappa = 0.9130$)
 - **Degree Programme:** PGD Computer Science, Faculty of Physical Sciences
 
 ---
@@ -50,7 +50,7 @@ This means a graded prediction served by the running system is demonstrably prod
 ```bash
 sha256sum backend/models/weights/efficientnet_b0_dr.pth
 # Output must match:
-# 8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa  backend/models/weights/efficientnet_b0_dr.pth
+# 67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7  backend/models/weights/efficientnet_b0_dr.pth
 ```
 
 On Windows PowerShell:

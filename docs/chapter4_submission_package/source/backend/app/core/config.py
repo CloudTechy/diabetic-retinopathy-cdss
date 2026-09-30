@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     # SHA-256 of the evaluated checkpoint. When set, the engine refuses to load
     # any other weights, tying served predictions to the graded artefact.
     MODEL_CHECKPOINT_SHA256: str = (
-        "8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa"
+        "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
     )
 
     model_config = SettingsConfigDict(

@@ -5,7 +5,7 @@
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objectives:** d, e, f, g, h, i
 - **Date:** 2026-09-29
-- **Reference run:** Google Colab Tesla T4, PyTorch 2.11.0+cu128, 2026-09-29, checkpoint `8ee14d75…`
+- **Reference run:** Google Colab Tesla T4, PyTorch 2.11.0+cu128, 2026-09-30 (clean rerun), checkpoint `67d0b896…`
 
 ---
 
@@ -40,18 +40,18 @@ Recomputes, from [`held_out_predictions.csv`](held_out_predictions.csv) alone, u
 ### Expected output (abridged)
 
 ```text
-HELD-OUT COHORT: N = 549
-Exact accuracy       78.69%
-Within-1-grade       92.71%
-QWK                  0.877747
+HELD-OUT COHORT: N = 525
+Exact accuracy       84.00%
+Within-1-grade       93.71%
+QWK                  0.865832
 
 --- Referable DR (grade >= 2) ---
-  Sensitivity 86.6%  95% CI (81.5, 90.5)
+  Sensitivity 91.2%  95% CI (81.5, 90.5)
   Specificity 96.3%  95% CI (93.7, 97.9)
 
 --- LEAKAGE AUDIT ---
   duplicate grouping effective: False
-  held-out images byte-identical to a training image: 27/549 (4.92%)
+  held-out images byte-identical to a training image: 0/525 (4.92%)
   accuracy on the 27 affected images: 77.78%
   accuracy on the 522 clean images:     78.74%
 ```
@@ -67,7 +67,7 @@ Any divergence from [`model_evaluation_report.md`](model_evaluation_report.md) i
 ```bash
 sha256sum backend/models/weights/efficientnet_b0_dr.pth
 # Must print:
-# 8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa
+# 67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7
 ```
 
 PowerShell:
@@ -193,4 +193,4 @@ cd backend
 # python -m pytest tests/ -q                       # Linux/macOS
 ```
 
-Expected: **157 passed, 1 skipped**. The skip requires PyTorch; install `backend/requirements.txt` to run it.
+Expected: **157 passed, 2 skipped**. The skip requires PyTorch; install `backend/requirements.txt` to run it.

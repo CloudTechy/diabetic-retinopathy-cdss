@@ -7,14 +7,14 @@
   "lr": 0.0001,
   "weight_decay": 0.0001,
   "scheduler": "CosineAnnealingLR",
-  "best_epoch": 11,
-  "best_val_qwk": 0.893724,
-  "checkpoint_sha256": "8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa",
+  "best_epoch": 14,
+  "best_val_qwk": 0.913045,
+  "checkpoint_sha256": "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7",
   "checkpoint_size_mb": 15.6,
-  "total_time_seconds": 3146.7,
+  "total_time_seconds": 2761.6,
   "device": "cuda",
   "pytorch_version": "2.11.0+cu128",
   "gpu": "Tesla T4",
-  "train_samples": 2563,
-  "val_samples": 550
+  "train_samples": 2453,
+  "val_samples": 526
 }

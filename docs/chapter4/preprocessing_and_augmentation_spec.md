@@ -66,7 +66,7 @@ Two consequences follow, and both are stated deliberately:
 
 ## 3. Training-Only Augmentation
 
-Applied dynamically to the **2,563-image training partition** only.
+Applied dynamically to the **2,453-image training partition** only.
 
 ```python
 transforms.Compose([

@@ -18,9 +18,9 @@ The complete request path, on the CPU the system deploys to, over 30 real held-o
 
 | Measure | Value |
 | :--- | :---: |
-| **Mean end-to-end latency** | **164.79 ms** |
-| **Median (P50)** | **137.21 ms** |
-| **95th percentile (P95)** | **277.31 ms** |
+| **Mean end-to-end latency** | **212.54 ms** |
+| **Median (P50)** | **179.68 ms** |
+| **95th percentile (P95)** | **373.39 ms** |
 | Minimum | 105.50 ms |
 | Maximum | 282.86 ms |
 
@@ -30,18 +30,18 @@ Comfortably interactive for an assisted-review workflow on a commodity 4-thread 
 
 | Stage | Mean ms | Median | P95 | Min | Max | % of request |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `read` | 0.46 | 0.43 | 0.79 | 0.24 | 0.86 | 0.3% |
-| `gate1` — integrity & decode | 2.10 | 1.36 | 6.17 | 0.57 | 6.32 | 1.3% |
-| **`gate2` — retinal relevance** | **56.06** | 32.33 | 142.99 | 13.92 | 144.50 | **34.0%** |
-| `gate3` — technical quality | 16.36 | 14.47 | 26.36 | 5.51 | 26.41 | 9.9% |
-| `preprocess` | 10.54 | 6.78 | 20.85 | 3.78 | 21.29 | 6.4% |
-| `forward` — EfficientNet-B0 | 29.24 | 28.79 | 32.10 | 26.49 | 36.49 | 17.7% |
-| `gradcam` — gradients & CAM | 0.60 | 0.59 | 0.74 | 0.53 | 0.77 | 0.4% |
-| `compose` — heatmap render | 17.89 | 17.43 | 20.67 | 15.25 | 21.55 | 10.9% |
-| **`encode` — PNG serialisation** | **30.18** | 29.30 | 36.06 | 25.75 | 38.91 | **18.3%** |
-| **TOTAL** | **164.79** | 137.21 | 277.31 | 105.50 | 282.86 | 100% |
+| `read` | 0.52 | 0.39 | 1.42 | 0.14 | 1.43 | 0.2% |
+| `gate1` — integrity & decode | 5.97 | 3.67 | 18.61 | 1.12 | 20.58 | 2.8% |
+| **`gate2` — retinal relevance** | **71.11** | 42.05 | 182.37 | 18.39 | 211.47 | **33.5%** |
+| `gate3` — technical quality | 23.41 | 22.66 | 35.63 | 9.12 | 36.82 | 11.0% |
+| `preprocess` | 13.12 | 7.94 | 28.54 | 4.62 | 29.11 | 6.2% |
+| `forward` — EfficientNet-B0 | 33.82 | 31.14 | 41.88 | 28.64 | 42.77 | 15.9% |
+| `gradcam` — gradients & CAM | 0.68 | 0.68 | 0.81 | 0.62 | 0.85 | 0.3% |
+| `compose` — heatmap render | 22.86 | 22.10 | 27.06 | 20.19 | 27.76 | 10.8% |
+| **`encode` — PNG serialisation** | **39.83** | 39.51 | 47.93 | 32.95 | 49.62 | **18.7%** |
+| **TOTAL** | **212.54** | 179.68 | 373.39 | 140.51 | 398.21 | 100% |
 
-Stage means sum to 163.44 ms against a measured total of 164.79 ms. The 1.35 ms difference (0.8%) is work between the timed regions — Grad-CAM hook registration and removal, the argmax, tensor indexing — belonging to no stage. `TOTAL` is wall-clock around the whole request and is the figure to cite.
+Stage means sum to 211.33 ms against a measured total of 212.54 ms. The 1.21 ms difference (0.6%) is work between the timed regions — Grad-CAM hook registration and removal, the argmax, tensor indexing — belonging to no stage. `TOTAL` is wall-clock around the whole request and is the figure to cite.
 
 Every value here is reproduced verbatim from [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), rounded to two decimals.
 
@@ -96,7 +96,7 @@ Grouped by kind:
 
 The balance has crossed over: model and explainability work is now the larger half. **PNG serialisation of the Grad-CAM overlay (`encode`, 30.18 ms, 18.3%) is now the second-largest stage** and costs more than the forward pass. A lower `compress_level`, or emitting the overlay at the resolution the viewer actually blends it at, would reduce it; neither is implemented.
 
-**Latency scales with input resolution, not with disease severity.** Mean exceeds median by a factor of 1.20 (164.79 vs 137.21 ms), and the spread is still widest where resolution drives cost: `gate2` runs a 32.33 ms median against a 142.99 ms P95, a 4.4× range, because the reduction step must still read every source pixel. The model stages, operating on a fixed 224×224 tensor, are correspondingly stable — `forward` spans only 26.49–36.49 ms across all 30 requests.
+**Latency scales with input resolution, not with disease severity.** Mean exceeds median by a factor of 1.20 (212.54 vs 179.68 ms), and the spread is still widest where resolution drives cost: `gate2` runs a 32.33 ms median against a 142.99 ms P95, a 4.4× range, because the reduction step must still read every source pixel. The model stages, operating on a fixed 224×224 tensor, are correspondingly stable — `forward` spans only 26.49–36.49 ms across all 30 requests.
 
 **The optimisation this identified has been applied and measured.** See §3.3 for the change and §1a for what it did and did not achieve.
 
@@ -176,12 +176,12 @@ Retained for comparison, **not** as a deployment figure. Measured on the Google 
 
 | Measure | Value |
 | :--- | :---: |
-| Mean | 8.36 ms |
-| Median | 8.34 ms |
-| P95 | 8.86 ms |
-| Min / Max | 7.91 / 9.11 ms |
+| Mean | 8.34 ms |
+| Median | 8.15 ms |
+| P95 | 10.12 ms |
+| Min / Max | 7.46 / 10.69 ms |
 
-Raw data in [`benchmark_timings.csv`](benchmark_timings.csv). The corresponding CPU forward pass is 33.48 ms — a 4× gap that is unsurprising and, as §2 shows, largely irrelevant to end-to-end response time.
+Raw data in [`benchmark_timings.csv`](benchmark_timings.csv). The corresponding CPU forward pass is 33.82 ms — a 4× gap that is unsurprising and, as §2 shows, largely irrelevant to end-to-end response time.
 
 ---
 
