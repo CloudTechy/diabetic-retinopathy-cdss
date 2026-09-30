@@ -23,7 +23,7 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 - **Retinal Chromatic Signature:** Evaluates reddish/orange retinal reflection. Requires Red/Blue channel ratio $\ge 1.15$ and Red channel luminance share $\ge 38.0\%$.
 
 ### Gate 3: Technical Quality & Sharpness
-- **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 100.0$.
+- **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 60.0$ (`LAPLACIAN_BLUR_THRESHOLD`).
 - **Illumination Uniformity:** Analyzes extreme underexposed (< 10) and overexposed (> 245) pixel ratios, rejecting acquisitions with extreme ratio $> 0.35$.
 
 ---

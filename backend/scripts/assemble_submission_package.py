@@ -78,6 +78,15 @@ LAYOUT = [
     ("docs/chapter4/screenshot_evidence_manifest.md", "documentation/screenshot_evidence_manifest.md"),
     ("docs/chapter4/independent_thesis_qa_gate_audit.md", "documentation/independent_thesis_qa_gate_audit.md"),
     ("docs/chapter4/evidence_provenance.md", "PROVENANCE.md"),
+    ("docs/chapter4/CLEAN_RERUN_RUNBOOK.md", "CLEAN_RERUN_RUNBOOK.md"),
+    ("docs/chapter4/architecture.md", "documentation/architecture.md"),
+    ("docs/chapter4/database_schema.md", "documentation/database_schema.md"),
+    ("docs/chapter4/api_contract.md", "documentation/api_contract.md"),
+    ("docs/chapter4/requirements_test_matrix.md", "documentation/requirements_test_matrix.md"),
+    ("docs/chapter4/implementation_status.md", "documentation/implementation_status.md"),
+    ("docs/chapter4/dataset_split_audit.json", "logs_and_metrics/dataset_split_audit.json"),
+    ("docs/chapter4/test_execution_output.txt", "logs_and_metrics/test_execution_output.txt"),
+    ("backend/scripts/build_clean_split.py", "scripts/build_clean_split.py"),
 
     # Scripts that produce the evidence
     ("notebooks/colab_train_and_evaluate.py", "scripts/colab_train_and_evaluate.py"),
@@ -91,7 +100,6 @@ LAYOUT = [
     ("backend/tests/test_spec_doc_consistency.py", "scripts/test_spec_doc_consistency.py"),
     ("backend/scripts/evaluate_model.py", "scripts/evaluate_model.py"),
     ("backend/scripts/train_efficientnet_b0.py", "scripts/train_efficientnet_b0.py"),
-    ("backend/scripts/generate_aptos_manifest.py", "scripts/generate_aptos_manifest.py"),
 ]
 
 # Artefacts that require the APTOS dataset to regenerate. Their absence is
@@ -102,10 +110,22 @@ PENDING_WITHOUT_DATASET = {
         "regenerate with: python scripts/generate_validation_evidence.py <aptos>/train_images",
     "logs_and_metrics/gate_downsampling_verification.json":
         "regenerate with: python scripts/verify_gate_downsampling.py <aptos>/train_images",
+    "logs_and_metrics/dataset_split_audit.json":
+        "regenerate with: python scripts/build_clean_split.py <aptos>/train_images",
 }
 
 SCREENSHOTS_SRC = os.path.join(CHAPTER4, "screenshots")
 SCREENSHOTS_DST = os.path.join(PACKAGE, "screenshots")
+
+# Source trees mirrored wholesale. The reviewer asked for the backend and
+# frontend integration sources and the complete test suite, without which
+# objectives a (architecture), b (validation), g (integration) and i
+# (functional testing) cannot be reproduced from the package alone.
+SOURCE_TREES = [
+    ("backend/app", "source/backend/app", (".py",)),
+    ("backend/tests", "source/backend/tests", (".py",)),
+    ("frontend/src", "source/frontend/src", (".ts", ".tsx", ".css")),
+]
 
 
 def sha256_file(path):
@@ -173,6 +193,31 @@ def main():
             shutil.copy2(src, dst)
         print(f"  [{verb}] {rel_dst}")
 
+    # Source trees.
+    src_files = 0
+    for rel_src, rel_dst, exts in SOURCE_TREES:
+        root = os.path.join(REPO_ROOT, rel_src)
+        if not os.path.isdir(root):
+            print(f"  [MISSING] {rel_src}/")
+            missing += 1
+            continue
+        for base, dirs, names in os.walk(root):
+            dirs[:] = [d for d in dirs if d not in ("__pycache__", "node_modules", ".pytest_cache")]
+            for name in sorted(names):
+                if not name.endswith(exts):
+                    continue
+                src = os.path.join(base, name)
+                dst = os.path.join(PACKAGE, rel_dst,
+                                   os.path.relpath(src, root).replace("\\", "/"))
+                if os.path.exists(dst) and sha256_file(src) == sha256_file(dst):
+                    continue
+                if not args.check:
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    shutil.copy2(src, dst)
+                src_files += 1
+    if src_files:
+        print(f"  [{'would sync' if args.check else 'synced'}] {src_files} source file(s)")
+
     # Screenshots are a directory, mirrored wholesale.
     shots = 0
     if os.path.isdir(SCREENSHOTS_SRC):
@@ -191,14 +236,14 @@ def main():
 
     print("-" * 78)
     print(f"added {copied}   updated {updated}   unchanged {unchanged}   "
-          f"screenshots synced {shots}   pending {pending}   missing {missing}")
+          f"source {src_files}   screenshots {shots}   pending {pending}   missing {missing}")
 
     if missing:
         print(f"\n[INCOMPLETE] {missing} artefact(s) absent. Produce them with the scripts named")
         print("             in this file's docstring. Nothing is generated here.")
         return 1
 
-    if args.check and (copied or updated or shots):
+    if args.check and (copied or updated or shots or src_files):
         print("\n[STALE] The package differs from the source artefacts. "
               "Re-run without --check.")
         return 1

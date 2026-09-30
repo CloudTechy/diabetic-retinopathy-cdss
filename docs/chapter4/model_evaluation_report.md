@@ -4,27 +4,53 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Degree & Faculty:** PGD Computer Science, Faculty of Physical Sciences
-- **Held-Out Evaluation Corpus:** 549 test images from the stratified APTOS 2019 partition
+- **Held-Out Evaluation Corpus:** 549 test images
 - **Evaluated Checkpoint:** SHA-256 `8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa`
-- **Evaluation Mechanism:** Every metric below is recomputed from [`held_out_predictions.csv`](held_out_predictions.csv) by [`backend/scripts/analyze_clinical_metrics.py`](../../backend/scripts/analyze_clinical_metrics.py), which depends only on the Python standard library.
+- **Evaluation Mechanism:** Every metric below is recomputed from [`held_out_predictions.csv`](held_out_predictions.csv) by [`analyze_clinical_metrics.py`](../../backend/scripts/analyze_clinical_metrics.py), which depends only on the Python standard library.
 
 ---
 
-## 1. Headline Metrics on 549 Held-Out Images
+> [!WARNING]
+> ## These results are superseded. Do not cite them in Chapter Four.
+>
+> The partition they were produced from is contaminated. Independent audit of
+> [`dataset_split_manifest.csv`](dataset_split_manifest.csv) found:
+>
+> - 3,662 records over only **3,534 unique image hashes**
+> - **48 exact-duplicate groups spanning more than one partition** — 27 test images byte-identical to a training image, 17 validation to training, 6 test to validation
+> - **30 exact-duplicate groups carrying conflicting severity labels**
+>
+> A test set in that condition cannot be described as held out. Comparing scores
+> on the contaminated subset against the rest does **not** repair it: validation
+> contamination influences which checkpoint is selected, and conflicting labels
+> put contradictory supervision into training.
+>
+> A leakage-free split has been implemented in
+> [`build_clean_split.py`](../../backend/scripts/build_clean_split.py) — de-duplication
+> keyed on the SHA-256 of image bytes, label-conflicting groups excluded, one
+> representative per group, and an assertion of zero hash overlap between
+> partitions. It yields **3,504 unique, non-conflicting images**.
+>
+> **The model must be retrained once on that split and every artefact
+> regenerated.** The figures below are retained only so the contaminated and
+> clean runs can be compared, and are labelled throughout as provisional.
+
+---
+
+## 1. Headline Metrics (provisional, contaminated split)
 
 | Metric | Value |
 | :--- | :---: |
-| **Quadratic Weighted Kappa ($\kappa$)** | **0.8777** |
-| **Exact 5-Class Accuracy** | **78.69%** (432 / 549) |
-| **Within-One-Grade Agreement** | **92.71%** (509 / 549) |
-| **Top-2 Accuracy** | **94.35%** |
-| **Macro-Averaged F1** | **0.6525** |
+| **Quadratic Weighted Kappa ($\kappa$)** | 0.8777 |
+| **Exact 5-Class Accuracy** | 78.69% (432 / 549) |
+| **Within-One-Grade Agreement** | 92.71% (509 / 549) |
+| **Macro-Averaged F1** | 0.6525 |
 | Over-called (predicted grade above truth) | 11.7% |
 | Under-called (predicted grade below truth) | 9.7% |
 
-**On reading these numbers.** Exact 5-class accuracy is the weakest available summary of this model and is reported here only for completeness. The held-out cohort is 49.2% Grade 0, so accuracy is dominated by the majority class, and the ICDR scale is ordinal — confusing Grade 2 with Grade 3 is not the same error as confusing Grade 0 with Grade 4. $\kappa = 0.8777$ and the operating points in §3 are the metrics that carry clinical meaning, and they are what the discussion should be built on.
+**On reading these numbers.** The held-out cohort is 49.2% Grade 0, so exact accuracy is dominated by the majority class, and the ICDR scale is ordinal — confusing Grade 2 with Grade 3 is not the same error as confusing Grade 0 with Grade 4. $\kappa$ and the per-class breakdown in §2 are the informative figures.
 
-$\kappa = 0.8777$ sits within the range reported in the published literature for EfficientNet-B0 at $224 \times 224$ input resolution on APTOS 2019 without ensembling, test-time augmentation, or ordinal-regression heads. No claim of state-of-the-art performance is made or implied.
+$\kappa = 0.8777$ sits within the range reported for EfficientNet-B0 at $224 \times 224$ on APTOS 2019 without ensembling, test-time augmentation or ordinal-regression heads. No claim of state-of-the-art performance is made.
 
 ---
 
@@ -50,61 +76,64 @@ Total Predicted  273    70   102    41    63 |     549
 | **3** | Severe NPDR | 29 | 58.6% | 40.7 – 74.5 | 95.4% | 41.5% | 0.486 |
 | **4** | Proliferative DR | 45 | 62.2% | 47.6 – 74.9 | 93.1% | 44.4% | 0.518 |
 
-Confidence intervals are Wilson score intervals. They are wide for Grades 3 and 4 because those classes carry only 29 and 45 held-out cases respectively; the point estimates for those grades should be treated as indicative rather than precise.
+Confidence intervals are Wilson score intervals. They are wide for Grades 3 and 4 because those classes carry only 29 and 45 held-out cases; those point estimates are indicative rather than precise.
 
 ---
 
-## 3. Clinical Operating Points
+## 3. Classification Behaviour
 
-A screening service does not act on a five-way grade. It makes a referral decision. Collapsing the ordinal output at the two clinically meaningful thresholds gives the following.
+This section describes what the classifier does with the image data. It makes no statement about clinical management, referral, or patient outcome — none of which is established by retrospective image classification, and none of which is within this system's scope.
 
-### 3.1 Referable DR (Grade $\ge 2$) — the primary screening endpoint
+### 3.1 Mild NPDR (Grade 1) recognition — 72.7%
 
-| Metric | Value | 95% CI |
-| :--- | :---: | :---: |
-| **Sensitivity** | **86.6%** | 81.5 – 90.5 |
-| **Specificity** | **96.3%** | 93.7 – 97.9 |
-| Positive Predictive Value | 94.2% | — |
-| Negative Predictive Value | 91.2% | — |
-| Referable cases missed | **30 / 224** | — |
+Grade 1 is the transition the ICDR scale places between a normal fundus and established retinopathy, and it is the class the research objectives single out. Sensitivity is **72.7%** (40 / 55).
 
-### 3.2 Sight-Threatening DR (Grade $\ge 3$)
+Its 15 errors distribute as **11 → Grade 2**, **3 → Grade 0**, **1 → Grade 4**.
 
-| Metric | Value | 95% CI |
-| :--- | :---: | :---: |
-| **Sensitivity** | **82.4%** | 72.2 – 89.4 |
-| **Specificity** | **91.0%** | 88.0 – 93.2 |
-| Positive Predictive Value | 58.6% | — |
-| Negative Predictive Value | **97.1%** | — |
-| Sight-threatening cases missed | **13 / 74** | — |
+### 3.2 Mild NPDR confused with No DR — 3 cases
 
-### 3.3 Any DR (Grade $\ge 1$)
+Only **3** Grade 1 images were assigned Grade 0. In each, the Grade 1 score was retained as the second-ranked class (0.092, 0.206, 0.298), so the distinction was represented in the output distribution rather than absent from it.
 
-| Metric | Value | 95% CI |
-| :--- | :---: | :---: |
-| Sensitivity | 97.8% | 95.4 – 99.0 |
-| Specificity | 98.9% | 96.8 – 99.6 |
-| Cases missed | 6 / 279 | — |
+A plausible mechanism is resolution: early microaneurysms measure roughly 25–50 µm and occupy few pixels on a multi-megapixel sensor, and resizing to $224 \times 224$ applies smoothing that can attenuate an isolated lesion's local contrast. This is **consistent with** the error pattern, not demonstrated by it — establishing it would require an ablation at higher input resolution, which was not run.
 
-### 3.4 Composition of the 30 referable misses
+### 3.3 Moderate NPDR (Grade 2) is the weakest class — 53.3%
 
-| True grade of missed case | Count |
-| :--- | :---: |
-| Grade 2 (Moderate NPDR) | 28 |
-| Grade 3 (Severe NPDR) | 1 |
-| Grade 4 (Proliferative DR) | 1 |
+Its 70 errors distribute as 27 → Grade 4, 25 → Grade 1, 15 → Grade 3, 3 → Grade 0.
 
-This distribution matters more than the count. Of the 224 referable cases, exactly **two** sight-threatening cases (one Severe NPDR, one PDR) were released as non-referable; the remaining 28 misses were Moderate NPDR, the mildest referable grade and the one with the longest safe interval to re-screening. The model's failures are concentrated where their clinical cost is lowest.
+Grade 2 is the ICDR scale's widest and least sharply bounded category — "more than microaneurysms but less than severe" — and its boundaries with Grade 1 and Grade 3 turn on lesion count and distribution, which is the information most degraded by downsampling.
+
+In 23 of the 27 Grade-2-called-Grade-4 cases, Grade 2 remained the second-ranked class.
+
+### 3.4 Grade 0 recognition — 98.9%
+
+Sensitivity 98.9% with 97.8% precision, the strongest of the five classes. Grade 0 is 49.2% of this cohort, so this is also the class with the most training support.
+
+### 3.5 Ordinal error structure
+
+Predicted grades exceed the reference grade in 11.7% of cases and fall below it in 9.7%. Within-one-grade agreement is 92.71%, and top-2 accuracy is 94.35% — the reference grade is within the model's two highest-scoring classes for most images it grades incorrectly.
 
 ---
 
-## 4. Error Structure
+## 4. Secondary Exploratory Analysis: Binary Collapse
 
-**The model errs toward over-referral.** Over-calling exceeds under-calling (11.7% vs 9.7%), and the single largest off-diagonal cell is 27 Moderate NPDR cases predicted as Proliferative DR. In a screening context this direction is the safer one: an over-called patient receives an unnecessary ophthalmology appointment, whereas an under-called patient is sent home with untreated disease.
+> [!IMPORTANT]
+> **Exploratory only.** The figures in this section are arithmetic collapses of
+> the five-class output. They are **not** system referral decisions, **not**
+> evidence of clinical safety, and **not** a demonstration of clinical
+> usefulness. The system produces preliminary decision-support information for
+> a reviewing clinician; it does not make referral determinations, and no
+> retrospective image-classification result can establish that it should.
+>
+> Reported because the binary collapse is conventional in the DR literature and
+> makes this work comparable to it — nothing more.
 
-**Grade 2 is the weakest class** at 53.3% sensitivity. Its 70 errors distribute as 27 → Grade 4, 25 → Grade 1, 15 → Grade 3, 3 → Grade 0. Notably, in 23 of the 27 Grade-2-called-Grade-4 cases, Grade 2 was still the model's *second* choice, and 122 of the 150 Grade 2 cases (81.3%) were assigned *some* referable grade. The model reliably recognises that these eyes need referral; it is the precise severity stratification it gets wrong.
+| Collapse | Sensitivity | 95% CI | Specificity | 95% CI |
+| :--- | :---: | :---: | :---: | :---: |
+| Grade $\ge 1$ | 97.8% | 95.4 – 99.0 | 98.9% | 96.8 – 99.6 |
+| Grade $\ge 2$ | 86.6% | 81.5 – 90.5 | 96.3% | 93.7 – 97.9 |
+| Grade $\ge 3$ | 82.4% | 72.2 – 89.4 | 91.0% | 88.0 – 93.2 |
 
-**Grade 0 is near-perfect** at 98.9% sensitivity with 97.8% precision. Because Grade 0 is 49.2% of a screening population, this is what would make the system operationally useful: it clears the healthy majority with high confidence and concentrates clinician attention on the remainder.
+Distribution of the 30 grade-$\ge 2$ cases assigned a grade below 2: 28 were Grade 2, 1 was Grade 3, 1 was Grade 4.
 
 ---
 
@@ -113,35 +142,34 @@ This distribution matters more than the count. Of the 224 referable cases, exact
 ### 5.1 Argmax invariant
 All 549 prediction rows satisfy `predicted_grade == argmax(score_grade_0..4)`, with zero discrepancies.
 
-### 5.2 Byte-level duplicate leakage — disclosed
-
-The pipeline partitions by `duplicate_group_id`, derived from APTOS's `duplicated_info.csv`. **That file is not distributed with the Kaggle competition download.** When it is absent, the fallback assigns every image its own group, so the de-duplication step runs but groups nothing. The committed manifest confirms this: 3,662 groups for 3,662 images.
-
-Auditing the committed SHA-256 column directly instead reveals:
+### 5.2 Partition contamination — the reason these results are provisional
 
 | Finding | Value |
 | :--- | :---: |
-| Held-out images byte-identical to a training image | **27 / 549 (4.92%)** |
-| Validation images byte-identical to a training image | 17 / 550 |
-| Distribution of affected held-out images | Gr1: 6, Gr2: 16, Gr3: 2, Gr4: 3 |
+| Records / unique image hashes | 3,662 / **3,534** |
+| Duplicate groups spanning partitions | **48** |
+| Test images byte-identical to a training image | 27 |
+| Validation images byte-identical to a training image | 17 |
+| Test images byte-identical to a validation image | 6 |
+| Duplicate groups with conflicting labels | **30** |
 
-**Measured effect on the reported result: none.**
+Reproduce with `python backend/scripts/analyze_clinical_metrics.py` (leakage audit section).
 
-| Subset | N | Accuracy | QWK |
-| :--- | :---: | :---: | :---: |
-| Affected (duplicated) images | 27 | 77.78% | — |
-| Clean images | 522 | **78.74%** | **0.877818** |
-| Full held-out cohort | 549 | 78.69% | 0.877747 |
+An earlier revision of this report argued the contamination was immaterial because accuracy on the 27 affected test images (77.78%) was no higher than on the remaining 522 (78.74%). **That argument is insufficient and has been withdrawn.** It addresses only test-set contamination, and not:
 
-The model performs marginally *worse* on the duplicated images than on the clean ones, and the clean-subset $\kappa$ (0.877818) is indistinguishable from the full-cohort $\kappa$ (0.877747). The reported metrics are therefore not inflated by memorised duplicates. The condition is disclosed here rather than silently corrected, and the clean-subset figures are available for any reviewer who prefers them. Re-running the split with `duplicated_info.csv` present is recorded as future work in [`known_limitations.md`](known_limitations.md).
+- **validation contamination** (17 images), which influences which epoch's checkpoint is selected; or
+- **conflicting labels** (30 groups), which place contradictory supervision in training.
+
+Neither effect is observable in a held-out score comparison. The correct remedy is a clean split and a retrain, not a post-hoc argument.
 
 ---
 
 ## 6. Reproduction
 
 ```bash
-# Recompute every number in this report from the committed predictions.
+# Recompute every number in this report from the committed predictions
 python backend/scripts/analyze_clinical_metrics.py
-```
 
-Requires only the Python standard library. Writes [`clinical_metrics.json`](clinical_metrics.json).
+# Build the corrected, leakage-free split (requires the APTOS images)
+python backend/scripts/build_clean_split.py aptos2019/train_images
+```

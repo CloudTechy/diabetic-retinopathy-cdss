@@ -26,7 +26,7 @@ Grade 2 is the ICDR scale's widest and least sharply bounded category — "more 
 
 Two observations soften the finding:
 
-- **122 of 150 Grade 2 cases (81.3%) still received a referable grade** ($\ge 2$). The model recognises these eyes need referral; it misplaces the severity.
+- **122 of 150 Grade 2 cases (81.3%) were assigned some grade $\ge 2$.** The misclassification is one of severity placement within the scale, not a failure to register abnormality. This is a statement about classifier behaviour, not about referral.
 - In **23 of the 27** Grade-2-called-Grade-4 cases, Grade 2 remained the model's second-ranked class, so the correct grade was present in the output distribution.
 
 ### Mitigation in the CDSS
@@ -80,18 +80,19 @@ Measured effect: accuracy 77.78% on the affected images vs 78.74% on the clean 5
 
 ---
 
-## 6. Validation, not inference, dominates response time
+## 6. Input handling, not inference, dominates response time
 
-End-to-end CPU latency is **164.79 ms mean / 277.31 ms P95** over 30 held-out images on a 4-thread x86_64 CPU ([`resource_benchmark.md`](resource_benchmark.md) §1).
+End-to-end CPU latency is **164.79 ms mean / 137.21 ms median / 277.31 ms P95** over 30 held-out images on a 4-thread x86_64 CPU ([`resource_benchmark.md`](resource_benchmark.md) §1). All figures in this section are from that same post-optimisation run.
 
-The structure of that number is the limitation worth stating. The model forward pass is **29.24 ms (17.7%)**; validation gates 2 and 3 cost **72.42 ms (43.9%)**, down from 59.1% before the gates were optimised but still the largest single category.
+The structure of the number is the limitation worth stating. The model forward pass is **29.24 ms (17.7%)**. Validation gates 2 and 3 together cost **72.42 ms (43.9%)** — reduced from 59.1% by computing their distribution statistics on a nearest-neighbour subsample, a change verified decision-preserving across all 3,662 APTOS images. PNG serialisation of the Grad-CAM overlay is now **30.18 ms (18.3%)**, costing more than the forward pass.
 
 Two consequences:
 
-1. **Latency scales with camera resolution, not with disease severity.** `gate2` ranges from a 61.62 ms median to a 318.02 ms P95 across APTOS's varied image dimensions, while the fixed-tensor `forward` stage stays within 28.94–42.50 ms. A site with higher-resolution cameras will see proportionally slower responses, with no change in diagnostic behaviour.
-2. **Most of that cost has since been removed.** Both gates now compute their distribution statistics on a nearest-neighbour subsample (`VALIDATION_ANALYSIS_MAX_DIM`, default 512), measured at 2.7× faster combined, with 38 tests asserting the accept/reject verdict is unchanged. Gate 3's Laplacian variance is deliberately excluded, being a resolution-dependent spatial derivative. The **end-to-end** figure quoted above is the pre-optimisation measurement; it has not been re-measured, so no improved total is claimed. Verification on real images is run with `backend/scripts/verify_gate_downsampling.py`.
+1. **Latency scales with input resolution, not with disease severity.** `gate2` runs a **32.33 ms median against a 142.99 ms P95** — a 4.4× range across APTOS's varied image dimensions — because the reduction step must still read every source pixel. The model stages, operating on a fixed $224 	imes 224$ tensor, are stable by comparison: `forward` spans only 26.49–36.49 ms across all 30 requests. A site with higher-resolution cameras will see proportionally slower responses with no change in classification behaviour.
 
-The measurement was taken on a shared 4-thread cloud CPU. A dedicated clinical workstation would likely be faster, but no such machine was benchmarked, so no figure for one is offered.
+2. **Further reducible cost is identified but not removed.** Gates 1, 2 and 3 each convert the full-resolution image independently. Decoding once and sharing a single reduced copy is the next available gain. It is not implemented, and no benefit from it is claimed.
+
+The measurement was taken on a shared cloud CPU. A dedicated clinical workstation would likely be faster, but none was benchmarked, so no figure for one is offered.
 
 ---
 
@@ -99,7 +100,7 @@ The measurement was taken on a shared 4-thread cloud CPU. A dedicated clinical w
 
 - Diabetic Macular Edema is a leading cause of moderate visual acuity loss in diabetic patients, and the ICDR severity grade does not encode it.
 - Colour fundus photography shows surrogate signs (hard exudate rings near the fovea) but cannot measure retinal thickness, intraretinal fluid or subretinal fluid.
-- **Safeguard:** the CDSS report recommends confirmatory SD-OCT where macular exudates are present. DME assessment is outside this system's scope.
+- **Scope:** DME assessment is outside this system's scope. The system reports five-class ICDR severity only, and makes no management or imaging recommendation.
 
 ---
 

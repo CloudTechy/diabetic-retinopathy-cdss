@@ -23,7 +23,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **82.4%**, NPV **97.1%** |
 | **Argmax contradictions** | 0 / 549 |
 | **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
-| **Test suite** | 145 passed, 1 skipped |
+| **Test suite** | 152 passed, 1 skipped |
 | **End-to-end CPU latency** | **164.79 ms** mean / 137.21 ms median / **277.31 ms** P95 |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
@@ -92,7 +92,7 @@ docs/chapter4_submission_package/
 
 **[`REVIEWER_RESPONSE.md`](REVIEWER_RESPONSE.md)** answers the Chapter Four QA review point by point: which findings no longer apply and how to check that mechanically, which four were still live and have now been fixed, and what this package deliberately does **not** claim.
 
-It also documents the **evidence integrity gate** — 40 executable assertions encoding the review's requirements, run on every push and every commit, so the failure cannot recur silently.
+It also documents the **evidence integrity gate** — 47 executable assertions encoding the review's requirements, run on every push and every commit, so the failure cannot recur silently.
 
 ---
 
