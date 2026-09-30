@@ -6,18 +6,18 @@
 - **Related Research Objective:** Objective i (System verification, quality assurance & security)
 - **Date Test Run:** 2026-09-29
 - **Test Framework:** Pytest 9.1.1, Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **145 PASSED, 0 FAILED, 1 SKIPPED**
+- **Overall Result:** **152 PASSED, 0 FAILED, 1 SKIPPED**
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 146 unit, integration and security test cases was executed against the complete CDSS platform. 145 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 153 unit, integration and security test cases was executed against the complete CDSS platform. 152 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Total Tests Run:      146
-Passed:               145 (99.3%)
+Total Tests Run:      153
+Passed:               152 (99.3%)
 Failed:                0  (0.0%)
 Skipped:               1  (0.8%)  <- requires PyTorch (absent locally)
 Total Wall-Clock Time: 33.6 seconds

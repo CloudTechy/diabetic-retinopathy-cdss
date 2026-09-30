@@ -65,7 +65,6 @@ Colab, and because the reviewer asked to see the training and evaluation code.
 | :--- | :--- | :--- |
 | `scripts/train_efficientnet_b0.py` | the training stage | emits `Epoch \| Train Loss \| Val Loss \| Val Acc`, not the header above |
 | `scripts/evaluate_model.py` | the evaluation stage | writes its own field ordering |
-| `scripts/generate_aptos_manifest.py` | the manifest stage | same schema, separate implementation |
 
 Both training implementations are genuine — each defines a `torch.utils.data.Dataset`
 whose `__getitem__` opens a real image file, and iterates a real `DataLoader`.
@@ -95,3 +94,4 @@ The distinction here is **provenance**, not authenticity.
 | `create_evaluated_checkpoint.py` | Built a randomly-initialised network and saved it to the production weights path. |
 | `generate_dataset_manifest.py` | Invented the N = 8,000 multi-cohort manifest. |
 | `prepare_submission_package.py` | Synthesised benchmark timings and wrote the 86.40% / 0.9415 reports. |
+| `generate_aptos_manifest.py` | Superseded by `build_clean_split.py`. It keyed de-duplication on `duplicated_info.csv`, which the Kaggle competition download does not contain, so the step silently grouped nothing. |

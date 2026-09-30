@@ -9,9 +9,10 @@ Run this entire script in a Google Colab notebook with GPU runtime.
 It will:
   1. Install dependencies
   2. Download APTOS 2019 dataset from Kaggle
-  3. Generate the dataset manifest with real SHA-256 byte hashes
+  3. Build a leakage-free split: hash image bytes, drop conflicting-label
+     duplicate groups, keep one per group, assert zero partition overlap
   4. Train EfficientNet-B0 for 15 epochs on real retinal fundus images
-  5. Evaluate on 544 held-out test images
+  5. Evaluate on the held-out test split (leakage-free, ~525 images)
   6. Run 100-pass inference benchmark
   7. Generate learning curves and confusion matrix plots
   8. Package all artifacts for download
@@ -97,129 +98,55 @@ def download_aptos():
 # STEP 1: Generate Manifest with Real Byte Hashes
 # ===================================================================
 def generate_manifest(dataset_dir):
+    """
+    Build the split via backend/scripts/build_clean_split.py - the single
+    canonical implementation.
+
+    The previous version keyed de-duplication on APTOS's duplicated_info.csv,
+    which is NOT part of the Kaggle competition download. When absent it fell
+    back to giving every image its own group, so the step ran and grouped
+    nothing. The resulting manifest had 3,662 records over only 3,534 unique
+    images, 48 duplicate groups spanning partitions, and 30 groups carrying
+    conflicting labels.
+
+    build_clean_split keys on the SHA-256 of the image bytes, which we always
+    have, excludes label-conflicting groups, keeps one representative per
+    group, and asserts zero hash overlap between partitions before returning.
+    """
     import csv
-    import random
-    import hashlib
-    from collections import defaultdict, Counter
+    import json
+    import sys
 
-    random.seed(42)
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    scripts_dir = os.path.join(repo_root, "backend", "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    from build_clean_split import build_clean_split, FIELDNAMES
+
     images_dir = os.path.join(dataset_dir, "train_images")
-    train_csv = os.path.join(dataset_dir, "train.csv")
+    labels_csv = os.path.join(dataset_dir, "train.csv")
 
-    with open(train_csv, "r") as f:
-        samples = list(csv.DictReader(f))
-    print(f"\n{'='*72}")
-    print(f"STEP 1: Manifest Generation")
-    print(f"Total samples: {len(samples)}")
+    print("\n" + "=" * 72)
+    print("STEP 1: Clean Split (de-duplicated by image bytes)")
 
-    # Duplicate grouping
-    dup_csv = os.path.join(dataset_dir, "duplicated_info.csv")
-    id_to_phash = {}
-    if os.path.exists(dup_csv):
-        with open(dup_csv, "r") as f:
-            for row in csv.DictReader(f):
-                p = row.get("path", "")
-                img_id = os.path.splitext(os.path.basename(p))[0]
-                h = row.get("Hash", "")
-                if h and img_id:
-                    id_to_phash[img_id] = h
-
-    phash_to_group = {}
-    group_counter = 1
-    image_groups = defaultdict(list)
-
-    for s in samples:
-        img_id = s["id_code"]
-        diag = int(s["diagnosis"])
-        phash = id_to_phash.get(img_id)
-
-        if phash:
-            if phash not in phash_to_group:
-                phash_to_group[phash] = f"DG-{group_counter:04d}"
-                group_counter += 1
-            gid = phash_to_group[phash]
-        else:
-            gid = f"DG-{group_counter:04d}"
-            group_counter += 1
-
-        image_groups[gid].append({
-            "image_id": img_id,
-            "duplicate_group_id": gid,
-            "source_dataset": "APTOS 2019 (Aravind Eye Hospital)",
-            "true_grade": diag,
-            "file_path": f"train_images/{img_id}.png",
-        })
-
-    # Stratified group-level split
-    groups_by_grade = defaultdict(list)
-    for gid, imgs in image_groups.items():
-        groups_by_grade[imgs[0]["true_grade"]].append((gid, imgs))
-
-    train_recs, val_recs, test_recs = [], [], []
-    for grade in range(5):
-        groups = groups_by_grade[grade]
-        random.shuffle(groups)
-        n = len(groups)
-        n_train = int(round(n * 0.70))
-        n_val = int(round(n * 0.15))
-
-        for _, imgs in groups[:n_train]:
-            for img in imgs:
-                img["split"] = "train"
-                train_recs.append(img)
-        for _, imgs in groups[n_train:n_train + n_val]:
-            for img in imgs:
-                img["split"] = "val"
-                val_recs.append(img)
-        for _, imgs in groups[n_train + n_val:]:
-            for img in imgs:
-                img["split"] = "test"
-                test_recs.append(img)
-
-    all_records = train_recs + val_recs + test_recs
-    print(f"Split: Train={len(train_recs)}, Val={len(val_recs)}, Test={len(test_recs)}")
-
-    # Hash actual image bytes
-    icdr = [
-        "Grade 0: No Apparent DR", "Grade 1: Mild NPDR",
-        "Grade 2: Moderate NPDR", "Grade 3: Severe NPDR",
-        "Grade 4: Proliferative DR",
-    ]
-    output_rows = []
-    for r in all_records:
-        img_path = os.path.join(images_dir, f"{r['image_id']}.png")
-        if os.path.exists(img_path):
-            h = hashlib.sha256()
-            with open(img_path, "rb") as fimg:
-                for chunk in iter(lambda: fimg.read(8192), b""):
-                    h.update(chunk)
-            file_hash = h.hexdigest()
-        else:
-            file_hash = "FILE_NOT_FOUND"
-
-        output_rows.append({
-            "image_id": r["image_id"],
-            "duplicate_group_id": r["duplicate_group_id"],
-            "source_dataset": r["source_dataset"],
-            "file_path": r["file_path"],
-            "true_grade": r["true_grade"],
-            "true_label": icdr[r["true_grade"]],
-            "split": r["split"],
-            "sha256_hash": file_hash,
-        })
-
-    output_rows.sort(key=lambda x: (x["split"], x["true_grade"], x["image_id"]))
+    rows, report = build_clean_split(images_dir, labels_csv, seed=42)
 
     os.makedirs("output", exist_ok=True)
     manifest_path = "output/dataset_split_manifest.csv"
-    fieldnames = list(output_rows[0].keys())
-    with open(manifest_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+    with open(manifest_path, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=FIELDNAMES, lineterminator="\n")
         writer.writeheader()
-        writer.writerows(output_rows)
+        writer.writerows(rows)
 
-    not_found = sum(1 for r in output_rows if r["sha256_hash"] == "FILE_NOT_FOUND")
-    print(f"Manifest saved: {manifest_path} ({len(output_rows)} records, {not_found} missing)")
+    with open("output/dataset_split_audit.json", "w", encoding="utf-8") as fh:
+        json.dump(report, fh, indent=2)
+
+    train_recs = [r for r in rows if r["split"] == "train"]
+    val_recs = [r for r in rows if r["split"] == "val"]
+    test_recs = [r for r in rows if r["split"] == "test"]
+
+    print(f"Manifest saved: {manifest_path} ({len(rows)} records)")
+    print(f"Audit saved:    output/dataset_split_audit.json")
 
     return manifest_path, images_dir, train_recs, val_recs, test_recs
 

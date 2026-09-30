@@ -51,6 +51,29 @@ def read(path):
         return fh.read()
 
 
+CORRECTION_RECORDS = {
+    "REVIEWER_RESPONSE.md",
+    "independent_thesis_qa_gate_audit.md",
+    "screenshot_evidence_manifest.md",
+    "evidence_provenance.md",
+    "model_evaluation_report.md",
+}
+
+
+def iter_markdown(include_correction_records=True):
+    """Yield (relative path, text) for every committed markdown document."""
+    docs_root = os.path.join(REPO_ROOT, "docs")
+    for dirpath, dirnames, filenames in os.walk(docs_root):
+        dirnames[:] = [d for d in dirnames if d not in ("__pycache__",)]
+        for name in sorted(filenames):
+            if not name.endswith(".md"):
+                continue
+            if not include_correction_records and name in CORRECTION_RECORDS:
+                continue
+            path = os.path.join(dirpath, name)
+            yield os.path.relpath(path, REPO_ROOT), read(path)
+
+
 def python_sources(*dirs):
     for d in dirs:
         if not os.path.isdir(d):
@@ -582,3 +605,113 @@ def test_evidence_csvs_only_cite_image_ids_that_exist_in_the_manifest():
     assert not offenders, (
         "Evidence cites image identifiers that do not exist in the dataset:\n  "
         + "\n  ".join(offenders[:10]))
+
+
+# =====================================================================
+# I. Senior-review findings, encoded so they cannot regress
+# =====================================================================
+
+def test_split_builder_deduplicates_by_image_bytes():
+    """
+    The contaminated manifest arose from keying de-duplication on APTOS's
+    duplicated_info.csv, which the competition download does not contain. The
+    replacement must key on a hash we compute ourselves, exclude
+    label-conflicting groups, and assert zero partition overlap.
+    """
+    path = os.path.join(SCRIPTS, "build_clean_split.py")
+    assert os.path.exists(path), "build_clean_split.py is missing"
+    text = read(path)
+    for required in ("sha256", "conflicting", "LEAKAGE"):
+        assert required in text, f"build_clean_split.py lacks {required!r}"
+
+
+def test_pipeline_does_not_depend_on_duplicated_info_csv():
+    """No code path may key de-duplication on a file the dataset does not ship."""
+    offenders = []
+    for path in list(python_sources(SCRIPTS, NOTEBOOKS)):
+        tree = ast.parse(read(path), filename=path)
+        # Collect docstring nodes so prose explaining the old behaviour is allowed.
+        docstrings = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                body = getattr(node, "body", None)
+                if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
+                    docstrings.add(id(body[0].value))
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Constant) and isinstance(node.value, str)
+                    and "duplicated_info" in node.value and id(node) not in docstrings):
+                offenders.append(f"{os.path.basename(path)}:{node.lineno}")
+    assert not offenders, (
+        "De-duplication still references duplicated_info.csv, which is absent "
+        "from the Kaggle download: " + ", ".join(offenders))
+
+
+def test_no_clinical_effectiveness_or_referral_claims_in_documents():
+    """
+    Retrospective image classification does not establish referral behaviour,
+    error safety, or clinical usefulness. Those claims exceed the approved
+    system scope.
+    """
+    banned = [
+        "need referral", "needs referral", "sent home",
+        "clinical cost is lowest", "errs toward over-referral",
+        "safer direction", "recommends confirmatory",
+        "demonstrated clinical", "clinically useful",
+    ]
+    offenders = []
+    for rel, text in iter_markdown(include_correction_records=False):
+        for lineno, line in enumerate(text.splitlines(), 1):
+            low = line.lower()
+            for phrase in banned:
+                if phrase in low:
+                    offenders.append(f"{rel}:{lineno}: {phrase!r}")
+    assert not offenders, (
+        "Clinical-effectiveness or referral claim beyond system scope:\n  "
+        + "\n  ".join(offenders))
+
+
+def test_binary_collapse_is_labelled_exploratory():
+    """
+    Referable-DR figures may be retained only as secondary exploratory
+    analysis, never as system referral decisions or safety evidence.
+    """
+    report = os.path.join(CHAPTER4, "model_evaluation_report.md")
+    if not os.path.exists(report):
+        pytest.skip("evaluation report not present")
+    text = read(report)
+    if r"Grade $\ge 2$" not in text and "grade >= 2" not in text.lower():
+        pytest.skip("no binary collapse reported")
+    assert "xploratory" in text, (
+        "the binary collapse section must be labelled exploratory")
+    assert "not** system referral decisions" in text or "not system referral" in text, (
+        "the binary collapse must state it is not a system referral decision")
+
+
+def test_no_superseded_regulatory_or_identity_claims_in_screenshots_manifest():
+    """
+    The PDF and deployment screenshots displayed a fabricated clinician, a GMC
+    number, "Certified ICDR Grade", "FDA SaMD Class II" and "NHS DTAC". They
+    were removed rather than reshipped.
+    """
+    for name in ("10_tamper_evident_pdf_report.png", "live_vercel_verified.png"):
+        for d in (os.path.join(CHAPTER4, "screenshots"),
+                  os.path.join(REPO_ROOT, "docs", "chapter4_submission_package", "screenshots")):
+            assert not os.path.exists(os.path.join(d, name)), (
+                f"{name} is non-compliant and must not be shipped; "
+                "regenerate it from the corrected build or leave it out")
+
+
+def test_documents_use_relative_links_not_windows_file_urls():
+    offenders = [rel for rel, text in iter_markdown() if "file:///" in text]
+    assert not offenders, (
+        "Windows file:/// links do not resolve for a reviewer:\n  " + "\n  ".join(offenders))
+
+
+def test_programme_is_described_consistently():
+    """The project is a PGD dissertation, not an MSc thesis."""
+    offenders = []
+    for rel, text in iter_markdown():
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if "MSc" in line:
+                offenders.append(f"{rel}:{lineno}")
+    assert not offenders, "Incorrect programme description (MSc):\n  " + "\n  ".join(offenders)

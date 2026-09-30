@@ -1,7 +1,7 @@
 # Diabetic Retinopathy CDSS — Comprehensive Testing & Verification Runbook
 
 **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy  
-**Researcher / MSc Candidate:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)  
+**Researcher / PGD Candidate:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)  
 **Document Purpose:** Complete operational verification runbook covering automated test suites, mathematical thresholds, empirical classifier validation, and step-by-step clinical UI walkthrough for thesis defense.
 
 ---
@@ -59,9 +59,9 @@ python backend/scripts/evaluate_model.py
 ```
 
 #### Generated Artifacts:
-- [`docs/chapter4/held_out_predictions.csv`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/held_out_predictions.csv) (549 itemized predictions)
-- [`docs/chapter4/confusion_matrix.png`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/confusion_matrix.png) (5x5 confusion matrix)
-- [`docs/chapter4/model_evaluation_report.md`](file:///c:/Users/USER/Documents/TECH4MATION/diabetic-retinopathy-cdss/docs/chapter4/model_evaluation_report.md)
+- [`docs/chapter4/held_out_predictions.csv`](/docs/chapter4/held_out_predictions.csv) (549 itemized predictions)
+- [`docs/chapter4/confusion_matrix.png`](/docs/chapter4/confusion_matrix.png) (5x5 confusion matrix)
+- [`docs/chapter4/model_evaluation_report.md`](/docs/chapter4/model_evaluation_report.md)
 
 #### Expected Benchmark Values:
 - **Quadratic Weighted Kappa ($\kappa$):** **0.8777**
