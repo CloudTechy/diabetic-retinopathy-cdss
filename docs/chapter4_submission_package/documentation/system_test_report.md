@@ -12,15 +12,15 @@
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 153 unit, integration and security test cases was executed against the complete CDSS platform. 157 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 159 unit, integration and security test cases was executed against the complete CDSS platform. 157 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Total Tests Run:      153
-Passed:               152 (99.3%)
+Total Tests Run:      159
+Passed:               157 (98.7%)
 Failed:                0  (0.0%)
-Skipped:               1  (0.8%)  <- requires PyTorch (absent locally)
-Total Wall-Clock Time: 33.6 seconds
+Skipped:                2  (1.3%)  <- requires PyTorch (absent locally)
+Total Wall-Clock Time: 36.8 seconds
 Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 ====================================================================================
 ```

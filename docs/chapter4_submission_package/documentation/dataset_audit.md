@@ -61,12 +61,14 @@ Because APTOS provides no patient identifier, the partition is **stratified at i
 
 | Partition | Target | Images ($N$) | Gr 0 | Gr 1 | Gr 2 | Gr 3 | Gr 4 | Purpose |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Training** | 70% | **2,563** | 1,264 | 259 | 699 | 135 | 206 | Supervised learning |
-| **Validation** | 15% | **550** | 271 | 56 | 150 | 29 | 44 | Checkpoint selection |
-| **Held-Out Test** | 15% | **549** | 270 | 55 | 150 | 29 | 45 | Final evaluation (Objective h) |
-| **Total** | 100% | **3,662** | 1,805 | 370 | 999 | 193 | 295 | — |
+| **Training** | 70% | **2,453** | 1,257 | 237 | 645 | 124 | 190 | Supervised learning |
+| **Validation** | 15% | **526** | 269 | 51 | 138 | 27 | 41 | Checkpoint selection |
+| **Held-Out Test** | 15% | **525** | 270 | 50 | 139 | 26 | 40 | Final evaluation (Objective h) |
+| **Total** | 100% | **3,504** | 1,796 | 338 | 922 | 177 | 271 | — |
 
-Grade proportions in the held-out split match the full cohort closely (Grade 0: 49.2% vs 49.3%), confirming the stratification held.
+Grade proportions in the held-out split match the retained cohort closely (Grade 0: 51.4% vs 51.3%), confirming the stratification held.
+
+The 3,504 total is the **de-duplicated, label-consistent** cohort, not the 3,662 labelled records APTOS ships. Section 4 explains what was removed and why.
 
 The complete record-by-record ledger — image identifier, source dataset, relative file path, grade, split assignment, and **SHA-256 of the image bytes** — is [`dataset_split_manifest.csv`](dataset_split_manifest.csv).
 
@@ -89,39 +91,40 @@ Rather than trusting the grouping, the committed SHA-256 column was audited dire
 | Distinct image byte-hashes | 3,534 |
 | Images sharing bytes with another image | 128 |
 | Hashes appearing in more than one split | 48 |
-| **Held-out images byte-identical to a training image** | **27 / 549 (4.92%)** |
+| **Held-out images byte-identical to a training image** | **0 / 525 (4.92%)** |
 | Validation images byte-identical to a training image | 17 / 550 |
 
-### 4.3 Measured effect: none
+### 4.3 Resolution: the split was rebuilt and the model retrained
 
-| Subset | $N$ | Accuracy | QWK |
-| :--- | :---: | :---: | :---: |
-| Affected (duplicated) held-out images | 27 | 77.78% | — |
-| Clean held-out images | 522 | **78.74%** | **0.877818** |
-| Full held-out cohort | 549 | 78.69% | 0.877747 |
+The contamination is no longer present. [`build_clean_split.py`](../../backend/scripts/build_clean_split.py)
+rebuilt the partition from image-byte hashes, and EfficientNet-B0 was retrained
+from ImageNet initialisation on the result.
 
-The model scores marginally lower on the duplicated images than on the clean ones.
+| Property | Contaminated split | Clean split |
+| :--- | :---: | :---: |
+| Records / unique images | 3,662 / 3,534 | **3,504 / 3,504** |
+| Duplicate groups spanning partitions | 48 | **0** |
+| Test images byte-identical to a training image | 27 | **0** |
+| Validation images byte-identical to a training image | 17 | **0** |
+| Duplicate groups with conflicting labels | 30 (retained) | **30 (excluded)** |
 
-> [!WARNING]
-> **This conclusion is withdrawn.** Comparing scores on the contaminated test
-> images against the rest addresses test contamination only. It cannot detect
-> **validation** contamination (17 images) influencing which checkpoint is
-> selected, nor **conflicting labels** (30 groups) placing contradictory
-> supervision into training. The remedy is a clean split and a retrain, not a
-> post-hoc comparison. See `CLEAN_RERUN_RUNBOOK.md`.
+Zero overlap is asserted by the builder *before* training starts, and confirmed
+afterwards by an independent recomputation in `analyze_clinical_metrics.py`
+(0 / 525). The per-group exclusion list — every image identifier and the grades
+that disagreed — is recorded in [`dataset_split_audit.json`](dataset_split_audit.json).
 
+**What was actually removed.** 158 records, which decompose into two very
+different things: 128 redundant *copies* of images that are retained (no
+distinct photograph is lost), and 30 distinct images whose duplicate groups
+carried contradictory severity labels and could not be adjudicated from the
+data. The second group is 0.85% of distinct images.
 
-### 4.4 Remediation path
-
-The audit is reproducible at any time — it depends only on the committed manifest:
-
-```bash
-python backend/scripts/analyze_clinical_metrics.py   # see the LEAKAGE AUDIT section
-```
-
-To eliminate the condition rather than measure it, the split must be regenerated with grouping keyed on the **SHA-256 already present in the manifest** (rather than on the absent `duplicated_info.csv`), followed by re-training. This is recorded as future work in [`known_limitations.md`](known_limitations.md). It was not done for this submission because the measured effect on every reported metric is nil, and re-training would invalidate the checkpoint whose provenance is already hash-verified end to end.
-
----
+**An earlier revision of this document argued the contamination was immaterial**
+because accuracy on the 27 affected test images was no higher than on the rest.
+That argument was withdrawn: it addresses test contamination only, and cannot
+detect validation contamination influencing checkpoint selection, nor
+conflicting labels placing contradictory supervision into training. It is
+retained here only as a record of the reasoning that was corrected.
 
 ## 5. Scope Statement
 

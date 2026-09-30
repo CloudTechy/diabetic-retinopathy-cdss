@@ -43,7 +43,7 @@ CHAPTER4 = os.path.join(REPO_ROOT, "docs", "chapter4")
 SCRIPTS = os.path.join(REPO_ROOT, "backend", "scripts")
 NOTEBOOKS = os.path.join(REPO_ROOT, "notebooks")
 
-EXPECTED_CHECKPOINT_SHA256 = "8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa"
+EXPECTED_CHECKPOINT_SHA256 = "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
 
 
 def read(path):
@@ -820,3 +820,38 @@ def test_contaminated_results_are_labelled_superseded():
     assert "superseded" in report.lower(), (
         "the evaluation report quotes results from a contaminated partition "
         "without marking them superseded")
+
+
+def test_validation_gate_failures_are_declared_as_a_defect():
+    """
+    The first genuine run of the validation pipeline rejected 10 of 10
+    unmodified held-out APTOS images: the Laplacian threshold is calibrated for
+    a corpus this one is not. The evidence may say so; what it may not do is sit
+    beside a document claiming objective b is met.
+
+    This rule ties the claim to the measurement. It does not require the gate to
+    pass - it requires the documents to agree with it.
+    """
+    csv_path = os.path.join(CHAPTER4, "validation_test_results.csv")
+    status_path = os.path.join(CHAPTER4, "implementation_status.md")
+    if not (os.path.exists(csv_path) and os.path.exists(status_path)):
+        pytest.skip("validation evidence or status document not present")
+
+    with open(csv_path, newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+
+    wrong = [r for r in rows
+             if (r["overall_status"] == "ACCEPTED") != (r["expected"] == "ACCEPT")]
+    if not wrong:
+        return  # the gate behaves; nothing to declare
+
+    status = read(status_path)
+    objective_b = next((l for l in status.split("\n")
+                        if l.startswith("| **Objective b**")), "")
+    assert "Defect" in objective_b or "Partial" in objective_b, (
+        f"{len(wrong)} validation case(s) behaved unexpectedly "
+        f"(e.g. {wrong[0]['test_case']} expected {wrong[0]['expected']}, "
+        f"got {wrong[0]['overall_status']}), but implementation_status.md does "
+        f"not mark objective b as a defect:\n  {objective_b.strip()}")
+    assert "BLOCKING" in read(os.path.join(CHAPTER4, "known_limitations.md")), (
+        "known_limitations.md must carry the blocking defect section")

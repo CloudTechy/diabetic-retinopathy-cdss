@@ -14,5 +14,42 @@
     "extreme": 0.014,
     "laplacian": 0.0
   },
-  "elapsed_s": 790.7
+  "near_threshold": {
+    "rb": {
+      "threshold": 1.15,
+      "band": 0.5,
+      "images_in_band": 216,
+      "max_abs_deviation": 0.0,
+      "closest_margin": 0.0
+    },
+    "coverage_lo": {
+      "threshold": 0.2,
+      "band": 0.05,
+      "images_in_band": 0,
+      "max_abs_deviation": 0.0,
+      "closest_margin": 0.2475
+    },
+    "coverage_hi": {
+      "threshold": 0.98,
+      "band": 0.05,
+      "images_in_band": 51,
+      "max_abs_deviation": 0.0002,
+      "closest_margin": 0.0035
+    },
+    "contrast": {
+      "threshold": 18.0,
+      "band": 5.0,
+      "images_in_band": 2502,
+      "max_abs_deviation": 0.3,
+      "closest_margin": 0.0
+    },
+    "extreme": {
+      "threshold": 0.35,
+      "band": 0.1,
+      "images_in_band": 11,
+      "max_abs_deviation": 0.001,
+      "closest_margin": 0.011
+    }
+  },
+  "elapsed_s": 1057.6
 }

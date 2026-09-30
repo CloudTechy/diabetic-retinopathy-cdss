@@ -21,7 +21,7 @@ node -v; npm -v
 
 # 3. Verify PyTorch Checkpoint and SHA-256 Checksum
 python -c "import hashlib; h = hashlib.sha256(open('backend/models/weights/efficientnet_b0_dr.pth', 'rb').read()).hexdigest(); print('Weights SHA-256:', h)"
-# Expected Output: 8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa
+# Expected Output: 67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7
 ```
 
 ---
@@ -51,7 +51,7 @@ python -m pytest backend/tests/ -v
 
 ## 3. Empirical Classifier & Model Evaluation Testing
 
-### 3.1 Held-Out Test Set Evaluation ($N = 549$)
+### 3.1 Held-Out Test Set Evaluation ($N = 525$)
 Executes deterministic inference on the untouched held-out test cohort to generate statistical metrics and the 5x5 confusion matrix:
 
 ```powershell
@@ -59,17 +59,17 @@ python backend/scripts/evaluate_model.py
 ```
 
 #### Generated Artifacts:
-- [`docs/chapter4/held_out_predictions.csv`](/docs/chapter4/held_out_predictions.csv) (549 itemized predictions)
+- [`docs/chapter4/held_out_predictions.csv`](/docs/chapter4/held_out_predictions.csv) (525 itemized predictions)
 - [`docs/chapter4/confusion_matrix.png`](/docs/chapter4/confusion_matrix.png) (5x5 confusion matrix)
 - [`docs/chapter4/model_evaluation_report.md`](/docs/chapter4/model_evaluation_report.md)
 
 #### Expected Benchmark Values:
-- **Quadratic Weighted Kappa ($\kappa$):** **0.8777**
-- **Overall Accuracy:** **78.69%** (432 / 549 correctly classified)
-- **Within-one-grade agreement:** **92.71%**
-- **Macro F1:** **0.6525**
-- **Referable DR (grade $\ge 2$):** sensitivity **86.6%**, specificity **96.3%**
-- **Sight-threatening DR (grade $\ge 3$):** sensitivity **82.4%**, NPV **97.1%**
+- **Quadratic Weighted Kappa ($\kappa$):** **0.8658**
+- **Overall Accuracy:** **84.00%** (441 / 525 correctly classified)
+- **Within-one-grade agreement:** **93.71%**
+- **Macro F1:** **0.7031**
+- **Referable DR (grade $\ge 2$):** sensitivity **91.2%**, specificity **96.3%**
+- **Sight-threatening DR (grade $\ge 3$):** sensitivity **68.2%**, NPV **97.1%**
 - **Mild NPDR (Grade 1) Sensitivity:** **72.7%** (40/55)
 - **Moderate NPDR (Grade 2) Sensitivity:** **53.3%** (80/150) — the weakest class
 
