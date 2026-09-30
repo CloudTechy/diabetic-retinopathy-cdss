@@ -12,14 +12,18 @@ from app.schemas.auth import LoginRequest, TokenResponse, ClinicianUserResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Default mock clinician profile
+# Seeded demonstration account. Every value here is explicitly simulated: the
+# system must never present a fabricated clinician identity, a fabricated
+# professional registration number, or an affiliation with a real institution.
+# An earlier revision seeded a plausible consultant name with a GMC-format
+# number and an nhs.uk email address, which implied a real NHS affiliation.
 DEFAULT_CLINICIAN_DATA = {
-    "username": "dr.adaeze",
-    "email": "a.okonjo@retina-clinic.nhs.uk",
-    "full_name": "Dr. Adaeze Okonjo, MBChB, FRCOphth",
-    "role": "Consultant Medical Ophthalmologist",
-    "license_number": "GMC-7492104",
-    "facility": "St. Jude Retinal Diagnostic Unit — Ward 4B",
+    "username": "demo.clinician",
+    "email": "demo.clinician@research-prototype.invalid",
+    "full_name": "Dr. Demo Clinician (Simulated)",
+    "role": "Simulated Reviewer — Research Prototype",
+    "license_number": "SIM-000001",
+    "facility": "Research Prototype Environment",
 }
 
 
@@ -110,7 +114,7 @@ async def login(credentials: LoginRequest, db: AsyncSession = Depends(get_db)):
     user = res.scalar_one_or_none()
 
     # Seed clinician fallback if credentials match default development credentials
-    if not user and (credentials.username in ("dr.adaeze", "a.okonjo@retina-clinic.nhs.uk", "clinician")):
+    if not user and (credentials.username in ("demo.clinician", "demo.clinician@research-prototype.invalid", "clinician")):
         user = await get_or_create_seed_user(db)
 
     if not user:

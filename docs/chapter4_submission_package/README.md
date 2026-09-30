@@ -23,7 +23,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **82.4%**, NPV **97.1%** |
 | **Argmax contradictions** | 0 / 549 |
 | **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
-| **Test suite** | 96 passed, 1 skipped |
+| **Test suite** | 131 passed, 1 skipped |
 | **End-to-end CPU latency** | **164.79 ms** mean / 137.21 ms median / **277.31 ms** P95 |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
@@ -87,9 +87,17 @@ docs/chapter4_submission_package/
 
 ---
 
-## 3. Verification — start here
+## 3. Start here: the reviewer response
 
-### 3.1 Recompute every metric (no ML dependencies, < 5 seconds)
+**[`REVIEWER_RESPONSE.md`](REVIEWER_RESPONSE.md)** answers the Chapter Four QA review point by point: which findings no longer apply and how to check that mechanically, which four were still live and have now been fixed, and what this package deliberately does **not** claim.
+
+It also documents the **evidence integrity gate** — 26 executable assertions encoding the review's requirements, run on every push and every commit, so the failure cannot recur silently.
+
+---
+
+## 4. Verification — run these yourself
+
+### 4.1 Recompute every metric (no ML dependencies, < 5 seconds)
 
 ```bash
 python scripts/analyze_clinical_metrics.py
@@ -97,7 +105,7 @@ python scripts/analyze_clinical_metrics.py
 
 Reads `logs_and_metrics/held_out_predictions.csv` and recomputes QWK (implemented from first principles), per-class sensitivity/specificity with Wilson confidence intervals, all three operating points, and the duplicate-leakage audit — using only the Python standard library.
 
-### 3.2 Verify the checkpoint
+### 4.2 Verify the checkpoint
 
 ```bash
 sha256sum checkpoint/efficientnet_b0_dr.pth
@@ -110,7 +118,7 @@ Get-FileHash checkpoint\efficientnet_b0_dr.pth -Algorithm SHA256
 
 The running system enforces this same digest and refuses to serve on mismatch.
 
-### 3.3 Verify the dataset manifest against real images
+### 4.3 Verify the dataset manifest against real images
 
 ```bash
 python dataset_sample_and_manifest/verify_manifest_hashes.py <path>/aptos2019/train_images --sample 25
@@ -118,7 +126,7 @@ python dataset_sample_and_manifest/verify_manifest_hashes.py <path>/aptos2019/tr
 
 See `dataset_sample_and_manifest/README.md` for why the images themselves are not redistributed.
 
-### 3.4 Cross-check the confusion matrix
+### 4.4 Cross-check the confusion matrix
 
 `logs_and_metrics/evaluation_summary.json` must agree with `visualizations/confusion_matrix.png` and with §2 of `documentation/model_evaluation_report.md`:
 
@@ -134,12 +142,12 @@ Row sums: 270 / 55 / 150 / 29 / 45 = 549. Trace = 432 = 78.69%.
 
 ---
 
-## 4. Revision note
+## 5. Revision note
 
 An earlier revision of this package reported $N = 544$, $\kappa = 0.9415$ and 86.40% accuracy, and shipped 15 placeholder PNGs as "sample test images". Those artefacts did not originate from a real training run: the manifest's recorded hashes matched **none** of the actual APTOS files, and it carried a `patient_id` column that APTOS 2019 does not publish. They have been replaced throughout by the 2026-09-29 run documented above, and `documentation/` now records the correction rather than concealing it.
 
 ---
 
-## 5. Scope
+## 6. Scope
 
 This is a **research prototype supporting a PGD dissertation**. It is not a medical device, holds no regulatory clearance, has undergone no prospective clinical trial, and must not be used for patient care. All model output is decision *support* requiring clinician review.

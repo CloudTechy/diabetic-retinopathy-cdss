@@ -33,7 +33,7 @@
         "id": "usr-01",
         "name": "Dr. Ada Okonjo",
         "role": "Consultant Medical Ophthalmologist",
-        "licenseNumber": "GMC-7492104"
+        "licenseNumber": "SIM-000001"
       }
     }
     ```

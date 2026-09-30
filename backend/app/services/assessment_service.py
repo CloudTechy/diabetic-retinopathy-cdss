@@ -412,9 +412,9 @@ class AssessmentService:
                 )
 
         # Resolve Clinician metadata
-        clinician_name = review_input.clinicianName or (reviewer.full_name if reviewer else "Dr. Adaeze Okonjo, MBChB, FRCOphth")
-        license_num = review_input.licenseNumber or (reviewer.license_number if reviewer else "GMC-7492104")
-        facility = review_input.facility or (reviewer.facility if reviewer else "St. Jude Retinal Diagnostic Unit")
+        clinician_name = review_input.clinicianName or (reviewer.full_name if reviewer else "Dr. Demo Clinician (Simulated)")
+        license_num = review_input.licenseNumber or (reviewer.license_number if reviewer else "SIM-000001")
+        facility = review_input.facility or (reviewer.facility if reviewer else "Research Prototype Environment")
 
         # Map grade label
         grade_meta = ICDR_CLASS_METADATA[review_input.certifiedGrade]

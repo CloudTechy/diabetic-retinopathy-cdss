@@ -229,8 +229,12 @@ def create_mock_gradcam_heatmap(
 
 class MockInferenceService(BaseInferenceService):
     """
-    Mock inference service delivering complete 5-class distributions and
-    Grad-CAM saliency heatmaps matching the FDA SaMD and NHS specifications.
+    SIMULATED inference engine for interface development and testing.
+
+    It returns hardcoded 5-class distributions and a synthetic Grad-CAM
+    overlay. Nothing it produces is a model output, and it is reachable only
+    when AI_INFERENCE_ENGINE=mock is set explicitly - never as a fallback,
+    because a simulated grade is indistinguishable from a real one in the UI.
     """
 
     def predict(
