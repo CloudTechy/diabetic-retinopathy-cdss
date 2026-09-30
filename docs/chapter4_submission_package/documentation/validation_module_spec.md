@@ -24,6 +24,30 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 
 ### Gate 3: Technical Quality & Sharpness
 - **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 60.0$ (`LAPLACIAN_BLUR_THRESHOLD`).
+
+> [!CAUTION]
+> **This threshold is not calibrated, and it currently rejects the entire corpus.**
+>
+> Genuine held-out APTOS images measure **5.7 – 22.0** on the path this gate
+> computes, so all ten unmodified images in
+> [`validation_test_results.csv`](validation_test_results.csv) were rejected with
+> `ERR_MOTION_OR_DEFOCUS_BLUR`. The value 60.0 was chosen a priori, not derived
+> from the imaging characteristics of this corpus.
+>
+> Laplacian variance is a spatial derivative: it scales with sensor resolution,
+> optics, compression and any upstream resizing, so it has no corpus-independent
+> value. The gate applies it to a bilinear-resized copy — 1024 px on the long
+> edge when larger, full resolution otherwise — and the threshold must be
+> calibrated against **that** path.
+>
+> Derive a defensible value with
+> `python backend/scripts/calibrate_blur_threshold.py <aptos>/train_images`,
+> then record the chosen percentile **and** the measured distribution here.
+>
+> The metric itself separates the two populations correctly: a deliberately
+> blurred image scores 0.9 against 5.7 – 22.0 for unmodified ones. Only the
+> cut-point is in the wrong place.
+
 - **Illumination Uniformity:** Analyzes extreme underexposed (< 10) and overexposed (> 245) pixel ratios, rejecting acquisitions with extreme ratio $> 0.35$.
 
 ---
