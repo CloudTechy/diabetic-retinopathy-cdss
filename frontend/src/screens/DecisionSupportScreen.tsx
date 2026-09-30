@@ -136,7 +136,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
                 <strong className="text-slate-900 font-mono">
                   {assessment.qualityMetrics.laplacianVariance.toFixed(1)}
                 </strong>{' '}
-                (&gt;100.0)
+                (&gt;60.0)
               </span>
             </div>
 

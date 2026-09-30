@@ -79,7 +79,7 @@ function createInitialRecords(): AssessmentRecord[] {
     imageUrl: fundus2.fundusDataUrl,
     gradcamUrl: gradcam2.gradcamDataUrl,
     qualityMetrics: {
-      laplacianVariance: 248.5, // > 100 threshold
+      laplacianVariance: 248.5, // > 60.0 threshold (LAPLACIAN_BLUR_THRESHOLD)
       illuminationIndex: 0.88,
       contrastDynamicRange: 184.2,
       nativeResolution: '2240x1488 px',
@@ -108,7 +108,7 @@ function createInitialRecords(): AssessmentRecord[] {
         name: 'Gate 3',
         title: 'Technical Quality & Sharpness',
         status: 'passed',
-        metric: 'Laplacian variance: 248.5 (>100.0 threshold)',
+        metric: 'Laplacian variance: 248.5 (>60.0 threshold)',
         details: 'Adequate vascular contrast and illumination homogeneity across all 4 quadrants.',
       },
     ],
@@ -340,7 +340,7 @@ function createInitialRecords(): AssessmentRecord[] {
         name: 'Gate 3',
         title: 'Technical Quality & Sharpness',
         status: 'failed',
-        metric: 'Laplacian variance: 42.1 (Threshold >= 100.0)',
+        metric: 'Laplacian variance: 42.1 (Threshold >= 60.0)',
         rejectionReason: 'Severe motion blur and underexposure detected in central macula.',
         clinicalAction: 'Please recapture retinal photograph. Ensure steady patient chin-rest fixation and verify camera objective lens cleanliness.',
       },
@@ -498,7 +498,7 @@ class ClinicalApiService {
         name: 'Gate 3',
         title: 'Technical Quality & Sharpness',
         status: failsAt === 3 ? 'failed' : failsAt ? 'pending' : 'passed',
-        metric: cv ? cv.gate3.metric : failsAt === 3 ? 'Laplacian variance: 45.2 (Threshold >= 100.0)' : 'Laplacian variance: 275.4 (> 100 threshold)',
+        metric: cv ? cv.gate3.metric : failsAt === 3 ? 'Laplacian variance: 45.2 (Threshold >= 60.0)' : 'Laplacian variance: 275.4 (> 60.0 threshold)',
         rejectionReason: cv?.gate3.rejectionReason || (failsAt === 3 ? 'Severe motion blur or insufficient contrast detected.' : undefined),
         clinicalAction: cv?.gate3.clinicalAction || (failsAt === 3 ? 'Recapture retinal photograph ensuring patient fixation is steady and lens is clean.' : undefined),
       },
@@ -703,7 +703,7 @@ Status:                 ${assessment.status.toUpperCase()}
 Gate 1 (File Integrity):        ${assessment.validationGates[0]?.status.toUpperCase() || 'PASS'}
 Gate 2 (Retinal Relevance):     ${assessment.validationGates[1]?.status.toUpperCase() || 'PASS'}
 Gate 3 (Technical Quality):     ${assessment.validationGates[2]?.status.toUpperCase() || 'PASS'}
-Laplacian Sharpness Variance:   ${assessment.qualityMetrics.laplacianVariance} (Threshold >= 100.0)
+Laplacian Sharpness Variance:   ${assessment.qualityMetrics.laplacianVariance} (Threshold >= 60.0)
 Illumination Homogeneity:       ${assessment.qualityMetrics.illuminationIndex}
 
 --------------------------------------------------------------------------------
