@@ -95,11 +95,10 @@ export interface TechnicalQualityMetrics {
 
 export interface ClinicianReview {
   agreement: AgreementType;
-  certifiedGrade: number;
-  certifiedGradeLabel: string;
+  reviewerAssessedGrade: number;
+  reviewerAssessedGradeLabel: string;
   justificationNotes?: string;
   inconclusiveReason?: string;
-  referralPlan: string; // Outside prototype scope — placeholder only
   clinicianName: string;
   licenseNumber: string;
   facility: string;

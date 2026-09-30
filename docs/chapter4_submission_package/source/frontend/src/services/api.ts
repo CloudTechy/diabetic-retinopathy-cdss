@@ -199,9 +199,8 @@ function createInitialRecords(): AssessmentRecord[] {
     },
     clinicianReview: {
       agreement: 'agree',
-      certifiedGrade: 0,
-      certifiedGradeLabel: 'Grade 0: No Apparent DR',
-      referralPlan: 'Referral decisions are outside the scope of this research prototype.',
+      reviewerAssessedGrade: 0,
+      reviewerAssessedGradeLabel: 'Grade 0: No Apparent DR',
       clinicianName: 'Dr. Demo Clinician (Simulated)',
       licenseNumber: 'SIM-000001',
       facility: 'Research Prototype Environment',
@@ -221,7 +220,7 @@ function createInitialRecords(): AssessmentRecord[] {
       {
         id: 'AUD-089',
         timestamp: '2026-09-26T11:22:15Z',
-        action: 'Certified Review Signed',
+        action: 'Professional Review Signed',
         actor: 'Dr. Demo Clinician (Simulated)',
         details: 'Clinician confirmed Grade 0: No Apparent DR. Record locked and immutable.',
         badgeType: 'success',
@@ -272,9 +271,8 @@ function createInitialRecords(): AssessmentRecord[] {
     },
     clinicianReview: {
       agreement: 'agree',
-      certifiedGrade: 3,
-      certifiedGradeLabel: 'Grade 3: Severe NPDR',
-      referralPlan: 'Referral decisions are outside the scope of this research prototype.',
+      reviewerAssessedGrade: 3,
+      reviewerAssessedGradeLabel: 'Grade 3: Severe NPDR',
       clinicianName: 'Dr. Demo Clinician (Simulated)',
       licenseNumber: 'SIM-000001',
       facility: 'Research Prototype Environment',
@@ -294,7 +292,7 @@ function createInitialRecords(): AssessmentRecord[] {
       {
         id: 'AUD-072',
         timestamp: '2026-09-26T09:55:00Z',
-        action: 'Certified Review Signed',
+        action: 'Professional Review Signed',
         actor: 'Dr. Demo Clinician (Simulated)',
         details: 'Clinician reviewed Grade 3: Severe NPDR classification. Professional observation recorded.',
         badgeType: 'warning',
@@ -604,9 +602,9 @@ class ClinicalApiService {
     const auditEvent: AuditEvent = {
       id: `AUD-${Math.floor(100 + Math.random() * 900)}`,
       timestamp: now,
-      action: 'Clinician Certified Review Finalized',
+      action: 'Clinician Professional Review Finalized',
       actor: this.currentUser.name,
-      details: `Clinician signed record. Classification: ${completeReview.certifiedGradeLabel}. Agreement: ${completeReview.agreement.toUpperCase()}.`,
+      details: `Clinician signed record. Classification: ${completeReview.reviewerAssessedGradeLabel}. Agreement: ${completeReview.agreement.toUpperCase()}.`,
       badgeType: completeReview.agreement === 'agree' ? 'success' : 'warning',
     };
 
@@ -651,7 +649,7 @@ class ClinicalApiService {
           return false;
         }
         if (filters.grade !== 'all') {
-          const grade = rec.clinicianReview?.certifiedGrade ?? rec.modelObservation?.primaryClassGrade;
+          const grade = rec.clinicianReview?.reviewerAssessedGrade ?? rec.modelObservation?.primaryClassGrade;
           if (grade !== filters.grade) return false;
         }
         if (filters.agreement !== 'all') {

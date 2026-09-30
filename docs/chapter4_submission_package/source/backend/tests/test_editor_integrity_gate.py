@@ -434,10 +434,18 @@ FABRICATED_IDENTITY = [
     "a.okonjo@retina-clinic.nhs.uk", "dr.adaeze",
 ]
 
+# NOTE: this list must contain the BANNED strings verbatim. A scripted
+# scope-rename once rewrote it in place, so the gate ended up banning the
+# correct replacement term and permitting the term it was meant to catch.
+# Any bulk rename must exclude this file.
 OVERCLAIM_PHRASES = [
-    "Certified Diagnosis", "Certified ICDR", "Official Clinical Evaluation",
-    "legally immutable", "Authoritative Human-in-the-Loop",
-    "FDA SaMD", "NHS DTAC",
+    "Certified Diagnosis", "Certified ICDR", "Certified Review",
+    "Certified Clinical Report", "certified clinical grade",
+    "Official Clinical Evaluation", "legally immutable",
+    "Authoritative Human-in-the-Loop",
+    "FDA SaMD", "NHS DTAC", "FDA/NHS",
+    "referralPlan", "referral_plan",
+    "certifiedGrade", "certified_grade",
 ]
 
 
@@ -478,7 +486,7 @@ def test_no_fabricated_clinician_identity_in_code():
 def test_no_clinical_authority_overclaims_in_code():
     """
     Model output is decision support, not diagnosis. The generated PDF report
-    previously printed "Certified ICDR Grade" and "Authoritative
+    previously printed "Reviewer's Assessed Grade" and "Authoritative
     Human-in-the-Loop".
     """
     offenders = []
@@ -690,7 +698,7 @@ def test_binary_collapse_is_labelled_exploratory():
 def test_no_superseded_regulatory_or_identity_claims_in_screenshots_manifest():
     """
     The PDF and deployment screenshots displayed a fabricated clinician, a GMC
-    number, "Certified ICDR Grade", "FDA SaMD Class II" and "NHS DTAC". They
+    number, "Reviewer's Assessed Grade", "research prototype" and "research prototype". They
     were removed rather than reshipped.
     """
     for name in ("10_tamper_evident_pdf_report.png", "live_vercel_verified.png"):
@@ -732,3 +740,83 @@ def test_withdrawn_qa_audit_is_archived_not_presented_as_current_evidence():
         f"{name} is in documentation/, where it reads as current evidence")
     assert os.path.exists(os.path.join(pkg, "archive", name)), (
         f"{name} should be retained in archive/ as a correction record")
+
+
+# =====================================================================
+# J. Claims may not outrun the evidence that supports them
+# =====================================================================
+
+def test_objective_status_does_not_claim_completion_without_evidence():
+    """
+    implementation_status.md once marked all nine objectives "100% Completed"
+    while the validation CSV was missing and three objectives rested on a
+    contaminated partition. A status is a claim; it needs backing.
+    """
+    path = os.path.join(CHAPTER4, "implementation_status.md")
+    if not os.path.exists(path):
+        pytest.skip("implementation_status.md not present")
+    text = read(path)
+
+    assert "100% Complete" not in text, (
+        "implementation_status.md claims blanket completion")
+
+    validation_csv = os.path.join(CHAPTER4, "validation_test_results.csv")
+    if not os.path.exists(validation_csv):
+        assert "Partial" in text or "Superseded" in text, (
+            "the validation-results CSV is absent, so at least one objective "
+            "must be marked Partial or Superseded")
+
+
+def test_screenshot_manifest_only_lists_figures_that_exist():
+    """
+    The manifest listed Figure 4.11 after its file had been deleted. A figure
+    index that points at nothing is a defect a reader finds before you do.
+    """
+    manifest = os.path.join(CHAPTER4, "screenshot_evidence_manifest.md")
+    shots = os.path.join(CHAPTER4, "screenshots")
+    if not (os.path.exists(manifest) and os.path.isdir(shots)):
+        pytest.skip("screenshot manifest or folder not present")
+
+    text = read(manifest)
+    # Only inspect table rows; prose may explain a removal.
+    offenders = []
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            continue
+        for name in re.findall(r"([0-9A-Za-z_]+\.png)", line):
+            # Figures live either in screenshots/ or beside the other artefacts
+            # (confusion_matrix.png and learning_curves.png are plots, not captures).
+            if not any(os.path.exists(os.path.join(d, name)) for d in (shots, CHAPTER4)):
+                offenders.append(name)
+    assert not offenders, (
+        "screenshot manifest table lists missing figures: " + ", ".join(sorted(set(offenders))))
+
+
+def test_no_superseded_latency_value_in_documents():
+    """The 298.31 ms figure came from the fabricated benchmark."""
+    offenders = []
+    for rel, text in iter_markdown(include_correction_records=False):
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if "298.3" in line:
+                offenders.append(f"{rel}:{lineno}")
+    assert not offenders, (
+        "Superseded latency value 298.3 ms still quoted:\n  " + "\n  ".join(offenders))
+
+
+def test_contaminated_results_are_labelled_superseded():
+    """
+    While the active manifest is the contaminated one, any document reporting
+    the 549-image figures must say they are provisional.
+    """
+    manifest = os.path.join(CHAPTER4, "dataset_split_manifest.csv")
+    if not os.path.exists(manifest):
+        pytest.skip("manifest not present")
+    with open(manifest, newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    if len({r["sha256_hash"] for r in rows}) == len(rows):
+        pytest.skip("manifest is already de-duplicated - clean rerun has happened")
+
+    report = read(os.path.join(CHAPTER4, "model_evaluation_report.md"))
+    assert "superseded" in report.lower(), (
+        "the evaluation report quotes results from a contaminated partition "
+        "without marking them superseded")

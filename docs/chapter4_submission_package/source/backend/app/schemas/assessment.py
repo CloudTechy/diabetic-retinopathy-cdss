@@ -47,11 +47,10 @@ class ModelObservationSchema(BaseModel):
 
 class ClinicianReviewSubmitRequest(BaseModel):
     agreement: AgreementType
-    certifiedGrade: int
-    certifiedGradeLabel: Optional[str] = None
+    reviewerAssessedGrade: int
+    reviewerAssessedGradeLabel: Optional[str] = None
     justificationNotes: Optional[str] = None
     inconclusiveReason: Optional[str] = None
-    referralPlan: str
     clinicianName: Optional[str] = None
     licenseNumber: Optional[str] = None
     facility: Optional[str] = None
@@ -59,11 +58,10 @@ class ClinicianReviewSubmitRequest(BaseModel):
 
 class ClinicianReviewResponse(BaseModel):
     agreement: AgreementType
-    certifiedGrade: int
-    certifiedGradeLabel: str
+    reviewerAssessedGrade: int
+    reviewerAssessedGradeLabel: str
     justificationNotes: Optional[str] = None
     inconclusiveReason: Optional[str] = None
-    referralPlan: str
     clinicianName: str
     licenseNumber: Optional[str] = None
     facility: Optional[str] = None

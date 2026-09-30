@@ -107,7 +107,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
       r.qualityMetrics.laplacianVariance.toFixed(1),
       r.modelObservation?.primaryClassLabel || 'N/A',
       r.modelObservation?.primaryScore.toFixed(2) || 'N/A',
-      r.clinicianReview?.certifiedGradeLabel || 'N/A',
+      r.clinicianReview?.reviewerAssessedGradeLabel || 'N/A',
       r.clinicianReview?.agreement || 'N/A',
       r.clinicianReview?.clinicianName || 'N/A',
     ]);
@@ -138,7 +138,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
             Record History, Search & Clinical Audit Ledger
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Search patient records, review certified clinical grades, and inspect immutable audit logs for research and clinical governance.
+            Search patient records, review reviewer-assessed grades, and inspect immutable audit logs for research and clinical governance.
           </p>
         </div>
 
@@ -347,7 +347,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                       {rec.clinicianReview ? (
                         <div>
                           <span className="font-bold text-teal-900">
-                            {rec.clinicianReview.certifiedGradeLabel}
+                            {rec.clinicianReview.reviewerAssessedGradeLabel}
                           </span>
                           <span className="text-[10px] text-slate-400 block">
                             {rec.clinicianReview.clinicianName.split(',')[0]}

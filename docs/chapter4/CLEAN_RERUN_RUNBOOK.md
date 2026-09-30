@@ -52,9 +52,25 @@ Expected output: **3,504 unique, non-conflicting images** — train 2,453 / val 
 
 ---
 
-## Run it
+## Resource configuration
 
-**Colab, GPU runtime (T4).** ~1.5 hours end to end.
+| Setting | Value | Why |
+| :--- | :--- | :--- |
+| **Runtime type** | **GPU — T4** | Training needs CUDA. T4 matches the previous run, so epoch times stay comparable. A100/L4 also work and are faster. |
+| RAM | Standard is sufficient | Peak usage is the DataLoader, not the model. High-RAM does no harm. |
+| Disk | **~25 GB free** | 9.51 GB archive + ~10 GB extracted, with the archive deleted after unzip. |
+| Wall-clock | **~80–95 min** | download ~7, hashing ~3, training ~50, evaluation ~2, validation evidence ~1, gate verification ~13, benchmark ~2 |
+
+**Do everything in ONE GPU session.** Two reasons, both learned the hard way:
+
+1. **Switching runtime type wipes the VM**, forcing a second 9.51 GB download.
+2. **Latency figures from different Colab sessions are not comparable.** The previous benchmark appeared 1.91× faster than its baseline, but the two runs landed on different CPUs — stages whose code never changed were themselves 1.14–1.40× faster. Measuring the model and the latency on one machine removes that confound entirely.
+
+The CPU benchmark runs fine inside a GPU session: it clears `CUDA_VISIBLE_DEVICES` before importing torch, so it measures that VM's CPU regardless of the accelerator attached.
+
+---
+
+## Run it
 
 ### Cell 1 — Kaggle token
 ```python
@@ -67,8 +83,10 @@ with open(os.path.expanduser("~/.kaggle/kaggle.json"), "wb") as f:
 os.chmod(os.path.expanduser("~/.kaggle/kaggle.json"), 0o600)
 ```
 
-### Cell 2 — repo and dataset
+### Cell 2 — fresh clone and dataset
 ```python
+%cd /content
+!rm -rf diabetic-retinopathy-cdss
 !git clone -q https://github.com/CloudTechy/diabetic-retinopathy-cdss.git
 %cd diabetic-retinopathy-cdss
 !pip install -q pydantic-settings
@@ -76,54 +94,87 @@ os.chmod(os.path.expanduser("~/.kaggle/kaggle.json"), 0o600)
 !kaggle competitions download -c aptos2019-blindness-detection -p aptos2019
 !unzip -q aptos2019/aptos2019-blindness-detection.zip -d aptos2019
 !rm aptos2019/aptos2019-blindness-detection.zip
+!nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 !ls aptos2019/train_images | wc -l          # expect 3662
 ```
 
-### Cell 3 — verify the split before training on it
+Clone fresh rather than `git pull` — an older checkout will not contain the
+clean-split builder.
+
+### Cell 3 — inspect the split BEFORE training on it
 ```python
-!python backend/scripts/build_clean_split.py aptos2019/train_images \
-    --out output/dataset_split_manifest.csv
+!python backend/scripts/build_clean_split.py aptos2019/train_images     --out output/dataset_split_manifest.csv
 ```
 
-Confirm before continuing:
-- `Unique, non-conflicting images retained: 3504`
-- `EXCLUDED 30 duplicate groups with conflicting labels`
-- `Hash overlap between partitions: 0 (verified)`
+Stop and report if these three lines do not appear:
 
-If any differ, **stop** and report them. The script aborts on leakage rather
-than proceeding.
+```text
+EXCLUDED 30 duplicate groups with conflicting labels (62 images)
+Unique, non-conflicting images retained: 3504
+Hash overlap between partitions: 0 (verified)
+```
 
-### Cell 4 — retrain and regenerate everything
+The script aborts on leakage rather than proceeding, so a silent pass is not possible.
+
+### Cell 4 — retrain and regenerate (~50 min)
 ```python
 !python notebooks/colab_train_and_evaluate.py
 ```
 
-Uses the same clean split. Produces the checkpoint, training transcript, epoch
-history, held-out predictions, evaluation summary, benchmark and both plots.
+It reuses the already-downloaded images and calls the same clean split, so the
+model trains on exactly the partition Cell 3 printed.
 
-### Cell 5 — validation-gate evidence and the decision-preservation check
+### Cell 5 — validation-gate evidence and decision preservation
 ```python
 !python backend/scripts/generate_validation_evidence.py aptos2019/train_images
 !python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
 ```
 
-### Cell 6 — CPU benchmark
-Switch to a **CPU** runtime, re-run Cells 2–3, then:
+`verify_gate_downsampling` must report **0 verdict changes** and a Laplacian
+deviation of **exactly 0.0**.
+
+### Cell 6 — CPU latency against the NEW checkpoint
 ```python
-!python backend/scripts/benchmark_cpu_end_to_end.py \
-    --images-dir aptos2019/train_images --runs 30
+!python backend/scripts/benchmark_cpu_end_to_end.py     --images-dir aptos2019/train_images     --checkpoint output/efficientnet_b0_dr.pth     --runs 30
 ```
 
-### Cell 7 — download
+`--checkpoint` is required: the freshly trained weights are in `output/`, not
+yet installed at the repository path.
+
+### Cell 7 — collect everything
 ```python
+import shutil, os
+os.makedirs('handover', exist_ok=True)
+for f in ['dataset_split_manifest.csv','dataset_split_audit.json','efficientnet_b0_dr.pth',
+          'training_execution.log','epoch_history.csv','training_summary.json',
+          'held_out_predictions.csv','evaluation_summary.json',
+          'benchmark_timings.csv','benchmark_summary.json',
+          'learning_curves.png','confusion_matrix.png']:
+    p = os.path.join('output', f)
+    if os.path.exists(p): shutil.copy(p, 'handover/')
+for f in ['validation_test_results.csv','gate_downsampling_verification.json',
+          'cpu_end_to_end_benchmark.json','cpu_end_to_end_benchmark.csv']:
+    p = os.path.join('docs/chapter4', f)
+    if os.path.exists(p): shutil.copy(p, 'handover/')
+
+print(sorted(os.listdir('handover')))
+shutil.make_archive('clean_rerun_evidence', 'zip', 'handover')
+
 from google.colab import files
-import shutil
-shutil.make_archive('clean_rerun_evidence', 'zip', 'output')
 files.download('clean_rerun_evidence.zip')
-files.download('docs/chapter4/validation_test_results.csv')
-files.download('docs/chapter4/gate_downsampling_verification.json')
-files.download('docs/chapter4/cpu_end_to_end_benchmark.json')
 ```
+
+---
+
+## After the run: the checkpoint digest will not match, and that is correct
+
+The new weights have a new SHA-256. Until `MODEL_CHECKPOINT_SHA256` in
+`backend/app/core/config.py` is updated to it, the integrity gate will fail on
+`test_repository_checkpoint_matches_declared_digest`.
+
+**That is the gate working.** It is refusing to let a checkpoint be served that
+is not the one the committed evidence describes. The digest is updated as part
+of installing the new artefacts, not before.
 
 ---
 

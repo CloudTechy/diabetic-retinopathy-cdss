@@ -47,9 +47,8 @@ class TestClinicianInTheLoopGovernance:
         # 2. Clinician records a review that disagrees with AI
         review_req = ClinicianReviewSubmitRequest(
             agreement="disagree",
-            certifiedGrade=1,
-            certifiedGradeLabel="Grade 1: Mild NPDR",
-            referralPlan="Routine diabetic eye screening recall in 12 months.",
+            reviewerAssessedGrade=1,
+            reviewerAssessedGradeLabel="Grade 1: Mild NPDR",
             justificationNotes="Isolated microaneurysms detected; lacks venous beading or IRMA required for Grade 2.",
         )
 
@@ -67,7 +66,7 @@ class TestClinicianInTheLoopGovernance:
         # AI Result remains unchanged (Grade 2)
         assert reviewed.ai_result.primary_class_grade == 2
         # Clinician Review holds certified grade (Grade 1)
-        assert reviewed.professional_review.certified_grade == 1
+        assert reviewed.professional_review.reviewer_assessed_grade == 1
         assert reviewed.professional_review.agreement == "disagree"
         assert reviewed.professional_review.is_immutable is True
 
@@ -80,7 +79,7 @@ class TestClinicianInTheLoopGovernance:
         review_query = await async_db.execute(select(ProfessionalReview).where(ProfessionalReview.assessment_id == assessment.id))
         stored_review = review_query.scalar_one_or_none()
         assert stored_review is not None
-        assert stored_review.certified_grade == 1
+        assert stored_review.reviewer_assessed_grade == 1
 
     @pytest.mark.asyncio
     async def test_completed_review_immutability(self, async_db):
@@ -100,9 +99,8 @@ class TestClinicianInTheLoopGovernance:
 
         review_req = ClinicianReviewSubmitRequest(
             agreement="agree",
-            certifiedGrade=0,
-            certifiedGradeLabel="Grade 0: No Apparent DR",
-            referralPlan="Routine annual screening.",
+            reviewerAssessedGrade=0,
+            reviewerAssessedGradeLabel="Grade 0: No Apparent DR",
             justificationNotes="Normal fundus appearance with sharp optic margins.",
         )
 
@@ -117,9 +115,8 @@ class TestClinicianInTheLoopGovernance:
         # Attempt to submit a second review or alter the completed review
         second_review_req = ClinicianReviewSubmitRequest(
             agreement="disagree",
-            certifiedGrade=3,
-            certifiedGradeLabel="Grade 3: Severe NPDR",
-            referralPlan="Urgent ophthalmology referral within 2 weeks.",
+            reviewerAssessedGrade=3,
+            reviewerAssessedGradeLabel="Grade 3: Severe NPDR",
             justificationNotes="Attempting post-completion modification.",
         )
 

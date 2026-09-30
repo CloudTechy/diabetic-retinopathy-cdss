@@ -212,13 +212,12 @@ class ProfessionalReview(Base):
     # Tri-State Agreement: 'agree', 'disagree', 'inconclusive'
     agreement = Column(String(50), nullable=False)
     
-    certified_grade = Column(Integer, nullable=False)  # 0 to 4
-    certified_grade_label = Column(String(100), nullable=False)
+    reviewer_assessed_grade = Column(Integer, nullable=False)  # 0 to 4
+    reviewer_assessed_grade_label = Column(String(100), nullable=False)
     
     # Mandatory justification if disagree or inconclusive (>= 15 characters)
     justification_notes = Column(Text, nullable=True)
     inconclusive_reason = Column(String(255), nullable=True)
-    referral_plan = Column(String(255), nullable=False)
     
     clinician_name = Column(String(255), nullable=False)
     license_number = Column(String(100), nullable=True)

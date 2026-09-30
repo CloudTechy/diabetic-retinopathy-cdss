@@ -70,7 +70,7 @@ Retinal datasets differ systematically in sensor spectral response, illumination
 
 ---
 
-## 5. Byte-level duplicate leakage in the split (disclosed, measured, immaterial)
+## 5. The split is contaminated — retrain required
 
 27 of 549 held-out images (4.92%) are byte-identical to a training image, because the de-duplication step depended on `duplicated_info.csv`, which is absent from the Kaggle competition download. See [`dataset_audit.md`](dataset_audit.md) §4.
 
