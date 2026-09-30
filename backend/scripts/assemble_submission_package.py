@@ -100,6 +100,7 @@ LAYOUT = [
     ("backend/scripts/benchmark_resources.py", "scripts/benchmark_resources.py"),
     ("backend/scripts/verify_gate_downsampling.py", "scripts/verify_gate_downsampling.py"),
     ("backend/scripts/generate_validation_evidence.py", "scripts/generate_validation_evidence.py"),
+    ("backend/scripts/calibrate_blur_threshold.py", "scripts/calibrate_blur_threshold.py"),
     ("backend/scripts/integrity_gate.py", "scripts/integrity_gate.py"),
     ("backend/tests/test_editor_integrity_gate.py", "scripts/test_editor_integrity_gate.py"),
     ("backend/tests/test_spec_doc_consistency.py", "scripts/test_spec_doc_consistency.py"),

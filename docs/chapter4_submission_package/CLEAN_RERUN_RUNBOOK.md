@@ -199,3 +199,27 @@ The integrity gate (`python backend/scripts/integrity_gate.py`) enforces that
 the reported confusion matrix, accuracy and QWK recompute from the new
 predictions file, so a mismatch fails the build rather than reaching Chapter
 Four.
+
+---
+
+## Outstanding after the clean rerun: calibrate the Gate 3 blur threshold
+
+The retrain is complete. One blocking defect remains: `LAPLACIAN_BLUR_THRESHOLD`
+is 60.0, and genuine APTOS images score 5.7-22.0 on the path the gate measures,
+so the pipeline rejects 100% of real fundus photographs.
+
+Run this in a session that has the APTOS images (~5 min for the full corpus):
+
+```python
+!python backend/scripts/calibrate_blur_threshold.py aptos2019/train_images
+```
+
+It prints the distribution and what each candidate threshold would reject, and
+writes `docs/chapter4/blur_threshold_calibration.json`. It deliberately does
+**not** set the value: choosing the operating point is a judgement, and a script
+that picked the number which made the tests pass would be fitting the threshold
+to the result.
+
+Then set `LAPLACIAN_BLUR_THRESHOLD` in `backend/app/core/config.py`, record the
+percentile and the distribution in `validation_module_spec.md`, and re-run
+`generate_validation_evidence.py` to confirm the ACCEPT cases are accepted.

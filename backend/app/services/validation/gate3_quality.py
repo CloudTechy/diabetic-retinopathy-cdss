@@ -88,9 +88,16 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
 
     # 1. Laplacian blur variance
     # UNCHANGED. Laplacian variance is a spatial derivative: its value depends
-    # on resolution by definition, and the 60.0 threshold is calibrated against
-    # this specific path. It keeps its own resize and its own full-resolution
-    # branch, and must not be folded into the analysis subsample above.
+    # on resolution by definition, so this path keeps its own resize and its own
+    # full-resolution branch, and must not be folded into the analysis subsample
+    # above.
+    #
+    # WARNING: the configured threshold is NOT calibrated against this path. An
+    # earlier version of this comment claimed it was; that claim was false.
+    # Measured over held-out APTOS images, genuine fundus photographs score
+    # 5.7-22.0 here, against LAPLACIAN_BLUR_THRESHOLD = 60.0 - so every real
+    # image is rejected. See known_limitations.md section 1, and run
+    # backend/scripts/calibrate_blur_threshold.py to derive a defensible value.
     if max(height, width) > 1024:
         scale = 1024.0 / max(height, width)
         scaled_img = pil_image.convert("L").resize(
