@@ -1043,3 +1043,54 @@ def test_calibrated_thresholds_are_documented_where_they_are_claimed():
     assert str(settings.MIN_IMAGE_DIMENSION) in spec, (
         f"spec does not quote the configured minimum dimension "
         f"({settings.MIN_IMAGE_DIMENSION})")
+
+
+def test_gate_decisions_never_compare_a_display_rounded_metric():
+    """
+    Gate 3 compared round(x, 1) against its thresholds, quantising the decision
+    boundary onto a 0.1 grid. With round thresholds like 18.0 and 60.0, images
+    landed exactly on the boundary: eight flipped 18.0 -> 17.9 under analysis
+    subsampling, failing the decision-preservation check.
+
+    Round for display; decide on full precision.
+    """
+    gate_dir = os.path.join(REPO_ROOT, "backend", "app", "services", "validation")
+    offenders = []
+
+    for name in sorted(os.listdir(gate_dir)):
+        if not name.endswith(".py"):
+            continue
+        path = os.path.join(gate_dir, name)
+        tree = ast.parse(read(path), filename=path)
+
+        # Names bound to the result of round(...)
+        rounded = set()
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Assign)
+                    and isinstance(node.value, ast.Call)
+                    and getattr(node.value.func, "id", None) == "round"):
+                for tgt in node.targets:
+                    if isinstance(tgt, ast.Name):
+                        rounded.add(tgt.id)
+        if not rounded:
+            continue
+
+        # Comparisons against a settings.* threshold
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Compare):
+                continue
+            uses_setting = any(
+                isinstance(c, ast.Attribute)
+                and getattr(c.value, "id", None) == "settings"
+                for c in [node.left, *node.comparators])
+            if not uses_setting:
+                continue
+            for operand in [node.left, *node.comparators]:
+                if isinstance(operand, ast.Name) and operand.id in rounded:
+                    offenders.append(f"{name}:{node.lineno} compares "
+                                     f"rounded `{operand.id}`")
+
+    assert not offenders, (
+        "A gate decision compares a display-rounded metric:\n  "
+        + "\n  ".join(offenders)
+        + "\nRound for the report; compare the full-precision value.")

@@ -7,6 +7,7 @@ Covers both uncalibrated values:
 
   LAPLACIAN_BLUR_THRESHOLD = 60.0   rejected 10/10 genuine held-out images
   MIN_IMAGE_DIMENSION      = 512    rejected 1 genuine held-out image
+  CONTRAST_THRESHOLD       = 18.0   rejected 5/10 once the first two were fixed
 
 WHY THIS EXISTS
 
@@ -116,6 +117,22 @@ def main():
         gray = 0.299 * arr[:, :, 0] + 0.587 * arr[:, :, 1] + 0.114 * arr[:, :, 2]
         return compute_laplacian_variance(gray)
 
+    from app.services.validation.downsample import downsample_for_analysis
+
+    def gate3_contrast(pil_image):
+        """
+        Replicate gate3_quality.py's contrast path exactly: nearest-neighbour
+        subsample to VALIDATION_ANALYSIS_MAX_DIM, luma, drop the camera's black
+        surround at gray > 15, standard deviation of what remains.
+        """
+        rgb = pil_image.convert("RGB")
+        analysis = downsample_for_analysis(rgb, settings.VALIDATION_ANALYSIS_MAX_DIM)
+        arr = np.asarray(analysis, dtype=np.float32)
+        gray = 0.299 * arr[:, :, 0] + 0.587 * arr[:, :, 1] + 0.114 * arr[:, :, 2]
+        mask = gray > 15.0
+        fg = gray[mask] if np.any(mask) else gray.ravel()
+        return float(np.std(fg))
+
     if not os.path.isdir(args.images_dir):
         raise SystemExit(f"Not a directory: {args.images_dir}")
 
@@ -163,12 +180,14 @@ def main():
 
     values = []
     short_edges = []
+    contrasts = []
     for i, name in enumerate(names, 1):
         try:
             with Image.open(os.path.join(args.images_dir, name)) as im:
                 width, height = im.size
                 short_edges.append(min(width, height))
                 values.append(gate3_laplacian(im))
+                contrasts.append(gate3_contrast(im))
         except Exception as exc:                      # noqa: BLE001
             print(f"  [skip] {name}: {exc}")
         if i % 500 == 0:
@@ -231,6 +250,47 @@ def main():
         print("  lower the minimum to admit them, or state why images the model was")
         print("  fitted on must not be graded.")
 
+    # ------------------------------------------------------------------
+    # Gate 3: contrast dynamic range
+    # ------------------------------------------------------------------
+    contrasts.sort()
+    c_thr = settings.CONTRAST_THRESHOLD
+    low_contrast = sum(1 for c in contrasts if c < c_thr)
+    c_pcts = {f"p{q}": round(percentile(contrasts, q), 3)
+              for q in (0.1, 0.5, 1, 2, 5, 10, 25, 50, 75, 90, 99)}
+
+    def crowding(threshold, window=0.5):
+        """How many images sit within +/- window of a candidate cut-point."""
+        return sum(1 for c in contrasts if abs(c - threshold) <= window)
+
+    print()
+    print("=" * 74)
+    print("GATE 3 CONTRAST CALIBRATION")
+    print("=" * 74)
+    print(f"Current CONTRAST_THRESHOLD: {c_thr}")
+    print(f"  min {min(contrasts):.2f}   median {percentile(contrasts, 50):.2f}   "
+          f"max {max(contrasts):.2f}")
+    for k, v in c_pcts.items():
+        print(f"    {k:>5}: {v:9.3f}")
+    print()
+    print(f"At the CURRENT threshold of {c_thr}: {low_contrast}/{len(contrasts)} "
+          f"({100*low_contrast/len(contrasts):.1f}%) of genuine images would be REJECTED.")
+    print(f"  Images within +/-0.5 of {c_thr}: {crowding(c_thr)} "
+          f"({100*crowding(c_thr)/len(contrasts):.1f}%)")
+    print()
+    print("CROWDING AT EACH CANDIDATE - a cut-point in a dense region is fragile")
+    print(f"  {'threshold':>10}  {'rejected':>9}  {'within +/-0.5':>14}")
+    for q in (0.1, 0.5, 1, 2, 5, 10):
+        t = percentile(contrasts, q)
+        n = sum(1 for c in contrasts if c < t)
+        print(f"  {t:10.2f}  {n:9d}  {crowding(t):14d}")
+    print()
+    print("  The decision-preservation check found 8 images flipping 18.0 -> 17.9")
+    print("  under analysis subsampling. Two causes: the gate compared a value")
+    print("  rounded to 1dp (fixed - it now decides on full precision), and 18.0")
+    print("  sat in a crowded part of the distribution. Prefer a cut-point with")
+    print("  few images beside it.")
+
     print()
     print("HOW TO CHOOSE")
     print("  The threshold's job is to reject images too blurred to grade, not to")
@@ -259,6 +319,19 @@ def main():
         "mean": round(statistics.mean(values), 3),
         "median": round(statistics.median(values), 3),
         "percentiles": pcts,
+        "contrast": {
+            "current_threshold": c_thr,
+            "rejected_at_current_threshold": low_contrast,
+            "rejected_share_at_current_threshold": round(low_contrast / len(contrasts), 4),
+            "min": round(min(contrasts), 3),
+            "median": round(percentile(contrasts, 50), 3),
+            "max": round(max(contrasts), 3),
+            "percentiles": c_pcts,
+            "crowding_within_half_unit": {
+                f"p{q}": crowding(percentile(contrasts, q))
+                for q in (0.1, 0.5, 1, 2, 5, 10)
+            },
+        },
         "min_image_dimension": {
             "current_threshold": min_dim,
             "rejected_at_current_threshold": too_small,

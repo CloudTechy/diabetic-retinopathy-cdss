@@ -86,9 +86,13 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
     foreground_mask = luminance > 15.0
     total_pixels = analysis_width * analysis_height
     foreground_pixels = int(np.sum(foreground_mask))
-    mask_coverage = round(foreground_pixels / float(total_pixels), 4)
+    # Decide on full precision; round only for the report. Comparing the
+    # rounded value puts the decision boundary on a fixed grid, so images
+    # land exactly on a round threshold and flip under any tiny change.
+    mask_coverage_exact = foreground_pixels / float(total_pixels)
+    mask_coverage = round(mask_coverage_exact, 4)
 
-    if mask_coverage < settings.RETINAL_MIN_COVERAGE:
+    if mask_coverage_exact < settings.RETINAL_MIN_COVERAGE:
         return Gate2Result(
             passed=False,
             mask_coverage=mask_coverage,

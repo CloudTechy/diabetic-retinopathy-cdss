@@ -126,7 +126,7 @@ Confirmed of the rejected package, and the cause is now documented: `prepare_sub
 
 ### 2.7 "38 automated tests — source not included"
 
-**166 passed, 3 skipped.** The skip requires PyTorch, absent from the local virtual environment. Full test sources are in the repository under `backend/tests/`, including 38 asserting the validation gates reach identical verdicts when optimised, 13 asserting Grad-CAM renders byte-identically, and 8 asserting the engine refuses to grade without verified weights.
+**167 passed, 3 skipped.** The skip requires PyTorch, absent from the local virtual environment. Full test sources are in the repository under `backend/tests/`, including 38 asserting the validation gates reach identical verdicts when optimised, 13 asserting Grad-CAM renders byte-identically, and 8 asserting the engine refuses to grade without verified weights.
 
 ### 2.8 "The checkpoint hash proves only that the binary has not changed"
 
@@ -234,7 +234,7 @@ Stated here so the review does not have to find them.
 
 Documentation did not prevent the first failure; an internal review even passed it. So the review's requirements are now **executable**.
 
-`backend/tests/test_editor_integrity_gate.py` encodes them as 61 assertions, grouped by your findings:
+`backend/tests/test_editor_integrity_gate.py` encodes them as 63 assertions, grouped by your findings:
 
 | Group | Enforces |
 | :--- | :--- |

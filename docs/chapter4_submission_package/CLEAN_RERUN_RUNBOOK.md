@@ -211,6 +211,13 @@ measured against this corpus:
 | :--- | ---: | :--- |
 | `LAPLACIAN_BLUR_THRESHOLD` | 60.0 | Rejects **10 of 10** genuine held-out images (they score 5.7 - 22.0) |
 | `MIN_IMAGE_DIMENSION` | 512 | Rejected 1 genuine held-out image |
+| `CONTRAST_THRESHOLD` | 18.0 | Rejected **5 of 10** once the first two were corrected |
+
+All three are measured in the same pass.
+
+> **If the images are already downloaded** in your session, skip the Kaggle
+> steps in Cell 2 and run only the final `calibrate_blur_threshold.py` line.
+> Nothing needs re-downloading, and the model does not need retraining.
 
 Both are settled by one corpus run. **No GPU, no retraining** - use a CPU
 runtime.
