@@ -14,6 +14,13 @@ class Gate3Result:
         illumination_index: float = 0.0,
         contrast_dynamic_range: float = 0.0,
         extreme_pixel_ratio: float = 0.0,
+        # The rounded fields above are for display. These are the values the
+        # gate actually compared against its thresholds, and they are what any
+        # audit or decision-preservation analysis must use: measuring a margin
+        # from a rounded value quantises it onto the rounding grid.
+        laplacian_variance_exact: float = 0.0,
+        contrast_dynamic_range_exact: float = 0.0,
+        extreme_pixel_ratio_exact: float = 0.0,
         metric: str = "",
         details: str = "",
         error_code: Optional[str] = None,
@@ -25,6 +32,9 @@ class Gate3Result:
         self.illumination_index = illumination_index
         self.contrast_dynamic_range = contrast_dynamic_range
         self.extreme_pixel_ratio = extreme_pixel_ratio
+        self.laplacian_variance_exact = laplacian_variance_exact
+        self.contrast_dynamic_range_exact = contrast_dynamic_range_exact
+        self.extreme_pixel_ratio_exact = extreme_pixel_ratio_exact
         self.metric = metric
         self.details = details
         self.error_code = error_code
@@ -38,6 +48,9 @@ class Gate3Result:
             "illumination_index": self.illumination_index,
             "contrast_dynamic_range": self.contrast_dynamic_range,
             "extreme_pixel_ratio": self.extreme_pixel_ratio,
+            "laplacian_variance_exact": self.laplacian_variance_exact,
+            "contrast_dynamic_range_exact": self.contrast_dynamic_range_exact,
+            "extreme_pixel_ratio_exact": self.extreme_pixel_ratio_exact,
             "metric": self.metric,
             "details": self.details,
             "error_code": self.error_code,
@@ -138,6 +151,9 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
             illumination_index=illumination_index,
             contrast_dynamic_range=contrast_dynamic_range,
             extreme_pixel_ratio=round(extreme_ratio, 3),
+            laplacian_variance_exact=laplacian_var_exact,
+            contrast_dynamic_range_exact=contrast_std,
+            extreme_pixel_ratio_exact=extreme_ratio,
             error_code="ERR_MOTION_OR_DEFOCUS_BLUR",
             metric=f"Laplacian variance: {laplacian_var:.1f} (Threshold >= {settings.LAPLACIAN_BLUR_THRESHOLD:.1f})",
             rejection_reason="Laplacian variance below acceptable sharpness threshold. Motion blur or optical defocus detected.",
@@ -152,6 +168,9 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
             illumination_index=illumination_index,
             contrast_dynamic_range=contrast_dynamic_range,
             extreme_pixel_ratio=round(extreme_ratio, 3),
+            laplacian_variance_exact=laplacian_var_exact,
+            contrast_dynamic_range_exact=contrast_std,
+            extreme_pixel_ratio_exact=extreme_ratio,
             error_code="ERR_LOW_CONTRAST",
             metric=f"Dynamic range std: {contrast_dynamic_range:.1f} (Threshold >= {settings.CONTRAST_THRESHOLD:.1f})",
             rejection_reason="Retinal contrast dynamic range is too narrow. Image is flat, washed out, or obscured by media haze.",
@@ -166,6 +185,9 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
             illumination_index=illumination_index,
             contrast_dynamic_range=contrast_dynamic_range,
             extreme_pixel_ratio=round(extreme_ratio, 3),
+            laplacian_variance_exact=laplacian_var_exact,
+            contrast_dynamic_range_exact=contrast_std,
+            extreme_pixel_ratio_exact=extreme_ratio,
             error_code="ERR_POOR_ILLUMINATION",
             metric=f"Extreme pixel ratio: {extreme_ratio * 100:.1f}% (Threshold <= {settings.ILLUMINATION_EXTREME_RATIO_MAX * 100:.0f}%)",
             rejection_reason="Severe illumination non-uniformity detected (excessive shadowing, flash washout, or extreme underexposure).",
@@ -181,6 +203,9 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
         illumination_index=illumination_index,
         contrast_dynamic_range=contrast_dynamic_range,
         extreme_pixel_ratio=round(extreme_ratio, 3),
+        laplacian_variance_exact=laplacian_var_exact,
+        contrast_dynamic_range_exact=contrast_std,
+        extreme_pixel_ratio_exact=extreme_ratio,
         metric=metric,
         details=details,
     )

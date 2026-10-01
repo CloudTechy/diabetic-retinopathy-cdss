@@ -14,6 +14,12 @@ class Gate2Result:
         aspect_ratio: float = 1.0,
         red_channel_ratio: float = 0.0,
         red_to_blue_ratio: float = 0.0,
+        # The rounded fields above are for display. These are the values the
+        # gate actually compared against its thresholds, and they are what any
+        # audit or decision-preservation analysis must use: measuring a margin
+        # from a rounded value quantises it onto the rounding grid.
+        mask_coverage_exact: float = 0.0,
+        red_to_blue_ratio_exact: float = 0.0,
         metric: str = "",
         details: str = "",
         error_code: Optional[str] = None,
@@ -25,6 +31,8 @@ class Gate2Result:
         self.aspect_ratio = aspect_ratio
         self.red_channel_ratio = red_channel_ratio
         self.red_to_blue_ratio = red_to_blue_ratio
+        self.mask_coverage_exact = mask_coverage_exact
+        self.red_to_blue_ratio_exact = red_to_blue_ratio_exact
         self.metric = metric
         self.details = details
         self.error_code = error_code
@@ -38,6 +46,8 @@ class Gate2Result:
             "aspect_ratio": self.aspect_ratio,
             "red_channel_ratio": self.red_channel_ratio,
             "red_to_blue_ratio": self.red_to_blue_ratio,
+            "mask_coverage_exact": self.mask_coverage_exact,
+            "red_to_blue_ratio_exact": self.red_to_blue_ratio_exact,
             "metric": self.metric,
             "details": self.details,
             "error_code": self.error_code,
@@ -96,6 +106,7 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
         return Gate2Result(
             passed=False,
             mask_coverage=mask_coverage,
+            mask_coverage_exact=mask_coverage_exact,
             aspect_ratio=aspect_ratio,
             error_code="ERR_RETINAL_MASK_ABSENT",
             metric=f"Aperture coverage: {mask_coverage * 100:.1f}% (Threshold >= {settings.RETINAL_MIN_COVERAGE * 100:.0f}%)",
@@ -130,6 +141,8 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
             aspect_ratio=aspect_ratio,
             red_channel_ratio=round(red_share, 3),
             red_to_blue_ratio=round(red_to_blue, 2),
+            mask_coverage_exact=mask_coverage_exact,
+            red_to_blue_ratio_exact=red_to_blue,
             error_code="ERR_NON_RETINAL_SPECTRAL_PROFILE",
             metric=f"Red/Blue ratio: {red_to_blue:.2f} (Threshold >= {settings.RETINAL_RED_RATIO_MIN})",
             rejection_reason="Spectral profile does not exhibit retinal vascular characteristics. Image appears to be non-retinal (e.g., face, text, scenery, or anterior segment).",
@@ -145,6 +158,8 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
         aspect_ratio=aspect_ratio,
         red_channel_ratio=round(red_share, 3),
         red_to_blue_ratio=round(red_to_blue, 2),
+        mask_coverage_exact=mask_coverage_exact,
+        red_to_blue_ratio_exact=red_to_blue,
         metric=metric,
         details=details,
     )

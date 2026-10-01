@@ -1156,3 +1156,143 @@ def test_the_ci_job_that_enforces_these_rules_can_collect_them():
         "\nPytest then exits 4 at conftest import and no rule in this file runs - "
         "the job reports a missing module instead of a finding, which is how main "
         "stayed red through three merges with the gate never executing.")
+# RULE GROUP L - an instrument must measure the system that exists
+#
+# The decision-preservation checker carried both defects it was built to
+# find. It restated the thresholds as literals, so after calibration moved
+# CONTRAST_THRESHOLD from 18.0 to 8.8 it went on reporting against 18.0;
+# and it took its deviations from the display-rounded metrics, so every
+# margin it printed was quantised onto the rounding grid.
+#
+# Both produce a report that LOOKS like evidence and measures nothing the
+# running system does.
+# ======================================================================
+
+THRESHOLD_SETTINGS = (
+    "RETINAL_MIN_COVERAGE",
+    "RETINAL_MAX_COVERAGE",
+    "RETINAL_RED_RATIO_MIN",
+    "CONTRAST_THRESHOLD",
+    "ILLUMINATION_EXTREME_RATIO_MAX",
+    "LAPLACIAN_BLUR_THRESHOLD",
+)
+
+# Metrics the gates publish twice: rounded for the report, exact for the
+# decision. Analysis code must read the exact one.
+DUAL_PRECISION_METRICS = (
+    "mask_coverage",
+    "red_to_blue_ratio",
+    "contrast_dynamic_range",
+    "extreme_pixel_ratio",
+    "laplacian_variance",
+)
+
+
+def test_verifier_reads_thresholds_from_the_live_configuration():
+    """
+    The table of thresholds the checker reports against must be built from
+    `settings`, not from literals. When it was written in by hand, calibration
+    moved CONTRAST_THRESHOLD from 18.0 to 8.8 and the report went on printing
+    "threshold 18.0", counting 2,502 images against a cut-point the system no
+    longer had.
+
+    An earlier version of THIS rule only asked whether `settings.X` appeared
+    somewhere in the file. It appears in the JSON record and in the print
+    statements, so hardcoding the comparison table back satisfied it. The rule
+    now reads the mapping itself.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "scripts",
+                        "verify_gate_downsampling.py")
+    tree = ast.parse(read(path), filename=path)
+
+    mapping = None
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Assign)
+                and any(getattr(t, "id", None) == "NEAR" for t in node.targets)
+                and isinstance(node.value, ast.Dict)):
+            mapping = node.value
+
+    assert mapping is not None, (
+        "verify_gate_downsampling.py no longer defines a `NEAR` threshold "
+        "mapping. If it was renamed, point this rule at the new name - do not "
+        "delete the rule.")
+
+    literals = []
+    settings_used = set()
+    for key, value in zip(mapping.keys, mapping.values):
+        label = getattr(key, "value", "?")
+        if not isinstance(value, (ast.Tuple, ast.List)) or not value.elts:
+            literals.append(f"`{label}` is not a (threshold, band) pair")
+            continue
+        threshold = value.elts[0]
+        if (isinstance(threshold, ast.Attribute)
+                and getattr(threshold.value, "id", None) == "settings"):
+            settings_used.add(threshold.attr)
+        else:
+            shown = getattr(threshold, "value", ast.dump(threshold))
+            literals.append(f"`{label}` compares against the literal {shown}")
+
+    assert not literals, (
+        "The decision-preservation check restates thresholds instead of "
+        "reading them:\n  " + "\n  ".join(literals)
+        + "\nRead each one from `settings`, so the report cannot outlive the "
+          "value it describes.")
+
+    # And the report must still cover every threshold the gates enforce.
+    reported = settings_used | {
+        name for name in THRESHOLD_SETTINGS
+        if f"settings.{name}" in read(path)}
+    missing = [name for name in THRESHOLD_SETTINGS if name not in reported]
+    assert not missing, (
+        "Thresholds enforced by the gates but absent from the check:\n  "
+        + "\n  ".join(missing))
+
+
+def test_deviation_analysis_uses_the_values_the_gates_decide_on():
+    """
+    Deviations and margins must come from the full-precision metrics. Taking
+    them from the rounded fields quantises every margin onto the rounding grid
+    - which is how one run reported a closest margin of exactly 0.0000 for
+    2,502 separate images and made a crowded cut-point look like a tie.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "scripts",
+                        "verify_gate_downsampling.py")
+    source = read(path)
+
+    offenders = []
+    for lineno, line in enumerate(source.split("\n"), 1):
+        code = line.split("#", 1)[0]
+        for metric in DUAL_PRECISION_METRICS:
+            if re.search(rf"\.{metric}\b(?!_exact)", code):
+                offenders.append(f"line {lineno}: reads rounded `.{metric}` "
+                                 f"- use `.{metric}_exact`")
+
+    assert not offenders, (
+        "The decision-preservation check measures display-rounded metrics:\n  "
+        + "\n  ".join(offenders)
+        + "\nThe gates publish both; analysis reads the exact one.")
+
+
+def test_gates_publish_the_exact_value_behind_every_rounded_one():
+    """
+    The rounded fields are the report. The exact fields are what the gate
+    compared against its threshold, so they are what an audit needs - without
+    them, no one downstream can reconstruct why an image was admitted.
+    """
+    gate_dir = os.path.join(REPO_ROOT, "backend", "app", "services", "validation")
+    missing = []
+
+    for name in ("gate2_relevance.py", "gate3_quality.py"):
+        source = read(os.path.join(gate_dir, name))
+        for metric in DUAL_PRECISION_METRICS:
+            if f"self.{metric} = " not in source:
+                continue
+            if f"self.{metric}_exact = " not in source:
+                missing.append(f"{name}: publishes `{metric}` rounded "
+                               f"but not `{metric}_exact`")
+
+    assert not missing, (
+        "A gate reports a rounded metric with no full-precision counterpart:"
+        "\n  " + "\n  ".join(missing)
+        + "\nPublish both: the rounded value for the report, the exact value "
+          "for the decision record.")
