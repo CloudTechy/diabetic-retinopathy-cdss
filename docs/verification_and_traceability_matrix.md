@@ -59,7 +59,7 @@ flowchart LR
 | **FR-03** | **Clinical Encounter Registration** | Technician registers encounter with sanitized Patient ID, laterality (`OD`/`OS`), camera model, and clinical notes. | `backend/app/routers/assessments.py`<br/>`backend/app/services/assessment_service.py` | `test_api_endpoints.py::test_create_and_upload_assessment`<br/>`test_state_machine.py::test_valid_forward_transitions` | ✅ PASS |
 | **FR-04** | **Gate 1: File Integrity & Cryptographic Hashing** | Rejects corrupted, non-image files, sizes $>15\,\text{MB}$, or dimensions $<512\times 512\text{px}$; computes SHA-256. | `backend/app/services/validation/gate1_integrity.py` | `test_validation_pipeline.py::TestGate1FileIntegrity` (6 test cases)<br/>`test_validation_pipeline.py::test_corrupt_file_halts_at_gate1` | ✅ PASS |
 | **FR-05** | **Gate 2: Retinal Anatomical Relevance** | Rejects non-fundus imagery (e.g. skin, anterior segment) via spectral profile ($R/B \ge 1.15$), circular mask ($\ge 50\%$), and aspect ratio. | `backend/app/services/validation/gate2_relevance.py` | `test_validation_pipeline.py::TestGate2RetinalRelevance` (4 test cases)<br/>`test_validation_pipeline.py::test_non_retinal_halts_at_gate2` | ✅ PASS |
-| **FR-06** | **Gate 3: Technical Quality & Blur Verification** | Evaluates Laplacian variance ($\ge 60.0$), illumination homogeneity ($\ge 0.65$), and contrast range ($\ge 18.0$); blocks ungradable inputs. | `backend/app/services/validation/gate3_quality.py` | `test_validation_pipeline.py::TestGate3TechnicalQuality` (2 test cases)<br/>`test_validation_pipeline.py::test_blurry_fundus_halts_at_gate3` | ✅ PASS |
+| **FR-06** | **Gate 3: Technical Quality & Blur Verification** | Evaluates Laplacian variance ($\ge 4.3$), illumination homogeneity ($\ge 0.65$), and contrast range ($\ge 18.0$); blocks ungradable inputs. | `backend/app/services/validation/gate3_quality.py` | `test_validation_pipeline.py::TestGate3TechnicalQuality` (2 test cases)<br/>`test_validation_pipeline.py::test_blurry_fundus_halts_at_gate3` | ✅ PASS |
 | **FR-07** | **Fail-Closed Execution Invariant** | If any gate (1, 2, or 3) fails, inference is strictly forbidden; state transitions directly to terminal `rejected`. | `backend/app/services/validation/pipeline.py`<br/>`backend/app/services/assessment_service.py` | `test_validation_pipeline.py::TestSequentialValidationPipelineFailClosed`<br/>`test_state_machine.py::test_rejection_strictly_blocks_model_execution` | ✅ PASS |
 | **FR-08** | **Model Inference & 5-Class Score Breakdown** | Standardizes input to $224\times 224$ RGB, computes candidate grade and 5-class normalized score breakdown ($[0.00-1.00]$). | `backend/app/services/ai_service.py`<br/>`backend/app/models/models.py` (`AIResult`) | `test_state_machine.py::test_valid_image_transitions_to_result_ready`<br/>`test_api_endpoints.py::test_create_and_upload_assessment` | ✅ PASS |
 | **FR-09** | **Explainability & Grad-CAM Visual Heatmaps** | Generates Grad-CAM activation maps over final convolutional bottleneck layer (`features.8`), normalized to Viridis/Turbo colormaps. | `backend/app/services/ai_service.py`<br/>`frontend/src/components/FundusViewer.tsx` | `test_api_endpoints.py::test_create_and_upload_assessment` (verifies `gradcamUrl` generation & artifact link) | ✅ PASS |
@@ -135,7 +135,7 @@ sequenceDiagram
 
     rect rgb(240, 255, 240)
         Note over Pipeline: Gate 3: Technical Quality
-        Pipeline->>Pipeline: Laplacian blur variance >= 60.0<br/>Contrast dynamic range >= 18.0, Illumination index >= 0.65
+        Pipeline->>Pipeline: Laplacian blur variance >= 4.3<br/>Contrast dynamic range >= 8.8, Illumination index >= 0.65
         alt Gate 3 Fails
             Pipeline-->>API: Status: REJECTED (Gate 3 Failed)
             API->>DB: Save Assessment (status='rejected', failed_gate=3)
@@ -173,8 +173,8 @@ sequenceDiagram
 3. **Gate 3: Technical Image Quality & Defocus Blur**
    - *Evaluator*: `evaluate_gate3(pil_img)` in `backend/app/services/validation/gate3_quality.py`
    - *Rules*:
-     - Defocus/motion blur: Evaluated via variance of Laplacian operator $\ge 60.0$.
-     - Contrast dynamic range: Difference between 95th and 5th percentiles of luminance histogram $\ge 18.0$.
+     - Defocus/motion blur: Evaluated via variance of Laplacian operator $\ge 4.3$.
+     - Contrast dynamic range: Difference between 95th and 5th percentiles of luminance histogram $\ge 8.8$.
      - Illumination index: Homogeneity of green-channel luminance $\ge 0.65$.
    - *Test Evidence*: 2 unit tests in `TestGate3TechnicalQuality` verifying sharp synthetic fundus passes and Gaussian blurred fundus fails with `ERR_MOTION_OR_DEFOCUS_BLUR`.
 

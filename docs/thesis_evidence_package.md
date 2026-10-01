@@ -102,7 +102,7 @@ In accordance with international regulatory guidelines for Software as a Medical
 - **No Direct Treatment Orders**: The system does not write prescriptions, schedule medical procedures, or communicate diagnostic findings directly to patients without prior clinical review and digital sign-off.
 
 ### 2. Technical Quality Gates vs. Clinical Gradability
-- **Distinction Between Gating and Pathology**: Passing the 3-stage technical validation pipeline (Gate 1 file signature, Gate 2 retinal relevance, and Gate 3 Laplacian blur variance $\ge 60.0$) verifies **technical physical adequacy of the digital file**, but **does not imply that the photograph is clinically gradable** in all retinal subfields.
+- **Distinction Between Gating and Pathology**: Passing the 3-stage technical validation pipeline (Gate 1 file signature, Gate 2 retinal relevance, and Gate 3 Laplacian blur variance $\ge 4.3$) verifies **technical physical adequacy of the digital file**, but **does not imply that the photograph is clinically gradable** in all retinal subfields.
 - **Media Opacities**: Dense cataracts, corneal leukomas, vitreous hemorrhages, or asteroid hyalosis may clear technical contrast and sharpness thresholds while obscuring microvascular detail in the macula or mid-periphery. The human reviewer must independently evaluate whether the image is adequate for clinical staging.
 - **Field of View Limitations**: Standard $45^\circ$ or $50^\circ$ single-field non-mydriatic fundus photographs may miss peripheral neo-vascularization or microaneurysms situated outside the central photographic field.
 

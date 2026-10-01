@@ -23,16 +23,23 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 - **Retinal Chromatic Signature:** Evaluates reddish/orange retinal reflection. Requires Red/Blue channel ratio $\ge 1.15$ and Red channel luminance share $\ge 38.0\%$.
 
 ### Gate 3: Technical Quality & Sharpness
-- **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 60.0$ (`LAPLACIAN_BLUR_THRESHOLD`).
+- **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 4.3$ (`LAPLACIAN_BLUR_THRESHOLD`), the 1st percentile of the development corpus - see the derivation recorded below.
 
-> [!CAUTION]
-> **This threshold is not calibrated, and it currently rejects the entire corpus.**
+> [!NOTE]
+> **Resolved 2026-10-01. This threshold is now derived from the corpus.**
 >
-> Genuine held-out APTOS images measure **5.7 – 22.0** on the path this gate
-> computes, so all ten unmodified images in
+> It was previously 60.0, chosen a priori. Genuine held-out APTOS images measure
+> **5.7 – 22.0** on the path this gate computes, so all ten unmodified images in
 > [`validation_test_results.csv`](validation_test_results.csv) were rejected with
-> `ERR_MOTION_OR_DEFOCUS_BLUR`. The value 60.0 was chosen a priori, not derived
-> from the imaging characteristics of this corpus.
+> `ERR_MOTION_OR_DEFOCUS_BLUR` — 99.5% of the development corpus would have been
+> refused. Two further thresholds were found to be a priori in the same way:
+> `CONTRAST_THRESHOLD` at 18.0 rejected 63.4% of genuine images, and
+> `MIN_IMAGE_DIMENSION` at 512 rejected 1.3%.
+>
+> All three are now set from the 1st percentile of the measured distribution
+> over the training and validation partitions. All 16 validation cases behave as
+> declared. The reasoning below is kept because it explains why the metric has
+> no corpus-independent value, which is why it had to be measured here.
 >
 > Laplacian variance is a spatial derivative: it scales with sensor resolution,
 > optics, compression and any upstream resizing, so it has no corpus-independent
@@ -47,6 +54,32 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 > The metric itself separates the two populations correctly: a deliberately
 > blurred image scores 0.9 against 5.7 – 22.0 for unmodified ones. Only the
 > cut-point is in the wrong place.
+
+### Calibrated admission thresholds
+
+| Setting | Value | Derivation |
+| :--- | ---: | :--- |
+| `LAPLACIAN_BLUR_THRESHOLD` | **4.3** | 1.0th percentile of Laplacian variance |
+| `MIN_IMAGE_DIMENSION` | **480** px | 1.0th percentile of shortest edge |
+| `CONTRAST_THRESHOLD` | **8.8** | 1.0th percentile of foreground std |
+
+**Declared percentile:** 1.0% — Admit the sharpest and largest 99.0% of the development corpus; the remainder is treated as too degraded to grade.
+
+**Measured over:** 2979 images, train+val (development), from
+[`dataset_split_manifest.csv`](dataset_split_manifest.csv). The held-out test
+partition is excluded: choosing an operating point on it would leak it.
+
+**Distribution:** [`blur_threshold_calibration.json`](blur_threshold_calibration.json)
+carries the full percentile table for both metrics, so this value can be
+checked against the data it came from.
+
+**Previous values:** `LAPLACIAN_BLUR_THRESHOLD` 60.0, `MIN_IMAGE_DIMENSION`
+512, `CONTRAST_THRESHOLD` 18.0. All three were chosen a priori and
+never measured against this corpus. The blur threshold rejected 10 of 10 genuine
+held-out images; with it corrected, the contrast threshold still rejected 5 of 10.
+
+*Applied 2026-10-01 by `apply_validation_thresholds.py`.*
+
 
 - **Illumination Uniformity:** Analyzes extreme underexposed (< 10) and overexposed (> 245) pixel ratios, rejecting acquisitions with extreme ratio $> 0.35$.
 
