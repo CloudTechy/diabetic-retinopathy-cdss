@@ -1094,3 +1094,65 @@ def test_gate_decisions_never_compare_a_display_rounded_metric():
         "A gate decision compares a display-rounded metric:\n  "
         + "\n  ".join(offenders)
         + "\nRound for the report; compare the full-precision value.")
+
+
+# ======================================================================
+# RULE GROUP N - the gate must be able to run where it is enforced
+#
+# Every rule above is worthless if the job that runs them cannot collect.
+# That is exactly what happened: tests/conftest.py imports the application
+# stack, the integrity-gate job installs only what static analysis needs, so
+# pytest died at conftest import with exit code 4 and main stayed red through
+# three merges without a single rule executing.
+#
+# Parsed as text, not YAML: pyyaml is not among the job's dependencies, and a
+# rule that cannot run in that job is the failure this group exists to stop.
+# ======================================================================
+
+def test_the_ci_job_that_enforces_these_rules_can_collect_them():
+    """
+    The workflow step running this file must either pass --noconftest or install
+    the application dependencies that tests/conftest.py imports. Without one of
+    the two, pytest fails at conftest import and reports a missing module in
+    place of every rule it never reached.
+    """
+    workflow = os.path.join(REPO_ROOT, ".github", "workflows",
+                            "evidence-integrity-gate.yml")
+    if not os.path.exists(workflow):
+        pytest.skip("evidence-integrity-gate.yml absent")
+
+    raw = read(workflow)
+
+    # Comment lines do not configure anything. An earlier version of this rule
+    # checked the whole file, so deleting the --noconftest flag still passed:
+    # the comment explaining the flag mentioned it. A rule satisfied by prose
+    # about the thing is not checking the thing.
+    text = "\n".join(line for line in raw.split("\n")
+                     if not line.lstrip().startswith("#"))
+
+    assert "test_editor_integrity_gate.py" in text, (
+        "The evidence integrity workflow no longer runs this file. If it moved, "
+        "point the workflow at the new path - do not leave the rules unenforced.")
+
+    # conftest.py's third-party imports, and the distributions that supply them.
+    conftest = read(os.path.join(REPO_ROOT, "backend", "tests", "conftest.py"))
+    needed = {
+        "pytest_asyncio": "pytest-asyncio",
+        "sqlalchemy": "sqlalchemy",
+        "fastapi": "fastapi",
+    }
+    imported = [dist for module, dist in needed.items()
+                if re.search(rf"^\s*(?:import|from)\s+{module}\b", conftest,
+                             flags=re.MULTILINE)]
+
+    bypasses_conftest = "--noconftest" in text
+    installs_app = ("requirements.txt" in text
+                    and all(dist in text for dist in imported))
+
+    assert bypasses_conftest or installs_app, (
+        "The integrity-gate job cannot collect these rules.\n"
+        f"tests/conftest.py imports {', '.join(imported) or 'application modules'}, "
+        "which the job does not install, and the step does not pass --noconftest."
+        "\nPytest then exits 4 at conftest import and no rule in this file runs - "
+        "the job reports a missing module instead of a finding, which is how main "
+        "stayed red through three merges with the gate never executing.")

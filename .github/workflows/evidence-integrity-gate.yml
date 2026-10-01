@@ -37,9 +37,24 @@ jobs:
         env:
           AI_INFERENCE_ENGINE: mock
         run: |
+          # --noconftest is load-bearing, not a convenience.
+          #
+          # tests/conftest.py imports the whole application stack -
+          # pytest_asyncio, aiosqlite, SQLAlchemy async, FastAPI - which this
+          # job deliberately does not install, because the rules below are
+          # static analysis over committed files and need none of it. Without
+          # the flag pytest fails at conftest IMPORT and exits 4 before running
+          # a single rule. That is what happened: the gate guarding every
+          # evidence claim had not executed in CI for several merges, reporting
+          # "fail" for a missing module rather than for anything it detects.
+          #
+          # If a rule ever needs an application fixture, install the
+          # dependencies in the step above - do not drop this flag and leave
+          # the job unable to collect.
           python -m pytest \
             tests/test_editor_integrity_gate.py \
             tests/test_spec_doc_consistency.py \
+            --noconftest \
             -v --tb=short
 
       - name: Recompute the reported metrics from the raw predictions
