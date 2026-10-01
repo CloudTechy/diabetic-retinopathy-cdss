@@ -157,7 +157,8 @@ class TestClinicalTerminologyCompliance:
 
     FORBIDDEN_TERMS = ["confidence score", "diagnostic certainty", "disease certainty", "ai diagnosis"]
 
-    def test_api_result_terminology_compliance(self, test_client):
+    def test_api_result_terminology_compliance(self, authed_client):
+        test_client = authed_client
         # Create and process assessment
         fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=True, blur=False)
         raw_bytes = image_to_bytes(fundus_img, "JPEG")
@@ -243,7 +244,53 @@ class TestSecurityAndAccessControl:
         assert verify_password(pwd, hashed) is True
         assert verify_password("wrong_password", hashed) is False
 
-    def test_nonexistent_assessment_returns_404(self, test_client):
+    def test_nonexistent_assessment_returns_404(self, authed_client):
+        test_client = authed_client
         res = test_client.get("/api/v1/assessments/REC-NONEXISTENT-9999/status")
         assert res.status_code == 404
         assert "not found" in res.json()["detail"].lower()
+
+
+class TestAuthenticationEnforcement:
+    """
+    Regression tests for two defects found in release QA.
+
+    Both were invisible because no test ever tried the failing path: every
+    clinical test authenticated implicitly, because the dependency handed out
+    the demonstration account to anonymous callers.
+    """
+
+    def test_existing_user_cannot_login_with_wrong_password(self, test_client):
+        """
+        The password check was nested inside `if not user:`, so any account that
+        already existed authenticated with ANY password and received a signed
+        token. This asserts the check is unconditional.
+        """
+        ok = test_client.post("/api/v1/auth/login", json={
+            "username": "demo.clinician",
+            "password": "dr_secure_password_2026"})
+        assert ok.status_code == 200, ok.text
+
+        bad = test_client.post("/api/v1/auth/login", json={
+            "username": "demo.clinician",
+            "password": "not-the-password-at-all"})
+        assert bad.status_code == 401, (
+            f"AUTHENTICATION BYPASS: a wrong password returned "
+            f"{bad.status_code} and issued a token for an existing account")
+
+    def test_clinical_endpoints_reject_anonymous_callers(self, test_client):
+        """
+        The clinical router imported the OPTIONAL dependency under the name
+        `get_current_user`, and that dependency returned the seeded account when
+        no token was present - so every route served an authenticated session to
+        an anonymous caller while appearing protected.
+        """
+        protected = [
+            ("get", "/api/v1/assessments/REC-DOES-NOT-EXIST/status"),
+            ("get", "/api/v1/assessments/REC-DOES-NOT-EXIST/result"),
+        ]
+        for method, path in protected:
+            res = getattr(test_client, method)(path)
+            assert res.status_code == 401, (
+                f"{method.upper()} {path} served an anonymous caller "
+                f"({res.status_code}); it must require a bearer token")

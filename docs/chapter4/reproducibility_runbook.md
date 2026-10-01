@@ -47,11 +47,11 @@ QWK                  0.865832
 
 --- Referable DR (grade >= 2) ---
   Sensitivity 91.2%  95% CI (81.5, 90.5)
-  Specificity 96.3%  95% CI (93.7, 97.9)
+  Specificity 95.6%  95% CI (92.8, 97.4)
 
 --- LEAKAGE AUDIT ---
   duplicate grouping effective: False
-  held-out images byte-identical to a training image: 0/525 (4.92%)
+  held-out images byte-identical to a training image: 0/525 (0.0%)
   accuracy on the 27 affected images: 77.78%
   accuracy on the 522 clean images:     78.74%
 ```
@@ -193,4 +193,4 @@ cd backend
 # python -m pytest tests/ -q                       # Linux/macOS
 ```
 
-Expected: **157 passed, 2 skipped**. The skip requires PyTorch; install `backend/requirements.txt` to run it.
+Expected: **165 passed, 2 skipped**. The skip requires PyTorch; install `backend/requirements.txt` to run it.

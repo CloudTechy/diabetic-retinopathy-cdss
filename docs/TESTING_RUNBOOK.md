@@ -52,7 +52,7 @@ python -m pytest backend/tests/ -v
 ## 3. Empirical Classifier & Model Evaluation Testing
 
 ### 3.1 Held-Out Test Set Evaluation ($N = 525$)
-Executes deterministic inference on the untouched held-out test cohort to generate statistical metrics and the 5x5 confusion matrix:
+Executes deterministic inference on the leakage-free held-out test cohort to generate statistical metrics and the 5x5 confusion matrix:
 
 ```powershell
 python backend/scripts/evaluate_model.py
@@ -68,9 +68,9 @@ python backend/scripts/evaluate_model.py
 - **Overall Accuracy:** **84.00%** (441 / 525 correctly classified)
 - **Within-one-grade agreement:** **93.71%**
 - **Macro F1:** **0.7031**
-- **Referable DR (grade $\ge 2$):** sensitivity **91.2%**, specificity **96.3%**
+- **Referable DR (grade $\ge 2$):** sensitivity **91.2%**, specificity **95.6%**
 - **Sight-threatening DR (grade $\ge 3$):** sensitivity **68.2%**, NPV **97.1%**
-- **Mild NPDR (Grade 1) Sensitivity:** **72.7%** (40/55)
+- **Mild NPDR (Grade 1) Sensitivity:** **66.0%** (33/50)
 - **Moderate NPDR (Grade 2) Sensitivity:** **53.3%** (80/150) — the weakest class
 
 > Recompute all of the above from the committed predictions, with no ML dependencies:

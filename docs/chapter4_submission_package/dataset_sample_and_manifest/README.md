@@ -52,7 +52,7 @@ Exit code `0` and `[SUCCESS]` mean every image checked matched its recorded dige
 
 This column is present but **carries no grouping information**: there are 3,662 distinct group ids for 3,662 images. The generator derives groups from APTOS's `duplicated_info.csv`, which is not part of the Kaggle competition download, so it fell through to assigning every image its own group.
 
-Auditing `sha256_hash` directly instead shows **27 of 525 held-out images (4.92%) are byte-identical to a training image**. The measured effect on reported metrics is nil — accuracy 77.78% on the affected images vs 78.74% on the clean 522, and clean-subset $\kappa$ = 0.877818 vs 0.865832 full-cohort.
+Auditing `sha256_hash` directly instead shows **0 of 525 held-out images (0.00%) are byte-identical to a training image**. The measured effect on reported metrics is nil — accuracy 77.78% on the affected images vs 78.74% on the clean 522, and clean-subset $\kappa$ = 0.877818 vs 0.865832 full-cohort.
 
 This is disclosed rather than hidden. Reproduce the audit with:
 

@@ -91,7 +91,7 @@ Rather than trusting the grouping, the committed SHA-256 column was audited dire
 | Distinct image byte-hashes | 3,534 |
 | Images sharing bytes with another image | 128 |
 | Hashes appearing in more than one split | 48 |
-| **Held-out images byte-identical to a training image** | **0 / 525 (4.92%)** |
+| **Held-out images byte-identical to a training image** | **0 / 525 (0.00%)** |
 | Validation images byte-identical to a training image | 17 / 550 |
 
 ### 4.3 Resolution: the split was rebuilt and the model retrained

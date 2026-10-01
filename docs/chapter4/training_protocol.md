@@ -78,7 +78,7 @@ Transcribed verbatim from [`epoch_history.csv`](epoch_history.csv).
 
 **No overfitting collapse.** Training loss falls monotonically from 1.3625 to 0.4969, while validation loss falls from 0.9476 to a plateau around 0.556–0.573 from epoch 8 onward. The gap between the two curves stays narrow and the validation curve does not turn upward, which is the signature of a run that stopped at roughly the right time rather than one that memorised the training set.
 
-**Validation QWK saturates early.** $\kappa$ exceeds 0.86 by epoch 3 and thereafter moves within a 0.04 band, peaking at 0.9130 at epoch 11. The final four epochs contribute no material improvement — consistent with the cosine schedule having annealed the learning rate below $3 \times 10^{-5}$.
+**Validation QWK saturates early.** $\kappa$ exceeds 0.86 by epoch 3 and thereafter moves within a 0.04 band, peaking at 0.9130 at epoch 14. The final four epochs contribute no material improvement — consistent with the cosine schedule having annealed the learning rate below $3 \times 10^{-5}$.
 
 **Macro F1 lags accuracy throughout** (0.686 vs 81.1% at the selected epoch). This gap is the minority-class problem stated plainly: the model learns Grade 0 quickly and the sparse Grades 3 and 4 slowly. It is the same effect that surfaces in the held-out per-class table in [`model_evaluation_report.md`](model_evaluation_report.md).
 

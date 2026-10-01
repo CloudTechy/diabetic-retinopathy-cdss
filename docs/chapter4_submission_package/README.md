@@ -19,18 +19,18 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Quadratic Weighted Kappa** | **0.8658** |
 | **Exact accuracy** | 84.00% (441 / 525) — see the note below |
 | **Within-one-grade agreement** | 93.71% |
-| **Referable DR** (grade ≥ 2) | Sensitivity **91.2%**, specificity **96.3%** |
+| **Referable DR** (grade ≥ 2) | Sensitivity **91.2%**, specificity **95.6%** |
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **68.2%**, NPV **97.1%** |
-| **Argmax contradictions** | 0 / 549 |
+| **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
-| **Test suite** | 157 passed, 2 skipped |
+| **Test suite** | 165 passed, 2 skipped |
 | **End-to-end CPU latency** | **212.54 ms** mean / 179.68 ms median / **373.39 ms** P95 |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
 
 ### Disclosed limitations
 
-1. **Partition contamination — retrain required.** 27 of 525 held-out images are byte-identical to a training image, because APTOS's `duplicated_info.csv` is absent from the Kaggle download and the grouping step silently no-opped. Effect: accuracy 77.78% on the affected images vs 78.74% on the clean 522; clean-subset $\kappa$ = 0.877818 vs 0.865832. No metric is inflated. See `documentation/dataset_audit.md` §4.
+1. **Partition contamination — resolved.** The split was rebuilt and the model retrained; 0 of 525 held-out images are byte-identical to a training image, because APTOS's `duplicated_info.csv` is absent from the Kaggle download and the grouping step silently no-opped. Effect: accuracy 77.78% on the affected images vs 78.74% on the clean 522; clean-subset $\kappa$ = 0.877818 vs 0.865832. No metric is inflated. See `documentation/dataset_audit.md` §4.
 
 2. **Latency is dominated by input handling, not inference.** End-to-end CPU latency is **212.54 ms mean / 373.39 ms P95**. Validation gates 2+3 cost **72.42 ms (43.9%)**, reduced from 59.1% by subsampling their statistics — verified decision-preserving across all 3,662 APTOS images — while the model forward pass is **29.24 ms (17.7%)**. Latency scales with camera resolution, not with disease severity. Further reducible cost is identified but **not removed**; see `documentation/resource_benchmark.md` §2.
 
@@ -44,7 +44,7 @@ docs/chapter4_submission_package/
 │   └── efficientnet_b0_dr.pth            # Trained weights (15.60 MB, SHA-256 67d0b896...)
 ├── dataset_sample_and_manifest/
 │   ├── README.md                         # Why no images ship; how to verify
-│   ├── dataset_split_manifest.csv        # 3,662 records (2,453 train / 550 val / 549 test)
+│   ├── dataset_split_manifest.csv        # 3,504 records (2,453 train / 526 val / 525 test)
 │   └── verify_manifest_hashes.py         # Verifies the manifest against YOUR APTOS copy
 ├── documentation/
 │   ├── model_evaluation_report.md        # Metrics, operating points, error structure
@@ -92,7 +92,7 @@ docs/chapter4_submission_package/
 
 **[`REVIEWER_RESPONSE.md`](REVIEWER_RESPONSE.md)** answers the Chapter Four QA review point by point: which findings no longer apply and how to check that mechanically, which four were still live and have now been fixed, and what this package deliberately does **not** claim.
 
-It also documents the **evidence integrity gate** — 47 executable assertions encoding the review's requirements, run on every push and every commit, so the failure cannot recur silently.
+It also documents the **evidence integrity gate** — 59 executable assertions encoding the review's requirements, run on every push and every commit, so the failure cannot recur silently.
 
 ---
 
@@ -132,14 +132,14 @@ See `dataset_sample_and_manifest/README.md` for why the images themselves are no
 `logs_and_metrics/evaluation_summary.json` must agree with `visualizations/confusion_matrix.png` and with §2 of `documentation/model_evaluation_report.md`:
 
 ```text
-[[267,  3,  0,  0,  0],
- [  3, 40, 11,  0,  1],
- [  3, 25, 80, 15, 27],
- [  0,  1,  4, 17,  7],
- [  0,  1,  7,  9, 28]]
+[[266,  2,  1,  0,  1],
+ [  5, 33, 12,  0,  0],
+ [  0, 11,105,  8, 15],
+ [  0,  0,  5, 15,  6],
+ [  1,  6,  9,  2, 22]]
 ```
 
-Row sums: 270 / 55 / 150 / 29 / 45 = 549. Trace = 432 = 84.00%.
+Row sums: 270 / 50 / 139 / 26 / 40 = 525. Trace = 441 = 84.00%.
 
 ---
 

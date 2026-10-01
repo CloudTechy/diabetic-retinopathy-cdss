@@ -305,7 +305,8 @@ class MockInferenceService(BaseInferenceService):
             gradcam_bytes=gradcam_bytes,
             gradcam_filename=gradcam_filename,
             gradcam_path=gradcam_path,
-            gradcam_url=f"/api/v1/storage/attributions/{gradcam_filename}",
+            gradcam_url=(f"/api/v1/storage/attributions/{gradcam_filename}"
+                         if gradcam_filename else None),
         )
 
 
@@ -446,89 +447,100 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
         start_time = time.time()
 
+        # A client-supplied grade must never steer the real engine. An earlier
+        # revision used `candidate_grade` in place of the argmax whenever it was
+        # supplied, so a request could choose the class the system displayed.
+        # The parameter survives only for interface compatibility with the
+        # simulated engine, which uses it as a test fixture.
+        if candidate_grade is not None:
+            logger.warning(
+                "candidate_grade=%s was supplied to the real inference engine. "
+                "Ignoring it: the grade is the model's argmax.", candidate_grade)
+
+        # ------------------------------------------------------------------
+        # Model inference. This must either produce a genuine result or fail.
+        # There is no fallback: a fabricated grade is indistinguishable from a
+        # real one downstream, which is precisely what must not happen.
+        # ------------------------------------------------------------------
+        preprocess = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225]),
+        ])
+        rgb_image = pil_image.convert("RGB")
+        input_tensor = preprocess(rgb_image).unsqueeze(0).to(self._device)
+        input_tensor.requires_grad = True
+
+        activations = []
+
+        def forward_hook(module, inp, out):
+            activations.append(out)
+
+        hook_handle = self._model.features[8].register_forward_hook(forward_hook)
         try:
-            # 1. Preprocessing pipeline
-            preprocess = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
-            rgb_image = pil_image.convert("RGB")
-            input_tensor = preprocess(rgb_image).unsqueeze(0).to(self._device)
-            input_tensor.requires_grad = True
-
-            # 2. Hook features.8 for Grad-CAM
-            activations = []
-            def forward_hook(module, inp, out):
-                activations.append(out)
-
-            hook_handle = self._model.features[8].register_forward_hook(forward_hook)
-
-            # 3. Model forward pass
             logits = self._model(input_tensor)
+        finally:
             hook_handle.remove()
 
-            probs_tensor = torch.softmax(logits, dim=1)[0].detach()
-            probs = [round(float(p), 4) for p in probs_tensor]
+        probs_tensor = torch.softmax(logits, dim=1)[0].detach()
+        probs = [round(float(x), 4) for x in probs_tensor]
 
-            # 4. Resolve target grade (respect test candidate fixture if specified, else argmax)
-            if candidate_grade is not None and 0 <= candidate_grade <= 4:
-                grade = candidate_grade
-            else:
-                grade = int(torch.argmax(logits, dim=1).item())
+        grade = int(torch.argmax(logits, dim=1).item())
+        meta = ICDR_CLASS_METADATA[grade]
+        primary_score = probs[grade]
+        class_scores = [
+            {"grade": i, "label": f"Grade {i}: {ICDR_CLASS_METADATA[i]['label']}",
+             "score": probs[i]}
+            for i in range(5)
+        ]
 
-            meta = ICDR_CLASS_METADATA[grade]
-            primary_score = probs[grade]
-
-            class_scores = [
-                {"grade": i, "label": f"Grade {i}: {ICDR_CLASS_METADATA[i]['label']}", "score": probs[i]}
-                for i in range(5)
-            ]
-
-            # 5. Compute Grad-CAM gradients on features.8
+        # ------------------------------------------------------------------
+        # Visual attribution. A failure here degrades the explanation; it does
+        # NOT change the grade or the scores, and it never substitutes a
+        # synthetic activation pattern for a real one.
+        # ------------------------------------------------------------------
+        gradcam_img = None
+        gradcam_unavailable_reason = None
+        try:
             target_logit = logits[0, grade]
-            grads = torch.autograd.grad(target_logit, activations[0], retain_graph=False)[0]
+            grads = torch.autograd.grad(
+                target_logit, activations[0], retain_graph=False)[0]
             weights = torch.mean(grads, dim=(2, 3), keepdim=True)
-            cam = torch.relu(torch.sum(weights * activations[0], dim=1)).squeeze().detach().cpu().numpy()
+            cam = torch.relu(
+                torch.sum(weights * activations[0], dim=1)
+            ).squeeze().detach().cpu().numpy()
 
-            if np.max(cam) > 0:
-                cam = cam / np.max(cam)
+            if float(np.max(cam)) <= 0:
+                # A uniformly zero CAM carries no attribution. Rendering a
+                # plausible-looking heatmap here would invent one.
+                gradcam_unavailable_reason = (
+                    "attribution map was uniformly zero for this input")
             else:
-                cam = np.zeros_like(cam)
+                cam = cam / np.max(cam)
+                cam_pil = Image.fromarray((cam * 255).astype(np.uint8)).resize(
+                    (512, 512), Image.Resampling.BILINEAR)
+                cam_arr = np.array(cam_pil, dtype=np.float32) / 255.0
+                gradcam_img = Image.fromarray(viridis_rgba_array(cam_arr))
 
-            # Resample CAM to 512x512 RGBA
-            cam_pil = Image.fromarray((cam * 255).astype(np.uint8)).resize((512, 512), Image.Resampling.BILINEAR)
-            cam_arr = np.array(cam_pil, dtype=np.float32) / 255.0
+        except Exception as exc:                                  # noqa: BLE001
+            logger.warning(
+                "Grad-CAM computation failed (%s). Returning the model result "
+                "without a visual explanation.", exc)
+            gradcam_unavailable_reason = f"attribution computation failed: {exc}"
 
-            rgba_arr = viridis_rgba_array(cam_arr)
+        # Save the attribution artifact, if there is a genuine one to save.
+        gradcam_filename = gradcam_path = gradcam_bytes = None
+        if gradcam_img is not None:
+            os.makedirs(settings.STORAGE_ATTRIBUTIONS_PATH, exist_ok=True)
+            gradcam_filename = f"gradcam_{uuid.uuid4().hex}.png"
+            gradcam_path = os.path.join(
+                settings.STORAGE_ATTRIBUTIONS_PATH, gradcam_filename)
+            gradcam_img.save(gradcam_path, format="PNG")
 
-            gradcam_img = Image.fromarray(rgba_arr)
-
-            # Fallback if CAM is completely empty
-            if np.max(cam) == 0:
-                gradcam_img = create_mock_gradcam_heatmap(grade, width=512, height=512, laterality=laterality)
-
-        except Exception as e:
-            logger.warning(f"Grad-CAM computation encountered fallback: {e}. Generating synthetic overlay.")
-            grade = candidate_grade if candidate_grade is not None else 2
-            meta = ICDR_CLASS_METADATA[grade]
-            scores = [0.04, 0.12, 0.78, 0.05, 0.01]
-            primary_score = scores[grade]
-            class_scores = [
-                {"grade": i, "label": f"Grade {i}: {ICDR_CLASS_METADATA[i]['label']}", "score": scores[i]}
-                for i in range(5)
-            ]
-            gradcam_img = create_mock_gradcam_heatmap(grade, width=512, height=512, laterality=laterality)
-
-        # 6. Save attribution artifact
-        os.makedirs(settings.STORAGE_ATTRIBUTIONS_PATH, exist_ok=True)
-        gradcam_filename = f"gradcam_{uuid.uuid4().hex}.png"
-        gradcam_path = os.path.join(settings.STORAGE_ATTRIBUTIONS_PATH, gradcam_filename)
-        gradcam_img.save(gradcam_path, format="PNG")
-
-        buf = io.BytesIO()
-        gradcam_img.save(buf, format="PNG")
-        gradcam_bytes = buf.getvalue()
+            buf = io.BytesIO()
+            gradcam_img.save(buf, format="PNG")
+            gradcam_bytes = buf.getvalue()
 
         execution_time_ms = round((time.time() - start_time) * 1000.0, 1)
 
@@ -537,6 +549,13 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             "Model-generated scores represent preliminary mathematical associations from the pre-trained EfficientNet-B0 network. "
             "Diagnostic judgment, clinical staging, and management plans remain exclusively the responsibility of the reviewing clinician."
         )
+
+        if gradcam_unavailable_reason:
+            disclaimer += (
+                " VISUAL EXPLANATION UNAVAILABLE for this study: "
+                f"{gradcam_unavailable_reason}. The grade and scores above "
+                "are the model's own output and are unaffected."
+            )
 
         return InferenceOutput(
             primary_grade=grade,
