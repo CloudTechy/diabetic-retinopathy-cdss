@@ -183,7 +183,11 @@
     "leaked_pct": 0.0,
     "leaked_by_grade": {},
     "leaked_image_ids": [],
-    "duplicate_grouping_effective": false,
+    "duplicate_groups": 3504,
+    "groups_with_more_than_one_row": 0,
+    "groups_collapsed_to_one_representative": true,
+    "groups_spanning_more_than_one_partition": 0,
+    "cross_partition_group_ids": [],
     "n_val_leaked_from_train": 0
   },
   "leakage_adjusted": null

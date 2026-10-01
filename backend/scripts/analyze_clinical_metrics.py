@@ -177,8 +177,19 @@ def audit_leakage():
     leaked = [r for r in test_rows if r["sha256_hash"] in train_hashes]
     leaked_ids = {r["image_id"] for r in leaked}
 
+    # build_clean_split.py collapses each byte-identical group to a single
+    # representative, so in a correctly built manifest EVERY group holds exactly
+    # one row. An earlier version reported `any(c > 1)` and printed
+    # "duplicate grouping effective: False" - true, and the opposite of how it
+    # reads: the grouping had already done its work at split time. Report the
+    # property that matters instead, which is that no group spans partitions.
     groups = Counter(r.get("duplicate_group_id", "") for r in rows)
-    grouping_effective = any(c > 1 for c in groups.values())
+    spanning = {gid: count for gid, count in groups.items() if count > 1}
+    group_splits = defaultdict(set)
+    for r in rows:
+        group_splits[r.get("duplicate_group_id", "")].add(r["split"])
+    cross_partition = sorted(gid for gid, splits in group_splits.items()
+                             if len(splits) > 1)
 
     return {
         "n_test": len(test_rows),
@@ -186,7 +197,11 @@ def audit_leakage():
         "leaked_pct": round(100 * len(leaked) / len(test_rows), 2) if test_rows else 0.0,
         "leaked_by_grade": dict(sorted(Counter(int(r["true_grade"]) for r in leaked).items())),
         "leaked_image_ids": sorted(leaked_ids),
-        "duplicate_grouping_effective": grouping_effective,
+        "duplicate_groups": len(groups),
+        "groups_with_more_than_one_row": len(spanning),
+        "groups_collapsed_to_one_representative": not spanning,
+        "groups_spanning_more_than_one_partition": len(cross_partition),
+        "cross_partition_group_ids": cross_partition[:20],
         "n_val_leaked_from_train": len(by_split["val"] & train_hashes),
     }
 
@@ -274,7 +289,15 @@ def main():
 
     if leakage:
         print(f"\n--- LEAKAGE AUDIT ---")
-        print(f"  duplicate grouping effective: {leakage['duplicate_grouping_effective']}")
+        if leakage["groups_collapsed_to_one_representative"]:
+            print(f"  duplicate groups: {leakage['duplicate_groups']}, "
+                  f"each collapsed to one representative")
+            print(f"    -> a group cannot span partitions by construction")
+        else:
+            print(f"  duplicate groups: {leakage['duplicate_groups']}, of which "
+                  f"{leakage['groups_with_more_than_one_row']} hold more than one row")
+            print(f"    groups spanning more than one partition: "
+                  f"{leakage['groups_spanning_more_than_one_partition']}")
         print(f"  held-out images byte-identical to a training image: "
               f"{leakage['n_test_leaked']}/{leakage['n_test']} ({leakage['leaked_pct']}%)")
         if clean:
