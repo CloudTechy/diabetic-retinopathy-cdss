@@ -23,7 +23,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **68.2%**, NPV **97.1%** |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
-| **Test suite** | 165 passed, 2 skipped |
+| **Test suite** | 166 passed, 3 skipped |
 | **End-to-end CPU latency** | **212.54 ms** mean / 179.68 ms median / **373.39 ms** P95 |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.

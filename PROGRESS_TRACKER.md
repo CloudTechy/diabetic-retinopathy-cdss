@@ -93,7 +93,7 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 
 ## 5. Test Suite
 
-**165 passed, 2 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
+**166 passed, 3 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
