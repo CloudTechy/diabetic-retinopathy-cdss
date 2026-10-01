@@ -111,6 +111,11 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
                      + 0.114 * full_arr[:, :, 2])
         laplacian_var = compute_laplacian_variance(full_gray)
 
+    # Full precision is what the gate decides on; the rounded value is what it
+    # reports. Comparing the rounded value put the decision boundary on a 0.1
+    # grid, so images landed exactly on a round threshold and flipped under any
+    # tiny change - eight of them did, under analysis subsampling.
+    laplacian_var_exact = laplacian_var
     laplacian_var = round(laplacian_var, 1)
 
     # 2. Contrast dynamic range
@@ -126,7 +131,7 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
 
     # Gate 3 Evaluation Logic
     # 1. Blur check
-    if laplacian_var < settings.LAPLACIAN_BLUR_THRESHOLD:
+    if laplacian_var_exact < settings.LAPLACIAN_BLUR_THRESHOLD:
         return Gate3Result(
             passed=False,
             laplacian_variance=laplacian_var,
@@ -140,7 +145,7 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
         )
 
     # 2. Contrast check
-    if contrast_dynamic_range < settings.CONTRAST_THRESHOLD:
+    if contrast_std < settings.CONTRAST_THRESHOLD:
         return Gate3Result(
             passed=False,
             laplacian_variance=laplacian_var,

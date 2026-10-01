@@ -99,8 +99,18 @@ def main():
             "calibrate_blur_threshold.py - it measures both thresholds now.")
     dim = int(dim)
 
+    c_block = cal.get("contrast") or {}
+    contrast = c_block.get("percentiles", {}).get(key)
+    if contrast is None:
+        raise SystemExit(
+            "The calibration carries no contrast distribution. Re-run "
+            "calibrate_blur_threshold.py - it measures all three thresholds now.")
+    contrast = round(float(contrast), 1)
+
     old_blur = cal.get("current_threshold")
     old_dim = dim_block.get("current_threshold")
+    old_contrast = c_block.get("current_threshold")
+    crowd = (c_block.get("crowding_within_half_unit") or {}).get(key)
 
     print("=" * 74)
     print("APPLY VALIDATION THRESHOLDS")
@@ -110,6 +120,9 @@ def main():
     print()
     print(f"  LAPLACIAN_BLUR_THRESHOLD   {old_blur}  ->  {blur}")
     print(f"  MIN_IMAGE_DIMENSION        {old_dim}  ->  {dim}")
+    print(f"  CONTRAST_THRESHOLD         {old_contrast}  ->  {contrast}")
+    if crowd is not None:
+        print(f"      ({crowd} images sit within +/-0.5 of that cut-point)")
     print()
     print(f"By construction this admits {100 - float(args.percentile):.1f}% of the "
           f"development corpus on each metric.")
@@ -127,6 +140,8 @@ def main():
                      f"LAPLACIAN_BLUR_THRESHOLD: float = {blur}", cfg)
     cfg_new = re.sub(r"MIN_IMAGE_DIMENSION:\s*int\s*=\s*\d+",
                      f"MIN_IMAGE_DIMENSION: int = {dim}", cfg_new)
+    cfg_new = re.sub(r"CONTRAST_THRESHOLD:\s*float\s*=\s*[\d.]+",
+                     f"CONTRAST_THRESHOLD: float = {contrast}", cfg_new)
     if cfg_new == cfg:
         raise SystemExit("Could not locate the settings in config.py; aborting.")
     with open(CONFIG, "w", encoding="utf-8") as fh:
@@ -144,6 +159,7 @@ def main():
 | :--- | ---: | :--- |
 | `LAPLACIAN_BLUR_THRESHOLD` | **{blur}** | {args.percentile}th percentile of Laplacian variance |
 | `MIN_IMAGE_DIMENSION` | **{dim}** px | {args.percentile}th percentile of shortest edge |
+| `CONTRAST_THRESHOLD` | **{contrast}** | {args.percentile}th percentile of foreground std |
 
 **Declared percentile:** {args.percentile}% — {rationale}
 
@@ -155,10 +171,10 @@ partition is excluded: choosing an operating point on it would leak it.
 carries the full percentile table for both metrics, so this value can be
 checked against the data it came from.
 
-**Previous values:** `LAPLACIAN_BLUR_THRESHOLD` was {old_blur} and
-`MIN_IMAGE_DIMENSION` was {old_dim}. Both were chosen a priori and were never
-measured against this corpus; the blur threshold rejected 10 of 10 genuine
-held-out images.
+**Previous values:** `LAPLACIAN_BLUR_THRESHOLD` {old_blur}, `MIN_IMAGE_DIMENSION`
+{old_dim}, `CONTRAST_THRESHOLD` {old_contrast}. All three were chosen a priori and
+never measured against this corpus. The blur threshold rejected 10 of 10 genuine
+held-out images; with it corrected, the contrast threshold still rejected 5 of 10.
 
 *Applied {date.today().isoformat()} by `apply_validation_thresholds.py`.*
 """
