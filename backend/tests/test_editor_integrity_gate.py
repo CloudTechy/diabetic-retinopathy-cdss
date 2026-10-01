@@ -1491,3 +1491,59 @@ def test_the_handover_refuses_artefacts_older_than_the_run():
     assert "stale" in body.lower(), (
         "collect() has no stale category. An artefact that predates the run must "
         "be reported and withheld, not copied in beside the measured ones.")
+
+
+# ======================================================================
+# RULE GROUP P - an escape sequence that got written out as a control code
+#
+# A patch written with a non-raw Python string turned "\times" into TAB +
+# "imes" and "\text{" into TAB + "ext{", so two documents rendered as
+#
+#     operating on a fixed $224     imes 224$
+#     the metric is $r_{    ext{mean}} / (b_{    ext{mean}} + 10^{-6})$
+#
+# and sat there through a merge. Markdown prose in this project has no
+# legitimate use for a literal tab, so one is a reliable signature of exactly
+# this mistake - cheap to detect, and invisible to a reader skimming rendered
+# output where the tab collapses to a space.
+# ======================================================================
+
+CONTROL_CHARACTERS = {
+    "\t": r"a tab, usually a flattened \t from a non-raw string (e.g. \times)",
+    "\x08": r"a backspace, usually a flattened \b",
+    "\x0c": r"a form feed, usually a flattened \f",
+    "\x0b": r"a vertical tab, usually a flattened \v",
+    "\r": "a carriage return inside a line",
+}
+
+
+def test_no_document_contains_a_flattened_escape_sequence():
+    """
+    LaTeX in these documents is written with backslash escapes. Patching them
+    through a non-raw string silently converts the escape into the control
+    character it names, and the damage survives review because a tab renders as
+    whitespace.
+    """
+    offenders = []
+    for root, _dirs, names in os.walk(os.path.join(REPO_ROOT, "docs")):
+        for name in sorted(names):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(root, name)
+            rel = os.path.relpath(path, REPO_ROOT)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+            # Normalise real line endings first; only in-line CRs are suspect.
+            text = text.replace("\r\n", "\n")
+            for lineno, line in enumerate(text.split("\n"), 1):
+                for char, why in CONTROL_CHARACTERS.items():
+                    if char in line:
+                        context = line.replace(char, "<<HERE>>").strip()[:90]
+                        offenders.append(f"{rel}:{lineno} contains {why}\n"
+                                         f"      {context}")
+
+    assert not offenders, (
+        "A document contains a control character where an escape sequence was "
+        "intended:\n  " + "\n  ".join(offenders)
+        + "\n\nWrite the patch with a RAW string (r\"\\times\") or a written .py "
+          "file - a heredoc and a plain Python string both flatten these.")
