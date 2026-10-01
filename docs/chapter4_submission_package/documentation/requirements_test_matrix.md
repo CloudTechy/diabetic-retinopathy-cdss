@@ -32,16 +32,29 @@
 
 | Req ID | Requirement Description | Target Constraint | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_cpu_end_to_end.py` (Mean **254.31 ms**, P95 **447.95 ms**) | **PASS on the mean; the P95 exceeds the budget** — see note |
+| **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_cpu_end_to_end.py` (Mean **180.41 ms**, P95 **342.49 ms**) | **PASS as written; NOT robustly met at the tail** — see note |
 
-> [!NOTE]
-> **NFR-01 is specified on the mean, and that is a weakness in the requirement.**
-> The mean end-to-end latency is 254.31 ms against the 350 ms budget, so the
-> requirement passes as written. The 95th percentile is **447.95 ms**, so roughly
-> one request in twenty exceeds the budget. The tail is driven by input
-> resolution in `gate2`, not by the model
-> ([`resource_benchmark.md`](resource_benchmark.md) §2). Recorded here rather
-> than resolved by restating the requirement around the figure that passes.
+> [!CAUTION]
+> **NFR-01 is specified on the mean, and the tail is not reproducible.**
+>
+> Three runs of the same harness over the same 30 images exist
+> ([`resource_benchmark.md`](resource_benchmark.md) §1b). Against the 350 ms
+> budget:
+>
+> | Run | Mean | Verdict | P95 | Verdict |
+> | :--- | ---: | :--- | ---: | :--- |
+> | A (2026-09-29) | 212.54 ms | PASS | 373.39 ms | **breach** |
+> | B (2026-10-01) | 254.31 ms | PASS | 447.95 ms | **breach** |
+> | C (2026-10-01, cited) | 180.41 ms | PASS | 342.49 ms | pass |
+>
+> The **mean passes in every run**. The **P95 breaches in two of three**, and
+> runs B and C differ only in which machine Colab allocated — identical code,
+> thresholds, images and run count, 1.41× apart in absolute time.
+>
+> So the requirement passes as written, and the tail it does not examine lands
+> on either side of the budget depending on hardware. Quoting only run C would
+> be choosing the flattering number. The tail is input resolution in `gate2`,
+> not the model.
 | **NFR-02** | **Memory Footprint:** Peak backend memory usage under load. | $< 512.0$ MB RSS | `backend/scripts/benchmark_resources.py` (Peak 328.8 MB) | **PASS** |
 | **NFR-03** | **Weights Storage:** Compressed checkpoint disk footprint. | $< 50.0$ MB | `backend/models/weights/efficientnet_b0_dr.pth` (15.6 MB) | **PASS** |
 | **NFR-04** | **Parameter Efficiency:** Total neural network parameter count. | $\approx 4.01$ M | Parameter inspection: exactly 4,013,953 parameters | **PASS** |
