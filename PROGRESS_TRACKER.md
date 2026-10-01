@@ -82,11 +82,11 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 - **Grad-CAM target layer:** `features.8` (1,280-channel final conv).
 - **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
 - **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
-- **End-to-end CPU latency:** mean **212.54 ms**, median 179.68 ms, P95 **373.39 ms** over 30 held-out images (4-thread x86_64, no GPU).
-- **vs the 315.25 ms pre-optimisation baseline:** raw 1.91×, but the two runs were on different Colab CPUs — unchanged-code stages were themselves 1.14–1.40× faster. Attributable improvement is **~1.4–1.7×**. Immune to that caveat: validation fell from **59.1% to 43.9%** of the request.
-- **Where it goes:** validation gates 2+3 = **72.42 ms (43.9%)**; PNG encode = 30.18 ms (18.3%); model forward pass = 29.24 ms (17.7%). Inference is not the bottleneck.
+- **End-to-end CPU latency:** mean **254.31 ms**, median 213.30 ms, P95 **447.95 ms** over 30 held-out images (4-thread x86_64, no GPU), measured at the calibrated admission thresholds. NFR-01's 350 ms budget passes on the mean; the **P95 does not**, and the requirement is written on the mean alone.
+- **vs the 315.25 ms pre-optimisation baseline:** that comparison is between the two 2026-09-29 runs (315.25 → 212.54 ms), raw 1.91×, but they were on different Colab CPUs — unchanged-code stages were themselves 1.14–1.40× faster. Attributable improvement is **~1.4–1.7×**. Immune to that caveat because it is internal to one run: validation fell from **59.1% to ~42%** of the request.
+- **Where it goes:** validation gates 2+3 = **106.55 ms (41.9%)**; PNG encode = 43.84 ms (17.2%); model forward pass = 36.39 ms (14.3%). Inference is not the bottleneck.
 - **Grad-CAM composition:** vectorised, **307.87 → 28.86 ms** (10.7x), byte-identical output.
-- **Validation gates:** statistics on a nearest-neighbour subsample. In the deployment benchmark gates 2+3 went **186.42 → 72.42 ms**. **Verified on all 3,662 real APTOS images: zero verdict changes, Laplacian deviation exactly 0.0.**
+- **Validation gates:** statistics on a nearest-neighbour subsample. In the 2026-09-29 deployment benchmark gates 2+3 went **186.42 → 72.42 ms**. Decision preservation was verified on all 3,662 real APTOS images with **zero** verdict changes **at the uncalibrated thresholds, which rejected every genuine image** — so most comparisons never reached the contrast check. Re-run after calibration: **1 changed verdict in 3,662 (0.027%)**, on an image sitting on the cut-point. Two defects in the checker itself were found and fixed (stale hardcoded thresholds; deviations measured on display-rounded values). A corpus re-run with the corrected checker is outstanding.
 - **GPU reference:** 8.34 ms Tesla T4 forward pass — training-environment comparison only, not a deployment figure.
 
 ---

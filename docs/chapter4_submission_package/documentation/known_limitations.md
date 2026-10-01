@@ -142,38 +142,52 @@ clinician could adjudicate them and restore them to a future split.
 
 ## 7. Input handling, not inference, dominates response time
 
-End-to-end CPU latency is **212.54 ms mean / 179.68 ms median / 373.39 ms P95**
+End-to-end CPU latency is **254.31 ms mean / 213.30 ms median / 447.95 ms P95**
 over 30 held-out images on a 4-thread x86_64 CPU
 ([`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json)). All figures
-in this section come from that single post-optimisation run.
+in this section come from that single run, measured once the admission
+thresholds were calibrated so every image executes the full path.
+
+**The tail is the part worth stating.** NFR-01 sets a 350 ms CPU budget and is
+specified on the mean, which passes. The P95 is **447.95 ms** and does not. One
+request in twenty therefore exceeds the stated budget, and the requirement as
+written cannot see that, because it examines only the average.
 
 The structure of the number is the limitation worth stating:
 
 | Stage | Mean (ms) | Share |
 | :--- | ---: | ---: |
-| `gate2` (aperture & relevance) | 71.11 | 33.5% |
-| `encode` (PNG serialisation of the overlay) | 39.83 | 18.7% |
-| `forward` (the model itself) | 33.82 | **15.9%** |
-| `gate3` (quality) | 23.41 | 11.0% |
-| `compose` (Grad-CAM overlay) | 22.86 | 10.8% |
-| `preprocess` | 13.12 | 6.2% |
-| `gate1`, `gradcam`, `read` | 7.17 | 3.3% |
+| `gate2` (aperture & relevance) | 78.23 | 30.8% |
+| `encode` (PNG serialisation of the overlay) | 43.84 | 17.2% |
+| `forward` (the model itself) | 36.39 | **14.3%** |
+| `compose` (Grad-CAM overlay) | 31.17 | 12.3% |
+| `gate3` (quality) | 28.33 | 11.1% |
+| `preprocess` | 14.44 | 5.7% |
+| `read`, `gate1`, `gradcam` | 20.33 | 8.0% |
 
-The model forward pass is **15.9%** of the request. Validation gates 2 and 3
-together cost **94.52 ms (44.5%)** — already reduced by computing their
-distribution statistics on a nearest-neighbour subsample, a change verified
-decision-preserving across all 3,662 APTOS images. Serialising the Grad-CAM PNG
-costs more than inference.
+The model forward pass is **14.3%** of the request. Validation gates 2 and 3
+together cost **106.55 ms (41.9%)** — already reduced by computing their
+distribution statistics on a nearest-neighbour subsample. Serialising the
+Grad-CAM PNG costs more than inference.
+
+The decision-preservation evidence for that subsampling is restated in
+[`resource_benchmark.md`](resource_benchmark.md) §3.3: at the calibrated
+thresholds the last corpus run found **one** verdict change in 3,662 images, on
+an image sitting on the cut-point, and the checker that produced it was itself
+reporting against stale hardcoded thresholds. A re-run with the corrected
+checker is outstanding.
 
 Two consequences:
 
 1. **Latency scales with input resolution, not with disease severity.** `gate2`
-   runs a **42.05 ms median against a 182.37 ms P95** — a 4.3× range across
+   runs a **46.16 ms median against a 202.76 ms P95** — a 4.4× range across
    APTOS's varied image dimensions — because the reduction step must still read
    every source pixel. The model stages, operating on a fixed $224 	imes 224$
-   tensor, are stable by comparison: `forward` spans 28.64–42.77 ms across all
+   tensor, are stable by comparison: `forward` spans 32.29–50.50 ms across all
    30 requests. A site with higher-resolution cameras will see proportionally
-   slower responses with no change in classification behaviour.
+   slower responses with no change in classification behaviour. This is also
+   where the P95 breach above comes from: the tail is resolution, not the
+   model.
 
 2. **Further reducible cost is identified but not removed.** Gates 1, 2 and 3
    each convert the full-resolution image independently. Decoding once and
