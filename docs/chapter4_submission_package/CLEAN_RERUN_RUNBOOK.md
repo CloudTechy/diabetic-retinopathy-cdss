@@ -202,24 +202,98 @@ Four.
 
 ---
 
-## Outstanding after the clean rerun: calibrate the Gate 3 blur threshold
+## Outstanding: calibrate the two admission thresholds
 
-The retrain is complete. One blocking defect remains: `LAPLACIAN_BLUR_THRESHOLD`
-is 60.0, and genuine APTOS images score 5.7-22.0 on the path the gate measures,
-so the pipeline rejects 100% of real fundus photographs.
+The retrain is complete. Two Gate thresholds were chosen a priori and never
+measured against this corpus:
 
-Run this in a session that has the APTOS images (~5 min for the full corpus):
+| Setting | Value | What it does today |
+| :--- | ---: | :--- |
+| `LAPLACIAN_BLUR_THRESHOLD` | 60.0 | Rejects **10 of 10** genuine held-out images (they score 5.7 - 22.0) |
+| `MIN_IMAGE_DIMENSION` | 512 | Rejected 1 genuine held-out image |
+
+Both are settled by one corpus run. **No GPU, no retraining** - use a CPU
+runtime.
+
+### Cell 1 - Kaggle token
 
 ```python
+from google.colab import files
+import os
+uploaded = files.upload()                       # kaggle.json
+os.makedirs(os.path.expanduser("~/.kaggle"), exist_ok=True)
+with open(os.path.expanduser("~/.kaggle/kaggle.json"), "wb") as f:
+    f.write(uploaded["kaggle.json"])
+os.chmod(os.path.expanduser("~/.kaggle/kaggle.json"), 0o600)
+```
+
+### Cell 2 - fetch and measure (~12 min)
+
+```python
+%cd /content
+!rm -rf diabetic-retinopathy-cdss
+!git clone -q https://github.com/CloudTechy/diabetic-retinopathy-cdss.git
+%cd diabetic-retinopathy-cdss
+!pip install -q pydantic-settings
+
+!kaggle competitions download -c aptos2019-blindness-detection -p aptos2019
+!unzip -q aptos2019/aptos2019-blindness-detection.zip -d aptos2019
+!rm aptos2019/aptos2019-blindness-detection.zip
+
 !python backend/scripts/calibrate_blur_threshold.py aptos2019/train_images
 ```
 
-It prints the distribution and what each candidate threshold would reject, and
-writes `docs/chapter4/blur_threshold_calibration.json`. It deliberately does
-**not** set the value: choosing the operating point is a judgement, and a script
-that picked the number which made the tests pass would be fitting the threshold
-to the result.
+It measures the **training and validation partitions only** - the held-out test
+set is excluded, because choosing an operating point on it would leak it. It
+prints a percentile table for both metrics and writes
+`docs/chapter4/blur_threshold_calibration.json`.
 
-Then set `LAPLACIAN_BLUR_THRESHOLD` in `backend/app/core/config.py`, record the
-percentile and the distribution in `validation_module_spec.md`, and re-run
-`generate_validation_evidence.py` to confirm the ACCEPT cases are accepted.
+### Cell 3 - declare a percentile and regenerate
+
+Read the table from Cell 2, then:
+
+```python
+PERCENTILE = "1.0"     # admit the sharpest / largest 99% of the development corpus
+
+!python backend/scripts/apply_validation_thresholds.py --percentile $PERCENTILE
+!python backend/scripts/generate_validation_evidence.py aptos2019/train_images
+!python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
+!python backend/scripts/benchmark_cpu_end_to_end.py --images-dir aptos2019/train_images --checkpoint backend/models/weights/efficientnet_b0_dr.pth --runs 30
+```
+
+`PERCENTILE` is the decision, and it is the thing that gets written down. The
+script derives both thresholds from the measured distribution and records the
+percentile, the corpus size and the subset in `validation_module_spec.md`.
+
+Start at `1.0`. If Cell 3 still shows ACCEPT cases failing, **report that** -
+it is a finding about the corpus, not a reason to try percentiles until the
+output looks right.
+
+### Cell 4 - collect
+
+```python
+import shutil, os
+os.makedirs('handover2', exist_ok=True)
+for f in ['blur_threshold_calibration.json', 'validation_test_results.csv',
+          'gate_downsampling_verification.json',
+          'cpu_end_to_end_benchmark.json', 'cpu_end_to_end_benchmark.csv',
+          'validation_module_spec.md']:
+    p = os.path.join('docs/chapter4', f)
+    if os.path.exists(p): shutil.copy(p, 'handover2/')
+shutil.copy('backend/app/core/config.py', 'handover2/config.py')
+
+print(sorted(os.listdir('handover2')))
+shutil.make_archive('calibration_evidence', 'zip', 'handover2')
+
+from google.colab import files
+files.download('calibration_evidence.zip')
+```
+
+Expect **7 files**. If any are missing, say which.
+
+### What this unblocks
+
+Validation evidence regenerated (objective b), the end-to-end benchmark re-run
+against admitted images, and objective i able to claim a completed path from
+upload to classification. Screenshot recapture and a final QA pass follow.
+

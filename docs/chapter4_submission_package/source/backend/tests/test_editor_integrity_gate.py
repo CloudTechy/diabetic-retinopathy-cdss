@@ -980,3 +980,66 @@ def test_login_verifies_the_password_unconditionally():
 
     assert 'credentials.password != "' not in body, (
         "login() compares the password to a literal; use verify_password only")
+
+
+def test_any_committed_calibration_is_from_a_real_development_corpus():
+    """
+    A calibration in the evidence folder sets the thresholds the served system
+    admits images by. A fixture run once landed there during a smoke test, so
+    assert what it must be: measured, sizeable, and free of the test partition.
+    """
+    path = os.path.join(CHAPTER4, "blur_threshold_calibration.json")
+    if not os.path.exists(path):
+        pytest.skip("no calibration committed yet")
+
+    with open(path, encoding="utf-8") as fh:
+        cal = json.load(fh)
+
+    subset = str(cal.get("subset", ""))
+    assert "HELD-OUT" not in subset.upper(), (
+        "the calibration included the held-out test partition, which leaks it")
+    assert "train" in subset.lower(), (
+        f"calibration subset is {subset!r}; it must be the development partitions")
+
+    n = cal.get("images_measured", 0)
+    assert n >= 500, (
+        f"calibration measured only {n} images; a percentile over that few is "
+        f"not an estimate of the corpus")
+
+    corpus = str(cal.get("corpus", ""))
+    for marker in ("scratchpad", "smoke", "fixture", "tmp", "temp"):
+        assert marker not in corpus.lower(), (
+            f"calibration corpus path looks synthetic: {corpus}")
+
+
+def test_calibrated_thresholds_are_documented_where_they_are_claimed():
+    """
+    If the configured thresholds no longer match the uncalibrated defaults, the
+    spec must carry the derivation. A changed number with no recorded percentile
+    is how the original 60.0 came to exist.
+    """
+    spec_path = os.path.join(CHAPTER4, "validation_module_spec.md")
+    if not os.path.exists(spec_path):
+        pytest.skip("spec not present")
+    spec = read(spec_path)
+
+    uncalibrated = (settings.LAPLACIAN_BLUR_THRESHOLD == 60.0
+                    and settings.MIN_IMAGE_DIMENSION == 512)
+    if uncalibrated:
+        assert "not calibrated" in spec, (
+            "the thresholds are still the a priori defaults, so the spec must "
+            "say they are uncalibrated")
+        return
+
+    assert "### Calibrated admission thresholds" in spec, (
+        "the thresholds were changed from the defaults but the spec records no "
+        "derivation; run apply_validation_thresholds.py rather than editing "
+        "config.py by hand")
+    assert "Declared percentile:" in spec, (
+        "the spec records no declared percentile for the chosen thresholds")
+    assert str(settings.LAPLACIAN_BLUR_THRESHOLD) in spec, (
+        f"spec does not quote the configured blur threshold "
+        f"({settings.LAPLACIAN_BLUR_THRESHOLD})")
+    assert str(settings.MIN_IMAGE_DIMENSION) in spec, (
+        f"spec does not quote the configured minimum dimension "
+        f"({settings.MIN_IMAGE_DIMENSION})")

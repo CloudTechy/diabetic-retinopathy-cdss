@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-Measure the Laplacian-variance distribution over the real corpus so the Gate 3
-blur threshold can be chosen from evidence instead of guessed.
+Measure the Gate 1 and Gate 3 admission thresholds over the real corpus so they
+can be chosen from evidence instead of guessed.
+
+Covers both uncalibrated values:
+
+  LAPLACIAN_BLUR_THRESHOLD = 60.0   rejected 10/10 genuine held-out images
+  MIN_IMAGE_DIMENSION      = 512    rejected 1 genuine held-out image
 
 WHY THIS EXISTS
 
@@ -157,9 +162,12 @@ def main():
     print()
 
     values = []
+    short_edges = []
     for i, name in enumerate(names, 1):
         try:
             with Image.open(os.path.join(args.images_dir, name)) as im:
+                width, height = im.size
+                short_edges.append(min(width, height))
                 values.append(gate3_laplacian(im))
         except Exception as exc:                      # noqa: BLE001
             print(f"  [skip] {name}: {exc}")
@@ -195,6 +203,34 @@ def main():
         n = sum(1 for v in values if v < t)
         print(f"  {t:10.2f}  {n:9d}  {100*n/len(values):6.2f}%")
 
+    # ------------------------------------------------------------------
+    # Gate 1: minimum image dimension
+    # ------------------------------------------------------------------
+    short_edges.sort()
+    min_dim = settings.MIN_IMAGE_DIMENSION
+    too_small = sum(1 for e in short_edges if e < min_dim)
+    dim_pcts = {f"p{q}": int(percentile(short_edges, q))
+                for q in (0.1, 0.5, 1, 2, 5, 10, 50, 100)}
+
+    print()
+    print("=" * 74)
+    print("GATE 1 MINIMUM-DIMENSION CALIBRATION")
+    print("=" * 74)
+    print(f"Current MIN_IMAGE_DIMENSION: {min_dim}")
+    print(f"  shortest edge: min {min(short_edges)}   median "
+          f"{int(percentile(short_edges, 50))}   max {max(short_edges)}")
+    for k, v in dim_pcts.items():
+        print(f"    {k:>5}: {v:7d} px")
+    print()
+    print(f"At the CURRENT minimum of {min_dim} px: {too_small}/{len(short_edges)} "
+          f"({100*too_small/len(short_edges):.1f}%) of genuine images would be "
+          f"REJECTED before reaching the classifier.")
+    if too_small:
+        print("  The model was trained on these images after resizing to 224x224,")
+        print("  so rejecting them at the door contradicts the training set. Either")
+        print("  lower the minimum to admit them, or state why images the model was")
+        print("  fitted on must not be graded.")
+
     print()
     print("HOW TO CHOOSE")
     print("  The threshold's job is to reject images too blurred to grade, not to")
@@ -223,6 +259,15 @@ def main():
         "mean": round(statistics.mean(values), 3),
         "median": round(statistics.median(values), 3),
         "percentiles": pcts,
+        "min_image_dimension": {
+            "current_threshold": min_dim,
+            "rejected_at_current_threshold": too_small,
+            "rejected_share_at_current_threshold": round(too_small / len(short_edges), 4),
+            "shortest_edge_min": min(short_edges),
+            "shortest_edge_median": int(percentile(short_edges, 50)),
+            "shortest_edge_max": max(short_edges),
+            "percentiles": dim_pcts,
+        },
         "note": ("Measurement only. The threshold is not written to configuration "
                  "by this script; the operating point is a judgement that must be "
                  "made and justified explicitly."),

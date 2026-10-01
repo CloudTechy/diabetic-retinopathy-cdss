@@ -90,6 +90,7 @@ LAYOUT = [
     ("docs/chapter4/requirements_test_matrix.md", "documentation/requirements_test_matrix.md"),
     ("docs/chapter4/implementation_status.md", "documentation/implementation_status.md"),
     ("docs/chapter4/dataset_split_audit.json", "logs_and_metrics/dataset_split_audit.json"),
+    ("docs/chapter4/blur_threshold_calibration.json", "logs_and_metrics/blur_threshold_calibration.json"),
     ("docs/chapter4/test_execution_output.txt", "logs_and_metrics/test_execution_output.txt"),
     ("backend/scripts/build_clean_split.py", "scripts/build_clean_split.py"),
 
@@ -101,6 +102,7 @@ LAYOUT = [
     ("backend/scripts/verify_gate_downsampling.py", "scripts/verify_gate_downsampling.py"),
     ("backend/scripts/generate_validation_evidence.py", "scripts/generate_validation_evidence.py"),
     ("backend/scripts/calibrate_blur_threshold.py", "scripts/calibrate_blur_threshold.py"),
+    ("backend/scripts/apply_validation_thresholds.py", "scripts/apply_validation_thresholds.py"),
     ("backend/scripts/integrity_gate.py", "scripts/integrity_gate.py"),
     ("backend/tests/test_editor_integrity_gate.py", "scripts/test_editor_integrity_gate.py"),
     ("backend/tests/test_spec_doc_consistency.py", "scripts/test_spec_doc_consistency.py"),
@@ -118,6 +120,8 @@ PENDING_WITHOUT_DATASET = {
         "regenerate with: python scripts/verify_gate_downsampling.py <aptos>/train_images",
     "logs_and_metrics/dataset_split_audit.json":
         "regenerate with: python scripts/build_clean_split.py <aptos>/train_images",
+    "logs_and_metrics/blur_threshold_calibration.json":
+        "regenerate with: python scripts/calibrate_blur_threshold.py <aptos>/train_images",
 }
 
 SCREENSHOTS_SRC = os.path.join(CHAPTER4, "screenshots")
