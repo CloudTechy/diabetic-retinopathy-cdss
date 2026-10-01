@@ -32,7 +32,16 @@
 
 | Req ID | Requirement Description | Target Constraint | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_resources.py` (Mean 212.54 ms) | **PASS** |
+| **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_cpu_end_to_end.py` (Mean **254.31 ms**, P95 **447.95 ms**) | **PASS on the mean; the P95 exceeds the budget** — see note |
+
+> [!NOTE]
+> **NFR-01 is specified on the mean, and that is a weakness in the requirement.**
+> The mean end-to-end latency is 254.31 ms against the 350 ms budget, so the
+> requirement passes as written. The 95th percentile is **447.95 ms**, so roughly
+> one request in twenty exceeds the budget. The tail is driven by input
+> resolution in `gate2`, not by the model
+> ([`resource_benchmark.md`](resource_benchmark.md) §2). Recorded here rather
+> than resolved by restating the requirement around the figure that passes.
 | **NFR-02** | **Memory Footprint:** Peak backend memory usage under load. | $< 512.0$ MB RSS | `backend/scripts/benchmark_resources.py` (Peak 328.8 MB) | **PASS** |
 | **NFR-03** | **Weights Storage:** Compressed checkpoint disk footprint. | $< 50.0$ MB | `backend/models/weights/efficientnet_b0_dr.pth` (15.6 MB) | **PASS** |
 | **NFR-04** | **Parameter Efficiency:** Total neural network parameter count. | $\approx 4.01$ M | Parameter inspection: exactly 4,013,953 parameters | **PASS** |
