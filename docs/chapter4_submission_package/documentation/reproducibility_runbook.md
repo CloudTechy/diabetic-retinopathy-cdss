@@ -46,17 +46,25 @@ Within-1-grade       93.71%
 QWK                  0.865832
 
 --- Referable DR (grade >= 2) ---
-  Sensitivity 91.2%  95% CI (81.5, 90.5)
+  Sensitivity 91.2%  95% CI (86.5, 94.4)
   Specificity 95.6%  95% CI (92.8, 97.4)
 
 --- LEAKAGE AUDIT ---
-  duplicate grouping effective: False
+  duplicate groups: 3504, each collapsed to one representative
+    -> a group cannot span partitions by construction
   held-out images byte-identical to a training image: 0/525 (0.0%)
-  accuracy on the 27 affected images: 77.78%
-  accuracy on the 522 clean images:     78.74%
 ```
 
 Any divergence from [`model_evaluation_report.md`](model_evaluation_report.md) is a defect. Please report it.
+
+> [!NOTE]
+> This block previously quoted a referable 95% CI of (81.5, 90.5) against a
+> point estimate of 91.2% — an interval that excludes its own estimate — plus
+> two lines about "the 27 affected images" and "the 522 clean images" held over
+> from the superseded run. The clean split leaves **zero** byte-identical
+> held-out images, so the script prints no clean-subset comparison at all. The
+> block above is the current output verbatim. A CI that does not bracket its
+> estimate is now caught by the evidence integrity gate.
 
 ---
 

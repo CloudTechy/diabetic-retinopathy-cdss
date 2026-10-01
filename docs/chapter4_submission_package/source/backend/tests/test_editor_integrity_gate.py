@@ -1296,3 +1296,113 @@ def test_gates_publish_the_exact_value_behind_every_rounded_one():
         "\n  " + "\n  ".join(missing)
         + "\nPublish both: the rounded value for the report, the exact value "
           "for the decision record.")
+# RULE GROUP M - a quoted statistic must be internally coherent
+#
+# reproducibility_runbook.md quoted a referable sensitivity of 91.2% with a
+# 95% CI of (81.5, 90.5) - an interval that does not contain its own point
+# estimate, so at least one of the three numbers was wrong and no reader
+# could tell which. The same block carried two lines about "the 27 affected
+# images" that the script stopped printing when the clean split left zero.
+#
+# Neither error needs the corpus to catch. Both are arithmetic.
+# ======================================================================
+
+CI_PATTERN = re.compile(
+    r"(\d+\.\d+)\s*%?\s*(?:,|\s)?\s*95%\s*CI\s*[\(\[]?\s*"
+    r"(\d+\.\d+)\s*[-,]\s*(\d+\.\d+)")
+
+
+def _documentation_files():
+    """Every prose artefact, including the assembled submission package."""
+    for base in (os.path.join(REPO_ROOT, "docs"),):
+        for root, _dirs, names in os.walk(base):
+            for name in sorted(names):
+                if name.endswith(".md"):
+                    yield os.path.join(root, name)
+    tracker = os.path.join(REPO_ROOT, "PROGRESS_TRACKER.md")
+    if os.path.exists(tracker):
+        yield tracker
+
+
+def test_every_confidence_interval_contains_its_point_estimate():
+    """
+    A 95% CI that excludes the estimate it qualifies is not a tight interval or
+    a rounding artefact - it is a transcription error, and it discredits every
+    other figure beside it. This is pure arithmetic on the text, so there is no
+    excuse for it reaching a reader.
+    """
+    offenders = []
+    for path in _documentation_files():
+        rel = os.path.relpath(path, REPO_ROOT)
+        for lineno, line in enumerate(read(path).split("\n"), 1):
+            for match in CI_PATTERN.finditer(line):
+                estimate, low, high = (float(g) for g in match.groups())
+                if low > high:
+                    offenders.append(f"{rel}:{lineno} CI ({low}, {high}) is inverted")
+                elif not (low <= estimate <= high):
+                    offenders.append(
+                        f"{rel}:{lineno} estimate {estimate} lies outside "
+                        f"its own 95% CI ({low}, {high})")
+
+    assert not offenders, (
+        "A confidence interval does not contain the estimate it qualifies:\n  "
+        + "\n  ".join(offenders)
+        + "\nRecompute from clinical_metrics.json; do not adjust the interval "
+          "to fit the estimate.")
+
+
+def test_runbook_expected_output_matches_what_the_script_reports():
+    """
+    The reproducibility runbook says "Any divergence is a defect. Please report
+    it." It diverged from itself: the expected-output block quoted a
+    clean-subset comparison over "the 27 affected images" long after the clean
+    split had reduced that to zero, which the script therefore never prints.
+
+    Check the figures the block states against the recomputed metrics.
+    """
+    runbook = os.path.join(REPO_ROOT, "docs", "chapter4",
+                           "reproducibility_runbook.md")
+    metrics_path = os.path.join(REPO_ROOT, "docs", "chapter4",
+                               "clinical_metrics.json")
+    if not (os.path.exists(runbook) and os.path.exists(metrics_path)):
+        pytest.skip("runbook or recomputed metrics absent")
+
+    with open(metrics_path, encoding="utf-8") as fh:
+        metrics = json.load(fh)
+    leakage = metrics.get("leakage_audit") or {}
+    leaked = leakage.get("n_test_leaked")
+
+    text = read(runbook)
+    blocks = re.findall(r"```text\n(.*?)```", text, flags=re.DOTALL)
+    expected = "\n".join(b for b in blocks if "LEAKAGE AUDIT" in b)
+    assert expected, (
+        "reproducibility_runbook.md no longer shows an expected-output block "
+        "containing the leakage audit. It is the only place a reader can check "
+        "their own run against; restore it rather than removing it.")
+
+    problems = []
+
+    # A clean-subset comparison is printed only when something actually leaked.
+    quotes_clean_subset = ("affected images" in expected
+                           or "clean images" in expected)
+    if leaked == 0 and quotes_clean_subset:
+        problems.append(
+            "quotes a clean-subset comparison, but the audit reports 0 leaked "
+            "held-out images, so the script prints no such lines")
+    if leaked and not quotes_clean_subset:
+        problems.append(
+            f"omits the clean-subset comparison, but the audit reports "
+            f"{leaked} leaked held-out image(s), which the script does print")
+
+    # The cohort size and leak count must be the recomputed ones.
+    n_test = leakage.get("n_test")
+    if n_test and f"/{n_test} " not in expected and f"/{n_test}(" not in expected:
+        problems.append(f"does not show the audited cohort size of {n_test}")
+    if leaked is not None and f"{leaked}/{n_test}" not in expected:
+        problems.append(f"does not show the audited leak count {leaked}/{n_test}")
+
+    assert not problems, (
+        "The runbook's expected output does not match what the script reports:"
+        "\n  " + "\n  ".join(problems)
+        + "\nPaste the current output; a runbook promising output the script "
+          "never produces is worse than no runbook.")

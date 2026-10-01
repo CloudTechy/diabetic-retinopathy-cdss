@@ -206,13 +206,13 @@ Re-verified against the genuine APTOS 2019 run. Every figure below is recomputed
 
 ### Target 1: Dataset Split Manifest (`dataset_split_manifest.csv`)
 * **Findings:**
-  - 3,662 rows; split counts **Train 2,453 (70.0%) / Validation 550 (15.0%) / Held-Out Test 549 (15.0%)**.
-  - Held-out class distribution: Gr 0: 270; Gr 1: 55; Gr 2: 150; Gr 3: 29; Gr 4: 45.
+  - 3,504 rows; split counts **Train 2,453 (70.0%) / Validation 526 (15.0%) / Held-Out Test 525 (15.0%)**.
+  - Held-out class distribution: Gr 0: 270; Gr 1: 50; Gr 2: 139; Gr 3: 26; Gr 4: 40.
   - SHA-256 column contains genuine image-byte hashes (spot-verified against the source files).
   - Partition is **grade-stratified, not patient-level**. APTOS 2019 publishes no patient identifier, so patient-level isolation is not achievable on this dataset and is not claimed.
-  - **Disclosed defect:** duplicate grouping no-opped (3,662 groups for 3,662 images) because `duplicated_info.csv` ships with neither the competition download nor the repository. 27 of 525 held-out images (4.92%) are byte-identical to a training image.
-  - **Measured impact:** accuracy 77.78% on the 27 affected images vs **78.74%** on the clean 522; clean-subset $\kappa$ = 0.877818 vs full-cohort 0.865832. No reported metric is inflated.
-* **Determination:** ⚠️ **PASS WITH DISCLOSURE**
+  - **Byte-identical duplication resolved.** The split is now built by `build_clean_split.py`, which hashes every file, groups byte-identical images, excludes the 30 groups carrying conflicting labels, and keeps one representative per remaining group — 158 records removed from 3,662. Every one of the 3,504 groups therefore holds exactly one row, so a group cannot span partitions by construction. Measured: **0 of 525** held-out images are byte-identical to a training image (previously 27, 4.92%), and the builder raises `SystemExit` on any hash overlap.
+  - **What this changed, and what it did not.** The earlier disclosure argued the leakage was immaterial because clean-subset $\kappa$ (0.877818) was close to the full-cohort figure (0.865832). That argument addressed test contamination only. It did not address validation contamination, which affects which checkpoint was selected, nor the 30 conflicting-label groups, which fed contradictory supervision into training. Both are removed here, and the model was retrained from scratch on the clean split rather than re-scored.
+* **Determination:** ✅ **PASS**
 
 ### Target 2: Trained Checkpoint (`efficientnet_b0_dr.pth`)
 * **Findings:**
