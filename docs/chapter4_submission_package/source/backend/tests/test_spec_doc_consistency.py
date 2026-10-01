@@ -73,7 +73,7 @@ def test_laplacian_threshold_is_quoted_consistently():
     Gate 3 rejects below LAPLACIAN_BLUR_THRESHOLD. No document may quote a
     different sharpness threshold.
     """
-    expected = settings.LAPLACIAN_BLUR_THRESHOLD  # 60.0
+    expected = settings.LAPLACIAN_BLUR_THRESHOLD  # 4.3, calibrated
     offenders = []
 
     for rel, text in iter_markdown(include_correction_records=False):
@@ -96,8 +96,9 @@ def test_laplacian_threshold_is_quoted_consistently():
 @pytest.mark.parametrize(
     "setting_name,expected",
     [("RETINAL_RED_RATIO_MIN", 1.15), ("RETINAL_MIN_COVERAGE", 0.20),
-     ("RETINAL_MAX_COVERAGE", 0.98), ("CONTRAST_THRESHOLD", 18.0),
-     ("ILLUMINATION_EXTREME_RATIO_MAX", 0.35), ("LAPLACIAN_BLUR_THRESHOLD", 60.0)],
+     ("RETINAL_MAX_COVERAGE", 0.98), ("CONTRAST_THRESHOLD", 8.8),
+     ("ILLUMINATION_EXTREME_RATIO_MAX", 0.35), ("LAPLACIAN_BLUR_THRESHOLD", 4.3),
+     ("MIN_IMAGE_DIMENSION", 480)],
 )
 def test_config_values_are_what_the_documents_describe(setting_name, expected):
     """

@@ -9,13 +9,16 @@
 
 ---
 
-## 1. BLOCKING: the validation pipeline rejects every genuine image
+## 1. RESOLVED: three admission thresholds were never calibrated
 
-> [!CAUTION]
-> This is a defect in the shipped configuration, not a property of the data.
+> [!NOTE]
+> **Closed 2026-10-01.** All 10 unmodified held-out images are now ACCEPTED and
+> all 6 derived negatives REJECTED, each for the reason its derivation predicts
+> ([`validation_test_results.csv`](validation_test_results.csv)). The record
+> below is kept because the defect was real and shipped, and because the reason
+> it went unnoticed matters more than the fix.
 
-The first genuine run of the image-validation pipeline
-([`validation_test_results.csv`](validation_test_results.csv)) rejected
+The first genuine run of the image-validation pipeline rejected
 **10 of 10 unmodified held-out APTOS images**. Nine failed Gate 3 with
 `ERR_MOTION_OR_DEFOCUS_BLUR`; one failed Gate 1 on resolution.
 
@@ -48,11 +51,34 @@ non-image bytes) were rejected for the right reason, and the deliberately
 blurred image scored 0.9 against 5.7–22.0 for unmodified ones. The ordering is
 sound; the cut-point is in the wrong place.
 
-**Required correction.** `LAPLACIAN_BLUR_THRESHOLD` must be calibrated from the
-distribution of Laplacian variance over the real corpus rather than chosen a
-priori, and the chosen percentile documented. That calibration needs the APTOS
-images and has not been run. **Objective b cannot be claimed as met until it
-is.**
+**It was not one threshold but three.** Correcting the blur cut-point left five
+of ten genuine images still rejected, all on `ERR_LOW_CONTRAST`. Measured over
+the 2,979 development images:
+
+| Setting | A priori | Calibrated (1st percentile) | Genuine images the a priori value rejected |
+| :--- | ---: | ---: | ---: |
+| `LAPLACIAN_BLUR_THRESHOLD` | 60.0 | **4.3** | 2,963 / 2,979 — **99.5%** |
+| `CONTRAST_THRESHOLD` | 18.0 | **8.8** | 1,890 / 2,979 — **63.4%** |
+| `MIN_IMAGE_DIMENSION` | 512 | **480** | 38 / 2,979 — 1.3% |
+
+Each is the 1st percentile of its own distribution, measured over the
+**training and validation partitions only** — choosing an operating point on the
+held-out test set would leak it, and
+[`calibrate_blur_threshold.py`](../../backend/scripts/calibrate_blur_threshold.py)
+refuses a calibration that includes it. The percentile is the declared
+judgement and is recorded with the distribution it came from in
+[`validation_module_spec.md`](validation_module_spec.md).
+
+`MIN_IMAGE_DIMENSION` deserves its own note: at 512 it refused images the model
+was **trained on** after resizing to 224×224. A gate that rejects its own
+training distribution is incoherent regardless of how few images it touches.
+
+**What remains a limitation.** The thresholds admit 99% of *this* corpus by
+construction. They are not a clinical quality standard, and a site with
+different cameras would need to recalibrate. The gates establish that an image
+is gradeable by this system, not that it is diagnostically adequate.
+
+**Objective b is met.** All 16 declared cases behave as declared.
 
 ## 2. Proliferative DR (Grade 4) is the weakest class — 55.0% sensitivity
 
@@ -217,7 +243,7 @@ faster, but none was benchmarked, so no figure for one is offered.
 ## 10. Image quality dependency
 
 - In non-mydriatic screening, small pupils, patient fatigue and lens opacity produce vignetting and illumination loss.
-- **Gate 3 safeguard:** the pipeline enforces Laplacian blur variance $\ge 60.0$ and bounded illumination. Images violating these thresholds are rejected before inference rather than graded unreliably — the system declines rather than guesses.
+- **Gate 3 safeguard:** the pipeline enforces Laplacian blur variance $\ge 4.3$ and bounded illumination. Images violating these thresholds are rejected before inference rather than graded unreliably — the system declines rather than guesses.
 
 ---
 

@@ -1,0 +1,75 @@
+{
+  "corpus": "aptos2019/train_images",
+  "subset": "train+val (development)",
+  "manifest": "/content/diabetic-retinopathy-cdss/docs/chapter4/dataset_split_manifest.csv",
+  "images_measured": 2979,
+  "sampled": false,
+  "current_threshold": 60.0,
+  "rejected_at_current_threshold": 2963,
+  "rejected_share_at_current_threshold": 0.9946,
+  "min": 3.233,
+  "max": 121.146,
+  "mean": 18.158,
+  "median": 17.041,
+  "percentiles": {
+    "p0.1": 3.769,
+    "p0.5": 4.08,
+    "p1": 4.292,
+    "p2": 4.615,
+    "p5": 5.431,
+    "p10": 7.178,
+    "p25": 11.948,
+    "p50": 17.041,
+    "p75": 23.215,
+    "p90": 27.091,
+    "p99": 50.71
+  },
+  "contrast": {
+    "current_threshold": 18.0,
+    "rejected_at_current_threshold": 1890,
+    "rejected_share_at_current_threshold": 0.6344,
+    "min": 6.621,
+    "median": 16.383,
+    "max": 55.606,
+    "percentiles": {
+      "p0.1": 7.101,
+      "p0.5": 8.217,
+      "p1": 8.828,
+      "p2": 9.4,
+      "p5": 10.369,
+      "p10": 11.505,
+      "p25": 13.657,
+      "p50": 16.383,
+      "p75": 19.567,
+      "p90": 23.975,
+      "p99": 36.009
+    },
+    "crowding_within_half_unit": {
+      "p0.1": 10,
+      "p0.5": 16,
+      "p1": 35,
+      "p2": 69,
+      "p5": 112,
+      "p10": 161
+    }
+  },
+  "min_image_dimension": {
+    "current_threshold": 512,
+    "rejected_at_current_threshold": 38,
+    "rejected_share_at_current_threshold": 0.0128,
+    "shortest_edge_min": 358,
+    "shortest_edge_median": 1536,
+    "shortest_edge_max": 2848,
+    "percentiles": {
+      "p0.1": 480,
+      "p0.5": 480,
+      "p1": 480,
+      "p2": 614,
+      "p5": 614,
+      "p10": 1000,
+      "p50": 1536,
+      "p100": 2848
+    }
+  },
+  "note": "Measurement only. The threshold is not written to configuration by this script; the operating point is a judgement that must be made and justified explicitly."
+}

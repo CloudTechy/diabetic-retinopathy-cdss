@@ -55,9 +55,9 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_BYTES: int = 15 * 1024 * 1024  # 15 MB per Gate 1 spec
 
     # Technical Validation Thresholds
-    MIN_IMAGE_DIMENSION: int = 512
-    LAPLACIAN_BLUR_THRESHOLD: float = 60.0
-    CONTRAST_THRESHOLD: float = 18.0
+    MIN_IMAGE_DIMENSION: int = 480
+    LAPLACIAN_BLUR_THRESHOLD: float = 4.3
+    CONTRAST_THRESHOLD: float = 8.8
     ILLUMINATION_EXTREME_RATIO_MAX: float = 0.35
     RETINAL_MIN_COVERAGE: float = 0.20
     RETINAL_MAX_COVERAGE: float = 0.98

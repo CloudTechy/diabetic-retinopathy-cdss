@@ -43,7 +43,7 @@ python -m pytest backend/tests/ -v
 #### Key Automated Invariants Verified:
 - **Gate 1 (File Integrity):** Validates magic bytes for authentic JPEG/PNG; strictly rejects zero-byte payloads, corrupt signatures, and files exceeding 15.0 MB.
 - **Gate 2 (Retinal Field Relevance):** Enforces ophthalmic aperture aspect ratio ($0.65 - 1.65$), dark corner boundary check, and chromatic red/blue spectral ratio ($R/B > 1.15$). Rejects documents, portraits, and radiographs.
-- **Gate 3 (Technical Image Quality):** Convolves discrete Laplacian operator ($3 \times 3$) to quantify blur variance ($\sigma_L^2 \ge 60.0$) and measures normalized luminance ($0.20 \le \bar{Y} \le 0.85$).
+- **Gate 3 (Technical Image Quality):** Convolves discrete Laplacian operator ($3 \times 3$) to quantify blur variance ($\sigma_L^2 \ge 4.3$) and measures normalized luminance ($0.20 \le \bar{Y} \le 0.85$).
 - **Fail-Closed Safety Invariant:** Failure at any gate permanently prohibits model tensor execution and locks the encounter in `rejected` status.
 - **Clinician-in-the-Loop Governance:** AI model observations and human clinician certifications reside in distinct, decoupled database entities; completed clinician reviews are cryptographically sealed and immutable.
 
@@ -143,7 +143,7 @@ flowchart TD
    - Watch the sequential validation progress stepper:
      - **Gate 1: File Integrity & MIME:** Verifies magic bytes, file size, and computes SHA-256 hash.
      - **Gate 2: Retinal Field Relevance:** Validates circular aperture aspect ratio ($0.65 - 1.65$) and spectral ratio ($R/B > 1.15$).
-     - **Gate 3: Technical Quality:** Convolves Laplacian operator to calculate focus variance ($\sigma_L^2 \ge 60.0$) and illumination index ($0.20 - 0.85$).
+     - **Gate 3: Technical Quality:** Convolves Laplacian operator to calculate focus variance ($\sigma_L^2 \ge 4.3$) and illumination index ($0.20 - 0.85$).
    - **Result:** Status displays `All 3 Quality Gates Passed — Proceeding to Automated Inference`.
 2. **Negative Path (Fail-Closed Rejection Lock):**
    - Upload a non-retinal image (e.g., a system architecture diagram or document) or a severely blurred photo.
