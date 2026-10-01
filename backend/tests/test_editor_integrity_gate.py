@@ -855,3 +855,128 @@ def test_validation_gate_failures_are_declared_as_a_defect():
         f"not mark objective b as a defect:\n  {objective_b.strip()}")
     assert "BLOCKING" in read(os.path.join(CHAPTER4, "known_limitations.md")), (
         "known_limitations.md must carry the blocking defect section")
+
+
+# =====================================================================
+# K. The served system must not fabricate, and must not be steerable
+#
+# Three defects found in release QA, all in the LIVE application rather
+# than the evidence: a client could choose the displayed grade, a failed
+# Grad-CAM was replaced by a synthetic overlay with hard-coded scores,
+# and clinical routes served anonymous callers an authenticated session.
+# =====================================================================
+
+AI_SERVICE = os.path.join(REPO_ROOT, "backend", "app", "services", "ai_service.py")
+
+
+def _real_inference_source():
+    """The body of EfficientNetB0InferenceService only, excluding the mock."""
+    text = read(AI_SERVICE)
+    start = text.index("class EfficientNetB0InferenceService")
+    end = text.find("\ndef get_ai_inference_service", start)
+    return text[start:end if end != -1 else len(text)]
+
+
+def test_real_engine_never_substitutes_a_synthetic_attribution():
+    """
+    The real service called create_mock_gradcam_heatmap on an empty CAM and in
+    its exception handler, so a failed attribution was shown as a real one.
+    """
+    body = _real_inference_source()
+    offenders = [f"line {i}" for i, line in enumerate(body.split("\n"), 1)
+                 if "create_mock_gradcam_heatmap" in line
+                 and not line.lstrip().startswith("#")]
+    assert not offenders, (
+        "EfficientNetB0InferenceService renders a synthetic Grad-CAM: "
+        + ", ".join(offenders) +
+        ". A failed explanation must be reported as unavailable, not invented.")
+
+
+def test_real_engine_never_substitutes_demonstration_scores():
+    """
+    Its exception handler assigned scores = [0.04, 0.12, 0.78, 0.05, 0.01] and
+    returned them as the model's class distribution.
+    """
+    import re as _re
+    body = _real_inference_source()
+    offenders = []
+    for i, line in enumerate(body.split("\n"), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        # A literal 5-element float list assigned to a scores-like name.
+        if _re.search(r"\b(scores|probs|class_scores)\b\s*=\s*\[\s*0?\.\d", line):
+            offenders.append(f"line {i}: {line.strip()[:70]}")
+    assert not offenders, (
+        "EfficientNetB0InferenceService assigns literal class scores:\n  "
+        + "\n  ".join(offenders) +
+        "\nModel scores must come from the model.")
+
+
+def test_a_request_cannot_choose_the_grade_the_real_engine_reports():
+    """
+    `grade = candidate_grade` let the caller pick the displayed class. The
+    parameter may survive for interface compatibility, but must not reach the
+    grade.
+    """
+    import re as _re
+    body = _real_inference_source()
+    offenders = [f"line {i}: {line.strip()[:70]}"
+                 for i, line in enumerate(body.split("\n"), 1)
+                 if not line.lstrip().startswith("#")
+                 and _re.search(r"^\s*grade\s*=\s*candidate_grade", line)]
+    assert not offenders, (
+        "The real engine assigns the grade from the request:\n  "
+        + "\n  ".join(offenders))
+    assert "torch.argmax" in body, (
+        "The real engine must derive the grade from the model's argmax")
+
+
+def test_clinical_routes_use_strict_authentication():
+    """
+    assessments.py imported get_optional_current_user AS get_current_user, and
+    that dependency returned the seeded demonstration account when no token was
+    supplied - so every route served an authenticated session to anyone.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "app", "routers", "assessments.py")
+    for line in read(path).split("\n"):
+        if line.lstrip().startswith("#"):
+            continue
+        assert "get_optional_current_user" not in line, (
+            f"assessments.py uses the optional auth dependency: {line.strip()[:80]}")
+
+
+def test_optional_auth_does_not_fabricate_a_session():
+    """It returned the seed user for anonymous callers; it must return None."""
+    path = os.path.join(REPO_ROOT, "backend", "app", "routers", "auth.py")
+    text = read(path)
+    body = text[text.index("async def get_optional_current_user"):]
+    body = body[:body.index("\n@router")]
+    assert "return await get_or_create_seed_user" not in body, (
+        "get_optional_current_user materialises an account for anonymous "
+        "callers; it must return None")
+
+
+def test_login_verifies_the_password_unconditionally():
+    """
+    The verify_password call sat inside `if not user:`, so an account that
+    already existed authenticated with any password.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "app", "routers", "auth.py")
+    text = read(path)
+    body = text[text.index("async def login("):]
+    body = body[:body.index("\n@router")]
+
+    verify_lines = [(i, l) for i, l in enumerate(body.split("\n"), 1)
+                    if "verify_password(" in l and not l.lstrip().startswith("#")]
+    assert verify_lines, "login() never calls verify_password"
+
+    # The check must be at function-top-level indentation (4 spaces), i.e. not
+    # nested inside a conditional that some accounts can skip.
+    for _i, line in verify_lines:
+        indent = len(line) - len(line.lstrip())
+        assert indent <= 8, (
+            f"verify_password is nested {indent} spaces deep, so some accounts "
+            f"can bypass it: {line.strip()[:70]}")
+
+    assert 'credentials.password != "' not in body, (
+        "login() compares the password to a literal; use verify_password only")

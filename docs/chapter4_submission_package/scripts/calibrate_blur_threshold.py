@@ -24,6 +24,14 @@ and a script that silently picked the number that made the tests pass would be
 fitting the threshold to the result, which is the failure this whole exercise
 exists to prevent.
 
+DEVELOPMENT SUBSET ONLY
+
+The threshold is measured over the TRAINING and VALIDATION partitions, read
+from `docs/chapter4/dataset_split_manifest.csv`. The held-out test partition is
+excluded: choosing an operating point on the test set leaks it, for the same
+reason the split exists at all. Pass --allow-test-split only if you have a
+reason you are willing to write down.
+
 Pick a percentile, justify it in `validation_module_spec.md`, and set it by
 hand.
 
@@ -72,6 +80,10 @@ def main():
                         help="Where to write the report (default: the evidence folder)")
     parser.add_argument("--force", action="store_true",
                         help="Write to the evidence folder even from a small corpus")
+    parser.add_argument("--allow-test-split", action="store_true",
+                        help="Include held-out test images (leaks the test set)")
+    parser.add_argument("--manifest", default=None,
+                        help="Split manifest (default: docs/chapter4/dataset_split_manifest.csv)")
     args = parser.parse_args()
 
     import numpy as np
@@ -104,6 +116,34 @@ def main():
 
     names = sorted(n for n in os.listdir(args.images_dir)
                    if n.lower().endswith((".png", ".jpg", ".jpeg")))
+
+    # Restrict to the development subset (train + validation).
+    manifest = args.manifest or os.path.join(
+        REPO_ROOT, "docs", "chapter4", "dataset_split_manifest.csv")
+    split_of = {}
+    if os.path.exists(manifest):
+        import csv as _csv
+        with open(manifest, newline="", encoding="utf-8") as fh:
+            for row in _csv.DictReader(fh):
+                split_of[row["image_id"]] = row["split"]
+
+    if not split_of:
+        print("WARNING: no split manifest found. Measuring every image in the")
+        print("         directory, which may include the held-out test set.")
+    elif args.allow_test_split:
+        print("WARNING: --allow-test-split given. Held-out test images are")
+        print("         included; this leaks the test partition.")
+    else:
+        dev = {n for n in names if split_of.get(os.path.splitext(n)[0]) in ("train", "val")}
+        excluded = len(names) - len(dev)
+        names = sorted(dev)
+        print(f"Development subset: {len(names)} images (train + validation).")
+        print(f"Excluded:           {excluded} held-out test or unlisted images.")
+        if not names:
+            raise SystemExit(
+                "No training or validation images found. Check that the manifest "
+                "matches this image directory.")
+
     if args.sample and args.sample < len(names):
         random.Random(args.seed).shuffle(names)
         names = sorted(names[:args.sample])
@@ -170,6 +210,9 @@ def main():
 
     report = {
         "corpus": args.images_dir,
+        "subset": ("train+val (development)" if not args.allow_test_split
+                   else "ALL IMAGES INCLUDING HELD-OUT TEST"),
+        "manifest": manifest if os.path.exists(manifest) else None,
         "images_measured": len(values),
         "sampled": bool(args.sample),
         "current_threshold": current,

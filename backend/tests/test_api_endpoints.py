@@ -33,7 +33,8 @@ class TestAuthEndpoints:
 class TestAssessmentEndpoints:
     """Verifies assessment lifecycle and clinical API endpoints."""
 
-    def test_create_and_upload_assessment(self, test_client):
+    def test_create_and_upload_assessment(self, authed_client):
+        test_client = authed_client
         # 1. Create draft assessment
         create_res = test_client.post(
             "/api/v1/assessments",
@@ -120,7 +121,8 @@ class TestAssessmentEndpoints:
         assert alias_res.status_code == 200
         assert alias_res.content.startswith(b"%PDF-")
 
-    def test_direct_data_url_creation_with_gate_failure(self, test_client):
+    def test_direct_data_url_creation_with_gate_failure(self, authed_client):
+        test_client = authed_client
         """Verify POST /assessments with simulated Gate 2 rejection."""
         fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=True)
         raw_bytes = image_to_bytes(fundus_img, "JPEG")
@@ -143,7 +145,8 @@ class TestAssessmentEndpoints:
         assert data["validationGates"][1]["status"] == "failed"
         assert data["validationGates"][2]["status"] == "pending"
 
-    def test_review_friction_justification_rule(self, test_client):
+    def test_review_friction_justification_rule(self, authed_client):
+        test_client = authed_client
         """Clinical Governance Invariant: Overriding AI requires >= 15 char justification."""
         # Create and run valid assessment
         fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=True)

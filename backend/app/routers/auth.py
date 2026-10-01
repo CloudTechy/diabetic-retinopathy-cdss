@@ -26,6 +26,14 @@ DEFAULT_CLINICIAN_DATA = {
     "facility": "Research Prototype Environment",
 }
 
+# Usernames that may materialise the demonstration account on first login. They
+# get an account created for them; they do NOT get to skip password checking.
+DEMO_LOGIN_IDENTIFIERS = {
+    "demo.clinician",
+    "demo.clinician@research-prototype.invalid",
+    "clinician",
+}
+
 
 async def get_or_create_seed_user(db: AsyncSession) -> User:
     """Ensure a default credentialed clinician exists for medical session."""
@@ -90,8 +98,8 @@ async def get_current_user(
 async def get_optional_current_user(
     authorization: Optional[str] = Header(None),
     db: AsyncSession = Depends(get_db)
-) -> User:
-    """Optional user dependency for clinical workflow endpoints."""
+) -> Optional[User]:
+    """Resolve a user from a bearer token, or None. Never fabricates a session."""
     if authorization and authorization.startswith("Bearer "):
         token = authorization.split(" ")[1]
         payload = decode_access_token(token)
@@ -101,7 +109,13 @@ async def get_optional_current_user(
             user = res.scalar_one_or_none()
             if user and user.is_active:
                 return user
-    return await get_or_create_seed_user(db)
+    # No valid bearer token means no authenticated user.
+    #
+    # An earlier revision returned the seeded demonstration account here, so
+    # every endpoint depending on this function served an authenticated session
+    # to an anonymous caller. Returning None lets a route decide, and the
+    # clinical routes now use the strict dependency instead.
+    return None
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -113,18 +127,29 @@ async def login(credentials: LoginRequest, db: AsyncSession = Depends(get_db)):
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()
 
-    # Seed clinician fallback if credentials match default development credentials
-    if not user and (credentials.username in ("demo.clinician", "demo.clinician@research-prototype.invalid", "clinician")):
+    # The demonstration account is materialised on first use so the prototype
+    # can be opened without a separate migration step. It is created WITH a
+    # password hash and authenticates against it exactly like any other account.
+    if not user and credentials.username in DEMO_LOGIN_IDENTIFIERS:
         user = await get_or_create_seed_user(db)
 
-    if not user:
-        # Check if default seed user should be created
-        user = await get_or_create_seed_user(db)
-        if credentials.password != "dr_secure_password_2026" and not verify_password(credentials.password, user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid clinical credentials or unauthorized account.",
-            )
+    # The password is verified for every account, on every login.
+    #
+    # An earlier revision placed this check inside `if not user:`, so an account
+    # that already existed skipped it entirely and any password issued a token.
+    # Keep this unconditional: no username exemption, no plaintext comparison,
+    # no "development credentials" branch.
+    if user is None or not verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid clinical credentials or unauthorized account.",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is deactivated.",
+        )
 
     token = create_access_token(subject=user.id, extra_claims={"role": user.role, "name": user.full_name})
 

@@ -154,3 +154,28 @@ def test_client():
     with TestClient(app) as client:
         yield client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers(test_client):
+    """
+    Bearer header for an authenticated clinical session.
+
+    The clinical endpoints require a real token. They previously accepted
+    anonymous callers because the dependency returned the seeded demonstration
+    account when no token was supplied, so tests passed without authenticating
+    and the protection was never exercised.
+    """
+    res = test_client.post("/api/v1/auth/login", json={
+        "username": "demo.clinician",
+        "password": "dr_secure_password_2026",
+    })
+    assert res.status_code == 200, f"fixture login failed: {res.text}"
+    return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+
+@pytest.fixture
+def authed_client(test_client, auth_headers):
+    """A TestClient that sends the bearer token on every request."""
+    test_client.headers.update(auth_headers)
+    return test_client

@@ -77,7 +77,7 @@ The distinction here is **provenance**, not authenticity.
 | Script | Purpose |
 | :--- | :--- |
 | `scripts/integrity_gate.py` | Runs the integrity gate locally; `--install-hook` enforces it per commit |
-| `scripts/test_editor_integrity_gate.py` | 27 assertions encoding the QA review's requirements |
+| `scripts/test_editor_integrity_gate.py` | 59 assertions encoding the QA review's requirements |
 | `scripts/test_spec_doc_consistency.py` | Fails if a document quotes a threshold the code does not enforce |
 | `scripts/benchmark_resources.py` | Forward-pass-only benchmark; selects CUDA when present |
 | `dataset_sample_and_manifest/verify_manifest_hashes.py` | Checks manifest hashes against your own APTOS copy |

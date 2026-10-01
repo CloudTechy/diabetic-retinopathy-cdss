@@ -85,7 +85,7 @@ contain one.
 ## 3. Sub-pixel attenuation in Mild NPDR (Grade 1)
 
 ### Empirical finding
-Grade 1 sensitivity is **72.7%** (40 / 55). Only **3** Grade 1 cases were misclassified as Grade 0 — the clinically worst direction for this class. In those 3 cases the Grade 1 score was retained at 0.092, 0.206 and 0.298 respectively, in each case as the second-ranked class.
+Grade 1 sensitivity is **66.0%** (33 / 50). **5** Grade 1 cases were misclassified as Grade 0 — the clinically worst direction for this class. In those 3 cases the Grade 1 score was retained at 0.092, 0.206 and 0.298 respectively, in each case as the second-ranked class.
 
 The larger share of Grade 1 error (11 cases) is over-calling to Grade 2, which is the safe direction.
 

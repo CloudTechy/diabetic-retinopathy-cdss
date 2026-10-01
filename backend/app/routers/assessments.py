@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.models import User, Assessment
-from app.routers.auth import get_optional_current_user as get_current_user
+# Clinical endpoints require a real authenticated session.
+#
+# This module previously imported `get_optional_current_user` under the name
+# `get_current_user`, which returned the seeded demonstration account whenever
+# no bearer token was supplied - so every route below served an authenticated
+# session to an anonymous caller while appearing to be protected.
+from app.routers.auth import get_current_user
 from app.schemas.assessment import (
     AssessmentCreateRequest,
     AssessmentRecordResponse,
