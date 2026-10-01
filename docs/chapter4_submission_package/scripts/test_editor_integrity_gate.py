@@ -1406,3 +1406,88 @@ def test_runbook_expected_output_matches_what_the_script_reports():
         "\n  " + "\n  ".join(problems)
         + "\nPaste the current output; a runbook promising output the script "
           "never produces is worse than no runbook.")
+
+
+# ======================================================================
+# RULE GROUP O - a handover may only carry what the run measured
+#
+# run_calibration_pipeline.py gathers artefacts into a zip for handover. Its
+# first draft decided a step was "already done" by asking whether the artefact
+# file existed - and every one of those artefacts is committed to this
+# repository, so on a fresh clone it skipped four of five steps and would have
+# shipped the previous run's evidence as freshly measured.
+#
+# That is the fabricated-artefact failure arriving by the back door. The rule
+# below keeps the two properties that close it.
+# ======================================================================
+
+def test_the_pipeline_resumes_on_recorded_work_not_on_file_existence():
+    """
+    Resume must consult a state file recording what this run completed. Asking
+    `os.path.exists(artefact)` cannot distinguish work done now from a file that
+    arrived with `git clone`.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "scripts",
+                        "run_calibration_pipeline.py")
+    if not os.path.exists(path):
+        pytest.skip("run_calibration_pipeline.py absent")
+
+    tree = ast.parse(read(path), filename=path)
+
+    planners = [node for node in ast.walk(tree)
+                if isinstance(node, ast.FunctionDef) and node.name == "main"]
+    assert planners, "run_calibration_pipeline.py has no main()"
+
+    # The plan must branch on recorded completion.
+    plan_source = ast.get_source_segment(read(path), planners[0]) or ""
+    assert "completed" in plan_source and "load_state" in plan_source, (
+        "The pipeline's plan does not consult recorded completion state. Resume "
+        "must be based on what this run measured, not on whether a committed "
+        "artefact happens to be present.")
+
+    # And it must not decide skipping from the artefact's presence.
+    offenders = []
+    for node in ast.walk(planners[0]):
+        if (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "exists"):
+            for arg in node.args:
+                src = ast.get_source_segment(read(path), arg) or ""
+                if "proves" in src or "artefact" in src:
+                    offenders.append(f"line {node.lineno}: skips on "
+                                     f"os.path.exists({src})")
+
+    assert not offenders, (
+        "The pipeline decides a step is done from the artefact's presence:\n  "
+        + "\n  ".join(offenders)
+        + "\nThose artefacts are committed, so on a fresh clone this ships the "
+          "previous run's evidence as though it had just been measured.")
+
+
+def test_the_handover_refuses_artefacts_older_than_the_run():
+    """
+    `collect()` must compare each artefact's mtime against the run's start and
+    leave the older ones out. Without it the zip silently mixes measured output
+    with the committed copies, and nobody downstream can tell which is which.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "scripts",
+                        "run_calibration_pipeline.py")
+    if not os.path.exists(path):
+        pytest.skip("run_calibration_pipeline.py absent")
+
+    source = read(path)
+    tree = ast.parse(source, filename=path)
+
+    collectors = [node for node in ast.walk(tree)
+                  if isinstance(node, ast.FunctionDef) and node.name == "collect"]
+    assert collectors, "run_calibration_pipeline.py has no collect()"
+
+    body = ast.get_source_segment(source, collectors[0]) or ""
+
+    assert "getmtime" in body, (
+        "collect() does not check artefact modification times. An artefact older "
+        "than the run start was not produced by it; shipping it puts unmeasured "
+        "evidence in the handover.")
+    assert "stale" in body.lower(), (
+        "collect() has no stale category. An artefact that predates the run must "
+        "be reported and withheld, not copied in beside the measured ones.")

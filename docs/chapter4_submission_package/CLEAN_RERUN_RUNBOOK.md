@@ -215,14 +215,15 @@ measured against this corpus:
 
 All three are measured in the same pass.
 
-> **If the images are already downloaded** in your session, skip the Kaggle
-> steps in Cell 2 and run only the final `calibrate_blur_threshold.py` line.
-> Nothing needs re-downloading, and the model does not need retraining.
+> **Nothing needs re-downloading and the model does not need retraining.** If
+> the images are already in your session, skip straight to Cell C2 — it detects
+> them and skips the Kaggle download.
 
-Both are settled by one corpus run. **No GPU, no retraining** - use a CPU
-runtime.
+**No GPU.** A CPU runtime is correct and cheaper.
 
-### Cell 1 - Kaggle token
+### Cell C1 - Kaggle token
+
+Skip this entirely if `~/.kaggle/kaggle.json` already exists in the session.
 
 ```python
 from google.colab import files
@@ -234,73 +235,77 @@ with open(os.path.expanduser("~/.kaggle/kaggle.json"), "wb") as f:
 os.chmod(os.path.expanduser("~/.kaggle/kaggle.json"), 0o600)
 ```
 
-### Cell 2 - fetch and measure (~12 min)
+### Cell C2 - fetch the repository and the images (~12 min, skipped if present)
 
 ```python
 %cd /content
-!rm -rf diabetic-retinopathy-cdss
-!git clone -q https://github.com/CloudTechy/diabetic-retinopathy-cdss.git
+import os
+if not os.path.isdir('diabetic-retinopathy-cdss'):
+    !git clone -q https://github.com/CloudTechy/diabetic-retinopathy-cdss.git
 %cd diabetic-retinopathy-cdss
+!git pull -q
 !pip install -q pydantic-settings
 
-!kaggle competitions download -c aptos2019-blindness-detection -p aptos2019
-!unzip -q aptos2019/aptos2019-blindness-detection.zip -d aptos2019
-!rm aptos2019/aptos2019-blindness-detection.zip
-
-!python backend/scripts/calibrate_blur_threshold.py aptos2019/train_images
+if not os.path.isdir('aptos2019/train_images'):
+    !kaggle competitions download -c aptos2019-blindness-detection -p aptos2019
+    !unzip -q aptos2019/aptos2019-blindness-detection.zip -d aptos2019
+    !rm aptos2019/aptos2019-blindness-detection.zip
+print(len(os.listdir('aptos2019/train_images')), 'images ready')
 ```
 
-It measures the **training and validation partitions only** - the held-out test
-set is excluded, because choosing an operating point on it would leak it. It
-prints a percentile table for both metrics and writes
-`docs/chapter4/blur_threshold_calibration.json`.
-
-### Cell 3 - declare a percentile and regenerate
-
-Read the table from Cell 2, then:
+### Cell C3 - the whole sequence, in one resumable command (~25 min)
 
 ```python
-PERCENTILE = "1.0"     # admit the sharpest / largest 99% of the development corpus
-
-!python backend/scripts/apply_validation_thresholds.py --percentile $PERCENTILE
-!python backend/scripts/generate_validation_evidence.py aptos2019/train_images
-!python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
-!python backend/scripts/benchmark_cpu_end_to_end.py --images-dir aptos2019/train_images --checkpoint backend/models/weights/efficientnet_b0_dr.pth --runs 30
-```
-
-`PERCENTILE` is the decision, and it is the thing that gets written down. The
-script derives both thresholds from the measured distribution and records the
-percentile, the corpus size and the subset in `validation_module_spec.md`.
-
-Start at `1.0`. If Cell 3 still shows ACCEPT cases failing, **report that** -
-it is a finding about the corpus, not a reason to try percentiles until the
-output looks right.
-
-### Cell 4 - collect
-
-```python
-import shutil, os
-os.makedirs('handover2', exist_ok=True)
-for f in ['blur_threshold_calibration.json', 'validation_test_results.csv',
-          'gate_downsampling_verification.json',
-          'cpu_end_to_end_benchmark.json', 'cpu_end_to_end_benchmark.csv',
-          'validation_module_spec.md']:
-    p = os.path.join('docs/chapter4', f)
-    if os.path.exists(p): shutil.copy(p, 'handover2/')
-shutil.copy('backend/app/core/config.py', 'handover2/config.py')
-
-print(sorted(os.listdir('handover2')))
-shutil.make_archive('calibration_evidence', 'zip', 'handover2')
+!python backend/scripts/run_calibration_pipeline.py \
+    --images-dir aptos2019/train_images --percentile 1.0
 
 from google.colab import files
 files.download('calibration_evidence.zip')
 ```
 
-Expect **7 files**. If any are missing, say which.
+That single command runs all five steps in order — measure the three
+thresholds, apply the declared percentile, regenerate the validation evidence,
+re-check decision preservation across the corpus, re-run the CPU benchmark —
+then collects everything into `calibration_evidence.zip`.
+
+**If the runtime disconnects part-way, re-run exactly the same command.** Each
+step records its completion, so the ones that finished are skipped and only the
+outstanding work repeats. Add `--dry-run` first if you want to see the plan
+without executing it.
+
+Two deliberate refusals built into it:
+
+- **Resume is based on what the run measured, not on which files are present.**
+  Every one of these artefacts is committed to the repository, so "the file
+  exists" would skip the work on a fresh clone and hand back the previous run's
+  evidence as though it were new.
+- **The zip will not carry an artefact older than the run.** Anything that
+  predates it is reported as `[STALE]` and left out, so a handover cannot
+  quietly mix measured output with committed copies.
+
+### On the percentile
+
+`--percentile` is the declared judgement — *"we admit the sharpest and largest
+99% of the development corpus"* — and it is recorded with the distribution it
+came from in `validation_module_spec.md`. Thresholds are measured over the
+**training and validation partitions only**; choosing an operating point on the
+held-out test set would leak it, and the script refuses a calibration that
+includes it.
+
+Start at `1.0`. **If ACCEPT cases still fail, report that output.** It is a
+finding about the corpus, not a reason to try percentiles until the result looks
+right.
+
+### What comes back
+
+Seven files: `blur_threshold_calibration.json`, `validation_test_results.csv`,
+`gate_downsampling_verification.json`, `cpu_end_to_end_benchmark.json`,
+`cpu_end_to_end_benchmark.csv`, `validation_module_spec.md`, `config.py`. The
+command prints `[ok]`, `[STALE]` or `[MISSING]` against each one, so say which
+line you saw rather than which files you think arrived.
 
 ### What this unblocks
 
 Validation evidence regenerated (objective b), the end-to-end benchmark re-run
 against admitted images, and objective i able to claim a completed path from
 upload to classification. Screenshot recapture and a final QA pass follow.
-
