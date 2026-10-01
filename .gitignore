@@ -91,3 +91,8 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 backend/scripts/blur_threshold_calibration.SMALL_CORPUS.json
+
+# Threshold-calibration pipeline working files (never evidence in themselves)
+.calibration_pipeline_state.json
+handover2/
+calibration_evidence.zip
