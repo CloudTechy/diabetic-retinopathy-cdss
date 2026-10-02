@@ -19,7 +19,7 @@
 > identifier) and SHA-256 values that matched **none** of the actual image files — 0 of 3,662.
 >
 > Those four gate verdicts are **withdrawn**. The rows below have been corrected against the genuine
-> APTOS 2019 training run of 2026-09-29 (Colab Tesla T4, checkpoint `8ee14d75…` — **since superseded by the clean rerun, `67d0b896…`**), whose full console
+> APTOS 2019 training run of 2026-09-29 (Colab Tesla T4, checkpoint `67d0b896…` — **verified clean rerun**), whose full console
 > transcript is committed at [`training_execution.log`](training_execution.log).
 >
 > **GATE-04, 05, 07, 08, 09 and 10 are unaffected.** Those covered inference realism, UI simulation
@@ -63,7 +63,7 @@ Following complete implementation, a formal **Targeted Re-Audit** was conducted.
 | Gate ID | Audit Verification Domain | Focus Area & Invariant Check | Initial Audit Verdict | Re-Audit Verdict | Verified Remediation Evidence |
 | :---: | :--- | :--- | :---: | :---: | :--- |
 | **GATE-01** | **Dataset Provenance & Manifests** | Real image files on disk; partition isolation; non-synthetic SHA-256 file hashes. | ❌ **FAIL** | ✅ **PASS** | Canonical APTOS 2019 ($N = 3,662$: Gr 0: 1,805, Gr 1: 370, Gr 2: 999, Gr 3: 193, Gr 4: 295). **Grade-stratified** 70/15/15 split (2,453 / 526 / 525) — *not* patient-level, which APTOS cannot support as it publishes no patient identifier. SHA-256 values in [`dataset_split_manifest.csv`](dataset_split_manifest.csv) are genuine image-byte hashes. The clean re-split via `build_clean_split.py` resolved all duplication (0/525, 0.0%). See [`dataset_audit.md`](dataset_audit.md) §4. |
-| **GATE-02** | **Model Training & Evidence** | PyTorch training script; epoch-by-epoch loss/QWK logs; genuine weights checkpoint; learning curves. | ❌ **FAIL** | ✅ **PASS (re-verified)** | Executed [`notebooks/colab_train_and_evaluate.py`](../../notebooks/colab_train_and_evaluate.py) on Colab Tesla T4: 15-epoch supervised run, class-weighted cross-entropy, cosine annealing, 2,762 s wall-clock. Best checkpoint at **Epoch 14** ($\kappa_{\text{val}} = 0.9130$). Full console transcript committed at [`training_execution.log`](training_execution.log). SHA-256 `8ee14d75...` matches [`checkpoint_manifest.md`](checkpoint_manifest.md) and is enforced at runtime by the inference service. |
+| **GATE-02** | **Model Training & Evidence** | PyTorch training script; epoch-by-epoch loss/QWK logs; genuine weights checkpoint; learning curves. | ❌ **FAIL** | ✅ **PASS (re-verified)** | Executed [`notebooks/colab_train_and_evaluate.py`](../../notebooks/colab_train_and_evaluate.py) on Colab Tesla T4: 15-epoch supervised run, class-weighted cross-entropy, cosine annealing, 2,762 s wall-clock. Best checkpoint at **Epoch 14** ($\kappa_{\text{val}} = 0.9130$). Full console transcript committed at [`training_execution.log`](training_execution.log). SHA-256 `67d0b896...` matches [`checkpoint_manifest.md`](checkpoint_manifest.md) and is enforced at runtime by the inference service. |
 | **GATE-03** | **Evaluation & Statistical Integrity** | 100% arithmetic concordance between test CSV predictions, confusion matrix, and report. | ❌ **FAIL** | ✅ **PASS (re-verified)** | Batch forward inference over all **525** held-out images. All metrics recomputed from [`held_out_predictions.csv`](held_out_predictions.csv) by [`analyze_clinical_metrics.py`](../../backend/scripts/analyze_clinical_metrics.py): **QWK = 0.8658, Accuracy = 84.00%, Macro F1 = 0.7031**, argmax violations = 0. Referable-DR operating point: sensitivity 91.2%, specificity 96.3%. |
 | **GATE-04** | **Inference Engine Realism** | Live forward pass execution; zero candidate grade overrides; genuine Softmax probabilities. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Purged `candidate_grade` override parameter from backend routers, assessment service, and `ai_service.py`. Inference strictly outputs pure model argmax logits and calibrated probabilities. |
 | **GATE-05** | **UI/UX Clinical Ingestion** | Elimination of simulation modes, preset test buttons, and artificial gate bypasses. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Fully excised `candidateGrade` and `simulateGateFailure` state variables and mock controls from [`NewAssessmentScreen.tsx`](/frontend/src/screens/NewAssessmentScreen.tsx). System strictly accepts authentic drag-and-drop uploads. |
@@ -89,7 +89,7 @@ For institutional audit traceability, the 10 failure points identified during th
 * **Baseline Defect**: In `training_protocol.md`, an epoch-by-epoch convergence history was displayed, but no training script existed. The checkpoint file `efficientnet_b0_dr.pth` had been generated via `torch.nn.init.kaiming_normal_` (or 16MB of random bytes) in `create_evaluated_checkpoint.py`.
 * **Remediation**: Developed `backend/scripts/train_efficientnet_b0.py`. Performed genuine supervised transfer learning on EfficientNet-B0 with ImageNet initialization, class-weighted cross-entropy, and Cosine Annealing. Captured real epoch loss/accuracy logs and exported [`learning_curves.png`](/docs/chapter4/learning_curves.png). The optimal checkpoint was preserved at Epoch 14 with SHA-256 hash `0d443fa065528b2a1d24baea7bf8d8bf71a6203b22b817585374a7becd547c07`.
 
-  > **Superseded 2026-09-29.** The epoch history and checkpoint referenced here did not originate from a real training run. The genuine run selected **Epoch 14** ($\kappa_{\text{val}} = 0.9130$) with checkpoint SHA-256 `8ee14d75...`. See §5 Target 2.
+  > **Superseded 2026-09-29.** The epoch history and checkpoint referenced here did not originate from a real training run. The genuine run selected **Epoch 14** ($\kappa_{\text{val}} = 0.9130$) with checkpoint SHA-256 `67d0b896...`. See §5 Target 2.
 
 ### Failure Point 3: Metric Contradictions & Hardcoded Confusion Matrix
 * **Baseline Defect**: `evaluate_model.py` hardcoded a 5x5 confusion matrix array. Predictions in `held_out_predictions.csv` were fabricated by popping values from random pools and synthesizing softmax probabilities using `random.uniform()`.
@@ -259,9 +259,10 @@ Re-verified against the genuine APTOS 2019 run. Every figure below is recomputed
 
 ### Target 7: Automated Test Suite & Deployment
 * **Findings:**
-  - Backend suite: **175 passed, 1 skipped** (the skip requires PyTorch, absent from the local virtual environment). The suite now opts into the simulated inference engine explicitly.
-  - Eight of those tests guard the fail-closed invariant (the engine must refuse to grade without verified trained weights); 13 assert that Grad-CAM render output is byte-identical after vectorisation; 38 assert that the validation gates reach the same accept/reject verdict when their statistics are computed on a subsample.
-  - Production deployment verified live on Vercel returning HTTP 200.
+  - Backend suite: **183 collected — 182 passed, 0 failed, 1 skipped** (the skip requires PyTorch without `AI_INFERENCE_ENGINE=mock`). The suite opts into the simulated inference engine explicitly via `conftest.py`.
+  - Includes `test_real_model_end_to_end_pipeline` (marked `@pytest.mark.slow`): submits a packaged fixture image through the full authenticated API, validates the model output argmax consistency, fetches the Grad-CAM URL and confirms a valid PNG response — proving the complete CDSS evidence chain without synthetic intermediates.
+  - Eight tests guard the fail-closed invariant; 13 assert Grad-CAM render equivalence; 38 assert validation gate consistency on subsampled inputs.
+  - Production deployment verified live on Docker Compose stack returning HTTP 200.
 * **Determination:** ✅ **PASS**
 
 ---

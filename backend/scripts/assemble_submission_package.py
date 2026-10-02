@@ -91,7 +91,7 @@ LAYOUT = [
     ("docs/chapter4/implementation_status.md", "documentation/implementation_status.md"),
     ("docs/chapter4/dataset_split_audit.json", "logs_and_metrics/dataset_split_audit.json"),
     ("docs/chapter4/blur_threshold_calibration.json", "logs_and_metrics/blur_threshold_calibration.json"),
-    ("docs/chapter4/test_execution_output.txt", "logs_and_metrics/test_execution_output.txt"),
+    ("docs/chapter4/test_execution.log", "logs_and_metrics/test_execution.log"),
     ("backend/scripts/build_clean_split.py", "scripts/build_clean_split.py"),
 
     # Scripts that produce the evidence

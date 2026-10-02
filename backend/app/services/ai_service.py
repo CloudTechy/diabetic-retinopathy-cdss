@@ -106,7 +106,6 @@ class BaseInferenceService(abc.ABC):
         self,
         pil_image: Image.Image,
         laterality: str = "OD",
-        candidate_grade: Optional[int] = None,
     ) -> InferenceOutput:
         """Run classification and generate visual explanation."""
         pass
@@ -241,12 +240,14 @@ class MockInferenceService(BaseInferenceService):
         self,
         pil_image: Image.Image,
         laterality: str = "OD",
-        candidate_grade: Optional[int] = None,
     ) -> InferenceOutput:
         start_time = time.time()
 
-        # Determine target grade (default to Moderate NPDR if unspecified)
-        grade = candidate_grade if candidate_grade is not None and 0 <= candidate_grade <= 4 else 2
+        # Simulated engine always returns Grade 2 (Moderate NPDR) — the most
+        # representative class in the test corpus. Grade is fixed and not
+        # externally configurable; a steerable grade would be indistinguishable
+        # from a real one in the UI and is therefore not permitted.
+        grade = 2
         meta = ICDR_CLASS_METADATA[grade]
 
         # Construct mathematically normalized 5-class score distribution
@@ -434,7 +435,6 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         self,
         pil_image: Image.Image,
         laterality: str = "OD",
-        candidate_grade: Optional[int] = None,
     ) -> InferenceOutput:
         if not self._initialized or self._model is None:
             raise ModelCheckpointError(
@@ -447,15 +447,10 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
         start_time = time.time()
 
-        # A client-supplied grade must never steer the real engine. An earlier
-        # revision used `candidate_grade` in place of the argmax whenever it was
-        # supplied, so a request could choose the class the system displayed.
-        # The parameter survives only for interface compatibility with the
-        # simulated engine, which uses it as a test fixture.
-        if candidate_grade is not None:
-            logger.warning(
-                "candidate_grade=%s was supplied to the real inference engine. "
-                "Ignoring it: the grade is the model's argmax.", candidate_grade)
+        # SECURITY NOTE: An earlier revision accepted a `candidate_grade`
+        # parameter that allowed a caller to substitute an externally chosen
+        # class for the model's argmax. That parameter has been removed from
+        # the entire inference interface. Grade is always the model's own argmax.
 
         # ------------------------------------------------------------------
         # Model inference. This must either produce a genuine result or fail.
