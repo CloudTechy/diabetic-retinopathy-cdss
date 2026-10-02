@@ -57,8 +57,13 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 
 // Sign in through the application's own control so the session is genuine.
-await page.goto(`${BASE}/#signin`, { waitUntil: 'networkidle2' });
-await page.waitForSelector('#staff-id');
+await page.goto(`${BASE}/#signin`, { waitUntil: 'domcontentloaded' });
+// React mounts after networkidle resolves, and the app may already hold a
+// session. Wait for either door rather than assuming which one is open.
+await page.waitForFunction(
+  () => document.querySelector('#staff-id')
+    || /Worklist|New Assessment/.test(document.body.innerText),
+  { timeout: 60000 });
 await page.evaluate(() => {
   const b = [...document.querySelectorAll('button')]
     .find((x) => /Dr\. Demo|Demo \(Ophth\)/i.test(x.textContent || ''));
@@ -72,16 +77,44 @@ await wait(1500);
 
 async function capture(hash, file, mustMatch, label) {
   await page.goto(`${BASE}/${hash}`, { waitUntil: 'networkidle2' });
-  await page.waitForFunction(
-    (re) => new RegExp(re, 'i').test(document.body.innerText),
-    { timeout: 45000 }, mustMatch.source);
-  await wait(2500);
+
+  // Opening a stored assessment REPLAYS the gate animation from Gate 1, so a
+  // match can be a frame in passing. Poll, and fire the shutter on the same
+  // tick as the match - no sleep in between.
+  const deadline = Date.now() + 90000;
+  let shown = null;
+  while (Date.now() < deadline) {
+    shown = await page.evaluate((re) => {
+      const t = document.body.innerText;
+      if (/in Progress|Pending Gate|Verifying binary|Calculating/i.test(t)) return null;
+      const m = t.match(new RegExp(re, 'i'));
+      return m ? m[0] : null;
+    }, mustMatch.source);
+    if (shown) break;
+    await wait(500);
+  }
+
+  if (!shown) {
+    throw new Error(`${file}: the page never reached a state matching `
+      + `${mustMatch} within 90s. Refusing to write a figure that does not `
+      + `show what its caption claims.`);
+  }
+
   await page.screenshot({ path: path.join(OUT, file) });
-  const shown = await page.evaluate((re) => {
+
+  // Confirm the evidence is STILL on screen after the shutter.
+  const after = await page.evaluate((re) => {
     const m = document.body.innerText.match(new RegExp(re, 'i'));
     return m ? m[0] : null;
   }, mustMatch.source);
-  console.log(`  ${file.padEnd(42)} ${label} — matched ${JSON.stringify(shown)}`);
+
+  if (!after) {
+    fs.unlinkSync(path.join(OUT, file));
+    throw new Error(`${file}: the state disappeared during capture; the figure `
+      + `has been deleted rather than shipped.`);
+  }
+
+  console.log(`  ${file.padEnd(42)} ${label} — shows ${JSON.stringify(after)}`);
 }
 
 await capture(`#validation/${rejected.id}`,
