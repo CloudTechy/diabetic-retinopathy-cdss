@@ -3,7 +3,7 @@
 **Document Version**: 1.0  
 **Project**: Clinical Decision Support System for Early Detection of Diabetic Retinopathy (EfficientNet-B0)  
 **Lead Researcher**: Onyekelu Chukwuebuka Elochukwu (2024516020FN)  
-**Target Standard**: FDA SaMD (Software as a Medical Device) Clinical Guidance, NHS England Digital Health Technology Standards (DTAC / NICE ESF), WCAG 2.1 AA Compliance  
+**Target Standard**: Prototype Tool (Software as a Medical Device) Clinical Guidance, NHS England Digital Health Technology Standards (DTAC / NICE ESF), WCAG 2.1 AA Compliance  
 
 ---
 
@@ -239,7 +239,7 @@ The viewer provides three complementary interaction modes:
 
 ---
 
-## 3. Human-AI Interaction & Clinician-in-the-Loop Safeguards (FDA SaMD & NHS Guidelines)
+## 3. Human-AI Interaction & Clinician-in-the-Loop Safeguards (Prototype Tool & NHS Guidelines)
 
 In compliance with FDA Software as a Medical Device (SaMD) Guidance, NHS England Code of Conduct for AI in Healthcare, and NICE Evidence Standards Framework, the system enforces strict boundaries between automated computation and clinical evaluation.
 
@@ -649,7 +649,7 @@ These design tokens provide the direct styling contract for `ui_frontend_agent`:
 | **8 Screen Journey** | PRD Section 7 (Clinical User Interface) | Visual & End-to-End Route Test | `ui_frontend_agent` |
 | **Dual Canvas Zoom & Pan** | PRD Section 7.2 (Image Interaction) | Mouse & Touch Gesture Simulation | `ui_frontend_agent` |
 | **Grad-CAM Opacity & Blend** | PRD Section 7.2 & FR-08 (Attribution) | Alpha Render Unit Tests | `ui_frontend_agent` |
-| **Perceptual Uniform Colormap** | NHS DTAC / FDA SaMD Visual Guidelines | CVD Palette Contrast Benchmark | `ui_frontend_agent` |
+| **Perceptual Uniform Colormap** | NHS DTAC / Prototype Tool Visual Guidelines | CVD Palette Contrast Benchmark | `ui_frontend_agent` |
 | **Non-Diagnostic Microcopy** | PRD Invariant 2 (Terminology Boundaries) | Automated Linter / String Assertions | `qa_testing_agent` |
 | **Tri-State Clinician Review** | PRD Section 7.3 & FR-09 (Review Protocol) | Form Submission Integration Test | `backend_ai_agent` |
 | **WCAG 2.1 AA Compliance** | PRD Section 11 (Accessibility & Standards) | Axe-Core Automated Audit & Lighthouse | `qa_testing_agent` |

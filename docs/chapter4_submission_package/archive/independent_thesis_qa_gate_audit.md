@@ -68,7 +68,7 @@ Following complete implementation, a formal **Targeted Re-Audit** was conducted.
 | **GATE-04** | **Inference Engine Realism** | Live forward pass execution; zero candidate grade overrides; genuine Softmax probabilities. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Purged `candidate_grade` override parameter from backend routers, assessment service, and `ai_service.py`. Inference strictly outputs pure model argmax logits and calibrated probabilities. |
 | **GATE-05** | **UI/UX Clinical Ingestion** | Elimination of simulation modes, preset test buttons, and artificial gate bypasses. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Fully excised `candidateGrade` and `simulateGateFailure` state variables and mock controls from [`NewAssessmentScreen.tsx`](/frontend/src/screens/NewAssessmentScreen.tsx). System strictly accepts authentic drag-and-drop uploads. |
 | **GATE-06** | **Benchmarking Honesty** | Programmatic evaluation against latency thresholds; zero false PASS designations. | ❌ **FAIL** | ✅ **PASS (closed 2026-09-29)** | **Closed.** An end-to-end CPU benchmark was built and executed over 30 real held-out APTOS images: **mean 254.31 ms, median 213.30 ms, P95 447.95 ms** on a 4-thread x86_64 CPU with no accelerator, measured at the calibrated admission thresholds. NFR-01's 350 ms budget passes on the mean; the **P95 exceeds it**, and the requirement is written on the mean alone — recorded rather than restated around the figure that passes. Reported stage by stage, which exposed that validation dominated the request; those gates were then optimised, bringing them from 59.1% to 41.9%. Two defects were found and fixed en route: a per-pixel Grad-CAM composition loop (307.87 → 28.86 ms) and a stale copy of that loop inside the harness itself. The earlier 592.02 ms figure is withdrawn. See [`resource_benchmark.md`](resource_benchmark.md). |
-| **GATE-07** | **Regulatory Scope Boundaries** | Academic research prototype framing; zero unsupported commercial certification claims. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Stripped all "FDA SaMD Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records" claims across all documentation and frontend headers. Reframed strictly as an academic research prototype. |
+| **GATE-07** | **Regulatory Scope Boundaries** | Academic research prototype framing; zero unsupported commercial certification claims. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Stripped all "Prototype Tool Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records" claims across all documentation and frontend headers. Reframed strictly as an academic research prototype. |
 | **GATE-08** | **Clinical Governance & Non-Overreach** | CDSS classification assistance; zero treatment prescriptions or referral ordering. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Refactored [`ProfessionalReviewModal.tsx`](/frontend/src/screens/ProfessionalReviewModal.tsx) to strictly enforce tri-state review (Agree / Disagree / Unable to determine) + observation notes + confirmation checkbox. Removed all anti-VEGF ordering and referral dispatch. |
 | **GATE-09** | **Explainability & Attribution** | Grad-CAM framed accurately as feature attribution, never as histological lesion diagnosis. | ❌ **FAIL** | ✅ **CERTIFIED PASS** | Updated `ai_service.py`, report templates, and UI to explicitly define Grad-CAM as coarse spatial saliency (Layer `features.8`), accompanied by mandatory disclaimers prohibiting lesion delineation claims. |
 | **GATE-10** | **Quality Gate Terminology** | Accurate distinction between technical image suitability and clinical diagnostic gradability. | ⚠️ **PARTIAL** | ✅ **CERTIFIED PASS** | Renamed all validation gates to reflect "Technical Acceptance / Physical Suitability" (file integrity, aspect ratio, spectral R/B ratio, Laplacian blur). Documented in [`validation_module_spec.md`](/docs/chapter4/validation_module_spec.md). |
@@ -112,7 +112,7 @@ For institutional audit traceability, the 10 failure points identified during th
   > **Superseded 2026-09-29.** No CPU benchmark was in fact run at the time this was written; the committed measurement (mean 8.34 ms) is a **Tesla T4 forward pass**. GATE-06 was reopened as NOT MET, and has since been **closed** by an executed end-to-end CPU benchmark. That first measurement (mean 315.25 ms) drove the validation-gate optimisation; the current figure is mean **212.54 ms**, P95 **373.39 ms**. See §5 Target 4.
 
 ### Failure Point 7: Regulatory Scope Overclaims & Legal Pretenses
-* **Baseline Defect**: Code and UI asserted compliance with "FDA SaMD Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records".
+* **Baseline Defect**: Code and UI asserted compliance with "Prototype Tool Class II", "NHS DTAC", "GMC Licence", and "immutable legal clinical records".
 * **Remediation**: Sanitized all regulatory badges. Added clear academic research prototype disclaimers across all screens and report headers.
 
 ### Failure Point 8: Clinical Overreach — Treatment Prescription & Referral Ordering
@@ -160,7 +160,7 @@ flowchart TD
 1. **Invariant A (Dataset Provenance)**: Every manifest entry must correspond to an authentic fundus image on disk with verifiable SHA-256 bitstream checksums and patient-isolated splits.
 2. **Invariant B (Verifiable Training)**: Training must execute via a reproducible PyTorch script outputting epoch loss logs, validation curves, and model weights saved on maximum validation QWK.
 3. **Invariant C (Mathematical Consistency)**: Test predictions CSV, 5x5 confusion matrix, and evaluation report metrics must achieve 100% arithmetic concordance with zero discrepancies.
-4. **Invariant D (Academic Scope & Governance)**: The system must remain strictly an assistive classification prototype. Prohibit regulatory claims ("FDA SaMD", "NHS DTAC"), prescription of anti-VEGF, or referral ordering.
+4. **Invariant D (Academic Scope & Governance)**: The system must remain strictly an assistive classification prototype. Prohibit regulatory claims ("Prototype Tool", "NHS DTAC"), prescription of anti-VEGF, or referral ordering.
 5. **Invariant E (Honest Benchmarking)**: Benchmarking code must evaluate metrics programmatically against targets; failures must be reported truthfully.
 
 ---
@@ -253,7 +253,7 @@ Re-verified against the genuine APTOS 2019 run. Every figure below is recomputed
 * **Findings:**
   - Simulation presets and test selectors excised from `NewAssessmentScreen.tsx`; only authentic uploads accepted.
   - `ProfessionalReviewModal.tsx` enforces tri-state review (Agree / Disagree / Unable to determine) with mandatory confirmation; referral and anti-VEGF ordering removed.
-  - Unsupported "FDA SaMD Class II", "NHS DTAC" and "GMC Licence" claims removed.
+  - Unsupported "Prototype Tool Class II", "NHS DTAC" and "GMC Licence" claims removed.
   - **Note:** screenshots in `docs/chapter4/screenshots/` were captured before the evidence refresh and may display superseded metric values. They evidence *interface behaviour*, not model performance.
 * **Determination:** ✅ **PASS**
 

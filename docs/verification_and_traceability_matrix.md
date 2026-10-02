@@ -1,7 +1,7 @@
 # Verification and Traceability Matrix (VTM)
 ## AI-Based Clinical Decision Support System (CDSS) for Diabetic Retinopathy
 **Document Identifier**: `DOC-VTM-M7-2026`  
-**Standard Compliance**: FDA SaMD (Software as a Medical Device) Clinical Guidance, NHS DTAC (Digital Health Technology Assessment Criteria), NICE Evidence Standards Framework (ESF), ISO/IEC 13485 / 62304 Medical Device Software Lifecycle  
+**Standard Compliance**: Prototype Tool (Software as a Medical Device) Clinical Guidance, NHS DTAC (Digital Health Technology Assessment Criteria), NICE Evidence Standards Framework (ESF), ISO/IEC 13485 / 62304 Medical Device Software Lifecycle  
 **Author / Lead Researcher**: Onyekelu Chukwuebuka Elochukwu (2024516020FN)  
 **System Version**: 1.0.0-Release Candidate  
 **Verification Date**: September 2026  

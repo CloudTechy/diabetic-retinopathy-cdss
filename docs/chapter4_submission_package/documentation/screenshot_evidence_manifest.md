@@ -33,7 +33,7 @@
 > Figures 4.1–4.9 were recaptured on 2026-09-30 from the current build, after the identity and
 > scope remediation. They show `Dr. Demo Clinician (Simulated)` / `SIM-000001` /
 > `Research Prototype Environment`. Earlier versions of these captures displayed a fabricated
-> clinician identity, a fabricated GMC registration number and a fabricated hospital name; those
+> clinician identity, a fabricated Clinician ID number and a fabricated hospital name; those
 > are superseded and must not be reproduced in the dissertation.
 >
 > **The score values shown are demonstration data, not model output.** These captures run the
@@ -64,7 +64,7 @@
 > `10_tamper_evident_pdf_report.png` (previously Figure 4.11) and
 > `live_vercel_verified.png` displayed a fabricated clinician identity, a GMC
 > registration number, "Certified ICDR Grade", "Management / Referral",
-> "FDA SaMD Class II", "NHS DTAC", the superseded sharpness threshold of 100,
+> "Prototype Tool Class II", "NHS DTAC", the superseded sharpness threshold of 100,
 > and a displayed SHA-256 of `e3b0c442...` - the hash of an empty value.
 >
 > The screenshot capture script covers screens 01-08 only, so neither was

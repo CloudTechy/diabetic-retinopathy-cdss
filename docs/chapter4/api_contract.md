@@ -130,10 +130,10 @@
   ```json
   {
     "agreement": "agree",
-    "certifiedGrade": 2,
-    "certifiedGradeLabel": "Grade 2: Moderate NPDR",
+    "reviewerAssessedGrade": 2,
+    "reviewerAssessedGradeLabel": "Grade 2: Moderate NPDR",
     "justificationNotes": "Macular exudates corroborated on slit lamp exam.",
-    "referralPlan": "Referral to secondary care / hospital medical retina clinic."
+    "optionalObservation": "Referral to secondary care / hospital medical retina clinic."
   }
   ```
 - **Response `200 OK`:** Finalized assessment object with cryptographic signature and state `completed`.

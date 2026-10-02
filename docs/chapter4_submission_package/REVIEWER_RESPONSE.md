@@ -255,7 +255,7 @@ python backend/scripts/integrity_gate.py                 # run it
 python backend/scripts/integrity_gate.py --install-hook  # enforce on every commit
 ```
 
-The gate was validated by deliberately reintroducing two of the original defects — a fabricated GMC number, and an accuracy edited to the old 86.40% — and confirming it blocked both. Writing it also found two further live issues: an `FDA SaMD` claim still in a service docstring, and a Laplacian threshold of 100 still quoted in the traceability matrix.
+The gate was validated by deliberately reintroducing two of the original defects — a fabricated GMC number, and an accuracy edited to the old 86.40% — and confirming it blocked both. Writing it also found two further live issues: an `Prototype Tool` claim still in a service docstring, and a Laplacian threshold of 100 still quoted in the traceability matrix.
 
 ---
 
