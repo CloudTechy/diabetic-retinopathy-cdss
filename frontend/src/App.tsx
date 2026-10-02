@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ClinicianUser, AssessmentRecord, EyeLaterality } from './types/clinical';
-import { clinicalApi, DEFAULT_CLINICIAN } from './services/api';
+import { clinicalApi } from './services/api';
 import { browserStorage } from './services/storage';
 import { Header } from './components/Header';
 import { SignInScreen } from './screens/SignInScreen';
@@ -24,7 +24,7 @@ export type ScreenState =
 export const App: React.FC = () => {
   // Authentication State with persistent storage
   const [currentUser, setCurrentUser] = useState<ClinicianUser | null>(() => {
-    return browserStorage.getStoredUser() || DEFAULT_CLINICIAN;
+    return browserStorage.getStoredUser();
   });
 
   // Active Screen and Assessment State with persistent restoration
@@ -81,7 +81,9 @@ export const App: React.FC = () => {
       if (storedUser) {
         setCurrentUser(storedUser);
       } else if (!currentUser) {
-        setCurrentUser(DEFAULT_CLINICIAN);
+        setCurrentUser(null);
+        setActiveScreen('signin');
+        return;
       }
 
       const session = browserStorage.getSessionState();

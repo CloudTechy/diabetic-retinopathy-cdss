@@ -4,7 +4,7 @@ export type ReviewStatus = 'validating' | 'needs_review' | 'completed' | 'reject
 
 export type GateStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
 
-export interface GateResult2 {
+export interface GateResult {
   name: string;
   gateIndex: 1 | 2 | 3;
   status: GateStatus;
@@ -14,6 +14,8 @@ export interface GateResult2 {
   rejectionReason?: string;
   clinicalAction?: string;
 }
+
+export type GateResult2 = GateResult;
 
 export type AgreementType = 'agree' | 'disagree' | 'inconclusive';
 

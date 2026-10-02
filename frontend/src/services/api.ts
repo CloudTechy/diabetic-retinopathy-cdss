@@ -6,7 +6,6 @@ import {
   WorklistFilter,
   AuditEvent,
   EyeLaterality,
-  ICDR_GRADES
 } from '../types/clinical';
 import { ClientValidationResult } from '../utils/retinalValidator';
 import { browserStorage } from './storage';
@@ -19,7 +18,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
   if (token) {
-    config.headers.Authorization = "Bearer $token";
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -84,7 +83,7 @@ class ClinicalApiService {
   }
 
   async getAssessmentById(id: string): Promise<AssessmentRecord | null> {
-    const res = await apiClient.get(/assessments/);
+    const res = await apiClient.get(`/assessments/${id}`);
     return res.data;
   }
 
@@ -107,7 +106,7 @@ class ClinicalApiService {
     assessmentId: string,
     review: Omit<ClinicianReview, 'signatureHash' | 'signedAt' | 'clinicianName' | 'licenseNumber' | 'facility'>
   ): Promise<AssessmentRecord> {
-    const res = await apiClient.post(/assessments/ + assessmentId + /review, review);
+    const res = await apiClient.post(`/assessments/${assessmentId}/review`, review);
     return res.data;
   }
 
@@ -117,17 +116,17 @@ class ClinicalApiService {
   }
 
   async getAuditLedger(assessmentId: string): Promise<AuditEvent[]> {
-    const res = await apiClient.get(/assessments/ + assessmentId + /audit);
+    const res = await apiClient.get(`/assessments/${assessmentId}/audit`);
     return res.data;
   }
 
   async downloadReportPdf(assessment: AssessmentRecord): Promise<void> {
-    const res = await apiClient.get(/reports/ + assessment.id + /pdf, { responseType: 'blob' });
+    const res = await apiClient.get(`/reports/${assessment.id}/pdf`, { responseType: 'blob' });
     const blob = new Blob([res.data], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = "DR-CDSS-Report- + assessment.id + .pdf";
+    a.download = `DR-CDSS-Report-${assessment.id}.pdf`;
     a.click();
     window.URL.revokeObjectURL(url);
   }

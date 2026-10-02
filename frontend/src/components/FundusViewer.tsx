@@ -28,7 +28,6 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
   gradcamUrl: initialGradcamUrl,
   laterality,
   nativeResolution = '2240x1488 px',
-  grade = 2,
 }) => {
   // Transform State (Affine pan/zoom)
   const [scale, setScale] = useState<number>(1.0);
@@ -359,7 +358,7 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
                 style={{ opacity: activeOpacity }}
                 draggable={false}
               />
-            )) : (!sideBySide && <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-mono text-sm">Visual explanation unavailable.</div>)}
+            )}
           </div>
 
           {/* Subtitle tag */}
@@ -394,8 +393,8 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
                   className="absolute inset-0 max-w-none w-[560px] h-[560px] object-contain rounded-full pointer-events-none transition-opacity duration-150"
                   style={{ opacity: activeOpacity }}
                   draggable={false}
-              />
-            )) : (!sideBySide && <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-mono text-sm">Visual explanation unavailable.</div>)}
+                />
+              )}
             </div>
 
             <div className="absolute top-3 left-3 bg-slate-900/80 px-2.5 py-1 rounded text-[11px] font-mono text-teal-300 border border-teal-700 flex items-center gap-1.5">

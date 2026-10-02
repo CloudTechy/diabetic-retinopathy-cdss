@@ -123,8 +123,6 @@ class AssessmentService:
         assessment_id: str,
         image_bytes: bytes,
         original_filename: str = "fundus.jpg",
-        candidate_grade: Optional[int] = None,
-        simulate_gate_failure: Optional[int] = None,
         actor: Optional[User] = None,
     ) -> Assessment:
         """
@@ -190,37 +188,6 @@ class AssessmentService:
 
         # 3. Execute 3-Stage Technical Validation Pipeline
         pipeline_res: ValidationPipelineResult = ValidationPipeline.execute(image_bytes, original_filename)
-
-        # Handle simulation override if requested
-        if simulate_gate_failure in (1, 2, 3):
-            # Manually inject simulation failure
-            if simulate_gate_failure == 1:
-                pipeline_res.overall_status = "rejected"
-                pipeline_res.failed_gate = 1
-                pipeline_res.failure_code = "ERR_SIMULATED_GATE1_FAIL"
-                pipeline_res.failure_reason = "Simulated binary signature failure."
-                pipeline_res.actionable_guidance = "Please provide uncorrupted image."
-                if pipeline_res.gate1_result:
-                    pipeline_res.gate1_result.passed = False
-                pipeline_res.gate2_result = None
-                pipeline_res.gate3_result = None
-            elif simulate_gate_failure == 2:
-                pipeline_res.overall_status = "rejected"
-                pipeline_res.failed_gate = 2
-                pipeline_res.failure_code = "ERR_SIMULATED_GATE2_FAIL"
-                pipeline_res.failure_reason = "Simulated non-retinal image rejection."
-                pipeline_res.actionable_guidance = "Ensure photograph captures posterior pole."
-                if pipeline_res.gate2_result:
-                    pipeline_res.gate2_result.passed = False
-                pipeline_res.gate3_result = None
-            elif simulate_gate_failure == 3:
-                pipeline_res.overall_status = "rejected"
-                pipeline_res.failed_gate = 3
-                pipeline_res.failure_code = "ERR_SIMULATED_GATE3_FAIL"
-                pipeline_res.failure_reason = "Simulated severe blur rejection."
-                pipeline_res.actionable_guidance = "Recapture image with steady patient fixation."
-                if pipeline_res.gate3_result:
-                    pipeline_res.gate3_result.passed = False
 
         # Extract quality metrics
         laplacian_var = pipeline_res.gate3_result.laplacian_variance if pipeline_res.gate3_result else 0.0
@@ -301,7 +268,6 @@ class AssessmentService:
         inference_out = get_active_inference_service().predict(
             pil_image=pil_img,
             laterality=assessment.eye_laterality,
-            candidate_grade=candidate_grade,
         )
         end_time = datetime.datetime.now(timezone.utc)
 
@@ -412,8 +378,8 @@ class AssessmentService:
                 )
 
         # Resolve Clinician metadata
-        clinician_name = review_input.clinicianName or (reviewer.full_name if reviewer else "Dr. Demo Clinician (Simulated)")
-        license_num = review_input.licenseNumber or (reviewer.license_number if reviewer else "SIM-000001")
+        clinician_name = review_input.clinicianName or reviewer.full_name if reviewer else "Dr. Reviewer"
+        license_num = review_input.licenseNumber or reviewer.license_number if reviewer else "N/A"
         facility = review_input.facility or (reviewer.facility if reviewer else "Research Prototype Environment")
 
         # Map grade label
@@ -737,3 +703,6 @@ class AssessmentService:
             createdAt=assessment.created_at.isoformat(),
             updatedAt=assessment.updated_at.isoformat(),
         )
+
+
+

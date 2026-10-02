@@ -20,8 +20,6 @@ interface NewAssessmentScreenProps {
     imageDataUrl: string;
     fileSizeBytes: number;
     filename: string;
-    simulateGateFailure?: 1 | 2 | 3 | null;
-    candidateGrade?: number;
     clientValidation?: ClientValidationResult;
   }) => void;
   onCancel: () => void;
@@ -435,3 +433,4 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
     </div>
   );
 };
+

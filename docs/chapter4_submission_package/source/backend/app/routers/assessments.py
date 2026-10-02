@@ -85,8 +85,6 @@ async def create_assessment(
 async def upload_assessment_image(
     assessment_id: str,
     file: UploadFile = File(...),
-    candidate_grade: Optional[int] = Form(None),
-    simulate_gate_failure: Optional[int] = Form(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -104,8 +102,6 @@ async def upload_assessment_image(
             assessment_id=assessment_id,
             image_bytes=image_bytes,
             original_filename=file.filename or "fundus.jpg",
-            candidate_grade=candidate_grade,
-            simulate_gate_failure=simulate_gate_failure,
             actor=current_user,
         )
         return AssessmentService.to_record_response(assessment)
@@ -307,3 +303,4 @@ async def serve_attribution(filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Attribution heatmap not found.")
     return FileResponse(file_path, media_type="image/png")
+

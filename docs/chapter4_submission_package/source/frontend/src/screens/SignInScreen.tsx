@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Eye, AlertTriangle, Building2, CheckCircle2, UserCheck } from 'lucide-react';
+import { Lock, Eye, AlertTriangle, UserCheck } from 'lucide-react';
 import { ClinicianUser } from '../types/clinical';
 import { clinicalApi } from '../services/api';
 
@@ -9,8 +9,7 @@ interface SignInScreenProps {
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) => {
   const [email, setEmail] = useState<string>('dr.demo@research-prototype.local');
-  const [password, setPassword] = useState<string>('••••••••••••');
-  const [password, setPassword] = useState<string>('Research Prototype Environment');
+  const [password, setPassword] = useState<string>('password123');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -115,7 +114,59 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
               </div>
             </div>
 
-            
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-xs font-bold text-white bg-clinical-primary hover:bg-clinical-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-clinical-primary transition-all disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Authenticating...
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5" />
+                    Secure Practitioner Sign In
+                  </span>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Quick Demo Credentials */}
+          <div className="pt-2 border-t border-slate-100">
+            <span className="text-[11px] font-semibold text-slate-500 block mb-2">
+              Research Prototype Demo Credentials:
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickDemoFill('consultant')}
+                className="p-2 border border-slate-200 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
+              >
+                <div className="flex items-center gap-1 font-semibold text-slate-800">
+                  <UserCheck className="w-3.5 h-3.5 text-clinical-primary" />
+                  Dr. Demo (Ophth)
+                </div>
+                <div className="text-[10px] text-slate-400">Consultant</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickDemoFill('optometrist')}
+                className="p-2 border border-slate-200 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
+              >
+                <div className="flex items-center gap-1 font-semibold text-slate-800">
+                  <UserCheck className="w-3.5 h-3.5 text-teal-600" />
+                  Optom. Demo
+                </div>
+                <div className="text-[10px] text-slate-400">Optometrist</div>
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Footer Reference */}
         <p className="mt-4 text-center text-[11px] text-slate-400">
@@ -125,4 +176,3 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
     </div>
   );
 };
-
