@@ -54,8 +54,18 @@ env/
 *.tflite
 !docs/chapter4_submission_package/checkpoint/*.pth
 !backend/models/weights/*.pth
+!frontend/public/models/*.onnx*
+!frontend/public/models/*.json
 models/checkpoints/*
 !models/checkpoints/.gitkeep
+
+# Android Build Outputs
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/android/*.apk
+frontend/android/*.aab
 
 # Medical Storage / Patient PHI / Uploaded Binaries
 # Strictly isolate binary directories to comply with Section 12 & 13 of PRD

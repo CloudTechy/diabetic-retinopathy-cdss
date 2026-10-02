@@ -2076,3 +2076,103 @@ def test_the_pdf_report_quotes_the_configured_threshold():
         + "\n  ".join(offenders)
         + "\nRead it from `settings`. A report quoting a rule the system does "
           "not apply is worse than one that omits the rule.")
+
+
+# ======================================================================
+# RULE GROUP V - the training table must BE epoch_history.csv
+#
+# training_protocol.md carries a fifteen-row epoch table under a heading that
+# cites epoch_history.csv as its source. Every one of the fifteen rows
+# disagreed with that file. Not rounding: epoch 06 read 0.8519 against a
+# recorded 0.8978, and the selected epoch's validation accuracy read 80.55%
+# against a recorded 83.46%. The table held the SUPERSEDED run's figures and
+# was never regenerated after the clean retrain.
+#
+# It also marked SIX epochs "**BEST**" - the running "new best so far" of a
+# checkpoint callback - leaving a reader unable to tell which was the claim.
+#
+# Nothing caught it because every existing rule checked that metrics recompute
+# from held_out_predictions.csv. No rule read the training history at all.
+# ======================================================================
+
+EPOCH_HISTORY = os.path.join(CHAPTER4, "epoch_history.csv")
+TRAINING_PROTOCOL = os.path.join(CHAPTER4, "training_protocol.md")
+
+_EPOCH_ROW = re.compile(r"^\|\s*\*{0,2}(\d{1,2})\*{0,2}\s*\|")
+
+
+def test_training_table_matches_epoch_history():
+    """
+    Every row of the epoch table must equal the recorded run. The table is a
+    transcription of a committed CSV, so there is no reason for it ever to
+    differ, and a difference means the document is describing a different run.
+    """
+    if not (os.path.exists(EPOCH_HISTORY) and os.path.exists(TRAINING_PROTOCOL)):
+        pytest.skip("training artefacts absent")
+
+    with open(EPOCH_HISTORY, newline="", encoding="utf-8") as fh:
+        raw = {int(r["epoch"]): r for r in csv.DictReader(fh)}
+
+    offenders = []
+    seen = set()
+    for line in read(TRAINING_PROTOCOL).split("\n"):
+        match = _EPOCH_ROW.match(line)
+        if not match:
+            continue
+        epoch = int(match.group(1))
+        record = raw.get(epoch)
+        if record is None:
+            continue
+        seen.add(epoch)
+
+        cells = [c.strip().replace("**", "").replace("`", "")
+                 for c in line.split("|")[1:-1]]
+        if len(cells) < 6:
+            continue
+
+        stated_acc, stated_qwk = cells[3].replace("%", ""), cells[4]
+        actual_acc = float(record["val_accuracy"]) * 100
+        actual_qwk = float(record["val_qwk"])
+
+        try:
+            if abs(float(stated_acc) - actual_acc) > 0.011:
+                offenders.append(
+                    f"epoch {epoch:02d}: val accuracy {stated_acc}% stated, "
+                    f"{actual_acc:.2f}% recorded")
+            if abs(float(stated_qwk) - actual_qwk) > 0.00011:
+                offenders.append(
+                    f"epoch {epoch:02d}: val QWK {stated_qwk} stated, "
+                    f"{actual_qwk:.4f} recorded")
+        except ValueError:
+            offenders.append(f"epoch {epoch:02d}: unparsable row")
+
+    assert seen, (
+        "No epoch rows were found in training_protocol.md. If the table moved, "
+        "point this rule at it rather than deleting the rule.")
+
+    assert not offenders, (
+        "The training table disagrees with epoch_history.csv:\n  "
+        + "\n  ".join(offenders)
+        + "\nThe table is a transcription of that file. Regenerate it; do not "
+          "edit the numbers by hand.")
+
+
+def test_exactly_one_epoch_is_marked_selected():
+    """
+    Six epochs were marked "BEST" beside one "BEST (SELECTED)". Only one
+    checkpoint was evaluated, and a reader must be able to see which.
+    """
+    if not os.path.exists(TRAINING_PROTOCOL):
+        pytest.skip("training_protocol.md absent")
+
+    # Count TABLE ROWS only. An earlier version of this rule counted the whole
+    # document and tripped on the paragraph that explains what SELECTED means -
+    # a rule measuring prose ABOUT the thing instead of the thing.
+    selected = sum(
+        1 for line in read(TRAINING_PROTOCOL).split("\n")
+        if _EPOCH_ROW.match(line) and re.search(r"\bSELECTED\b", line))
+
+    assert selected == 1, (
+        f"{selected} rows are marked SELECTED in training_protocol.md; exactly "
+        "one checkpoint was evaluated. Mark intermediate improvements as "
+        "improvements.")

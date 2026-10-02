@@ -5,8 +5,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  Camera as CameraIcon,
+  Cpu
 } from 'lucide-react';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { EyeLaterality } from '../types/clinical';
 import { analyzeRetinalImageOnCanvas, ClientValidationResult } from '../utils/retinalValidator';
 
@@ -122,6 +125,26 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
 
   const handleDragLeave = () => {
     setIsDragging(false);
+  };
+
+  const handleCameraCapture = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 95,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Prompt,
+      });
+      if (photo.dataUrl) {
+        const res = await fetch(photo.dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `retinal_camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        processImageFile(file);
+      }
+    } catch (err) {
+      console.log('[Camera] Cancelled or camera unavailable:', err);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -281,15 +304,31 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
           </div>
         </section>
 
-        {/* Section 2: Drag and Drop Retinal Fundus Uploader */}
+        {/* Section 2: Drag and Drop Retinal Fundus Uploader with Camera / Edge AI */}
         <section aria-labelledby="upload-heading" className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 id="upload-heading" className="text-xs font-bold uppercase tracking-wider text-slate-600">
-              2. Digital Fundus Photograph Upload
-            </h3>
-            <span className="text-[11px] text-slate-400 font-mono">
-              Accepted: JPEG, PNG • Max: 15MB • Min: 480x480
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h3 id="upload-heading" className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                2. Digital Fundus Photograph
+              </h3>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <Cpu className="w-3 h-3 text-emerald-600" /> Offline Edge AI Enabled
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCameraCapture}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 shadow-xs transition"
+                title="Capture fundus photo using mobile camera or ophthalmoscope adapter"
+              >
+                <CameraIcon className="w-3.5 h-3.5" />
+                <span>Use Mobile Camera / Lens</span>
+              </button>
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                JPEG/PNG • Max: 15MB
+              </span>
+            </div>
           </div>
 
           {/* Ingestion Drop Zone */}

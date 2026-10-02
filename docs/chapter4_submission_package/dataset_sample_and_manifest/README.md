@@ -4,7 +4,7 @@
 
 | File | Description |
 | :--- | :--- |
-| `dataset_split_manifest.csv` | 3,662 rows — one per APTOS 2019 image — recording image id, source, grade, split assignment, and the **SHA-256 of the actual image bytes**. |
+| `dataset_split_manifest.csv` | **3,504 rows** — one per *retained* APTOS 2019 image — recording image id, source, grade, split assignment, and the **SHA-256 of the actual image bytes**. APTOS publishes 3,662 labelled records; 158 are removed by byte-identical de-duplication and the exclusion of the 30 conflicting-label groups. |
 | `verify_manifest_hashes.py` | Verifies the manifest against your own copy of the APTOS images. |
 
 ---
@@ -45,12 +45,12 @@ Exit code `0` and `[SUCCESS]` mean every image checked matched its recorded dige
 | `file_path` | Path relative to the dataset root |
 | `true_grade` | ICDR severity 0–4 |
 | `true_label` | Human-readable grade label |
-| `split` | `train` (2,453) / `val` (550) / `test` (549) |
+| `split` | `train` (2,453) / `val` (526) / `test` (525) — summing to the 3,504 retained records |
 | `sha256_hash` | SHA-256 of the image file's bytes |
 
 ### Caveat on `duplicate_group_id`
 
-This column is present but **carries no grouping information**: there are 3,662 distinct group ids for 3,662 images. The generator derives groups from APTOS's `duplicated_info.csv`, which is not part of the Kaggle competition download, so it fell through to assigning every image its own group.
+Each group holds exactly **one** row, and that is the intended end state rather than a failure. `build_clean_split.py` hashes every file, groups byte-identical images, excludes the 30 groups carrying conflicting labels, and keeps a single representative of each remaining group — so a duplicate group cannot span partitions by construction. (An earlier generator derived groups from APTOS's `duplicated_info.csv`, which is not part of the Kaggle competition download, and fell through to assigning every image its own group: 3,662 groups for 3,662 images, grouping nothing. That is superseded.)
 
 Auditing `sha256_hash` directly instead shows **0 of 525 held-out images (0.00%) are byte-identical to a training image**. The measured effect on reported metrics is nil — accuracy 77.78% on the affected images vs 78.74% on the clean 522, and clean-subset $\kappa$ = 0.877818 vs 0.865832 full-cohort.
 

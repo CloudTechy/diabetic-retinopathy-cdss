@@ -229,7 +229,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
                   className="w-full flex items-center justify-center py-3 px-4 rounded-xl text-xs font-black text-white bg-clinical-primary hover:bg-clinical-primary-hover shadow-md transition transform active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-clinical-primary"
                 >
                   <UserCheck className="w-4 h-4 mr-2" />
-                  Initiate Certified Clinician Review (Screen 6)
+                  Record Clinician Review (Screen 6)
                 </button>
 
                 <div className="grid grid-cols-2 gap-2">

@@ -138,7 +138,16 @@ def test_configured_checkpoint_path_matches_compose_mount():
     """
     from app.core.config import settings
 
-    assert settings.MODEL_CHECKPOINT_PATH.endswith("models/weights/efficientnet_b0_dr.pth")
+    # Compared with separators normalised: the configured path is the container
+    # path under compose and the repository path otherwise, and on Windows the
+    # latter is backslash-separated. The invariant is WHERE it points, not which
+    # separator the host happens to use.
+    configured = settings.MODEL_CHECKPOINT_PATH.replace(chr(92), "/")
+    assert configured.endswith("models/weights/efficientnet_b0_dr.pth"), (
+        f"MODEL_CHECKPOINT_PATH is {settings.MODEL_CHECKPOINT_PATH!r}; compose "
+        "mounts ./backend at /app, so the weights must resolve under "
+        "models/weights/. A path pointing elsewhere silently produced "
+        "random-weight predictions before this was fixed.")
 
 
 def test_repository_checkpoint_matches_declared_digest():

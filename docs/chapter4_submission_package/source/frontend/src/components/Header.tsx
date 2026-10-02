@@ -18,7 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [secondsRemaining, setSecondsRemaining] = useState<number>(15 * 60);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState<boolean>(false);
 
-  // Inactivity countdown per NHS / Clinical Workstation safety policy
+  // Inactivity countdown. Modelled on common clinical-workstation practice;
+  // no conformity with any specific health-service policy is claimed.
   useEffect(() => {
     if (!currentUser) return;
 

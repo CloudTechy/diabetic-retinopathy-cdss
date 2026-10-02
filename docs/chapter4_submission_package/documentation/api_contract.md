@@ -125,7 +125,7 @@
   ```
 
 ### `POST /api/v1/assessments/{id}/review`
-- **Description:** Submits authoritative human clinician certification and locks the consultation record.
+- **Description:** Records the reviewing clinician's own independent assessment and locks the consultation record.
 - **Request Body:**
   ```json
   {
@@ -133,7 +133,7 @@
     "reviewerAssessedGrade": 2,
     "reviewerAssessedGradeLabel": "Grade 2: Moderate NPDR",
     "justificationNotes": "Macular exudates corroborated on slit lamp exam.",
-    "optionalObservation": "Referral to secondary care / hospital medical retina clinic."
+    "optionalObservation": "Clinician's free-text note. The system records it verbatim and draws no referral conclusion from it. e.g. discussed findings with patient at clinic."
   }
   ```
 - **Response `200 OK`:** Finalized assessment object with cryptographic signature and state `completed`.

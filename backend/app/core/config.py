@@ -73,7 +73,17 @@ class Settings(BaseSettings):
     # AI Model
     # Must match where the weights actually land inside the container: compose
     # mounts ./backend at /app, so backend/models/weights/ -> /app/models/weights/.
-    MODEL_CHECKPOINT_PATH: str = "/app/models/weights/efficientnet_b0_dr.pth"
+    # Follows the same convention as STORAGE_* above: the container path when
+    # running under compose, the repository path otherwise. A checkpoint path
+    # that only resolves inside Docker makes every local run depend on an
+    # override, and a missing override fails closed with a confusing message.
+    MODEL_CHECKPOINT_PATH: str = (
+        "/app/models/weights/efficientnet_b0_dr.pth" if os.path.exists("/app")
+        else os.path.abspath(
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))), "models", "weights",
+                "efficientnet_b0_dr.pth"))
+    )
     MODEL_DEVICE: str = "cpu"
     MODEL_SCORE_THRESHOLD: float = 0.5
     # SHA-256 of the evaluated checkpoint. When set, the engine refuses to load

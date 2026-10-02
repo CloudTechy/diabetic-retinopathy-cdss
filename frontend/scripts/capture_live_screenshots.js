@@ -35,6 +35,26 @@ const PASS = process.env.CDSS_PASSWORD || 'dr_secure_password_2026';
 const OUT = path.resolve('../docs/chapter4/screenshots_live');
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Wait until the validation stepper reaches a terminal state.
+ *
+ * The three gates animate in sequence, so "the page mentions Gate 3" is true
+ * long before Gate 3 has answered. Waiting on progress text produced a figure
+ * of a spinner captioned as a rejection. This waits for the ABSENCE of the
+ * in-progress wording and the presence of an outcome, and throws rather than
+ * letting the capture proceed past a timeout.
+ */
+async function waitForGateOutcome(page, { expect, timeout = 90000 }) {
+  await page.waitForFunction((want) => {
+    const t = document.body.innerText;
+    const busy = /in Progress|Calculating|Evaluating input/i.test(t);
+    if (busy) return false;
+    return want === 'reject'
+      ? /ERR_[A-Z_]+|Rejected|cannot be graded|Recapture/i.test(t)
+      : /All 3 Validation Gates|Successfully Passed|Open Decision-Support/i.test(t);
+  }, { timeout }, expect);
+}
 const shot = (page, name) => page.screenshot({ path: path.join(OUT, name) });
 
 async function clickText(page, text, tags = 'button, a') {
@@ -192,11 +212,8 @@ async function main() {
 
   // 4 — validation stepper
   await clickText(page, 'Proceed to 3-Gate Validation');
-  // The stepper animates each gate in turn; give it the full sequence.
-  await page.waitForFunction(
-    () => /Validation Gate|Gate 1|Gate 3|Technical Quality/i.test(document.body.innerText),
-    { timeout: 45000 }).catch(() => {});
-  await wait(4000);
+  await waitForGateOutcome(page, { expect: 'pass' });
+  await wait(1200);
   await snap('04_validation_stepper_passed.png', 'three gates, real metrics');
 
   // 5 — decision support: wait for the model's answer, not a fixed delay.
@@ -209,17 +226,66 @@ async function main() {
   await snap('05_decision_support_workspace.png', 'real grade + real Grad-CAM');
 
   // 6 — review modal
-  if (await clickText(page, 'Review') || await clickText(page, 'Certify')) {
-    await wait(2000);
+  if (await clickText(page, 'Record Clinician Review')
+      || await clickText(page, 'Review')) {
+    await wait(2500);
     await snap('06_professional_review_modal.png', 'human-in-the-loop modal');
-    await page.keyboard.press('Escape');
-    await wait(1000);
+
+    // 7 — complete the review so the finalised record is real, not a mock-up.
+    await page.evaluate(() => {
+      document.querySelectorAll('input[type="radio"], input[type="checkbox"]')
+        .forEach((el) => { if (!el.checked) el.click(); });
+    });
+    await wait(900);
+    const submitted = await clickText(page, 'Sign')
+      || await clickText(page, 'Submit')
+      || await clickText(page, 'Confirm');
+    if (submitted) {
+      await page.waitForFunction(
+        () => /Professional Review Response|SIGNED|Integrity ID/i
+          .test(document.body.innerText), { timeout: 30000 }).catch(() => {});
+      await wait(2500);
+      await snap('07_completed_assessment_record.png',
+        'finalised record, signed by the reviewer');
+    }
   }
 
-  // 7 — record history
+  // 8 — record history
   if (await clickText(page, 'Record History')) {
     await wait(2500);
     await snap('08_record_history_audit.png', 'live record history');
+  }
+
+  // 4b — the fail-closed path, on a real image degraded by a stated transform.
+  const NEGATIVE = path.resolve('scripts/_derived_blurred_negative.jpg');
+  if (fs.existsSync(NEGATIVE)) {
+    if (!await clickText(page, 'New Assessment')) {
+      await page.goto(`${BASE}/#new_assessment`, { waitUntil: 'networkidle2' });
+    }
+    await wait(2000);
+    const pid = await page.$('input[placeholder*="PT-"]');
+    if (pid) await pid.type(`PT-REJ-${Date.now().toString().slice(-4)}`);
+    const neg = await page.$('input[type="file"]');
+    if (neg) {
+      await neg.uploadFile(NEGATIVE);
+      await wait(2500);
+      await clickText(page, 'Proceed to 3-Gate Validation');
+      await waitForGateOutcome(page, { expect: 'reject' });
+      await wait(1200);
+
+      // Prove the figure shows what it claims before it is written.
+      const verdict = await page.evaluate(() => {
+        const m = document.body.innerText.match(/ERR_[A-Z_]+/);
+        return m ? m[0] : null;
+      });
+      if (!verdict) {
+        throw new Error('The blurred image did not produce a gate error code. '
+          + 'Refusing to write 04b: a figure captioned as a rejection must '
+          + 'show one.');
+      }
+      await snap('04b_validation_stepper_rejected.png',
+        `fail-closed path, ${verdict}`);
+    }
   }
 
   await browser.close();

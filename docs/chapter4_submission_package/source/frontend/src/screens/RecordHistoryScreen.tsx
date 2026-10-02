@@ -93,7 +93,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
       'Laplacian Variance',
       'Model Candidate Stage',
       'Model Score',
-      'Certified Clinical Stage',
+      'Clinician Recorded Grade',
       'Agreement',
       'Reviewing Clinician',
     ];

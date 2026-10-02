@@ -106,7 +106,7 @@ graph TD
   | 4. Submits Official Review (Agree / Disagree / Unable to determine)
   v
 +-------------------------------------------------------+
-| Process 4.0: Certification, Report & Audit Storage    |
+| Process 4.0: Review Sign-off, Report & Audit Storage |
 +-------------------------------------------------------+
   |
   +---> Persists immutable review to PostgreSQL
@@ -131,7 +131,7 @@ stateDiagram-v2
     Inference --> ResultReady : Softmax Scores + Grad-CAM Artifacts Generated
     
     ResultReady --> UnderReview : Clinician Opens Review Modal
-    UnderReview --> Completed : Clinician Signs Certification
+    UnderReview --> Completed : Clinician Signs Review
     
     Rejected --> [*] : Terminal (Inference Prohibited)
     Completed --> [*] : Immutable Locked Record

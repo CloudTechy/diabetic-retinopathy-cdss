@@ -6,13 +6,23 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "cap:build": "npm run build && cap sync android",
+    "cap:open": "cap open android",
+    "cap:run": "cap run android",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/camera": "^8.2.5",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
     "axios": "^1.6.8",
     "clsx": "^2.1.0",
     "lucide-react": "^0.358.0",
+    "onnxruntime-web": "^1.30.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.1"
