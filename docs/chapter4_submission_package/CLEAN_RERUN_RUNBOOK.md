@@ -202,16 +202,22 @@ Four.
 
 ---
 
-## Outstanding: calibrate the two admission thresholds
+## Calibrating the admission thresholds — DONE, kept as the procedure
 
-The retrain is complete. Two Gate thresholds were chosen a priori and never
-measured against this corpus:
+> [!NOTE]
+> **Completed 2026-10-01.** The thresholds below are in `config.py` and the
+> evidence is committed. This section stays because it is the procedure for
+> recalibrating against a different corpus, which any new deployment site would
+> have to do.
 
-| Setting | Value | What it does today |
-| :--- | ---: | :--- |
-| `LAPLACIAN_BLUR_THRESHOLD` | 60.0 | Rejects **10 of 10** genuine held-out images (they score 5.7 - 22.0) |
-| `MIN_IMAGE_DIMENSION` | 512 | Rejected 1 genuine held-out image |
-| `CONTRAST_THRESHOLD` | 18.0 | Rejected **5 of 10** once the first two were corrected |
+Three Gate thresholds had been chosen a priori and never measured against this
+corpus. Measured over the 2,979 training and validation images:
+
+| Setting | Was | Now | Genuine images the a priori value rejected |
+| :--- | ---: | ---: | ---: |
+| `LAPLACIAN_BLUR_THRESHOLD` | 60.0 | **4.3** | 2,963 / 2,979 — **99.5%** |
+| `CONTRAST_THRESHOLD` | 18.0 | **8.8** | 1,890 / 2,979 — **63.4%** |
+| `MIN_IMAGE_DIMENSION` | 512 | **480** | 38 / 2,979 — 1.3% |
 
 All three are measured in the same pass.
 

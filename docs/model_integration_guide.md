@@ -1,7 +1,7 @@
 # Milestone M6: EfficientNet-B0 Model Integration & Grad-CAM Walkthrough Guide
 
 **Document ID**: `DR-CDSS-M6-GUIDE`  
-**Classification**: SaMD Technical Architecture & Verification Specification  
+**Classification**: Research-prototype technical architecture and verification specification. This system holds no medical-device classification and has not been assessed by any regulator.  
 **Version**: 1.0.0  
 **Target Architecture**: PyTorch 2.x + Torchvision (EfficientNet-B0 Backbone)  
 **Associated System**: Diabetic Retinopathy Clinical Decision Support System (FastAPI Backend)
@@ -12,7 +12,7 @@
 
 This guide provides a comprehensive, step-by-step technical walkthrough for **Milestone M6 (Model Integration)** of the Diabetic Retinopathy Clinical Decision Support System (DR-CDSS). 
 
-In accordance with international Software as a Medical Device (SaMD) principles, FDA guidance on AI/ML-enabled medical software, and NHS digital health governance:
+The boundaries below are **informed by** published guidance on Software as a Medical Device — FDA material on AI/ML-enabled medical software and NHS digital health governance — as a source of design principles. No claim of conformity, classification or approval is made:
 1. **Clinical Decision Support Boundary**: The deep neural network acts strictly as an adjunct diagnostic aid. The model outputs **"model-generated class scores"** (never labeled as "confidence", "certainty", or "diagnostic truths").
 2. **Deterministic, Non-Adaptive Inference**: The CDSS operates in **evaluation mode only** (`model.eval()`). All neural network parameters are strictly frozen (`requires_grad = False`). Online fine-tuning, run-time gradient updates, and continuous learning from live clinical requests are architecturally prohibited to avoid model drift and preserve validation pedigree.
 3. **Fail-Closed Execution Invariant**: Inference is physically unreachable unless an uploaded fundus image has sequentially cleared all three stages of the Technical Validation Pipeline (Gate 1: File Integrity, Gate 2: Retinal Anatomical Relevance, and Gate 3: Technical Quality).
@@ -462,7 +462,7 @@ pytest backend/tests/test_api_endpoints.py -k test_create_and_upload_assessment 
 
 | Compliance Aspect | Implementation Standard | System Enforcement |
 | :--- | :--- | :--- |
-| **SaMD Risk Categorization** | IMDRF Category II (Informs Clinical Management) | Model designated as advisory; final diagnosis requires signed clinician review. |
+| **Risk framing (design reference only)** | The IMDRF "informs clinical management" tier was used as a *design reference* when setting the human-in-the-loop boundary. It is **not** an assigned categorisation. | Model output is advisory and non-diagnostic; a clinician records their own independent grade. |
 | **Model Drift Prevention** | ISO 13485 / IEC 62304 Software Lifecycle | `model.eval()`, `requires_grad=False`, no run-time gradient adjustments. |
 | **Traceability & Integrity** | 21 CFR Part 11 / EU MDR Article 10 | Cryptographic SHA-256 hash validation on weights prior to instantiation. |
 | **Explainability (XAI)** | High-Level Expert Group on AI (HLEG) Trustworthy AI | Grad-CAM feature heatmaps generated per prediction with target layer logging. |

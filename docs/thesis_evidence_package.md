@@ -94,7 +94,7 @@ xychart-beta
 
 ## 3. Clinical & Research Limitations Statement
 
-In accordance with international regulatory guidelines for Software as a Medical Device (FDA Class II SaMD, EU MDR 2017/745, and UK MHRA guidance), the clinical decision boundaries, intended use, and technical limitations of this system are explicitly documented below.
+The clinical decision boundaries, intended use and technical limitations of this system are documented below. Their structure is **informed by** published guidance for Software as a Medical Device (FDA, EU MDR 2017/745, UK MHRA) as a model for what such a statement should cover. This is a research prototype: it carries no device class under any of those frameworks, and no conformity assessment has been performed.
 
 ### 1. Decision Boundaries & Non-Autonomous Operation
 - **Strictly Decision-Support (Non-Autonomous)**: The DR-CDSS is engineered and validated exclusively as an assistive second-reader and clinical triage aid. Under no circumstances is the system licensed, calibrated, or authorized to operate autonomously or issue independent medical diagnoses.

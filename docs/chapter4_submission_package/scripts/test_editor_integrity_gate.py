@@ -449,14 +449,29 @@ OVERCLAIM_PHRASES = [
 ]
 
 
-def _code_files():
+def _walk_repo(suffixes):
     for base, _dirs, files in os.walk(REPO_ROOT):
         parts = base.replace("\\", "/").split("/")
         if any(p in {".git", "node_modules", ".venv", "dist", "__pycache__", "build"} for p in parts):
             continue
         for name in files:
-            if name.endswith((".py", ".ts", ".tsx")):
+            if name.endswith(suffixes):
                 yield os.path.relpath(os.path.join(base, name), REPO_ROOT)
+
+
+def _code_files():
+    return _walk_repo((".py", ".ts", ".tsx"))
+
+
+def _prose_files():
+    """
+    Documents were outside the overclaim rule entirely until an independent
+    review found "FDA Class II SaMD" and "In compliance with FDA ... NHS England
+    ... NICE" sitting in docs/ - a regulatory classification and a conformity
+    claim that this research prototype does not hold. The rule had only ever
+    read .py/.ts/.tsx, so the prose was never examined.
+    """
+    return _walk_repo((".md",))
 
 
 def test_no_fabricated_clinician_identity_in_code():
@@ -1627,3 +1642,195 @@ def test_the_corpus_guard_compares_bytes_against_the_manifest():
     assert "_sha256(" in body, (
         "check_corpus() does not hash the files. Comparing names alone passes "
         "every impostor, since an impostor's name is a real image_id.")
+
+
+# Claims of a regulatory STATUS the system does not hold. Being informed by a
+# framework is a legitimate design statement and is not listed here; holding a
+# class, or complying, is not.
+REGULATORY_STATUS_CLAIMS = [
+    "Class II Software as a Medical Device",
+    "FDA Class II",
+    "Classification**: SaMD",
+    "SaMD Risk Categorization",
+    "In compliance with FDA",
+    "In accordance with international regulatory guidelines",
+    "regulatory approval",
+    "CE marked",
+    "FDA cleared",
+    "FDA approved",
+]
+
+
+def test_no_document_claims_a_regulatory_status_the_system_lacks():
+    """
+    This is a PGD research prototype. It has no device classification, has not
+    been through a conformity assessment, and is not approved or cleared by any
+    regulator. Documents may cite these frameworks as design references; they
+    may not place the system inside one.
+    """
+    offenders = []
+    for rel in _prose_files():
+        if "chapter4_submission_package" in rel.replace("\\", "/"):
+            continue        # a mirror of the sources checked above
+        path = os.path.join(REPO_ROOT, rel)
+        for lineno, line in enumerate(read(path).split("\n"), 1):
+            for phrase in REGULATORY_STATUS_CLAIMS:
+                if phrase.lower() in line.lower():
+                    offenders.append(f"{rel}:{lineno} claims {phrase!r}")
+
+    assert not offenders, (
+        "A document places this prototype inside a regulatory framework it does "
+        "not belong to:\n  " + "\n  ".join(offenders)
+        + "\nWrite that the design is INFORMED BY the guidance, and state that "
+          "no classification, conformity assessment or approval exists.")
+
+
+# ======================================================================
+# RULE GROUP R - one test result, and the documents must quote it
+#
+# An independent reviewer found no single authoritative passing run. The
+# package carried FIVE different answers to "did the tests pass":
+#
+#     test_execution.log                 184 collected, 183 passed, 1 skipped
+#     system_test_report.md              "183 collected - 182 passed"
+#     independent_thesis_qa_gate_audit   "183 collected - 182 passed"
+#     reproducibility_runbook.md         "183 collected - 182 passed"
+#     PROGRESS_TRACKER.md                "175 passed, 1 skipped"
+#     test_execution_output.txt (stale)  "167 passed, 3 skipped"
+#
+# The documents disagreed with the log they cite, and with each other. A
+# reader cannot tell which run is the evidence, so none of them is.
+#
+# These rules do the arithmetic the reviewer did by hand.
+# ======================================================================
+
+TEST_LOG = os.path.join(REPO_ROOT, "docs", "chapter4", "test_execution.log")
+
+# "183 passed, 1 skipped" / "183 passed, 1 skipped, 2 warnings in 68s"
+_SUMMARY = re.compile(
+    r"(?P<passed>\d+)\s+passed"
+    r"(?:,\s*(?P<failed>\d+)\s+failed)?"
+    r"(?:,\s*(?P<skipped>\d+)\s+skipped)?")
+_COLLECTED = re.compile(r"collected\s+(\d+)\s+item")
+
+# Any document statement of the form "N collected", "N passed", "N skipped".
+_CLAIM = re.compile(
+    r"\*{0,2}(\d+)\*{0,2}\s*(?:tests?\s+)?(collected|passed|skipped|failed)")
+
+
+def _authoritative_counts():
+    """(collected, passed, skipped, failed) from the committed log."""
+    if not os.path.exists(TEST_LOG):
+        return None
+    text = read(TEST_LOG)
+    summary = None
+    for match in _SUMMARY.finditer(text):
+        summary = match          # the last summary line is the run's verdict
+    if summary is None:
+        return None
+    collected = None
+    found = _COLLECTED.findall(text)
+    if found:
+        collected = int(found[-1])
+    return (
+        collected,
+        int(summary.group("passed")),
+        int(summary.group("skipped") or 0),
+        int(summary.group("failed") or 0),
+    )
+
+
+def test_the_committed_test_log_records_a_passing_run():
+    """
+    The log is the evidence. If it records failures, no document may describe
+    the suite as passing, and the right fix is to make the tests pass.
+    """
+    counts = _authoritative_counts()
+    assert counts is not None, (
+        f"No pytest summary found in {os.path.relpath(TEST_LOG, REPO_ROOT)}. "
+        "The committed log is what every document cites; regenerate it.")
+    collected, passed, skipped, failed = counts
+
+    assert failed == 0, (
+        f"The committed test log records {failed} failure(s). Fix the tests and "
+        "regenerate the log - do not describe the suite as passing while its own "
+        "evidence says otherwise.")
+
+    if collected is not None:
+        assert passed + skipped == collected, (
+            f"The log's own arithmetic does not close: {collected} collected but "
+            f"{passed} passed + {skipped} skipped = {passed + skipped}.")
+
+
+def test_documents_quote_the_committed_test_log():
+    """
+    Every test count stated in a document must be one the log actually records.
+    A document saying "183 collected - 182 passed" beside a log saying "184
+    collected, 183 passed" leaves the reader to guess which is the run.
+    """
+    counts = _authoritative_counts()
+    if counts is None:
+        pytest.skip("no committed test log")
+    collected, passed, skipped, failed = counts
+    allowed = {"collected": collected, "passed": passed,
+               "skipped": skipped, "failed": failed}
+
+    targets = [
+        os.path.join(REPO_ROOT, "docs", "chapter4", "system_test_report.md"),
+        os.path.join(REPO_ROOT, "docs", "chapter4",
+                     "independent_thesis_qa_gate_audit.md"),
+        os.path.join(REPO_ROOT, "docs", "chapter4",
+                     "reproducibility_runbook.md"),
+        os.path.join(REPO_ROOT, "docs", "chapter4",
+                     "objective_traceability_matrix.md"),
+        os.path.join(REPO_ROOT, "PROGRESS_TRACKER.md"),
+    ]
+
+    offenders = []
+    for path in targets:
+        if not os.path.exists(path):
+            continue
+        rel = os.path.relpath(path, REPO_ROOT)
+        for lineno, line in enumerate(read(path).split("\n"), 1):
+            # An earlier version of this rule also required the word "test",
+            # "suite" or "pytest" on the same line. The line it most needed to
+            # catch - "**Overall Result:** **183 collected - 182 passed**" -
+            # contains none of them, so the rule passed over the single
+            # clearest contradiction in the package. The verbs below are
+            # specific enough on their own in these documents.
+            for value, kind in _CLAIM.findall(line):
+                expected = allowed.get(kind)
+                if expected is None:
+                    continue
+                if int(value) != expected:
+                    offenders.append(
+                        f"{rel}:{lineno} says {value} {kind}; the committed log "
+                        f"records {expected}")
+
+    assert not offenders, (
+        "A document states a test count the committed log does not support:\n  "
+        + "\n  ".join(offenders)
+        + "\nRegenerate docs/chapter4/test_execution.log and quote it, or correct "
+          "the document. One run is the evidence.")
+
+
+def test_only_one_test_log_ships():
+    """
+    A second, older log beside the first is how the package came to carry two
+    different answers. The package mirrors the canonical log; nothing else may
+    sit beside it claiming to be a run.
+    """
+    package_logs = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package",
+                                "logs_and_metrics")
+    if not os.path.isdir(package_logs):
+        pytest.skip("submission package not assembled")
+
+    found = sorted(
+        name for name in os.listdir(package_logs)
+        if re.search(r"test.*(execution|run|output)", name, re.I))
+
+    assert len(found) <= 1, (
+        "More than one test log ships in the submission package:\n  "
+        + "\n  ".join(found)
+        + "\nKeep exactly one. A superseded log beside the current one is "
+          "indistinguishable from the current one to a reader.")

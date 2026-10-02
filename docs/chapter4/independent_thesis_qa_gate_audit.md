@@ -259,7 +259,7 @@ Re-verified against the genuine APTOS 2019 run. Every figure below is recomputed
 
 ### Target 7: Automated Test Suite & Deployment
 * **Findings:**
-  - Backend suite: **183 collected — 182 passed, 0 failed, 1 skipped** (the skip requires PyTorch without `AI_INFERENCE_ENGINE=mock`). The suite opts into the simulated inference engine explicitly via `conftest.py`.
+  - Backend suite: **188 collected — 187 passed, 0 failed, 1 skipped**, reproduced verbatim in [`test_execution.log`](test_execution.log). The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` **runs and passes** against the digest-verified checkpoint. The suite opts into the simulated inference engine explicitly via `conftest.py`.
   - Includes `test_real_model_end_to_end_pipeline` (marked `@pytest.mark.slow`): submits a packaged fixture image through the full authenticated API, validates the model output argmax consistency, fetches the Grad-CAM URL and confirms a valid PNG response — proving the complete CDSS evidence chain without synthetic intermediates.
   - Eight tests guard the fail-closed invariant; 13 assert Grad-CAM render equivalence; 38 assert validation gate consistency on subsampled inputs.
   - Production deployment verified live on Docker Compose stack returning HTTP 200.

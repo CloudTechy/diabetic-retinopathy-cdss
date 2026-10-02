@@ -60,7 +60,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-xl rounded-2xl sm:px-10 border border-slate-200 space-y-6">
-          {/* SaMD Disclaimer Banner */}
+          {/* Scope banner. Deliberately not phrased as a device
+              classification: this is a research prototype. */}
           <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 flex items-start space-x-3 text-xs text-amber-900">
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
