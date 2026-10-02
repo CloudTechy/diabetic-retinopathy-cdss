@@ -1,0 +1,35 @@
+# Keep the build context small and the image clean.
+#
+# The developer venv is the important one: installing PyTorch locally pushed
+# backend/.venv past 2 GB, and because the Dockerfile does `COPY . .` from this
+# directory, every image build began by transferring it. A Windows venv is also
+# useless inside a Linux image, and docker-compose bind-mounts ./backend over
+# /app at runtime anyway, so it would shadow whatever was copied.
+.venv/
+venv/
+env/
+
+# Python bytecode and tooling caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local databases and scratch state
+*.db
+*.sqlite
+*.sqlite3
+.calibration_pipeline_state.json
+
+# NOTE: models/weights/*.pth is deliberately NOT excluded. It is 16 MB, and
+# baking it keeps the image able to serve on its own rather than only when
+# docker-compose happens to bind-mount ./backend over /app.
+
+# Local environment
+.env
+.env.*
+!.env.example
