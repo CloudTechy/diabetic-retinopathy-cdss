@@ -112,15 +112,65 @@ async function main() {
   // 1 — sign-in
   await page.goto(`${BASE}/#signin`, { waitUntil: 'networkidle2', timeout: 30000 });
   await page.waitForSelector('#staff-id', { timeout: 20000 });
-  await page.type('#staff-id', USER);
-  await page.type('#password', PASS);
-  await wait(500);
+
+  // Drive the form the way the application does. page.type() dispatches key
+  // events that a React controlled input does not necessarily absorb, so the
+  // form submitted empty and the app correctly reported an auth failure while
+  // the API was answering 200 the whole time.
+  const usedDemoFill = await page.evaluate(() => {
+    const btn = [...document.querySelectorAll('button')]
+      .find((b) => /Dr\. Demo|Demo \(Ophth\)/i.test(b.textContent || ''));
+    if (btn) { btn.click(); return true; }
+    return false;
+  });
+
+  if (!usedDemoFill) {
+    // Fallback: set through the native setter so React's onChange fires.
+    await page.evaluate((u, p2) => {
+      const set = (sel, val) => {
+        const el = document.querySelector(sel);
+        const setter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype, 'value').set;
+        setter.call(el, val);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      set('#staff-id', u);
+      set('#password', p2);
+    }, USER, PASS);
+  }
+
+  await wait(900);
+  const filled = await page.evaluate(() => ({
+    id: document.querySelector('#staff-id')?.value || '',
+    pw: (document.querySelector('#password')?.value || '').length,
+  }));
+  if (!filled.id || !filled.pw) {
+    throw new Error(`Credentials did not reach the form (id=${filled.id}, pw length ${filled.pw})`);
+  }
   await snap('01_signin_screen.png', 'credentials entered, not yet submitted');
 
   await page.click('button[type="submit"]');
-  await page.waitForFunction(() => !window.location.hash.includes('signin'),
-    { timeout: 30000 });
-  await wait(2500);
+
+  // Wait for the authenticated shell, not for the URL to change. The hash is a
+  // side effect of the screen switch; the navigation is the screen switch.
+  // When this fails, say what the page shows - a bare timeout tells you nothing.
+  try {
+    await page.waitForFunction(() => {
+      const t = document.body.innerText;
+      return t.includes('Worklist') || t.includes('New Assessment');
+    }, { timeout: 30000 });
+  } catch (err) {
+    const text = await page.evaluate(() => document.body.innerText.slice(0, 600));
+    const hash = await page.evaluate(() => window.location.hash);
+    await shot(page, '00_signin_stalled.png');
+    console.error('\nSign-in did not reach the authenticated shell.');
+    console.error(`  hash: ${hash}`);
+    console.error('  page text:');
+    console.error(text.split('\n').filter(Boolean).slice(0, 12)
+      .map((l) => `    ${l}`).join('\n'));
+    throw err;
+  }
+  await wait(3000);
 
   // 2 — dashboard
   await snap('02_clinical_dashboard.png', 'live worklist from the API');
@@ -142,11 +192,20 @@ async function main() {
 
   // 4 — validation stepper
   await clickText(page, 'Proceed to 3-Gate Validation');
-  await wait(3500);
+  // The stepper animates each gate in turn; give it the full sequence.
+  await page.waitForFunction(
+    () => /Validation Gate|Gate 1|Gate 3|Technical Quality/i.test(document.body.innerText),
+    { timeout: 45000 }).catch(() => {});
+  await wait(4000);
   await snap('04_validation_stepper_passed.png', 'three gates, real metrics');
-  await wait(6000);
 
-  // 5 — decision support
+  // 5 — decision support: wait for the model's answer, not a fixed delay.
+  await clickText(page, 'Open Decision-Support Result Workspace');
+  await page.waitForFunction(
+    () => /No Apparent DR|NPDR|Proliferative|model-generated class score/i
+      .test(document.body.innerText),
+    { timeout: 60000 }).catch(() => {});
+  await wait(3500);
   await snap('05_decision_support_workspace.png', 'real grade + real Grad-CAM');
 
   // 6 — review modal

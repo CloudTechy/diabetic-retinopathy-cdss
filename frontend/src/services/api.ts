@@ -10,9 +10,17 @@ import {
 import { ClientValidationResult } from '../utils/retinalValidator';
 import { browserStorage } from './storage';
 
+// For native mobile apps (Capacitor), API requests point directly to the cloud backend.
+// In web deployments (SpaceHub / Vercel), relative '/api/v1' is proxied by Nginx / Vercel rewrites.
+const API_BASE_URL =
+  (import.meta as any).env?.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()
+    ? 'https://drai-cdss.spacehubtech.cloud/api/v1'
+    : '/api/v1');
+
 const apiClient = axios.create({
-  baseURL: '/api/v1',
-  timeout: 5000,
+  baseURL: API_BASE_URL,
+  timeout: 60000,
 });
 
 apiClient.interceptors.request.use((config) => {
