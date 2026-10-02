@@ -98,3 +98,5 @@ handover2/
 calibration_evidence.zip
 
 .pytest_tmp/
+*.zip
+*.tar.gz
