@@ -1,0 +1,75 @@
+{
+  "corpus": "C:\\Users\\USER\\AppData\\Local\\Temp\\claude\\c--Users-USER-Documents-TECH4MATION-cybervilla-backend\\99ec2341-909c-48b1-8da9-9bcf0c6c0ba6\\scratchpad\\smoke3",
+  "subset": "train+val (development)",
+  "manifest": "C:\\Users\\USER\\Documents\\TECH4MATION\\diabetic-retinopathy-cdss\\docs\\chapter4\\dataset_split_manifest.csv",
+  "images_measured": 10,
+  "sampled": false,
+  "current_threshold": 60.0,
+  "rejected_at_current_threshold": 10,
+  "rejected_share_at_current_threshold": 1.0,
+  "min": 7.133,
+  "max": 23.399,
+  "mean": 14.264,
+  "median": 13.583,
+  "percentiles": {
+    "p0.1": 7.143,
+    "p0.5": 7.184,
+    "p1": 7.235,
+    "p2": 7.337,
+    "p5": 7.644,
+    "p10": 8.156,
+    "p25": 9.929,
+    "p50": 13.583,
+    "p75": 18.094,
+    "p90": 21.219,
+    "p99": 23.181
+  },
+  "contrast": {
+    "current_threshold": 18.0,
+    "rejected_at_current_threshold": 9,
+    "rejected_share_at_current_threshold": 0.9,
+    "min": 4.27,
+    "median": 6.55,
+    "max": 23.644,
+    "percentiles": {
+      "p0.1": 4.274,
+      "p0.5": 4.291,
+      "p1": 4.313,
+      "p2": 4.355,
+      "p5": 4.483,
+      "p10": 4.697,
+      "p25": 5.247,
+      "p50": 6.55,
+      "p75": 11.449,
+      "p90": 17.959,
+      "p99": 23.075
+    },
+    "crowding_within_half_unit": {
+      "p0.1": 2,
+      "p0.5": 2,
+      "p1": 2,
+      "p2": 2,
+      "p5": 2,
+      "p10": 3
+    }
+  },
+  "min_image_dimension": {
+    "current_threshold": 512,
+    "rejected_at_current_threshold": 0,
+    "rejected_share_at_current_threshold": 0.0,
+    "shortest_edge_min": 900,
+    "shortest_edge_median": 900,
+    "shortest_edge_max": 900,
+    "percentiles": {
+      "p0.1": 900,
+      "p0.5": 900,
+      "p1": 900,
+      "p2": 900,
+      "p5": 900,
+      "p10": 900,
+      "p50": 900,
+      "p100": 900
+    }
+  },
+  "note": "Measurement only. The threshold is not written to configuration by this script; the operating point is a judgement that must be made and justified explicitly."
+}

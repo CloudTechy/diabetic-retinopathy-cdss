@@ -51,7 +51,7 @@ services:
       STORAGE_ATTRIBUTIONS_PATH: /app/storage/attributions
       MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-15}
       MODEL_CHECKPOINT_PATH: ${MODEL_CHECKPOINT_PATH:-/app/models/weights/efficientnet_b0_dr.pth}
-      MODEL_CHECKPOINT_SHA256: ${MODEL_CHECKPOINT_SHA256:-8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa}
+      MODEL_CHECKPOINT_SHA256: ${MODEL_CHECKPOINT_SHA256:-67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7}
       MODEL_DEVICE: ${MODEL_DEVICE:-cpu}
       CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","http://127.0.0.1:3000","http://127.0.0.1:5173"]'
     ports:

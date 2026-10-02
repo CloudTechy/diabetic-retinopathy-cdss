@@ -59,7 +59,6 @@ class TestAssessmentEndpoints:
         upload_res = test_client.post(
             f"/api/v1/assessments/{assessment_id}/upload",
             files={"file": ("test_fundus.jpg", raw_bytes, "image/jpeg")},
-            data={"candidate_grade": 2},
         )
         assert upload_res.status_code == 200
         uploaded_data = upload_res.json()
@@ -186,4 +185,5 @@ class TestAssessmentEndpoints:
         )
         assert valid_res.status_code == 200
         assert valid_res.json()["status"] == "completed"
+
 

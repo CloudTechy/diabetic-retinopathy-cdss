@@ -1,0 +1,194 @@
+{
+  "n_test": 525,
+  "exact_accuracy_pct": 84.0,
+  "within_one_grade_pct": 93.71,
+  "over_called_pct": 8.57,
+  "under_called_pct": 7.43,
+  "quadratic_weighted_kappa": 0.865832,
+  "confusion_matrix": [
+    [
+      266,
+      2,
+      1,
+      0,
+      1
+    ],
+    [
+      5,
+      33,
+      12,
+      0,
+      0
+    ],
+    [
+      0,
+      11,
+      105,
+      8,
+      15
+    ],
+    [
+      0,
+      0,
+      5,
+      15,
+      6
+    ],
+    [
+      1,
+      6,
+      9,
+      2,
+      22
+    ]
+  ],
+  "per_class": [
+    {
+      "grade": 0,
+      "label": "Grade 0: No Apparent DR",
+      "support": 270,
+      "sensitivity_pct": 98.52,
+      "sensitivity_ci95": [
+        96.3,
+        99.4
+      ],
+      "specificity_pct": 97.65,
+      "precision_pct": 97.79,
+      "f1": 0.9815
+    },
+    {
+      "grade": 1,
+      "label": "Grade 1: Mild NPDR",
+      "support": 50,
+      "sensitivity_pct": 66.0,
+      "sensitivity_ci95": [
+        52.2,
+        77.6
+      ],
+      "specificity_pct": 96.0,
+      "precision_pct": 63.46,
+      "f1": 0.6471
+    },
+    {
+      "grade": 2,
+      "label": "Grade 2: Moderate NPDR",
+      "support": 139,
+      "sensitivity_pct": 75.54,
+      "sensitivity_ci95": [
+        67.8,
+        81.9
+      ],
+      "specificity_pct": 93.01,
+      "precision_pct": 79.55,
+      "f1": 0.7749
+    },
+    {
+      "grade": 3,
+      "label": "Grade 3: Severe NPDR",
+      "support": 26,
+      "sensitivity_pct": 57.69,
+      "sensitivity_ci95": [
+        38.9,
+        74.5
+      ],
+      "specificity_pct": 98.0,
+      "precision_pct": 60.0,
+      "f1": 0.5882
+    },
+    {
+      "grade": 4,
+      "label": "Grade 4: Proliferative DR",
+      "support": 40,
+      "sensitivity_pct": 55.0,
+      "sensitivity_ci95": [
+        39.8,
+        69.3
+      ],
+      "specificity_pct": 95.46,
+      "precision_pct": 50.0,
+      "f1": 0.5238
+    }
+  ],
+  "operating_points": [
+    {
+      "name": "Referable DR",
+      "threshold": 2,
+      "n_positive": 205,
+      "n_negative": 320,
+      "tp": 187,
+      "fn": 18,
+      "fp": 14,
+      "tn": 306,
+      "sensitivity_pct": 91.22,
+      "sensitivity_ci95": [
+        86.5,
+        94.4
+      ],
+      "specificity_pct": 95.62,
+      "specificity_ci95": [
+        92.8,
+        97.4
+      ],
+      "ppv_pct": 93.03,
+      "npv_pct": 94.44
+    },
+    {
+      "name": "Sight-threatening DR",
+      "threshold": 3,
+      "n_positive": 66,
+      "n_negative": 459,
+      "tp": 45,
+      "fn": 21,
+      "fp": 24,
+      "tn": 435,
+      "sensitivity_pct": 68.18,
+      "sensitivity_ci95": [
+        56.2,
+        78.2
+      ],
+      "specificity_pct": 94.77,
+      "specificity_ci95": [
+        92.3,
+        96.5
+      ],
+      "ppv_pct": 65.22,
+      "npv_pct": 95.39
+    },
+    {
+      "name": "Any DR",
+      "threshold": 1,
+      "n_positive": 255,
+      "n_negative": 270,
+      "tp": 249,
+      "fn": 6,
+      "fp": 4,
+      "tn": 266,
+      "sensitivity_pct": 97.65,
+      "sensitivity_ci95": [
+        95.0,
+        98.9
+      ],
+      "specificity_pct": 98.52,
+      "specificity_ci95": [
+        96.3,
+        99.4
+      ],
+      "ppv_pct": 98.42,
+      "npv_pct": 97.79
+    }
+  ],
+  "leakage_audit": {
+    "n_test": 525,
+    "n_test_leaked": 0,
+    "leaked_pct": 0.0,
+    "leaked_by_grade": {},
+    "leaked_image_ids": [],
+    "duplicate_groups": 3504,
+    "groups_with_more_than_one_row": 0,
+    "groups_collapsed_to_one_representative": true,
+    "groups_spanning_more_than_one_partition": 0,
+    "cross_partition_group_ids": [],
+    "n_val_leaked_from_train": 0
+  },
+  "leakage_adjusted": null
+}

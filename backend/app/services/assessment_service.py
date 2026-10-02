@@ -268,7 +268,6 @@ class AssessmentService:
         inference_out = get_active_inference_service().predict(
             pil_image=pil_img,
             laterality=assessment.eye_laterality,
-            candidate_grade=candidate_grade,
         )
         end_time = datetime.datetime.now(timezone.utc)
 
@@ -704,5 +703,6 @@ class AssessmentService:
             createdAt=assessment.created_at.isoformat(),
             updatedAt=assessment.updated_at.isoformat(),
         )
+
 
 

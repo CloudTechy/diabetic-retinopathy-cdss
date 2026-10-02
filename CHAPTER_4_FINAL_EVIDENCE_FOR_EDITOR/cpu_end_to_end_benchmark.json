@@ -1,0 +1,104 @@
+{
+  "scope": "end-to-end request path (read -> gates -> preprocess -> forward -> Grad-CAM -> compose -> encode)",
+  "image_source": "aptos",
+  "image_source_detail": "APTOS (aptos2019/train_images, mean 1798 KB)",
+  "mean_image_bytes": 1841568,
+  "synthetic_caveat": null,
+  "compute_only_mean_ms": 89.017,
+  "device": "cpu",
+  "cpu": "x86_64",
+  "torch_threads": 4,
+  "pytorch": "2.11.0+cpu",
+  "python": "3.13.15",
+  "warmup": 3,
+  "runs_requested": 30,
+  "runs_completed": 30,
+  "total_mean_ms": 180.414,
+  "total_median_ms": 147.448,
+  "total_p95_ms": 342.493,
+  "total_min_ms": 95.883,
+  "total_max_ms": 360.737,
+  "stages": [
+    {
+      "stage": "read",
+      "mean_ms": 12.967,
+      "median_ms": 10.254,
+      "p95_ms": 34.766,
+      "min_ms": 0.566,
+      "max_ms": 40.048,
+      "pct_of_total": 7.2
+    },
+    {
+      "stage": "gate1",
+      "mean_ms": 2.305,
+      "median_ms": 1.542,
+      "p95_ms": 6.377,
+      "min_ms": 0.624,
+      "max_ms": 6.533,
+      "pct_of_total": 1.3
+    },
+    {
+      "stage": "gate2",
+      "mean_ms": 59.032,
+      "median_ms": 32.433,
+      "p95_ms": 161.889,
+      "min_ms": 12.116,
+      "max_ms": 189.733,
+      "pct_of_total": 32.7
+    },
+    {
+      "stage": "gate3",
+      "mean_ms": 15.655,
+      "median_ms": 14.431,
+      "p95_ms": 25.065,
+      "min_ms": 4.896,
+      "max_ms": 25.38,
+      "pct_of_total": 8.7
+    },
+    {
+      "stage": "preprocess",
+      "mean_ms": 10.357,
+      "median_ms": 6.9,
+      "p95_ms": 20.148,
+      "min_ms": 3.613,
+      "max_ms": 20.227,
+      "pct_of_total": 5.7
+    },
+    {
+      "stage": "forward",
+      "mean_ms": 29.221,
+      "median_ms": 27.969,
+      "p95_ms": 35.298,
+      "min_ms": 25.855,
+      "max_ms": 35.327,
+      "pct_of_total": 16.2
+    },
+    {
+      "stage": "gradcam",
+      "mean_ms": 0.633,
+      "median_ms": 0.615,
+      "p95_ms": 0.754,
+      "min_ms": 0.566,
+      "max_ms": 0.784,
+      "pct_of_total": 0.4
+    },
+    {
+      "stage": "compose",
+      "mean_ms": 18.2,
+      "median_ms": 17.596,
+      "p95_ms": 23.64,
+      "min_ms": 15.105,
+      "max_ms": 24.188,
+      "pct_of_total": 10.1
+    },
+    {
+      "stage": "encode",
+      "mean_ms": 30.606,
+      "median_ms": 30.454,
+      "p95_ms": 34.214,
+      "min_ms": 26.057,
+      "max_ms": 36.422,
+      "pct_of_total": 17.0
+    }
+  ]
+}

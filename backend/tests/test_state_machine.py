@@ -115,7 +115,6 @@ class TestStateMachineServiceExecution:
             assessment_id=assessment.id,
             image_bytes=raw_bytes,
             original_filename="sharp_retina.jpg",
-            candidate_grade=2,
         )
 
         assert result_assessment.status == "result_ready"
@@ -125,3 +124,4 @@ class TestStateMachineServiceExecution:
         assert result_assessment.ai_result is not None
         assert result_assessment.ai_result.primary_class_grade == 2
         assert len(result_assessment.ai_result.class_scores) == 5
+

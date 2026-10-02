@@ -8,8 +8,8 @@ interface SignInScreenProps {
 }
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) => {
-  const [email, setEmail] = useState<string>('dr.demo@research-prototype.local');
-  const [password, setPassword] = useState<string>('password123');
+  const [email, setEmail] = useState<string>('demo.clinician');
+  const [password, setPassword] = useState<string>('dr_secure_password_2026');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -33,11 +33,11 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
 
   const handleQuickDemoFill = (role: 'consultant' | 'optometrist') => {
     if (role === 'consultant') {
-      setEmail('dr.demo@research-prototype.local');
-      setPassword('password123');
+      setEmail('demo.clinician');
+      setPassword('dr_secure_password_2026');
     } else {
-      setEmail('optometrist.demo@research-prototype.local');
-      setPassword('password123');
+      setEmail('demo.clinician');
+      setPassword('dr_secure_password_2026');
     }
   };
 

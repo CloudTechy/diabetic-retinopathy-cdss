@@ -23,6 +23,21 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      sessionStorage.removeItem('access_token');
+      browserStorage.saveStoredUser(null);
+      if (window.location.hash !== '#signin') {
+        window.location.hash = '#signin';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 class ClinicalApiService {
   private currentUser: ClinicianUser | null = null;
 
@@ -37,16 +52,9 @@ class ClinicalApiService {
   }
 
   async login(credentials: { username: string; password?: string }): Promise<ClinicianUser> {
-    const params = new URLSearchParams();
-    params.append('username', credentials.username);
-    if (credentials.password) {
-      params.append('password', credentials.password);
-    }
-
-    const res = await apiClient.post('/auth/login', params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+    const res = await apiClient.post('/auth/login', {
+      username: credentials.username,
+      password: credentials.password || '',
     });
 
     const token = res.data.access_token;

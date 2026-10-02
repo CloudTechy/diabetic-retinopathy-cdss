@@ -26,12 +26,12 @@ DEFAULT_CLINICIAN_DATA = {
     "facility": "Research Prototype Environment",
 }
 
-# Usernames that may materialise the demonstration account on first login. They
-# get an account created for them; they do NOT get to skip password checking.
 DEMO_LOGIN_IDENTIFIERS = {
     "demo.clinician",
     "demo.clinician@research-prototype.invalid",
     "clinician",
+    "dr.demo@research-prototype.local",
+    "optometrist.demo@research-prototype.local",
 }
 
 

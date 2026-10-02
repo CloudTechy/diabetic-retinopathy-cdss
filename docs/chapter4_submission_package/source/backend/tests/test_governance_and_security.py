@@ -37,7 +37,6 @@ class TestClinicianInTheLoopGovernance:
             assessment_id=assessment.id,
             image_bytes=raw_bytes,
             original_filename="retina_od.jpg",
-            candidate_grade=2,
         )
 
         assert validated.ai_result is not None
@@ -94,7 +93,6 @@ class TestClinicianInTheLoopGovernance:
             assessment_id=assessment.id,
             image_bytes=raw_bytes,
             original_filename="retina_os.jpg",
-            candidate_grade=0,
         )
 
         review_req = ClinicianReviewSubmitRequest(
@@ -141,7 +139,6 @@ class TestClinicianInTheLoopGovernance:
             assessment_id=assessment.id,
             image_bytes=raw_bytes,
             original_filename="retina_frozen.jpg",
-            candidate_grade=0,
         )
 
         assert processed.model_execution is not None
@@ -203,7 +200,6 @@ class TestClinicalTerminologyCompliance:
             assessment_id=assessment.id,
             image_bytes=raw_bytes,
             original_filename="retina_disclaimer.jpg",
-            candidate_grade=1,
         )
 
         assert processed.ai_result is not None
@@ -293,3 +289,4 @@ class TestAuthenticationEnforcement:
             assert res.status_code == 401, (
                 f"{method.upper()} {path} served an anonymous caller "
                 f"({res.status_code}); it must require a bearer token")
+
