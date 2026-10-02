@@ -15,8 +15,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
+#
+# The CPU build of torch goes in FIRST, from PyTorch's own index. requirements.txt
+# declares torch because the inference engine fails closed without it, but the
+# default Linux wheel drags in the entire CUDA stack - well over 2 GB of nvidia-*
+# packages this image has no use for. Installing the CPU build here satisfies
+# that requirement before pip reaches it.
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch torchvision \
+        --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy backend application source

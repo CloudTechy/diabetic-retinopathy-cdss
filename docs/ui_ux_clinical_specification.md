@@ -14,7 +14,7 @@ This document establishes the user experience (UX), human-computer interaction (
 The primary purpose of this CDSS is to assist qualified healthcare professionals (ophthalmologists, optometrists, general practitioners, and retinal screening technicians) in the early identification and severity classification of Diabetic Retinopathy (DR) from digital retinal fundus photography.
 
 ### Fundamental Clinical Principles
-1. **Clinician Authority (Human-in-the-Loop)**: The system is explicitly designed as a *Class II Software as a Medical Device (SaMD)* decision-support aid, **not** an autonomous diagnostic engine. The clinician retains ultimate diagnostic, clinical staging, and treatment authority.
+1. **Clinician Authority (Human-in-the-Loop)**: The system is a research-prototype decision-support aid, **not** an autonomous diagnostic engine and **not** a classified medical device. The clinician retains all diagnostic, staging and treatment authority; the model contributes a preliminary, non-diagnostic observation.
 2. **Fail-Closed Validation**: Model inference is mathematically forbidden unless an uploaded image successfully clears a 3-stage validation pipeline (File Integrity, Retinal Relevance, and Technical Quality).
 3. **Strict Bounded Terminology**: The UI strictly forbids misleading pseudo-certainty terms such as "confidence", "certainty", or "diagnostic accuracy". Scores are explicitly presented as "model-generated class scores" $[0.00 - 1.00]$ alongside contextualized class distribution bars.
 4. **Cognitive Bias Mitigation**: The interface actively combats automation bias (over-reliance) and alert fatigue (under-reliance) through intentional visual demarcation, friction-engineered review confirmations, and synchronized explainability overlays (Grad-CAM).
@@ -241,7 +241,7 @@ The viewer provides three complementary interaction modes:
 
 ## 3. Human-AI Interaction & Clinician-in-the-Loop Safeguards (Prototype Tool & NHS Guidelines)
 
-In compliance with FDA Software as a Medical Device (SaMD) Guidance, NHS England Code of Conduct for AI in Healthcare, and NICE Evidence Standards Framework, the system enforces strict boundaries between automated computation and clinical evaluation.
+Taking FDA guidance on Software as a Medical Device, the NHS England Code of Conduct for AI in Healthcare and the NICE Evidence Standards Framework as **design references**, the system enforces strict boundaries between automated computation and clinical evaluation. Compliance with those frameworks is not claimed and has not been assessed.
 
 ### 3.1 Strict Non-Diagnostic Microcopy & Wording Invariants
 

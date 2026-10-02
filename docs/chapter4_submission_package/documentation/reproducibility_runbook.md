@@ -201,4 +201,4 @@ cd backend
 # python -m pytest tests/ -q                       # Linux/macOS
 ```
 
-Expected: **183 collected — 182 passed, 1 skipped** (wall-clock ≈ 56 s). The skip marks `test_real_model_end_to_end_pipeline` which runs only when `AI_INFERENCE_ENGINE=pytorch` and the full PyTorch stack is available; configure `conftest.py` with `AI_INFERENCE_ENGINE=pytorch` or run `pytest -m slow` to include it.
+Expected: **190 collected — 189 passed, 1 skipped** (wall-clock ≈ 100 s with PyTorch installed). The skip is `test_contaminated_results_are_labelled_superseded`. `test_real_model_end_to_end_pipeline` runs only when `AI_INFERENCE_ENGINE=pytorch` and the full PyTorch stack is available; configure `conftest.py` with `AI_INFERENCE_ENGINE=pytorch` or run `pytest -m slow` to include it.

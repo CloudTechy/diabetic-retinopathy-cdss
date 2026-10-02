@@ -1,17 +1,35 @@
 """
-Real end-to-end integration test against the genuine EfficientNet-B0 checkpoint.
+End-to-end integration test against the genuine EfficientNet-B0 checkpoint.
 
-This test proves the complete evidence chain:
-1. A real JPEG fundus image from the repository fixtures is submitted
-   through the authenticated API — no synthetic fundus, no mock engine.
-2. The backend validates the image through all three quality gates.
-3. The real EfficientNet-B0 checkpoint produces a grade and class probabilities.
-4. The argmax of the returned probabilities must equal the reported primary grade.
-5. A Grad-CAM URL is returned and the server actually serves valid PNG bytes at
-   that URL — confirming the explanation artefact was written and is accessible.
+WHAT THIS ESTABLISHES
 
-These five checks together prove the complete CDSS evidence chain described in
-Chapter 4, Section 4.4 of the thesis, without synthetic or mocked intermediates.
+A JPEG is submitted through the authenticated API and travels the whole
+production path with no mocked intermediate:
+
+1. the three admission gates evaluate it at their calibrated thresholds;
+2. the real checkpoint - digest-verified against MODEL_CHECKPOINT_SHA256 -
+   produces a grade and five class probabilities;
+3. the argmax of those probabilities equals the reported primary grade, so the
+   displayed grade is the model's own and not a substituted one;
+4. a Grad-CAM URL is returned, and fetching it yields non-empty bytes carrying
+   the PNG signature - the explanation artefact exists and is served, rather
+   than being a string in a response.
+
+WHAT THIS DOES NOT ESTABLISH
+
+**The fixture is a synthetic fundus, not an APTOS photograph.** It is 800x800,
+generated to pass the admission gates, and its SHA-256 appears nowhere in
+`dataset_split_manifest.csv`. It was previously named `aptos_sample_fundus.jpg`,
+which asserted a provenance it does not have.
+
+So this test proves the pipeline is wired correctly and that the served grade is
+the model's own. It says nothing about accuracy on real retinal images, and the
+grade it returns is not a clinical result. The accuracy evidence is the held-out
+cohort in `model_evaluation_report.md` (N = 525), computed separately.
+
+Upgrading this to a genuine held-out APTOS image would make it evidence of both.
+That needs one real image committed to `fixtures/`, which the Kaggle licence and
+repository size both permit; it has not been done.
 """
 import hashlib
 import os
@@ -25,8 +43,9 @@ from fastapi.testclient import TestClient
 # Fixture image metadata
 # ---------------------------------------------------------------------------
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
-FIXTURE_IMAGE_PATH = os.path.join(FIXTURE_DIR, "aptos_sample_fundus.jpg")
-# SHA-256 of the 800×800 synthetic retinal fundus image (pipeline-validated: passes all 3 gates)
+FIXTURE_IMAGE_PATH = os.path.join(FIXTURE_DIR, "synthetic_fundus_gate_passing.jpg")
+# SHA-256 of the 800x800 SYNTHETIC fundus image. Not an APTOS photograph -
+# see the module docstring. Pinned so the fixture cannot be swapped silently.
 FIXTURE_IMAGE_SHA256 = "09bb3cba1a6a0ee8f9687f8031bb001df72911f68df3530c4282817e106e1ae3"
 
 
@@ -48,7 +67,7 @@ def _is_valid_png(data: bytes) -> bool:
 # ---------------------------------------------------------------------------
 
 def test_fixture_image_integrity():
-    """Verify the packaged fixture image is present and unmodified."""
+    """Verify the packaged fixture is present and unmodified."""
     assert os.path.isfile(FIXTURE_IMAGE_PATH), (
         f"Fixture image missing at {FIXTURE_IMAGE_PATH}. "
         "Run: git lfs pull  or  git checkout backend/tests/fixtures/"
@@ -104,7 +123,9 @@ def test_real_model_end_to_end_pipeline(authed_client):
                 "patientId": "REAL-INTEGRATION-TEST",
                 "laterality": "OD",
                 "cameraModel": "Topcon TRC-NW400 (Fixture)",
-                "clinicalNotes": "Real EfficientNet-B0 integration test — fixture image.",
+                "clinicalNotes": ("Integration test against the real checkpoint. "
+                                  "SYNTHETIC fixture image: proves wiring, "
+                                  "not accuracy."),
             },
         )
         assert create_response.status_code == 201, (
@@ -121,7 +142,8 @@ def test_real_model_end_to_end_pipeline(authed_client):
         with open(FIXTURE_IMAGE_PATH, "rb") as img_file:
             upload_response = client.post(
                 f"/api/v1/assessments/{draft_id}/upload",
-                files={"file": ("aptos_sample_fundus.jpg", img_file, "image/jpeg")},
+                files={"file": ("synthetic_fundus_gate_passing.jpg", img_file,
+                                "image/jpeg")},
             )
 
         assert upload_response.status_code == 200, (
