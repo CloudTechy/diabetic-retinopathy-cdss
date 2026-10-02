@@ -104,7 +104,6 @@ class TestStateMachineServiceExecution:
         create_req = AssessmentCreateRequest(
             patientId="PAT-TEST-PASS",
             laterality="OS",
-            candidateGrade=2,
         )
         assessment = await AssessmentService.create_assessment(async_db, create_req)
 

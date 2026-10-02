@@ -69,8 +69,6 @@ async def create_assessment(
                 assessment_id=assessment.id,
                 image_bytes=image_bytes,
                 original_filename=filename,
-                candidate_grade=payload.candidateGrade,
-                simulate_gate_failure=payload.simulateGateFailure,
                 actor=current_user,
             )
         except Exception as e:
@@ -227,7 +225,7 @@ async def submit_review(
 ):
     """
     Formal clinical governance checkpoint.
-    Clinician signs off on ICDR classification, referral recommendation, and justification.
+    Clinician signs off on ICDR classification, action plan, and justification.
     Once submitted, the record transitions to 'completed' and becomes strictly immutable.
     """
     try:

@@ -96,3 +96,5 @@ backend/scripts/blur_threshold_calibration.SMALL_CORPUS.json
 .calibration_pipeline_state.json
 handover2/
 calibration_evidence.zip
+
+.pytest_tmp/

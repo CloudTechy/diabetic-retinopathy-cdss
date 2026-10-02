@@ -27,6 +27,14 @@ import random
 import sys
 import time
 
+# Refuse a directory whose files claim a manifest identity they do not have.
+# A local directory of 640x480 placeholders named after real held-out images
+# produced output that looked exactly like evidence; nothing noticed, because
+# every check asked whether an image_id was in the manifest and none asked
+# whether the FILE was that image. See corpus_guard.py.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from corpus_guard import assert_corpus_is_authentic  # noqa: E402
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BACKEND_ROOT = os.path.join(REPO_ROOT, "backend")
 if BACKEND_ROOT not in sys.path:
@@ -41,6 +49,9 @@ def main():
     parser.add_argument("--max-dim", type=int, default=None,
                         help="Analysis resolution to test (default: the configured value)")
     parser.add_argument("--seed", type=int, default=42, help="Sampling seed when --limit is used")
+    parser.add_argument("--full-corpus-check", action="store_true",
+                        help="Hash every manifest image rather than a sample of 64")
+
     args = parser.parse_args()
 
     from PIL import Image
@@ -52,6 +63,9 @@ def main():
 
     if not os.path.isdir(args.images_dir):
         raise SystemExit(f"Not a directory: {args.images_dir}")
+
+    assert_corpus_is_authentic(
+        args.images_dir, sample=0 if args.full_corpus_check else 64)
 
     files = sorted(f for f in os.listdir(args.images_dir)
                    if f.lower().endswith((".png", ".jpg", ".jpeg")))

@@ -124,7 +124,7 @@ class TestAssessmentEndpoints:
     def test_direct_data_url_creation_with_gate_failure(self, authed_client):
         test_client = authed_client
         """Verify POST /assessments with simulated Gate 2 rejection."""
-        fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=True)
+        fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=False)
         raw_bytes = image_to_bytes(fundus_img, "JPEG")
         data_url = f"data:image/jpeg;base64,{base64.b64encode(raw_bytes).decode('utf-8')}"
 
@@ -186,3 +186,4 @@ class TestAssessmentEndpoints:
         )
         assert valid_res.status_code == 200
         assert valid_res.json()["status"] == "completed"
+

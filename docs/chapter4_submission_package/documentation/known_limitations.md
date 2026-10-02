@@ -111,7 +111,7 @@ contain one.
 ## 3. Sub-pixel attenuation in Mild NPDR (Grade 1)
 
 ### Empirical finding
-Grade 1 sensitivity is **66.0%** (33 / 50). **5** Grade 1 cases were misclassified as Grade 0 — the clinically worst direction for this class. In those 3 cases the Grade 1 score was retained at 0.092, 0.206 and 0.298 respectively, in each case as the second-ranked class.
+Grade 1 sensitivity is **66.0%** (33 / 50). **5** Grade 1 cases were misclassified as Grade 0 — the clinically worst direction for this class. In 3 of those 5 cases the Grade 1 score was retained at 0.092, 0.206 and 0.298 respectively, in each case as the second-ranked class.
 
 The larger share of Grade 1 error (11 cases) is over-calling to Grade 2, which is the safe direction.
 
@@ -125,12 +125,12 @@ The larger share of Grade 1 error (11 cases) is over-calling to Grade 2, which i
 
 ## 4. Wide confidence intervals on the severe grades
 
-Grades 3 and 4 carry only **29** and **45** held-out cases respectively. The resulting Wilson intervals are correspondingly wide:
+Grades 3 and 4 carry only **26** and **40** held-out cases respectively. The resulting Wilson intervals are correspondingly wide:
 
 | Grade | Sensitivity | 95% CI | Interval width |
 | :---: | :---: | :---: | :---: |
-| 3 (Severe NPDR) | 58.6% | 40.7 – 74.5 | 33.8 pts |
-| 4 (Proliferative DR) | 62.2% | 47.6 – 74.9 | 27.3 pts |
+| 3 (Severe NPDR) | 57.7% | 38.9 – 74.5 | 35.6 pts |
+| 4 (Proliferative DR) | 55.0% | 39.8 – 69.3 | 29.5 pts |
 
 These point estimates should be treated as indicative. A cohort several times larger in the severe grades would be needed to state them with useful precision.
 

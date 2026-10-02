@@ -5,8 +5,8 @@
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Primary Research Objective:** Objective c (Preprocess and partition the retinal dataset)
 - **Benchmark Dataset:** APTOS 2019 Blindness Detection (Aravind Eye Hospital cohort)
-- **Dataset Size:** **3,662 retinal fundus photographs** (the complete labelled APTOS training set)
-- **Evidence File:** [`dataset_split_manifest.csv`](dataset_split_manifest.csv) — 3,662 rows, one per image, each carrying the SHA-256 of the actual image bytes
+- **Dataset Size:** **3,662 retinal fundus photographs** as published by APTOS; **3,504** after byte-identical de-duplication and the removal of conflicting-label groups (§4)
+- **Evidence File:** [`dataset_split_manifest.csv`](dataset_split_manifest.csv) — **3,504 rows**, one per retained image, each carrying the SHA-256 of the actual image bytes. That column is what [`corpus_guard.py`](../../backend/scripts/corpus_guard.py) checks a directory against before any script measures it.
 
 ---
 

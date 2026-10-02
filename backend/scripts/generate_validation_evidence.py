@@ -36,6 +36,14 @@ import io
 import os
 import sys
 
+# Refuse a directory whose files claim a manifest identity they do not have.
+# A local directory of 640x480 placeholders named after real held-out images
+# produced output that looked exactly like evidence; nothing noticed, because
+# every check asked whether an image_id was in the manifest and none asked
+# whether the FILE was that image. See corpus_guard.py.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from corpus_guard import assert_corpus_is_authentic  # noqa: E402
+
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(_HERE))
 BACKEND_ROOT = os.path.join(REPO_ROOT, "backend")
@@ -112,6 +120,10 @@ def main():
 
     if not os.path.isdir(args.images_dir):
         raise SystemExit(f"Not a directory: {args.images_dir}")
+
+    # Every image, not a sample: this script reads about sixteen of them, and
+    # they are the ones that become the published evidence table.
+    assert_corpus_is_authentic(args.images_dir, sample=0)
 
     test_rows = load_manifest()
     by_grade = {}

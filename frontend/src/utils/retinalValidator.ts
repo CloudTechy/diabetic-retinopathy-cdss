@@ -186,12 +186,12 @@ export function analyzeRetinalImageOnCanvas(
     laplacianVariance = count > 0 ? (sumGrad / count) * 4 : 180.0;
   }
 
-  const gate3Passed = gate2Passed && laplacianVariance >= 60.0;
+  const gate3Passed = gate2Passed && laplacianVariance >= 4.3;
   let gate3Reason: string | undefined;
   let gate3Action: string | undefined;
 
   if (!gate3Passed && gate2Passed) {
-    gate3Reason = `Insufficient optical sharpness or motion blur (Laplacian variance: ${laplacianVariance.toFixed(1)} < 60.0 threshold).`;
+    gate3Reason = `Insufficient optical sharpness or motion blur (Laplacian variance: ${laplacianVariance.toFixed(1)} < 4.3 threshold).`;
     gate3Action = 'Recapture retinal photograph ensuring steady patient fixation and camera objective cleanliness.';
   }
 
@@ -229,7 +229,7 @@ export function analyzeRetinalImageOnCanvas(
     gate3: {
       passed: gate3Passed,
       laplacianVariance,
-      metric: `Laplacian variance: ${laplacianVariance.toFixed(1)} (Threshold >= 60.0)`,
+      metric: `Laplacian variance: ${laplacianVariance.toFixed(1)} (Threshold >= 4.3)`,
       rejectionReason: gate3Reason,
       clinicalAction: gate3Action,
     },

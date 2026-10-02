@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ColormapType, COLORMAPS } from '../utils/colormaps';
 import { EyeLaterality } from '../types/clinical';
-import { generateSyntheticGradCam } from '../utils/syntheticFundus';
+
 
 interface FundusViewerProps {
   imageUrl: string;
@@ -45,13 +45,7 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
   const [showControlsDrawer, setShowControlsDrawer] = useState<boolean>(false);
 
   // Dynamic Grad-CAM generation if colormap or threshold changes
-  const [gradcamSrc, setGradcamSrc] = useState<string>(initialGradcamUrl || '');
-
-  // Regenerate Grad-CAM when colormap or threshold changes
-  useEffect(() => {
-    const res = generateSyntheticGradCam(grade, laterality, colormap, threshold);
-    setGradcamSrc(res.gradcamDataUrl);
-  }, [grade, laterality, colormap, threshold]);
+  
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -357,15 +351,15 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
             />
 
             {/* Attribution Layer: Grad-CAM Saliency Heatmap (Overlay) */}
-            {gradcamSrc && !sideBySide && (
+            {initialGradcamUrl && !sideBySide && (
               <img
-                src={gradcamSrc}
+                src={initialGradcamUrl}
                 alt="Grad-CAM Saliency Attribution Heatmap"
                 className="absolute inset-0 max-w-none w-[560px] h-[560px] object-contain rounded-full pointer-events-none transition-opacity duration-150"
                 style={{ opacity: activeOpacity }}
                 draggable={false}
               />
-            )}
+            )) : (!sideBySide && <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-mono text-sm">Visual explanation unavailable.</div>)}
           </div>
 
           {/* Subtitle tag */}
@@ -393,15 +387,15 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
                 draggable={false}
               />
               {/* Overlaid Heatmap */}
-              {gradcamSrc && (
+              {initialGradcamUrl && (
                 <img
-                  src={gradcamSrc}
+                  src={initialGradcamUrl}
                   alt="Grad-CAM attribution overlay"
                   className="absolute inset-0 max-w-none w-[560px] h-[560px] object-contain rounded-full pointer-events-none transition-opacity duration-150"
                   style={{ opacity: activeOpacity }}
                   draggable={false}
-                />
-              )}
+              />
+            )) : (!sideBySide && <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-mono text-sm">Visual explanation unavailable.</div>)}
             </div>
 
             <div className="absolute top-3 left-3 bg-slate-900/80 px-2.5 py-1 rounded text-[11px] font-mono text-teal-300 border border-teal-700 flex items-center gap-1.5">
@@ -436,3 +430,5 @@ export const FundusViewer: React.FC<FundusViewerProps> = ({
     </section>
   );
 };
+
+

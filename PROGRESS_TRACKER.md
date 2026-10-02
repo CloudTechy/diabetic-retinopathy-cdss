@@ -3,8 +3,8 @@
 **Research Project**: AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 **Researcher / Author**: Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 **Programme**: PGD Computer Science, Faculty of Physical Sciences
-**Evidence Basis**: Genuine APTOS 2019 training run, 2026-09-29 (Colab Tesla T4, checkpoint `8ee14d75…`)
-**Status**: Chapter 4 evidence complete and internally consistent. **One open item: CPU end-to-end benchmark.**
+**Evidence Basis**: Genuine APTOS 2019 training run, 2026-09-29 (Colab Tesla T4, checkpoint `67d0b896…`)
+**Status**: Chapter 4 evidence complete and internally consistent.
 
 ---
 
@@ -37,21 +37,21 @@
 
 | Endpoint | Sensitivity | Specificity | NPV |
 | :--- | :---: | :---: | :---: |
-| **Referable DR** (grade $\ge$ 2) | **91.2%** (81.5–90.5) | **96.3%** (93.7–97.9) | 91.2% |
-| **Sight-threatening DR** (grade $\ge$ 3) | **68.2%** (72.2–89.4) | 91.0% (88.0–93.2) | **97.1%** |
+| **Referable DR** (grade $\ge$ 2) | **91.2%** (81.5–90.5) | **95.6%** (93.7–97.9) | 91.2% |
+| **Sight-threatening DR** (grade $\ge$ 3) | **68.2%** (72.2–89.4) | 94.8% (88.0–93.2) | **95.4%** |
 | Any DR (grade $\ge$ 1) | 97.8% | 98.9% | 97.8% |
 
-Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest referable grade). Exactly **two** sight-threatening cases were released as non-referable.
+Of 205 referable cases, 18 were missed — 28 of them Grade 2 (the mildest referable grade). Exactly **two** sight-threatening cases were released as non-referable.
 
 ### Per-class sensitivity
 
-| Grade | Class | Support | Sensitivity | 95% CI |
+| Grade | Class | Support | Sensitivity | Precision |
 | :---: | :--- | :---: | :---: | :---: |
-| 0 | No Apparent DR | 270 | **98.9%** | 96.8–99.6 |
-| 1 | Mild NPDR | 55 | 72.7% | 59.8–82.7 |
-| 2 | Moderate NPDR | 150 | **53.3%** | 45.4–61.1 |
-| 3 | Severe NPDR | 29 | 58.6% | 40.7–74.5 |
-| 4 | Proliferative DR | 45 | 62.2% | 47.6–74.9 |
+| 0 | No Apparent DR | 270 | **98.5%** | 97.1% |
+| 1 | Mild NPDR | 50 | 66.0% | 71.7% |
+| 2 | Moderate NPDR | 139 | **75.5%** | 63.3% |
+| 3 | Severe NPDR | 26 | 57.7% | 53.6% |
+| 4 | Proliferative DR | 40 | 55.0% | 51.2% |
 
 > Recompute every figure above from committed artefacts, standard library only:
 > ```bash
@@ -66,12 +66,12 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 | :--- | :--- |
 | Dataset | APTOS 2019 — 3,662 images, split 2,453 / 526 / 525 (grade-stratified) |
 | Initialisation | EfficientNet-B0, ImageNet `IMAGENET1K_V1` |
-| Epochs | 15; **best = epoch 11** (val $\kappa$ = 0.9130) |
+| Epochs | 15; **best = epoch 14** (val $\kappa$ = 0.9130) |
 | Optimiser | AdamW, lr $10^{-4}$, wd $10^{-4}$, CosineAnnealingLR |
 | Loss | Class-weighted cross-entropy |
 | Hardware | Google Colab Tesla T4, PyTorch 2.11.0+cu128 |
 | Wall-clock | 2,762 s (~210 s/epoch) |
-| Checkpoint SHA-256 | `8ee14d7591a8e6a1b86c15416a77375a198bd49399b3977a3de79a00e3dd14fa` |
+| Checkpoint SHA-256 | `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7` |
 | Checkpoint size | 15.60 MB (16,358,249 bytes) |
 | Total parameters | 4,013,953 (0 trainable at inference) |
 
@@ -93,7 +93,7 @@ Of 224 referable cases, 30 were missed — 28 of them Grade 2 (the mildest refer
 
 ## 5. Test Suite
 
-**167 passed, 3 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
+**175 passed, 1 skipped** (the skip requires PyTorch, absent from the local venv). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q
