@@ -1834,3 +1834,89 @@ def test_only_one_test_log_ships():
         + "\n  ".join(found)
         + "\nKeep exactly one. A superseded log beside the current one is "
           "indistinguishable from the current one to a reader.")
+
+
+# ======================================================================
+# RULE GROUP S - what the production path requires, the project must declare
+#
+# torch and torchvision were absent from backend/requirements.txt. The trained
+# engine fails closed without them, correctly, so a deployment built from
+# exactly what the project declares returned HTTP 503 on every assessment -
+# and the 503 told the operator to "Install backend/requirements.txt", a file
+# that did not contain the module it was complaining about.
+#
+# One omission, three symptoms: a dead local stack, a failing CI suite, and
+# main red for three commits.
+# ======================================================================
+
+REQUIREMENTS = os.path.join(REPO_ROOT, "backend", "requirements.txt")
+
+# Modules the serving path imports and cannot run without.
+RUNTIME_CRITICAL_IMPORTS = ("torch", "torchvision")
+
+
+def _declared_requirements():
+    if not os.path.exists(REQUIREMENTS):
+        return set()
+    names = set()
+    for line in read(REQUIREMENTS).split("\n"):
+        line = line.split("#", 1)[0].strip()
+        if not line or line.startswith("-"):
+            continue
+        name = re.split(r"[<>=!\[;]", line, maxsplit=1)[0].strip().lower()
+        if name:
+            names.add(name)
+    return names
+
+
+def test_requirements_declares_what_the_engine_cannot_run_without():
+    """
+    The inference service raises ModelCheckpointError on ImportError for these
+    modules. If they are not declared, the documented install produces a service
+    that cannot serve, which is what happened.
+    """
+    declared = _declared_requirements()
+    missing = [m for m in RUNTIME_CRITICAL_IMPORTS if m.lower() not in declared]
+
+    assert not missing, (
+        "The production inference path imports modules the project does not "
+        "declare:\n  " + "\n  ".join(missing)
+        + f"\nAdd them to {os.path.relpath(REQUIREMENTS, REPO_ROOT)}. Until then "
+          "a deployment built from this project's own requirements returns HTTP "
+          "503 on every assessment.")
+
+
+def test_the_dependency_error_gives_an_instruction_that_works():
+    """
+    The 503 raised when PyTorch is absent must name something that actually
+    installs it. It previously said "Install backend/requirements.txt" while
+    that file declared no torch - the one piece of advice the system offers at
+    its own failure point, and it did not work.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "app", "services", "ai_service.py")
+    source = read(path)
+
+    tree = ast.parse(source, filename=path)
+    message = ""
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Raise):
+            continue
+        segment = ast.get_source_segment(source, node) or ""
+        if "PyTorch is not installed" in segment:
+            message = segment
+            break
+
+    assert message, (
+        "No raise carrying the 'PyTorch is not installed' message was found. If "
+        "it moved, point this rule at it rather than dropping the rule.")
+
+    assert "pip install torch" in message, (
+        "The dependency error does not tell the operator how to install torch. "
+        "Naming a requirements file is only useful if that file declares it; "
+        "name the install command.")
+
+    declared = _declared_requirements()
+    if "requirements.txt" in message:
+        assert "torch" in declared, (
+            "The dependency error points at backend/requirements.txt, which does "
+            "not declare torch. Either declare it there or stop citing the file.")

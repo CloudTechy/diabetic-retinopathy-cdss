@@ -355,9 +355,15 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         except ImportError as exc:
             raise ModelCheckpointError(
                 "PyTorch is not installed in this environment, so the trained "
-                f"engine cannot be served ({exc}). Install backend/requirements.txt, "
-                "or set AI_INFERENCE_ENGINE=mock to run the simulated engine "
-                "explicitly. The simulated engine is never selected implicitly."
+                f"engine cannot be served ({exc}). Install the CPU build first:\n"
+                f"  pip install torch torchvision --index-url "
+                f"https://download.pytorch.org/whl/cpu\n"
+                f"  pip install -r backend/requirements.txt\n"
+                f"Then restart the service.\n"
+                "Alternatively set AI_INFERENCE_ENGINE=mock to run the "
+                "simulated engine explicitly. The simulated engine is never "
+                "selected implicitly, because a simulated grade is "
+                "indistinguishable from a real one downstream."
             ) from exc
 
         device = torch.device(settings.MODEL_DEVICE if torch.cuda.is_available() else "cpu")

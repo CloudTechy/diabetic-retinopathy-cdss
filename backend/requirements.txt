@@ -15,6 +15,22 @@ pillow>=10.2.0,<11.0.0
 numpy>=1.26.0,<2.0.0
 python-multipart>=0.0.9
 
+# Trained Inference Engine
+#
+# The production engine FAILS CLOSED without these: it returns HTTP 503 rather
+# than substituting a simulated grade, so an install missing them cannot serve a
+# single assessment. They were absent from this file while the 503 message told
+# operators to install it.
+#
+# On Linux the default PyPI wheels pull the CUDA stack. For a CPU deployment
+# install the CPU build first, then this file:
+#
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r backend/requirements.txt
+#
+torch>=2.2.0,<3.0.0
+torchvision>=0.17.0,<1.0.0
+
 # Clinical PDF Reporting
 reportlab>=4.1.0,<5.0.0
 
