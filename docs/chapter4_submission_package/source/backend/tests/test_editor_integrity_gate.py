@@ -2176,3 +2176,48 @@ def test_exactly_one_epoch_is_marked_selected():
         f"{selected} rows are marked SELECTED in training_protocol.md; exactly "
         "one checkpoint was evaluated. Mark intermediate improvements as "
         "improvements.")
+
+
+# ======================================================================
+# RULE GROUP W - the package may not keep what the source dropped
+#
+# assemble_submission_package.py copies and updates; it does not remove. When
+# figure 4b was renamed, the package kept BOTH files - and the orphan was the
+# rejected mid-animation capture, deleted precisely because it did not show
+# what its caption claimed. It would have travelled to the editor inside the
+# zip, where it is the only version anyone reads.
+#
+# Same shape as the superseded second test log: invisible in the source tree,
+# present in the artefact that goes out.
+# ======================================================================
+
+def test_the_package_screenshots_match_the_source_exactly():
+    """
+    A figure in the package that the source no longer has is an orphan, and an
+    orphan is a figure nobody is maintaining.
+    """
+    src = os.path.join(CHAPTER4, "screenshots")
+    pkg = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package",
+                       "screenshots")
+    if not (os.path.isdir(src) and os.path.isdir(pkg)):
+        pytest.skip("screenshot directories absent")
+
+    source = {f for f in os.listdir(src) if not f.startswith(".")}
+    packaged = {f for f in os.listdir(pkg) if not f.startswith(".")}
+
+    orphans = sorted(packaged - source)
+    missing = sorted(source - packaged)
+
+    problems = []
+    if orphans:
+        problems.append("in the package but not in the source: "
+                        + ", ".join(orphans))
+    if missing:
+        problems.append("in the source but not in the package: "
+                        + ", ".join(missing))
+
+    assert not problems, (
+        "The submission package's figures disagree with the source:\n  "
+        + "\n  ".join(problems)
+        + "\nThe package is what the examiner reads. Re-run "
+          "assemble_submission_package.py and delete anything it leaves behind.")
