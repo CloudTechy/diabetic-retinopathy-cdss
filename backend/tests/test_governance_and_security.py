@@ -143,7 +143,18 @@ class TestClinicianInTheLoopGovernance:
 
         assert processed.model_execution is not None
         assert processed.model_execution.execution_mode == "evaluation"
-        assert "frozen" in processed.model_execution.model_version.lower()
+
+        # The recorded version must state that the weights do not change in
+        # service - that is what makes the Chapter 4 metrics apply to what the
+        # system actually serves. This asserts the PROPERTY, not one phrasing:
+        # an earlier version demanded the literal word "frozen", so replacing
+        # that jargon with plain language for clinicians broke a test that was
+        # never about wording.
+        version = processed.model_execution.model_version.lower()
+        assert ("fixed weights" in version or "frozen" in version), (
+            f"model_version {processed.model_execution.model_version!r} does not "
+            "record that the weights are fixed. The served model must be "
+            "identifiable as the evaluated one.")
 
 
 class TestClinicalTerminologyCompliance:

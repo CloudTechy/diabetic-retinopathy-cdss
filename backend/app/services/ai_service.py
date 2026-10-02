@@ -300,7 +300,7 @@ class MockInferenceService(BaseInferenceService):
             class_scores=class_scores,
             target_layer="features.8 (Conv2d Bottleneck Residual)",
             top_activation_region=meta["top_activation"],
-            model_version="EfficientNet-B0-DR-v1 (Weights frozen)",
+            model_version="EfficientNet-B0-DR-v1 (fixed weights)",
             execution_time_ms=execution_time_ms,
             disclaimer=disclaimer,
             gradcam_bytes=gradcam_bytes,
@@ -329,7 +329,10 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
     def load_model(self):
         """
-        Load the frozen trained checkpoint, or fail closed.
+        Load the trained checkpoint, or fail closed.
+
+        The weights are fixed: nothing here updates them, so the model
+        that serves a request is the one Chapter 4 evaluated.
 
         A clinical decision-support engine must never serve grades from an
         untrained graph. If the checkpoint is absent, unreadable, or does not
@@ -405,7 +408,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         self._device = device
         self._initialized = True
         logger.info(
-            "Loaded frozen EfficientNet-B0 weights from %s (device=%s)",
+            "Loaded EfficientNet-B0 weights from %s (device=%s); weights are fixed",
             self.checkpoint_path, device,
         )
 
@@ -565,7 +568,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             class_scores=class_scores,
             target_layer="features.8 (Conv2d Bottleneck Residual)",
             top_activation_region=meta["top_activation"],
-            model_version="EfficientNet-B0-DR-v1 (Weights frozen)",
+            model_version="EfficientNet-B0-DR-v1 (fixed weights)",
             execution_time_ms=execution_time_ms,
             disclaimer=disclaimer,
             gradcam_bytes=gradcam_bytes,

@@ -632,7 +632,7 @@ class AssessmentService:
                 classScores=[ScoreBreakdownItem(**cs) for cs in ai.class_scores],
                 targetLayer=ai.target_layer,
                 topActivationRegion=ai.top_activation_region or "Inferotemporal quadrant microaneurysms",
-                modelVersion=assessment.model_execution.model_version if assessment.model_execution else "EfficientNet-B0-DR-v1 (Weights frozen)",
+                modelVersion=assessment.model_execution.model_version if assessment.model_execution else "EfficientNet-B0-DR-v1 (fixed weights)",
                 inferenceTimestamp=ai.created_at.isoformat(),
             )
 

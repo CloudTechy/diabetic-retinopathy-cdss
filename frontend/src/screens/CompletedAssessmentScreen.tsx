@@ -227,9 +227,14 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                 )}
 
                 {/* Scope Notice */}
+                {/* The model's bounds are stated under the model score above.
+                    Repeating them here, beneath the clinician's own recorded
+                    assessment, told the clinician their judgement was not a
+                    diagnosis - which is backwards. This records provenance
+                    instead. */}
                 <div className="text-[11px] text-slate-500 p-2.5 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed">
-                  <strong className="text-slate-700 block text-[11px]">Clinical Scope Boundary:</strong>
-                  <span>Independent professional assessment recorded. Decision-support findings do not constitute clinical diagnosis.</span>
+                  <strong className="text-slate-700 block text-[11px]">Attribution:</strong>
+                  <span>Independent professional assessment recorded and cryptographically bound to the reviewing clinician.</span>
                 </div>
               </div>
             ) : (

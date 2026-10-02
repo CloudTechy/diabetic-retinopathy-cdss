@@ -156,7 +156,7 @@ class ReportService:
         gate_data = [
             ["Gate 1: File Integrity", g1_stat, f"MIME {img.mime_type if img else 'JPEG'}, SHA-256: {sha_hash[:16]}..."],
             ["Gate 2: Retinal Relevance", g2_stat, "Retinal aperture geometry and spectral balance confirmed."],
-            ["Gate 3: Technical Quality", g3_stat, f"Laplacian variance: {lap_metric} (Threshold >= 60.0), Illum: {illum_metric}"],
+            ["Gate 3: Technical Quality", g3_stat, f"Laplacian variance: {lap_metric} (Threshold >= {settings.LAPLACIAN_BLUR_THRESHOLD}), Illum: {illum_metric}"],
         ]
 
         gate_table = Table(gate_data, colWidths=[1.8 * inch, 1.0 * inch, 4.2 * inch])
@@ -188,7 +188,8 @@ class ReportService:
                 ],
                 [
                     Paragraph("<strong>Model Identity:</strong>", body_style),
-                    Paragraph("EfficientNet-B0 (Frozen Evaluation)", body_style),
+                    Paragraph("EfficientNet-B0 \u2014 fixed weights, no in-service learning",
+                              body_style),
                     Paragraph("<strong>Target Saliency Layer:</strong>", body_style),
                     Paragraph(ai.target_layer, body_style),
                 ],

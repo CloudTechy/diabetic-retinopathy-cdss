@@ -140,7 +140,7 @@ class ModelExecution(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(64), ForeignKey("assessments.id", ondelete="CASCADE"), unique=True, nullable=False)
     model_name = Column(String(100), default="EfficientNet-B0", nullable=False)
-    model_version = Column(String(100), default="EfficientNet-B0-DR-v1 (Weights frozen)", nullable=False)
+    model_version = Column(String(100), default="EfficientNet-B0-DR-v1 (fixed weights)", nullable=False)
     execution_mode = Column(String(50), default="evaluation", nullable=False)  # Evaluation only; online learning forbidden
     device = Column(String(50), default="cpu", nullable=False)
     execution_time_ms = Column(Float, nullable=False, default=0.0)
@@ -172,7 +172,7 @@ class AIResult(Base):
     disclaimer = Column(
         Text,
         default="NOTICE: Clinical Decision Support Only — Not for Independent Diagnosis. "
-                "Scores represent feature activations from frozen EfficientNet-B0 and do not represent clinical certainty.",
+                "Scores represent feature activations from EfficientNet-B0 and do not represent clinical certainty.",
         nullable=False
     )
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
