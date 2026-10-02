@@ -6,7 +6,7 @@
 - **Related Research Objective:** Objective g (Design CDSS software architecture) & Objective i (Verification)
 - **Git Commit:** `22cda2c` (Baseline)
 - **Date Generated:** 2026-09-28
-- **Total Evidence Screenshots:** 11 Figure Panels
+- **Total Evidence Screenshots:** 10 Figure Panels
 
 ---
 
@@ -48,7 +48,7 @@
 > run (N = 525, κ = 0.8658), not a screenshot, and may be cited as a result.
 >
 > Thresholds displayed in the interface are kept consistent with `backend/app/core/config.py`.
-> The Laplacian sharpness threshold reads 60.0 in both, matching `LAPLACIAN_BLUR_THRESHOLD`.
+> The Laplacian sharpness threshold reads 4.3 in both, matching `LAPLACIAN_BLUR_THRESHOLD`.
 >
 > Regenerate with:
 > ```bash

@@ -1,6 +1,14 @@
 import io
 import math
 import os
+import pathlib
+
+# Workaround: on Windows the default pytest temp root
+# (C:\Users\...\Temp\pytest-of-USER) can become inaccessible.
+# Redirect to a guaranteed-writable location inside the project.
+_pytest_tmp = pathlib.Path(__file__).resolve().parent.parent / ".pytest_tmp"
+_pytest_tmp.mkdir(exist_ok=True)
+os.environ.setdefault("PYTEST_DEBUG_TEMPROOT", str(_pytest_tmp))
 
 # The suite exercises the clinical journey against the SIMULATED inference
 # engine. This opt-in is explicit and must stay explicit: the production code

@@ -1547,3 +1547,83 @@ def test_no_document_contains_a_flattened_escape_sequence():
         "intended:\n  " + "\n  ".join(offenders)
         + "\n\nWrite the patch with a RAW string (r\"\\times\") or a written .py "
           "file - a heredoc and a plain Python string both flatten these.")
+
+
+# ======================================================================
+# RULE GROUP Q - a file must be the image its name claims
+#
+# storage/datasets/aptos2019/train_images/ on the development machine held 15
+# files named after real APTOS images - every name an image_id present in
+# dataset_split_manifest.csv. None was that image: all 640x480, 4-5 KB, and
+# EIGHT byte-identical to each other, against real photographs of ~1.8 MB at up
+# to 2848 px.
+#
+# Nothing caught it. Rule group H already required that a CSV may only cite
+# image_ids from the manifest, and these files satisfied that perfectly - the
+# ids were real. No check asked whether the FILE was the image the id names,
+# and the manifest has carried the answer all along in its SHA-256 column.
+#
+# A script pointed at that directory produces output indistinguishable from
+# evidence: real ids, plausible gate metrics, a grade per image.
+# ======================================================================
+
+CORPUS_CONSUMING_SCRIPTS = (
+    "calibrate_blur_threshold.py",
+    "generate_validation_evidence.py",
+    "verify_gate_downsampling.py",
+    "benchmark_cpu_end_to_end.py",
+)
+
+
+def test_every_script_that_measures_a_corpus_verifies_it_first():
+    """
+    Any script handed a directory of images must check those images against the
+    manifest's recorded SHA-256 before measuring them.
+    """
+    missing = []
+    for name in CORPUS_CONSUMING_SCRIPTS:
+        path = os.path.join(REPO_ROOT, "backend", "scripts", name)
+        if not os.path.exists(path):
+            missing.append(f"{name}: absent - if it was renamed, point this "
+                           f"rule at the new name rather than dropping it")
+            continue
+        tree = ast.parse(read(path), filename=path)
+        calls = {node.func.id for node in ast.walk(tree)
+                 if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Name)}
+        if "assert_corpus_is_authentic" not in calls:
+            missing.append(f"{name}: measures a corpus without verifying it")
+
+    assert not missing, (
+        "A script measures images without checking they are the images they "
+        "claim to be:\n  " + "\n  ".join(missing)
+        + "\nCall assert_corpus_is_authentic(images_dir) before any "
+          "measurement - see backend/scripts/corpus_guard.py.")
+
+
+def test_the_corpus_guard_compares_bytes_against_the_manifest():
+    """
+    The guard's whole value is that it hashes the file and compares against the
+    manifest. A version that only checked filenames would pass every impostor,
+    because the impostors had real image_ids for names.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "scripts", "corpus_guard.py")
+    assert os.path.exists(path), (
+        "corpus_guard.py is gone. It is the only thing standing between a "
+        "directory of placeholders and a published evidence table.")
+
+    source = read(path)
+    tree = ast.parse(source, filename=path)
+
+    assert "sha256" in source, "corpus_guard.py no longer hashes anything"
+    assert "sha256_hash" in source, (
+        "corpus_guard.py no longer reads the manifest's sha256_hash column, so "
+        "it has nothing to compare a file against")
+
+    checkers = [n for n in ast.walk(tree)
+                if isinstance(n, ast.FunctionDef) and n.name == "check_corpus"]
+    assert checkers, "corpus_guard.py has no check_corpus()"
+    body = ast.get_source_segment(source, checkers[0]) or ""
+    assert "_sha256(" in body, (
+        "check_corpus() does not hash the files. Comparing names alone passes "
+        "every impostor, since an impostor's name is a real image_id.")

@@ -60,6 +60,14 @@ import time
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 os.environ.setdefault("MODEL_DEVICE", "cpu")
 
+# Refuse a directory whose files claim a manifest identity they do not have.
+# A local directory of 640x480 placeholders named after real held-out images
+# produced output that looked exactly like evidence; nothing noticed, because
+# every check asked whether an image_id was in the manifest and none asked
+# whether the FILE was that image. See corpus_guard.py.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from corpus_guard import assert_corpus_is_authentic  # noqa: E402
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BACKEND_ROOT = os.path.join(REPO_ROOT, "backend")
 if BACKEND_ROOT not in sys.path:
@@ -152,6 +160,8 @@ def make_synthetic_images(count, width, height, out_dir, noise_sigma=0.6):
 
 def resolve_images(images_dir, runs):
     """Prefer held-out test images named in the manifest; fall back to any PNG."""
+    assert_corpus_is_authentic(images_dir, sample=64)
+
     if not os.path.isdir(images_dir):
         raise SystemExit(
             f"Image directory not found: {images_dir}\n"

@@ -6,20 +6,20 @@
 - **Related Research Objective:** Objective i (System verification, quality assurance & security)
 - **Date Test Run:** 2026-09-29
 - **Test Framework:** Pytest 9.1.1, Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **157 PASSED, 0 FAILED, 1 SKIPPED**
+- **Overall Result:** **175 PASSED, 0 FAILED, 1 SKIPPED**
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 167 unit, integration and security test cases was executed against the complete CDSS platform. 167 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 176 unit, integration and security test cases was executed against the complete CDSS platform. 175 passed; 1 was skipped because it requires PyTorch, which is not installed in the local virtual environment. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Total Tests Run:      170
-Passed:               167 (98.2%)
+Total Tests Run:      176
+Passed:               175 (99.4%)
 Failed:                0  (0.0%)
-Skipped:                2  (1.3%)  <- requires PyTorch (absent locally)
+Skipped:                1  (0.6%)  <- requires PyTorch (absent locally)
 Total Wall-Clock Time: 43.2 seconds
 Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 ====================================================================================
@@ -95,7 +95,7 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 
 ## Fail-Closed Inference Tests (added 2026-09-29)
 
-Six cases in `backend/tests/test_inference_fail_closed.py` guard a single safety invariant: **the system must never return a diabetic retinopathy grade unless verified trained weights are loaded.**
+Eight cases in `backend/tests/test_inference_fail_closed.py` guard a single safety invariant: **the system must never return a diabetic retinopathy grade unless verified trained weights are loaded.**
 
 | # | Test | Asserts |
 | :---: | :--- | :--- |
