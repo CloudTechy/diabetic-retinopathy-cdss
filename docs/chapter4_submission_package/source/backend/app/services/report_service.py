@@ -268,7 +268,7 @@ class ReportService:
                     Paragraph("<strong>Scope Note:</strong>", body_style),
                     Paragraph("This report records a preliminary model observation and the "
                               "reviewing professional's response. It determines no diagnosis, "
-                              "referral or treatment.", body_style),
+                              "action plan.", body_style),
                 ],
                 [
                     Paragraph("<strong>Signature Timestamp:</strong>", body_style),
@@ -291,7 +291,7 @@ class ReportService:
         else:
             elements.append(
                 Paragraph(
-                    "<em>Awaiting clinician certification. This preliminary consultation record has not yet been signed.</em>",
+                    "<em>Awaiting clinician professional review. This preliminary consultation record has not yet been signed.</em>",
                     body_style,
                 )
             )

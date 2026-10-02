@@ -394,7 +394,7 @@ class AssessmentService:
 
         # Check existing review
         if assessment.professional_review:
-            raise ReviewValidationError("This assessment already has a certified clinician review and is immutable.")
+            raise ReviewValidationError("This assessment already has a confirmed review and is immutable.")
 
         # Check status allows review: result_ready or under_review
         if assessment.status not in ("result_ready", "under_review"):
@@ -418,7 +418,7 @@ class AssessmentService:
 
         # Map grade label
         grade_meta = ICDR_CLASS_METADATA[review_input.reviewerAssessedGrade]
-        certified_label = f"Grade {review_input.reviewerAssessedGrade}: {grade_meta['label']}"
+        confirmed_label = f"Grade {review_input.reviewerAssessedGrade}: {grade_meta['label']}"
 
         # Generate cryptographic SHA-256 digital signature
         now = datetime.datetime.now(timezone.utc)
@@ -436,7 +436,7 @@ class AssessmentService:
             reviewer_id=reviewer.id if reviewer else None,
             agreement=review_input.agreement,
             reviewer_assessed_grade=review_input.reviewerAssessedGrade,
-            reviewer_assessed_grade_label=certified_label,
+            reviewer_assessed_grade_label=confirmed_label,
             justification_notes=review_input.justificationNotes,
             inconclusive_reason=review_input.inconclusiveReason,
             clinician_name=clinician_name,
@@ -460,7 +460,7 @@ class AssessmentService:
             user_id=reviewer.id if reviewer else None,
             action="Clinician Professional Review Finalized",
             actor=clinician_name,
-            details=f"Clinician signed record. Classification: {certified_label}. Agreement: {review_input.agreement.upper()}.",
+            details=f"Clinician signed record. Classification: {confirmed_label}. Agreement: {review_input.agreement.upper()}.",
             badge_type=badge,
         )
         db.add(audit)

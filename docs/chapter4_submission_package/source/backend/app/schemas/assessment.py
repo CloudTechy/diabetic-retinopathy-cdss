@@ -87,8 +87,6 @@ class AssessmentCreateRequest(BaseModel):
     imageDataUrl: Optional[str] = None
     fileSizeBytes: Optional[int] = None
     filename: Optional[str] = None
-    simulateGateFailure: Optional[int] = None
-    candidateGrade: Optional[int] = None
 
 
 class AssessmentRecordResponse(BaseModel):

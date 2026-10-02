@@ -65,7 +65,7 @@ class TestClinicianInTheLoopGovernance:
         assert reviewed.ai_result.id == ai_res_id
         # AI Result remains unchanged (Grade 2)
         assert reviewed.ai_result.primary_class_grade == 2
-        # Clinician Review holds certified grade (Grade 1)
+        # Clinician Review holds confirmed grade (Grade 1)
         assert reviewed.professional_review.reviewer_assessed_grade == 1
         assert reviewed.professional_review.agreement == "disagree"
         assert reviewed.professional_review.is_immutable is True
@@ -170,7 +170,6 @@ class TestClinicalTerminologyCompliance:
                 "patientId": "PT-TERMINOLOGY-01",
                 "laterality": "OD",
                 "imageDataUrl": data_url,
-                "candidateGrade": 2,
             },
         )
         assert res.status_code == 201

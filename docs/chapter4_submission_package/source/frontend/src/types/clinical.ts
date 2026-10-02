@@ -4,7 +4,7 @@ export type ReviewStatus = 'validating' | 'needs_review' | 'completed' | 'reject
 
 export type GateStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
 
-export interface GateResult {
+export interface GateResult2 {
   name: string;
   gateIndex: 1 | 2 | 3;
   status: GateStatus;
@@ -127,7 +127,7 @@ export interface AssessmentRecord {
   imageUrl: string;
   gradcamUrl?: string;
   qualityMetrics: TechnicalQualityMetrics;
-  validationGates: GateResult[];
+  validationGates: GateResult2[];
   modelObservation?: ModelObservation;
   clinicianReview?: ClinicianReview;
   auditTrail: AuditEvent[];
@@ -155,3 +155,4 @@ export interface WorklistFilter {
   dateFrom?: string;
   dateTo?: string;
 }
+
