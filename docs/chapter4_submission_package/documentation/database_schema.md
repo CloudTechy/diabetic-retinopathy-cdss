@@ -131,7 +131,7 @@ erDiagram
 | `certified_grade_label` | VARCHAR(100) | NO | Certified grade clinical text. |
 | `justification_notes` | TEXT | YES | Optional clinician rationale. |
 | `inconclusive_reason` | VARCHAR(255) | YES | Specific ambiguity category if inconclusive. |
-| `referral_plan` | TEXT | NO | Optional observation. |
+| `referral_plan` | TEXT | NO | Optional free-text field for the reviewing clinician's observational notes. Does not constitute a clinical referral decision or treatment prescription. |
 | `signature_hash` | VARCHAR(64) | NO | Cryptographic integrity hash of review fields. |
 | `signed_at` | TIMESTAMPTZ | NO | Immutability lock timestamp. |
 

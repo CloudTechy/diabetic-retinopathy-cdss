@@ -50,7 +50,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
 
           <div className="space-y-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300">
-              Fail-Closed SaMD Safety Lock
+              Fail-Closed Prototype Safety Lock
             </span>
             <h2 className="text-xl font-black text-slate-900">
               Automated AI Inference Strictly Aborted
@@ -209,7 +209,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
                     <ShieldCheck className="w-5 h-5 text-teal-600" />
                     <div>
                       <span className="font-bold block">Review Finalized & Signed</span>
-                      <span className="text-[11px] text-teal-700">Record is officially certified and locked.</span>
+                      <span className="text-[11px] text-teal-700">Record is finalised and locked.</span>
                     </div>
                   </div>
                 </div>
