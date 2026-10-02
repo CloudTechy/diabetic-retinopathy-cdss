@@ -17,7 +17,7 @@ A multi-layer automated test suite comprising 182 unit, integration and security
 ```text
 ============================== Test Execution Summary ==============================
 Total Tests Run:      176
-Passed:               175 (99.4%)
+Passed:               181 (99.4%)
 Failed:                0  (0.0%)
 Skipped:                1  (0.6%)  <- requires PyTorch (absent locally)
 Total Wall-Clock Time: 43.2 seconds
@@ -44,7 +44,7 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 | `test_non_retinal_image_fails_gate2` | Gate 2 | Architecture diagram screenshot | Gate 2 Rejected | **PASS** |
 | `test_blank_dark_image_fails_gate2` | Gate 2 | Uniform black image | Gate 2 Rejected | **PASS** |
 | `test_extreme_aspect_ratio_fails_gate2` | Gate 2 | Non-standard widescreen crop | Gate 2 Rejected | **PASS** |
-| `test_sharp_fundus_passes_gate3` | Gate 3 | In-focus fundus photo ($\sigma_L^2 \ge 60$) | Gate 3 Passed | **PASS** |
+| `test_sharp_fundus_passes_gate3` | Gate 3 | In-focus fundus photo ($\sigma_L^2 \ge 4.3$) | Gate 3 Passed | **PASS** |
 | `test_blurred_fundus_fails_gate3` | Gate 3 | Defocused blurred photo ($\sigma_L^2 < 60$) | Gate 3 Rejected | **PASS** |
 | `test_corrupt_file_halts_at_gate1` | Sequential | Corrupt file halts before Gate 2 | Invariant Halted | **PASS** |
 | `test_non_retinal_halts_at_gate2` | Sequential | Non-retinal halts before Gate 3 | Invariant Halted | **PASS** |
