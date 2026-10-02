@@ -48,7 +48,7 @@ erDiagram
 | `full_name` | VARCHAR(255) | NO | Full legal and professional title. |
 | `hashed_password` | VARCHAR(255) | NO | Bcrypt/Argon2 salted hash (zero plaintext). |
 | `role` | VARCHAR(50) | NO | `clinician`, `technician`, `administrator`. |
-| `license_number` | VARCHAR(100) | YES | Medical council or GMC registration number. |
+| `license_number` | VARCHAR(100) | YES | Medical council or Clinician ID number. |
 | `facility` | VARCHAR(255) | YES | Hospital unit or primary eye clinic name. |
 | `is_active` | BOOLEAN | NO | Account state flag. |
 | `created_at` | TIMESTAMPTZ | NO | Timestamp of registration. |

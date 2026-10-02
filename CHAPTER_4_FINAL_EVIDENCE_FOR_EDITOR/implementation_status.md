@@ -15,14 +15,17 @@
 
 > [!CAUTION]
 > **Objective b has a blocking defect.** The clean retrain is complete and
-> objectives c, f and h are now evidenced on a leakage-free partition. However,
-> the first genuine run of the image-validation pipeline
-> ([`validation_test_results.csv`](validation_test_results.csv)) shows Gate 3
-> rejecting **10 of 10 unmodified held-out APTOS images** with
-> `ERR_MOTION_OR_DEFOCUS_BLUR`. The configured sharpness threshold
-> (`LAPLACIAN_BLUR_THRESHOLD = 60.0`) is mis-calibrated for this corpus, whose
-> real images score 5.7–22.0. As configured the system would refuse to grade
-> every genuine fundus photograph. See `known_limitations.md` §1.
+> objectives c, f and h are evidenced on a leakage-free partition.
+>
+> **Closed 2026-10-01.** The first genuine run of the image-validation pipeline
+> showed Gate 3 rejecting **10 of 10 unmodified held-out APTOS images** with
+> `ERR_MOTION_OR_DEFOCUS_BLUR`: the sharpness threshold was 60.0 against real
+> images scoring 5.7–22.0, so the system would have refused to grade every
+> genuine fundus photograph. Two further thresholds proved to be a priori in the
+> same way. All three are now derived from the 1st percentile of the development
+> corpus, and all 16 declared validation cases behave as declared
+> ([`validation_test_results.csv`](validation_test_results.csv)). The record is
+> kept in `known_limitations.md` §1 because the defect was real and shipped.
 
 | Research Objective | Specification & Scope | Chapter Four Evidence Document | Implementation Status |
 | :--- | :--- | :--- | :---: |

@@ -288,7 +288,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
               2. Digital Fundus Photograph Upload
             </h3>
             <span className="text-[11px] text-slate-400 font-mono">
-              Accepted: JPEG, PNG • Max: 15MB • Min: 512x512
+              Accepted: JPEG, PNG • Max: 15MB • Min: 480x480
             </span>
           </div>
 

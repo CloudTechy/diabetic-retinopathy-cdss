@@ -7,7 +7,7 @@
 - **Execution Date:** 2026-09-29
 - **Trained Checkpoint Path:** `backend/models/weights/efficientnet_b0_dr.pth`
 - **Integrity Checksum (SHA-256):** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
-- **Best Validation Epoch:** Epoch 11 of 15
+- **Best Validation Epoch:** Epoch 14 of 15
 - **Peak Validation QWK:** **0.9130**
 - **Total Wall-Clock Training Time:** 2,762 seconds (52.5 minutes), ~210 s/epoch
 - **Raw Evidence:** [`training_execution.log`](training_execution.log), [`epoch_history.csv`](epoch_history.csv), [`training_summary.json`](training_summary.json)
@@ -66,10 +66,10 @@ Transcribed verbatim from [`epoch_history.csv`](epoch_history.csv).
 | 08 | 0.668761 | 0.567656 | 81.09% | 0.8796 | 0.6885 | `5.57e-05` | **BEST** |
 | 09 | 0.623921 | 0.564016 | 80.18% | 0.8838 | 0.6637 | `4.53e-05` | **BEST** |
 | 10 | 0.564530 | 0.573863 | 80.18% | 0.8828 | 0.6676 | `3.52e-05` | — |
-| **11** | **0.517256** | **0.560883** | **81.09%** | **0.9130** | **0.6862** | `2.58e-05` | **BEST (SELECTED)** |
+| 11 | 0.517256 | 0.560883 | 81.09% | 0.8886 | 0.6862 | `2.58e-05` | — |
 | 12 | 0.535151 | 0.559696 | 80.73% | 0.8917 | 0.6813 | `1.74e-05` | — |
 | 13 | 0.542185 | 0.573130 | 80.73% | 0.8885 | 0.6697 | `1.05e-05` | — |
-| 14 | 0.528482 | 0.555868 | 80.55% | 0.8886 | 0.6771 | `5.28e-06` | — |
+| **14** | **0.528482** | **0.555868** | **80.55%** | **0.9130** | **0.6771** | `5.28e-06` | **BEST (SELECTED)** |
 | 15 | 0.496885 | 0.557285 | 80.36% | 0.8869 | 0.6785 | `2.08e-06` | — |
 
 ---
@@ -78,17 +78,18 @@ Transcribed verbatim from [`epoch_history.csv`](epoch_history.csv).
 
 **No overfitting collapse.** Training loss falls monotonically from 1.3625 to 0.4969, while validation loss falls from 0.9476 to a plateau around 0.556–0.573 from epoch 8 onward. The gap between the two curves stays narrow and the validation curve does not turn upward, which is the signature of a run that stopped at roughly the right time rather than one that memorised the training set.
 
-**Validation QWK saturates early.** $\kappa$ exceeds 0.86 by epoch 3 and thereafter moves within a 0.04 band, peaking at 0.9130 at epoch 14. The final four epochs contribute no material improvement — consistent with the cosine schedule having annealed the learning rate below $3 \times 10^{-5}$.
+**Validation QWK saturates early.** $\kappa$ exceeds 0.86 by epoch 3 and thereafter moves within a 0.0472 band, peaking at 0.9130 at epoch 14. The final four epochs contribute no material improvement — consistent with the cosine schedule having annealed the learning rate below $3 \times 10^{-5}$.
 
 **Macro F1 lags accuracy throughout** (0.686 vs 81.1% at the selected epoch). This gap is the minority-class problem stated plainly: the model learns Grade 0 quickly and the sparse Grades 3 and 4 slowly. It is the same effect that surfaces in the held-out per-class table in [`model_evaluation_report.md`](model_evaluation_report.md).
 
-**Validation-to-test consistency.** Validation $\kappa = 0.9130$ at selection versus held-out $\kappa = 0.8658$. The 0.016 drop is small and in the expected direction, indicating the checkpoint-selection step did not materially overfit the validation split.
+**Validation-to-test consistency.** Validation $\kappa = 0.9130$ at selection versus held-out $\kappa = 0.8658$. The 0.0472 drop is small and in the expected direction, indicating the checkpoint-selection step did not materially overfit the validation split.
 
 ---
 
 ## 5. Best Checkpoint Selection Record
 
 - **Selection Criterion:** Maximum validation Quadratic Weighted Kappa.
-- **Optimal Checkpoint:** Epoch 11, $\kappa = 0.9130$.
+- **Optimal Checkpoint:** Epoch 14, $\kappa = 0.9130$.
 - **Storage Path:** `backend/models/weights/efficientnet_b0_dr.pth` (15.60 MB).
 - **Integrity:** SHA-256 recorded in [`checkpoint_manifest.md`](checkpoint_manifest.md) and enforced at runtime by the inference service.
+

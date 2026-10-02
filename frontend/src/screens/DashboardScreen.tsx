@@ -127,7 +127,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <div className="flex items-center space-x-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
           <span>
-            <strong>Clinical Safety Protocol:</strong> Automated findings are non-binding preliminary observations. All model outputs are non-diagnostic research observations requiring independent clinical interpretation.
+            <strong>Clinical Safety Protocol:</strong> Model outputs are non-binding preliminary observations requiring independent clinical interpretation.
           </span>
         </div>
         <span className="font-mono text-[11px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded hidden lg:inline">

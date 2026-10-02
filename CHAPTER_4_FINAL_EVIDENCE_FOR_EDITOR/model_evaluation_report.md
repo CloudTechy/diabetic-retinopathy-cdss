@@ -42,7 +42,7 @@ The final row is recomputed independently of the split builder by the leakage au
 
 **On reading these numbers.** The held-out cohort is 51.4% Grade 0, so exact accuracy is dominated by the majority class, and the ICDR scale is ordinal — confusing Grade 2 with Grade 3 is not the same error as confusing Grade 0 with Grade 4. $\kappa$ and the per-class breakdown in §3 are the informative figures.
 
-$\kappa = 0.8658$ sits within the range reported for EfficientNet-B0 at $224 \times 224$ on APTOS 2019 without ensembling, test-time augmentation or ordinal-regression heads. No claim of state-of-the-art performance is made.
+$\kappa = 0.8658$ sits within the range reported for EfficientNet-B0 at $224 \times 224$ on APTOS 2019 without ensembling, test-time augmentation or ordinal-regression heads. The QWK difference of 0.0472 between the validation peak (0.9130) and the test set indicates slight overfitting but remains stable. No claim of state-of-the-art performance is made.
 
 ### 2.1 Comparison with the superseded contaminated run
 
@@ -187,3 +187,4 @@ python backend/scripts/analyze_clinical_metrics.py
 # Rebuild the leakage-free split (requires the APTOS images)
 python backend/scripts/build_clean_split.py aptos2019/train_images
 ```
+

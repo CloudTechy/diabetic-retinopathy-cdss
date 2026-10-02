@@ -64,7 +64,7 @@ Of 205 referable cases, 18 were missed — 28 of them Grade 2 (the mildest refer
 
 | Property | Value |
 | :--- | :--- |
-| Dataset | APTOS 2019 — 3,662 images, split 2,453 / 526 / 525 (grade-stratified) |
+| Dataset | APTOS 2019 — 3,662 labelled records published; **3,504** retained after byte-identical de-duplication and removal of the 30 conflicting-label groups. Split 2,453 / 526 / 525 (grade-stratified) of the retained set. |
 | Initialisation | EfficientNet-B0, ImageNet `IMAGENET1K_V1` |
 | Epochs | 15; **best = epoch 14** (val $\kappa$ = 0.9130) |
 | Optimiser | AdamW, lr $10^{-4}$, wd $10^{-4}$, CosineAnnealingLR |
@@ -93,7 +93,7 @@ Of 205 referable cases, 18 were missed — 28 of them Grade 2 (the mildest refer
 
 ## 5. Test Suite
 
-**190 collected — 189 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
+**182 collected — 181 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q

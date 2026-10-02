@@ -583,21 +583,41 @@ def test_provenance_document_exists_and_names_the_producing_run():
         "provenance doc must state which scripts produced no evidence")
 
 
-@pytest.mark.parametrize("artefact", [
-    "dataset_split_manifest.csv", "held_out_predictions.csv",
-    "epoch_history.csv", "training_execution.log", "training_summary.json",
-    "evaluation_summary.json", "clinical_metrics.json",
-    "benchmark_timings.csv", "benchmark_summary.json",
-    "cpu_end_to_end_benchmark.json", "confusion_matrix.png",
-    "learning_curves.png",
-])
-def test_every_committed_artefact_is_listed_in_the_provenance_doc(artefact):
-    """An evidence file nobody claims to have produced is a liability."""
-    if not os.path.exists(os.path.join(CHAPTER4, artefact)):
-        pytest.skip(f"{artefact} not present")
-    assert artefact in read(PROVENANCE_DOC), (
-        f"{artefact} is committed but not listed in evidence_provenance.md. "
-        "Name the script that produced it, or remove the file.")
+# Documents describe the evidence; they are not themselves artefacts needing a
+# producer. Everything else in docs/chapter4/ is.
+PROVENANCE_EXEMPT_SUFFIXES = (".md",)
+
+
+def test_every_committed_artefact_is_listed_in_the_provenance_doc():
+    """
+    An evidence file nobody claims to have produced is a liability.
+
+    This walked a hardcoded list of twelve filenames until a QA pass found three
+    artefacts shipping undeclared - blur_threshold_calibration.json,
+    dataset_split_audit.json and test_execution.log - every one of them added
+    after the list was written, and therefore outside the rule by construction.
+    It now enumerates the directory, so a new artefact must be declared before
+    it can ship.
+    """
+    if not os.path.isdir(CHAPTER4):
+        pytest.skip("chapter4 directory absent")
+
+    provenance = read(PROVENANCE_DOC)
+    undeclared = []
+    for name in sorted(os.listdir(CHAPTER4)):
+        path = os.path.join(CHAPTER4, name)
+        if os.path.isdir(path) or name.startswith("."):
+            continue
+        if name.endswith(PROVENANCE_EXEMPT_SUFFIXES):
+            continue
+        if name not in provenance:
+            undeclared.append(name)
+
+    assert not undeclared, (
+        "Evidence files are committed that evidence_provenance.md does not "
+        "name:\n  " + "\n  ".join(undeclared)
+        + "\nName the script that produced each one, or remove the file. An "
+          "artefact with no producer is indistinguishable from a fabricated one.")
 
 
 def test_evidence_csvs_only_cite_image_ids_that_exist_in_the_manifest():
@@ -1920,3 +1940,139 @@ def test_the_dependency_error_gives_an_instruction_that_works():
         assert "torch" in declared, (
             "The dependency error points at backend/requirements.txt, which does "
             "not declare torch. Either declare it there or stop citing the file.")
+
+
+# ======================================================================
+# RULE GROUP T - a split must belong to the total it is quoted beside
+#
+# PROGRESS_TRACKER.md read "APTOS 2019 - 3,662 images, split 2,453 / 526 / 525".
+# Those partitions sum to 3,504. 3,662 is what APTOS publishes; 3,504 is what
+# survives de-duplication and the removal of the 30 conflicting-label groups.
+# The line contradicted itself, and a reader has no way to tell which number
+# describes the cohort the model was trained and evaluated on.
+# ======================================================================
+
+SPLIT_TRAIN, SPLIT_VAL, SPLIT_TEST = 2453, 526, 525
+RETAINED_TOTAL = SPLIT_TRAIN + SPLIT_VAL + SPLIT_TEST      # 3504
+PUBLISHED_TOTAL = 3662
+
+
+def test_the_partition_counts_are_never_quoted_against_the_published_total():
+    """
+    Wherever the three partition counts appear together, the total on that line
+    must be the retained one. Quoting them beside 3,662 asserts a split of a
+    cohort that was not split.
+    """
+    offenders = []
+    for rel in _prose_files():
+        if "chapter4_submission_package" in rel.replace("\\", "/"):
+            continue
+        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, rel)).split("\n"), 1):
+            has_train = f"{SPLIT_TRAIN:,}" in line or str(SPLIT_TRAIN) in line
+            has_val = f"{SPLIT_VAL:,}" in line or str(SPLIT_VAL) in line
+            has_test = f"{SPLIT_TEST:,}" in line or str(SPLIT_TEST) in line
+            if not (has_train and has_val and has_test):
+                continue
+            # A correction record describes the SUPERSEDED split, which really
+            # was of 3,662 before de-duplication. Rewriting those lines would
+            # destroy the evidence that the defect existed - the mistake a
+            # blanket figure replacement has already made twice here.
+            if "superseded" in line.lower() or "withdrawn" in line.lower():
+                continue
+            if f"{PUBLISHED_TOTAL:,}" in line or str(PUBLISHED_TOTAL) in line:
+                # Allowed only when the line also names the retained total, i.e.
+                # it is explicitly contrasting the two.
+                if f"{RETAINED_TOTAL:,}" not in line and str(RETAINED_TOTAL) not in line:
+                    offenders.append(
+                        f"{rel}:{lineno} quotes the split "
+                        f"{SPLIT_TRAIN}/{SPLIT_VAL}/{SPLIT_TEST} (sum "
+                        f"{RETAINED_TOTAL}) against the published total "
+                        f"{PUBLISHED_TOTAL}")
+
+    assert not offenders, (
+        "A partition split is quoted against a total it does not sum to:\n  "
+        + "\n  ".join(offenders)
+        + f"\n{PUBLISHED_TOTAL} is what APTOS publishes; {RETAINED_TOTAL} is what "
+          "was split. Name both, or name the one the partitions belong to.")
+
+
+# ======================================================================
+# RULE GROUP U - the interface may not advertise a limit the system does not use
+#
+# The upload panel read "Accepted: JPEG, PNG - Max: 15MB - Min: 512x512" while
+# MIN_IMAGE_DIMENSION had been calibrated to 480. A clinician sizing images to
+# the advertised limit would be working to a rule the system does not enforce,
+# and a 490px image - which the gates now accept - was being described as too
+# small on the very screen that accepts it.
+# ======================================================================
+
+def test_the_upload_screen_quotes_the_configured_limits():
+    """
+    Numbers the interface states as limits must come from config.py. They are a
+    promise to the user about what the system will do.
+    """
+    screen = os.path.join(REPO_ROOT, "frontend", "src", "screens",
+                          "NewAssessmentScreen.tsx")
+    if not os.path.exists(screen):
+        pytest.skip("NewAssessmentScreen.tsx absent")
+
+    config = read(os.path.join(REPO_ROOT, "backend", "app", "core", "config.py"))
+
+    def setting(name, pattern):
+        match = re.search(pattern, config)
+        assert match, f"{name} not found in config.py"
+        return match.group(1)
+
+    min_dim = setting("MIN_IMAGE_DIMENSION",
+                      r"MIN_IMAGE_DIMENSION:\s*int\s*=\s*(\d+)")
+    max_mb = setting("MAX_UPLOAD_SIZE_MB",
+                     r"MAX_UPLOAD_SIZE_MB:\s*int\s*=\s*(\d+)")
+
+    text = read(screen)
+    offenders = []
+
+    advertised_min = re.search(r"Min:\s*(\d+)\s*[xX\u00d7]\s*(\d+)", text)
+    if advertised_min:
+        for shown in advertised_min.groups():
+            if shown != min_dim:
+                offenders.append(
+                    f"upload panel advertises a {shown}px minimum; "
+                    f"MIN_IMAGE_DIMENSION is {min_dim}")
+
+    advertised_max = re.search(r"Max:\s*(\d+)\s*MB", text)
+    if advertised_max and advertised_max.group(1) != max_mb:
+        offenders.append(
+            f"upload panel advertises a {advertised_max.group(1)}MB maximum; "
+            f"MAX_UPLOAD_SIZE_MB is {max_mb}")
+
+    assert not offenders, (
+        "The upload screen states a limit the system does not enforce:\n  "
+        + "\n  ".join(offenders)
+        + "\nThese numbers are a promise to the clinician about what will be "
+          "accepted. Quote the configured value.")
+
+
+def test_the_pdf_report_quotes_the_configured_threshold():
+    """
+    The generated consultation PDF printed "Laplacian variance: 71.6
+    (Threshold >= 60.0)" while LAPLACIAN_BLUR_THRESHOLD was 4.3. The number had
+    been written into the report template by hand, so a document handed to a
+    clinician stated a decision rule the system had stopped applying - and it
+    stated it beside a real measurement, which makes it look checked.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "app", "services",
+                        "report_service.py")
+    if not os.path.exists(path):
+        pytest.skip("report_service.py absent")
+
+    offenders = []
+    for lineno, line in enumerate(read(path).split("\n"), 1):
+        code = line.split("#", 1)[0]
+        if re.search(r"Threshold\s*>=\s*[0-9]", code):
+            offenders.append(f"line {lineno}: threshold written as a literal")
+
+    assert not offenders, (
+        "The PDF report states a threshold as a literal:\n  "
+        + "\n  ".join(offenders)
+        + "\nRead it from `settings`. A report quoting a rule the system does "
+          "not apply is worse than one that omits the rule.")
