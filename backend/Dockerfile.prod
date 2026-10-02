@@ -5,21 +5,24 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv (fast Python package manager)
 RUN pip install uv
 
 # Install dependencies first for Docker layer caching
+# Use CPU wheels for PyTorch to keep image lightweight and fast on CPU
 COPY requirements.txt .
-RUN uv pip install --system --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+    uv pip install --system --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY . .
 
 EXPOSE 8000
 
-# Start Uvicorn with multiple workers for production
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Start Uvicorn with workers for production
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

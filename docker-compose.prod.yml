@@ -53,8 +53,8 @@ services:
     container_name: dr_cdss_frontend_prod
     restart: always
     ports:
-      # Expose Nginx on port 3000 to the host (Spacehubtech reverse proxy will route to this)
-      - "${HOST_PORT:-3000}:80"
+      # Expose Nginx on local port 3350 (Spacehubtech reverse proxy routes drai-cdss.spacehubtech.cloud to this)
+      - "127.0.0.1:${HOST_PORT:-3350}:80"
     depends_on:
       - backend
     networks:
