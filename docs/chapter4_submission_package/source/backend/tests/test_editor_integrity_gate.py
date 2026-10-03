@@ -2240,70 +2240,249 @@ def test_the_package_screenshots_match_the_source_exactly():
 # document: it is confidently wrong.
 # ======================================================================
 
-SCHEMA_DOC = os.path.join(CHAPTER4, "database_schema.md")
-MODELS = os.path.join(REPO_ROOT, "backend", "app", "models", "models.py")
+def _resolve(*candidates):
+    """First path that exists, so the rule runs in BOTH layouts.
 
-# Tables whose documented columns are checked against the model. Keyed by the
-# SQLAlchemy class name; the value is the heading the document uses.
-CHECKED_TABLES = {"ProfessionalReview": "professional_reviews"}
+    Repo:      <repo>/docs/chapter4/database_schema.md
+    Extracted: <package>/documentation/database_schema.md, with the tests at
+               <package>/source/backend/tests/ so REPO_ROOT is <package>/source.
+
+    The previous version looked only in the repo layout and skipped silently in
+    the package - for the reviewer, who has no other way to check the claim.
+    """
+    for c in candidates:
+        if c and os.path.exists(c):
+            return c
+    return None
 
 
-def _model_columns(class_name):
-    """Column attribute names declared on a model class."""
+_PKG_ROOT = os.path.dirname(REPO_ROOT)  # <package>, when REPO_ROOT is source/
+
+SCHEMA_DOC = _resolve(
+    os.path.join(CHAPTER4, "database_schema.md"),
+    os.path.join(_PKG_ROOT, "documentation", "database_schema.md"),
+    os.path.join(REPO_ROOT, "documentation", "database_schema.md"),
+)
+MODELS = _resolve(
+    os.path.join(REPO_ROOT, "backend", "app", "models", "models.py"),
+    os.path.join(_PKG_ROOT, "source", "backend", "app", "models", "models.py"),
+)
+
+# Tables are discovered from the document's own headings rather than listed
+# here. A hardcoded list is how six tables went unchecked.
+TABLE_HEADING = re.compile(r"^### \d+\. `([a-z_][a-z0-9_]*)`\s*$", re.MULTILINE)
+COLUMN_ROW = re.compile(
+    r"^\|\s*`([a-z_][a-z0-9_]*)`\s*\|[^|]*\|\s*(YES|NO)\s*\|", re.MULTILINE)
+
+
+def _model_tables():
+    """{table_name: (ClassName, {column: nullable})} for every mapped class."""
     tree = ast.parse(read(MODELS), filename=MODELS)
+    out = {}
     for node in ast.walk(tree):
-        if not (isinstance(node, ast.ClassDef) and node.name == class_name):
+        if not isinstance(node, ast.ClassDef):
             continue
-        names = set()
+        table, columns = None, {}
         for stmt in node.body:
             if not isinstance(stmt, ast.Assign):
                 continue
+            for target in stmt.targets:
+                if isinstance(target, ast.Name) and target.id == "__tablename__":
+                    table = getattr(stmt.value, "value", None)
             if not (isinstance(stmt.value, ast.Call)
                     and getattr(stmt.value.func, "id", None) == "Column"):
                 continue
+            # SQLAlchemy defaults nullable to True unless it is a primary key.
+            nullable = True
+            for kw in stmt.value.keywords:
+                if kw.arg == "nullable":
+                    nullable = getattr(kw.value, "value", True)
+                elif kw.arg == "primary_key" and getattr(kw.value, "value", False):
+                    nullable = False
             for target in stmt.targets:
                 if isinstance(target, ast.Name):
-                    names.add(target.id)
-        return names
-    return set()
+                    columns[target.id] = bool(nullable)
+        if table:
+            out[table] = (node.name, columns)
+    return out
 
 
-def test_schema_document_only_describes_columns_that_exist():
-    """
-    Every column the schema document names for a checked table must be declared
-    on the corresponding model.
-    """
-    if not (os.path.exists(SCHEMA_DOC) and os.path.exists(MODELS)):
-        pytest.skip("schema document or models absent")
-
+def _documented_tables():
+    """{table_name: {column: nullable}} as the schema document states them."""
     text = read(SCHEMA_DOC)
+    headings = list(TABLE_HEADING.finditer(text))
+    out = {}
+    for i, m in enumerate(headings):
+        stop = headings[i + 1].start() if i + 1 < len(headings) else len(text)
+        section = text[m.start():stop]
+        out[m.group(1)] = {
+            c: (flag == "YES") for c, flag in COLUMN_ROW.findall(section)}
+    return out
+
+
+def test_schema_document_matches_the_model_in_both_directions():
+    """
+    For every table the schema document describes, the set of documented
+    columns and the set the model declares must be EQUAL, and each column's
+    stated nullability must match.
+
+    Equality, not containment. An omitted column is as misleading as an
+    invented one: a reader who sees eleven rows and assumes that is the table
+    has been misled either way.
+    """
+    assert SCHEMA_DOC, (
+        "database_schema.md not found in either the repo layout "
+        "(docs/chapter4/) or the extracted-package layout (documentation/). "
+        "This rule must not skip: add the layout rather than let it pass.")
+    assert MODELS, (
+        "models.py not found in either layout. This rule must not skip.")
+
+    model = _model_tables()
+    documented = _documented_tables()
+    assert documented, (
+        "No table sections parsed out of %s. If the heading format changed, "
+        "update TABLE_HEADING rather than letting this rule pass vacuously."
+        % os.path.basename(SCHEMA_DOC))
+
     offenders = []
-
-    for class_name, table in CHECKED_TABLES.items():
-        declared = _model_columns(class_name)
+    for table in sorted(documented):
+        if table not in model:
+            offenders.append(
+                "`%s`: documented, but no model class declares that "
+                "__tablename__" % table)
+            continue
+        class_name, declared = model[table]
         assert declared, (
-            f"No Column assignments found on model class {class_name}. If it "
-            "moved, point this rule at the new name rather than dropping it.")
+            "No Column assignments found on %s. If it moved, point this rule "
+            "at the new name rather than dropping it." % class_name)
+        stated = documented[table]
 
-        # Column rows look like:  | `column_name` | TYPE | ... |
-        section = text
-        heading = "`%s`" % table
-        if heading in text:
-            start = text.index(heading)
-            nxt = text.find("\n### ", start)
-            section = text[start:nxt if nxt != -1 else len(text)]
-
-        for match in re.finditer(r"^\|\s*`([a-z_][a-z0-9_]*)`\s*\|", section,
-                                 re.MULTILINE):
-            column = match.group(1)
-            if column not in declared:
+        for column in sorted(set(stated) - set(declared)):
+            offenders.append(
+                "`%s`.`%s`: documented, but %s does not declare it"
+                % (table, column, class_name))
+        for column in sorted(set(declared) - set(stated)):
+            offenders.append(
+                "`%s`.`%s`: declared on %s, but the document omits it"
+                % (table, column, class_name))
+        for column in sorted(set(stated) & set(declared)):
+            if stated[column] != declared[column]:
                 offenders.append(
-                    "%s: documents column `%s`, which %s does not declare"
-                    % (table, column, class_name))
+                    "`%s`.`%s`: document says nullable=%s, %s declares "
+                    "nullable=%s"
+                    % (table, column, "YES" if stated[column] else "NO",
+                       class_name, "YES" if declared[column] else "NO"))
 
     assert not offenders, (
-        "database_schema.md describes columns the model does not have:\n  "
+        "database_schema.md disagrees with backend/app/models/models.py:\n  "
         + "\n  ".join(offenders)
-        + "\nTranscribe the table from backend/app/models/models.py. A schema "
-          "document that does not match the model is confidently wrong, which "
-          "is worse than absent.")
+        + "\nTranscribe each table from the model. A schema document that does "
+          "not match the model is confidently wrong, which is worse than "
+          "absent — and an omitted column misleads a reader exactly as much as "
+          "an invented one.")
+
+
+# ======================================================================
+# RULE GROUP Y - prose must not cite model attributes that do not exist
+#
+# Rule X guards the schema document's table dictionaries. It did not guard
+# prose, and prose is where the last phantom survived:
+# verification_and_traceability_matrix.md cited
+# `ProfessionalReview.certified_grade` as test evidence for a governance
+# requirement. That column does not exist. The document asserting what had been
+# verified was itself unverified, and rule X could not see it because the matrix
+# carries no table dictionary.
+#
+# The check is scoped to class names the model actually declares, so it cannot
+# be satisfied by rephrasing and needs no editing when a model class is added.
+# ======================================================================
+
+DOC_ROOTS = [
+    CHAPTER4,
+    os.path.join(REPO_ROOT, "docs"),
+    os.path.join(_PKG_ROOT, "documentation"),
+]
+
+ATTR_REFERENCE = re.compile(r"`([A-Z][A-Za-z0-9]*)\.([a-z_][a-z0-9_]*)`")
+
+
+def _model_classes():
+    """{ClassName: {attribute names declared on it}} for mapped classes."""
+    tree = ast.parse(read(MODELS), filename=MODELS)
+    out = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
+            continue
+        names, is_model = set(), False
+        for stmt in node.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+            for target in stmt.targets:
+                if not isinstance(target, ast.Name):
+                    continue
+                if target.id == "__tablename__":
+                    is_model = True
+                else:
+                    names.add(target.id)
+        if is_model:
+            out[node.name] = names
+    return out
+
+
+def _prose_files():
+    seen, files = set(), []
+    for root in DOC_ROOTS:
+        if not root or not os.path.isdir(root):
+            continue
+        for base, _dirs, names in os.walk(root):
+            parts = base.replace("\\", "/").split("/")
+            # archive/ records what WAS wrong, and must be allowed to quote it.
+            if "archive" in parts:
+                continue
+            for name in sorted(names):
+                if not name.endswith(".md"):
+                    continue
+                full = os.path.join(base, name)
+                key = os.path.realpath(full)
+                if key not in seen:
+                    seen.add(key)
+                    files.append(full)
+    return files
+
+
+def test_prose_cites_only_model_attributes_that_exist():
+    """
+    Any `ClassName.attribute` in the documentation, where ClassName is a model
+    class, must name an attribute that class declares.
+    """
+    assert MODELS, "models.py not found in either layout; this rule must not skip."
+
+    classes = _model_classes()
+    assert classes, (
+        "No mapped classes parsed from models.py. If the models moved, point "
+        "this rule at them rather than letting it pass vacuously.")
+
+    files = _prose_files()
+    assert files, "No documentation found; this rule must not pass vacuously."
+
+    offenders = []
+    for path in files:
+        rel = os.path.relpath(path, REPO_ROOT)
+        for lineno, line in enumerate(read(path).split("\n"), 1):
+            # A correction record must be able to name the wrong column.
+            if "superseded" in line.lower() or "never existed" in line.lower():
+                continue
+            for class_name, attr in ATTR_REFERENCE.findall(line):
+                if class_name not in classes:
+                    continue
+                if attr not in classes[class_name]:
+                    offenders.append(
+                        "%s:%d cites `%s.%s`, which %s does not declare"
+                        % (rel, lineno, class_name, attr, class_name))
+
+    assert not offenders, (
+        "Documentation cites model attributes that do not exist:\n  "
+        + "\n  ".join(offenders)
+        + "\nA document that states what was verified must itself be verified. "
+          "Correct the attribute name against backend/app/models/models.py, or "
+          "if the line is recording a past error, say so explicitly in it.")

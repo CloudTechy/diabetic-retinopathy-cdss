@@ -26,7 +26,10 @@ WHAT IT CHECKS, AND WHY EACH ONE MATTERS
   4. The split is leakage-free.                No held-out image may share its
                                                bytes with a training image.
   5. The test log records a passing run and    Five different test counts once
-     the documents quote THAT log.             circulated in this package.
+     EVERY document quotes THAT log.           circulated here. This reads every
+                                               .md in the archive, including the
+                                               root README, and recognises both
+                                               "186 passed" and "Passed: 186".
   6. Every evidence file has a producer.       An artefact nobody claims to have
                                                produced is indistinguishable
                                                from a fabricated one.
@@ -257,17 +260,43 @@ def _testlog(out):
 
     allowed = {"collected": total, "passed": passed,
                "skipped": skipped, "failed": failed}
-    claim = re.compile(r"\*{0,2}(\d+)\*{0,2}\s*(?:tests?\s+)?"
-                       r"(collected|passed|skipped|failed)")
+
+    # Two wordings occur in this package. An earlier version of this scanner
+    # recognised only the first and read only documentation/, so "Passed: 182",
+    # "Tests Collected: 186", "181/181", and the root README.md and
+    # REVIEWER_RESPONSE.md were all invisible to it - and it reported agreement
+    # while four counts disagreed.
+    #
+    # The negative lookbehinds keep "Gate 1 Passed" and "All 3 Passed" out:
+    # those are gate verdicts, not suite counts.
+    patterns = [
+        re.compile(r"(?<!Gate )(?<!All )\*{0,2}(\d+)\*{0,2}\s*"
+                   r"(?:tests?\s+(?:cases?\s+)?)?"
+                   r"(collected|passed|skipped|failed)", re.I),
+        re.compile(r"(collected|passed|skipped|failed)\s*:\s*\*{0,2}(\d+)", re.I),
+    ]
+
+    # Every Markdown file in the package. archive/ is excluded by name: a
+    # superseded document's purpose is to record what WAS true.
+    targets = []
+    for base, _dirs, files in os.walk(HERE):
+        parts = base.replace("\\", "/").split("/")
+        if "archive" in parts:
+            continue
+        for name in sorted(files):
+            if name.endswith(".md"):
+                targets.append(os.path.join(base, name))
 
     disagreements = []
-    for name in sorted(os.listdir(DOCS)):
-        if not name.endswith(".md"):
-            continue
-        for lineno, line in enumerate(read_text(os.path.join(DOCS, name)).split("\n"), 1):
-            for value, kind in claim.findall(line):
-                if int(value) != allowed[kind]:
-                    disagreements.append("%s:%d says %s %s" % (name, lineno, value, kind))
+    for path in sorted(targets):
+        rel = os.path.relpath(path, HERE)
+        for lineno, line in enumerate(read_text(path).split("\n"), 1):
+            found = [(k.lower(), int(v)) for v, k in patterns[0].findall(line)]
+            found += [(k.lower(), int(v)) for k, v in patterns[1].findall(line)]
+            for kind, value in found:
+                if kind in allowed and value != allowed[kind]:
+                    disagreements.append("%s:%d says %s %s"
+                                         % (rel, lineno, value, kind))
 
     if disagreements:
         ok = False
@@ -275,7 +304,7 @@ def _testlog(out):
         for d in disagreements[:8]:
             out("    %s" % d)
     else:
-        out("every test count stated in documentation/ matches this log")
+        out("every test count in every .md in this package matches this log")
     return None, ok
 
 
