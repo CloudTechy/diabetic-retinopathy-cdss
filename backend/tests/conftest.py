@@ -41,7 +41,7 @@ def create_synthetic_retinal_fundus(
         arr[:, :, 0] = 50   # Low Red
         arr[:, :, 1] = 120  # Medium Green
         arr[:, :, 2] = 220  # High Blue
-        img = Image.fromarray(arr, mode="RGB")
+        img = Image.fromarray(arr)
         draw = ImageDraw.Draw(img)
         draw.text((50, 50), "NON-RETINAL PHOTOGRAPH - CHEST X-RAY / FACE", fill=(255, 255, 255))
         return img
@@ -138,11 +138,10 @@ def test_client():
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # get_event_loop() warns from Python 3.12 when no loop is running; a
+    # fixture that owns its loop should create it outright.
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     
     if loop.is_running():
         import concurrent.futures

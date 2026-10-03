@@ -45,7 +45,7 @@ def synthetic_fundus(width=1600, height=1200, seed=0, margin_frac=0.08,
 
     arr = np.asarray(img).astype(np.float32)
     arr += rng.normal(0, 0.6, arr.shape).astype(np.float32)
-    img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
+    img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
     if blur:
         img = img.filter(ImageFilter.GaussianBlur(blur))
     return img
@@ -54,7 +54,7 @@ def synthetic_fundus(width=1600, height=1200, seed=0, margin_frac=0.08,
 def non_retinal(width=1600, height=1200):
     arr = np.zeros((height, width, 3), dtype=np.uint8)
     arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = 50, 120, 220
-    return Image.fromarray(arr, "RGB")
+    return Image.fromarray(arr)
 
 
 # Images chosen to straddle the thresholds: aperture coverage from 0.09 to 0.73
@@ -159,7 +159,7 @@ class TestDownsampleHelper:
         """
         arr = np.zeros((100, 100, 3), dtype=np.uint8)
         arr[:50] = 255  # hard edge: any averaging creates intermediate values
-        out = np.asarray(downsample_for_analysis(Image.fromarray(arr, "RGB"), 20))
+        out = np.asarray(downsample_for_analysis(Image.fromarray(arr), 20))
         assert set(np.unique(out)).issubset({0, 255})
 
     def test_longest_side_is_capped(self):
