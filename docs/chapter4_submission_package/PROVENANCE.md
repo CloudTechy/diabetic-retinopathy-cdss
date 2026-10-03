@@ -51,6 +51,7 @@ which only this script emits.
 | `logs_and_metrics/validation_test_results.csv` | `scripts/generate_validation_evidence.py` | held-out images + stated derivations |
 | `logs_and_metrics/blur_threshold_calibration.json` | `scripts/calibrate_blur_threshold.py` | the 2,979 train+val images named in `dataset_split_manifest.csv` |
 | `logs_and_metrics/dataset_split_audit.json` | `scripts/build_clean_split.py` | the APTOS image bytes + `train.csv` labels |
+| `VERIFY.py` | hand-written; produces no evidence | reads the artefacts above and recomputes their headline figures. Stdlib only, so a reviewer needs no environment. Its recorded transcript is `VERIFICATION.md`. |
 | `logs_and_metrics/test_execution.log` | `pytest tests/ -v` against `backend/.venv` | the committed suite; the single authoritative run |
 | `screenshots/01`–`08` | `frontend/scripts/capture_screenshots.js` | the built frontend |
 | `screenshots/09_confusion_matrix_empirical.png` | copy of `visualizations/confusion_matrix.png` | — |

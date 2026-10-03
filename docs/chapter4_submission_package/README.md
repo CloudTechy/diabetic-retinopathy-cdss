@@ -1,5 +1,27 @@
 # Chapter Four Evidence & Reproduction Submission Package
 
+> [!IMPORTANT]
+> ## Verify this package before reading it
+>
+> **No installation required** — no virtual environment, no PyTorch, no
+> repository checkout, no network. Python 3.8+ and the standard library:
+>
+> ```bash
+> python VERIFY.py
+> ```
+>
+> It recomputes the headline metrics from the raw predictions (Quadratic
+> Weighted Kappa implemented from first principles, not imported), confirms the
+> checkpoint digest, confirms the integration fixture is a genuine held-out
+> APTOS image, confirms the split is leakage-free, and confirms every test count
+> stated in these documents matches the committed log.
+>
+> [`VERIFICATION.md`](VERIFICATION.md) explains each check and carries a
+> recorded transcript, so the package can be checked by eye without running
+> anything.
+
+
+
 **Programme:** Postgraduate Diploma (PGD) in Computer Science
 **Faculty:** Faculty of Physical Sciences
 **Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy

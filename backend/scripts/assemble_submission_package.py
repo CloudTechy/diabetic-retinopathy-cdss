@@ -41,6 +41,11 @@ EXPECTED_CHECKPOINT_SHA256 = "67d0b89641f08057126dd411e380b25575ef29f71ae37ee579
 # (source relative to repo root, destination relative to the package)
 LAYOUT = [
     # Trained weights
+    # The reviewer has no virtual environment and no repository checkout.
+    # These two files are the only way they can CHECK this package rather
+    # than trust it, so they must survive every rebuild.
+    ("docs/chapter4/VERIFY.py", "VERIFY.py"),
+    ("docs/chapter4/VERIFICATION.md", "VERIFICATION.md"),
     ("backend/models/weights/efficientnet_b0_dr.pth", "checkpoint/efficientnet_b0_dr.pth"),
     # The integration test's fixture. Without it the test cannot run from
     # the extracted package, and the test is the thing that proves the

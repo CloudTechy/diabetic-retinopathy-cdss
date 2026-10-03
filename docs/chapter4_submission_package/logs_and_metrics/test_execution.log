@@ -204,4 +204,4 @@ tests/test_api_endpoints.py::TestAuthEndpoints::test_login_and_me
     loop = asyncio.get_event_loop()
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-============ 185 passed, 1 skipped, 2 warnings in 86.31s (0:01:26) ============
+============ 185 passed, 1 skipped, 2 warnings in 73.42s (0:01:13) ============
