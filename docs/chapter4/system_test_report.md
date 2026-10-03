@@ -6,19 +6,19 @@
 - **Related Research Objective:** Objective i (System verification, quality assurance & security)
 - **Date Test Run:** 2026-10-02
 - **Test Framework:** Pytest 9.1.1, Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **187 collected — 186 passed, 0 failed, 1 skipped**
+- **Overall Result:** **188 collected — 187 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 187 test cases was executed against the complete CDSS platform. 186 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 188 test cases was executed against the complete CDSS platform. 187 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      186
-Passed:               185 (99.5%)
+Tests Collected:      188
+Passed:               187 (99.5%)
 Failed:                 0  (0.0%)
 Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: ~77 seconds
@@ -47,7 +47,7 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 | `test_blank_dark_image_fails_gate2` | Gate 2 | Uniform black image | Gate 2 Rejected | **PASS** |
 | `test_extreme_aspect_ratio_fails_gate2` | Gate 2 | Non-standard widescreen crop | Gate 2 Rejected | **PASS** |
 | `test_sharp_fundus_passes_gate3` | Gate 3 | In-focus fundus photo ($\sigma_L^2 \ge 4.3$) | Gate 3 Passed | **PASS** |
-| `test_blurred_fundus_fails_gate3` | Gate 3 | Defocused blurred photo ($\sigma_L^2 < 60$) | Gate 3 Rejected | **PASS** |
+| `test_blurred_fundus_fails_gate3` | Gate 3 | Defocused blurred photo ($\sigma_L^2 < 4.3$) | Gate 3 Rejected | **PASS** |
 | `test_corrupt_file_halts_at_gate1` | Sequential | Corrupt file halts before Gate 2 | Invariant Halted | **PASS** |
 | `test_non_retinal_halts_at_gate2` | Sequential | Non-retinal halts before Gate 3 | Invariant Halted | **PASS** |
 | `test_blurry_fundus_halts_at_gate3` | Sequential | Blur halts before inference | Invariant Halted | **PASS** |
