@@ -232,7 +232,7 @@ classDiagram
 1. **Independent Relational Storage (FR-15)**
    - `AIResult` and `ProfessionalReview` occupy separate database tables with independent schemas and distinct primary keys.
    - When a clinician disagrees with the AI classification, the AI score record remains unmodified; both records are retained for retrospective clinical audit.
-   - *Test Evidence*: `test_governance_and_security.py::test_separate_storage_of_ai_result_and_review` verified that upon submitting an override review, `AIResult.primary_class_grade` remained 2 while `ProfessionalReview.certified_grade` was certified as 1.
+   - *Test Evidence*: `test_governance_and_security.py::test_separate_storage_of_ai_result_and_review` verified that upon submitting an override review, `AIResult.primary_class_grade` remained 2 while `ProfessionalReview.reviewer_assessed_grade` recorded 1.
 
 2. **Completed Review Immutability (FR-14)**
    - Once a review is submitted, the parent assessment enters the terminal state `completed`.
