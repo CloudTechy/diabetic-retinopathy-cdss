@@ -58,7 +58,7 @@ Three runs of this harness exist over the same 30 held-out images:
 | :--- | :--- | :--- | ---: | ---: | ---: | ---: |
 | A | 2026-09-29 | a priori (rejected the corpus) | 212.54 ms | 179.68 ms | 373.39 ms | 43.9% |
 | B | 2026-10-01 | calibrated | 254.31 ms | 213.30 ms | 447.95 ms | 41.9% |
-| **C (§1)** | 2026-10-01 | calibrated | **180.41 ms** | **147.45 ms** | **342.49 ms** | **41.4%** |
+| **C — CANONICAL (§1)** | 2026-10-01 | calibrated | **180.41 ms** | **147.45 ms** | **342.49 ms** | **41.4%** |
 
 **B and C are identical in everything under our control** — same commit, same
 thresholds, same images, same 30 measured requests after 3 warm-ups. They differ

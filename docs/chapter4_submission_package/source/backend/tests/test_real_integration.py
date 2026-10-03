@@ -1,10 +1,27 @@
 """
-End-to-end integration test against the genuine EfficientNet-B0 checkpoint.
+End-to-end integration test against the genuine EfficientNet-B0 checkpoint,
+using a GENUINE HELD-OUT APTOS IMAGE.
+
+THE FIXTURE
+
+    image_id   d1f1ea894da1
+    split      test  (held out; the model never saw it in training)
+    grade      2  (Moderate NPDR)
+    sha256     d6eb606b07cdcd6045f2477f9fa3899df7f112f862897286a21f0eece06f2acf
+
+All three are asserted below against
+`docs/chapter4/dataset_split_manifest.csv`, so the fixture cannot be swapped
+without the test saying so, and a reviewer can verify its provenance in one
+command.
+
+This replaces a synthetic 800x800 image that had been named
+`aptos_sample_fundus.jpg` - a filename asserting a provenance it did not have,
+and the same defect as the placeholder files once found in storage/datasets/.
 
 WHAT THIS ESTABLISHES
 
-A JPEG is submitted through the authenticated API and travels the whole
-production path with no mocked intermediate:
+A real held-out photograph travels the whole production path with no mocked
+intermediate:
 
 1. the three admission gates evaluate it at their calibrated thresholds;
 2. the real checkpoint - digest-verified against MODEL_CHECKPOINT_SHA256 -
@@ -12,25 +29,17 @@ production path with no mocked intermediate:
 3. the argmax of those probabilities equals the reported primary grade, so the
    displayed grade is the model's own and not a substituted one;
 4. a Grad-CAM URL is returned, and fetching it yields non-empty bytes carrying
-   the PNG signature - the explanation artefact exists and is served, rather
-   than being a string in a response.
+   the PNG signature.
 
-WHAT THIS DOES NOT ESTABLISH
+WHAT IT STILL DOES NOT ESTABLISH
 
-**The fixture is a synthetic fundus, not an APTOS photograph.** It is 800x800,
-generated to pass the admission gates, and its SHA-256 appears nowhere in
-`dataset_split_manifest.csv`. It was previously named `aptos_sample_fundus.jpg`,
-which asserted a provenance it does not have.
-
-So this test proves the pipeline is wired correctly and that the served grade is
-the model's own. It says nothing about accuracy on real retinal images, and the
-grade it returns is not a clinical result. The accuracy evidence is the held-out
-cohort in `model_evaluation_report.md` (N = 525), computed separately.
-
-Upgrading this to a genuine held-out APTOS image would make it evidence of both.
-That needs one real image committed to `fixtures/`, which the Kaggle licence and
-repository size both permit; it has not been done.
+Accuracy. This is ONE image. The test does not assert which grade comes back,
+because a single case proves nothing about performance and pinning it would
+turn a wiring test into a brittle claim. The accuracy evidence is the held-out
+cohort in `model_evaluation_report.md` (N = 525), of which this image is one
+member.
 """
+import csv
 import hashlib
 import os
 import struct
@@ -43,10 +52,13 @@ from fastapi.testclient import TestClient
 # Fixture image metadata
 # ---------------------------------------------------------------------------
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
-FIXTURE_IMAGE_PATH = os.path.join(FIXTURE_DIR, "synthetic_fundus_gate_passing.jpg")
-# SHA-256 of the 800x800 SYNTHETIC fundus image. Not an APTOS photograph -
-# see the module docstring. Pinned so the fixture cannot be swapped silently.
-FIXTURE_IMAGE_SHA256 = "09bb3cba1a6a0ee8f9687f8031bb001df72911f68df3530c4282817e106e1ae3"
+FIXTURE_IMAGE_PATH = os.path.join(FIXTURE_DIR, "aptos_heldout_d1f1ea894da1.png")
+FIXTURE_IMAGE_ID = "d1f1ea894da1"
+FIXTURE_SPLIT = "test"
+# SHA-256 of the genuine held-out APTOS image, as recorded in
+# docs/chapter4/dataset_split_manifest.csv. Pinned so the fixture cannot be
+# swapped silently.
+FIXTURE_IMAGE_SHA256 = "d6eb606b07cdcd6045f2477f9fa3899df7f112f862897286a21f0eece06f2acf"
 
 
 def _sha256_file(path: str) -> str:
@@ -65,6 +77,44 @@ def _is_valid_png(data: bytes) -> bool:
 # ---------------------------------------------------------------------------
 # Pre-test fixture verification
 # ---------------------------------------------------------------------------
+
+def test_fixture_is_the_held_out_aptos_image_it_claims_to_be():
+    """
+    The fixture must BE the manifest row it names: same id, held-out split, and
+    the SHA-256 recorded for that row.
+
+    A pinned hash alone only proves the file has not changed since someone
+    pinned it. It says nothing about whether the file is an APTOS image at all -
+    which is exactly how a synthetic 800x800 picture came to be committed under
+    the name `aptos_sample_fundus.jpg`, and how fifteen placeholders came to sit
+    in storage/datasets/ wearing real held-out image ids.
+    """
+    manifest_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "docs", "chapter4", "dataset_split_manifest.csv")
+    if not os.path.exists(manifest_path):
+        pytest.skip("dataset_split_manifest.csv not present in this checkout")
+
+    with open(manifest_path, newline="", encoding="utf-8") as fh:
+        rows = {r["image_id"]: r for r in csv.DictReader(fh)}
+
+    record = rows.get(FIXTURE_IMAGE_ID)
+    assert record is not None, (
+        f"{FIXTURE_IMAGE_ID} does not appear in dataset_split_manifest.csv. The "
+        "integration fixture must be an image from the evaluated corpus.")
+
+    assert record["split"] == FIXTURE_SPLIT, (
+        f"{FIXTURE_IMAGE_ID} is split={record['split']!r}, not {FIXTURE_SPLIT!r}. "
+        "Grading an image the model trained on would be meaningless as evidence.")
+
+    assert record["sha256_hash"] == FIXTURE_IMAGE_SHA256, (
+        "The pinned SHA-256 does not match the manifest row for "
+        f"{FIXTURE_IMAGE_ID}.")
+
+    assert _sha256_file(FIXTURE_IMAGE_PATH) == FIXTURE_IMAGE_SHA256, (
+        f"The file at {FIXTURE_IMAGE_PATH} is not the image "
+        f"{FIXTURE_IMAGE_ID} names. It has been altered or replaced.")
+
 
 def test_fixture_image_integrity():
     """Verify the packaged fixture is present and unmodified."""
@@ -105,9 +155,27 @@ def test_real_model_end_to_end_pipeline(authed_client):
     old_singleton = ai_svc._service_singleton
     ai_svc._service_singleton = None  # force re-initialisation
 
-    checkpoint_abs = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../models/weights/efficientnet_b0_dr.pth")
-    )
+    # Resolve the checkpoint in BOTH layouts: the repository, where it lives at
+    # backend/models/weights/, and the extracted submission package, where the
+    # assembler places it at checkpoint/. A reviewer running this from the zip
+    # should get the real checkpoint or a clear refusal, not a path error.
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(here, "..", "models", "weights", "efficientnet_b0_dr.pth"),
+        os.path.join(here, "..", "..", "..", "..", "checkpoint",
+                     "efficientnet_b0_dr.pth"),
+        os.path.join(here, "..", "..", "..", "checkpoint",
+                     "efficientnet_b0_dr.pth"),
+    ]
+    checkpoint_abs = next(
+        (os.path.abspath(c) for c in candidates if os.path.exists(c)), None)
+
+    if checkpoint_abs is None:
+        pytest.skip(
+            "efficientnet_b0_dr.pth not found. In the repository it is at "
+            "backend/models/weights/; in the extracted submission package it is "
+            "at checkpoint/. This test grades a real image with the real "
+            "checkpoint and will not run without it.")
     old_checkpoint = settings.MODEL_CHECKPOINT_PATH
     settings.MODEL_CHECKPOINT_PATH = checkpoint_abs
 
@@ -123,9 +191,10 @@ def test_real_model_end_to_end_pipeline(authed_client):
                 "patientId": "REAL-INTEGRATION-TEST",
                 "laterality": "OD",
                 "cameraModel": "Topcon TRC-NW400 (Fixture)",
-                "clinicalNotes": ("Integration test against the real checkpoint. "
-                                  "SYNTHETIC fixture image: proves wiring, "
-                                  "not accuracy."),
+                "clinicalNotes": ("Integration test against the real checkpoint using a "
+                                  "genuine held-out APTOS image (d1f1ea894da1). "
+                                  "Proves the path end to end; one image is "
+                                  "not an accuracy claim."),
             },
         )
         assert create_response.status_code == 201, (
@@ -142,8 +211,8 @@ def test_real_model_end_to_end_pipeline(authed_client):
         with open(FIXTURE_IMAGE_PATH, "rb") as img_file:
             upload_response = client.post(
                 f"/api/v1/assessments/{draft_id}/upload",
-                files={"file": ("synthetic_fundus_gate_passing.jpg", img_file,
-                                "image/jpeg")},
+                files={"file": ("aptos_heldout_d1f1ea894da1.png", img_file,
+                                "image/png")},
             )
 
         assert upload_response.status_code == 200, (

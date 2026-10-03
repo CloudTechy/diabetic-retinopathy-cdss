@@ -31,7 +31,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
 }) => {
   // Friction engineering: NO pre-selected default
   const [agreement, setAgreement] = useState<AgreementType | null>(null);
-  const [reviewerAssessedGrade, setCertifiedGrade] = useState<number | null>(null);
+  const [reviewerAssessedGrade, setReviewerAssessedGrade] = useState<number | null>(null);
   const [justificationNotes, setJustificationNotes] = useState<string>('');
   const [inconclusiveReason, setInconclusiveReason] = useState<string>('Media Opacity / Cataract');
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -45,12 +45,12 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
   const handleSelectAgreement = (type: AgreementType) => {
     setAgreement(type);
     if (type === 'agree') {
-      setCertifiedGrade(modelGrade);
+      setReviewerAssessedGrade(modelGrade);
     } else if (type === 'inconclusive') {
-      setCertifiedGrade(modelGrade);
+      setReviewerAssessedGrade(modelGrade);
     } else if (type === 'disagree') {
       if (reviewerAssessedGrade === modelGrade) {
-        setCertifiedGrade(null);
+        setReviewerAssessedGrade(null);
       }
     }
   };

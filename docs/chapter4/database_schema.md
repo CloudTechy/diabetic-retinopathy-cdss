@@ -26,7 +26,7 @@ erDiagram
     ASSESSMENTS ||--o{ MODEL_EXECUTIONS : runs
     ASSESSMENTS ||--o| AI_RESULTS : predicts
     ASSESSMENTS ||--o{ EXPLANATION_ARTIFACTS : generates
-    ASSESSMENTS ||--o| PROFESSIONAL_REVIEWS : certifies
+    ASSESSMENTS ||--o| PROFESSIONAL_REVIEWS : reviewed-by
     ASSESSMENTS ||--o{ AUDIT_EVENTS : logs
 
     MODEL_EXECUTIONS ||--o| AI_RESULTS : produces
@@ -127,8 +127,8 @@ erDiagram
 | `clinician_name` | VARCHAR(255) | NO | Denormalized signatory name. |
 | `license_number` | VARCHAR(100) | YES | Medical practitioner registration code. |
 | `agreement` | VARCHAR(50) | NO | `agree`, `disagree`, `inconclusive`. |
-| `certified_grade` | INTEGER | NO | Human clinician certified ICDR grade ($0-4$). |
-| `certified_grade_label` | VARCHAR(100) | NO | Certified grade clinical text. |
+| `certified_grade` | INTEGER | NO | The reviewing clinician's **own** recorded ICDR grade ($0-4$). The column name is historical; nothing in the system certifies it. |
+| `certified_grade_label` | VARCHAR(100) | NO | Text form of the clinician's recorded grade. |
 | `justification_notes` | TEXT | YES | Optional clinician rationale. |
 | `inconclusive_reason` | VARCHAR(255) | YES | Specific ambiguity category if inconclusive. |
 | `referral_plan` | TEXT | NO | Optional free-text field for the reviewing clinician's observational notes. Does not constitute a clinical referral decision or treatment prescription. |

@@ -42,6 +42,11 @@ EXPECTED_CHECKPOINT_SHA256 = "67d0b89641f08057126dd411e380b25575ef29f71ae37ee579
 LAYOUT = [
     # Trained weights
     ("backend/models/weights/efficientnet_b0_dr.pth", "checkpoint/efficientnet_b0_dr.pth"),
+    # The integration test's fixture. Without it the test cannot run from
+    # the extracted package, and the test is the thing that proves the
+    # evidence chain end to end.
+    ("backend/tests/fixtures/aptos_heldout_d1f1ea894da1.png",
+     "source/backend/tests/fixtures/aptos_heldout_d1f1ea894da1.png"),
 
     # Raw run artefacts
     ("docs/chapter4/dataset_split_manifest.csv", "dataset_sample_and_manifest/dataset_split_manifest.csv"),
