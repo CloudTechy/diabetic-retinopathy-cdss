@@ -93,7 +93,14 @@ LAYOUT = [
     # documentation/. Fixing the layout is the durable correction.
     ("docs/chapter4/independent_thesis_qa_gate_audit.md", "archive/independent_thesis_qa_gate_audit.md"),
     ("docs/chapter4/evidence_provenance.md", "PROVENANCE.md"),
-    ("docs/chapter4/CLEAN_RERUN_RUNBOOK.md", "CLEAN_RERUN_RUNBOOK.md"),
+    # Superseded: it described retraining on the leakage-free split as the
+    # one outstanding step, and that retrain has since been carried out.
+    # Mapped to archive/ so it is not read as an instruction to run
+    # anything, and because its contamination table describes the OLD
+    # split (3,662 records / 48 cross-partition groups), not the committed
+    # one. Deleting it would lose the record of what was wrong.
+    ("docs/chapter4/archive/CLEAN_RERUN_RUNBOOK.superseded.md",
+     "archive/CLEAN_RERUN_RUNBOOK.superseded.md"),
     ("docs/chapter4/architecture.md", "documentation/architecture.md"),
     ("docs/chapter4/database_schema.md", "documentation/database_schema.md"),
     ("docs/chapter4/api_contract.md", "documentation/api_contract.md"),

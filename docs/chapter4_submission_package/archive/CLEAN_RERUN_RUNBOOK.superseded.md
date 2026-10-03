@@ -1,4 +1,23 @@
-# Clean Rerun Runbook — the one remaining step
+# Clean Rerun Runbook — SUPERSEDED
+
+> [!NOTE]
+> ## Superseded — this work is done
+>
+> This runbook was written when retraining on the leakage-free split was the one
+> outstanding item. **That retrain has since been carried out.** The checkpoint,
+> split manifest, epoch history and held-out predictions in this package all
+> come from the clean run, and `clinical_metrics.json` records
+> `n_test_leaked: 0` of 525.
+>
+> The contamination table below therefore describes the **superseded** split
+> (3,662 records vs 3,534 unique hashes, 48 cross-partition groups, 27 leaked
+> test images). Those numbers are kept because this document's purpose is to
+> record what was wrong and what was done about it. For the split actually used,
+> see `dataset_split_manifest.csv` — 3,504 retained records, 0 cross-partition
+> groups.
+>
+> Nothing in this file is an instruction to run anything.
+
 
 Everything in the senior QA review has been actioned **except** the item that
 needs a GPU: retraining on the leakage-free split and regenerating the

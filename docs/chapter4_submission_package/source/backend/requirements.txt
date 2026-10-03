@@ -1,0 +1,49 @@
+# FastAPI & ASGI Server
+fastapi>=0.110.0,<1.0.0
+uvicorn[standard]>=0.28.0,<1.0.0
+pydantic>=2.6.0,<3.0.0
+pydantic-settings>=2.2.0,<3.0.0
+
+# Database & ORM
+sqlalchemy[asyncio]>=2.0.28,<3.0.0
+asyncpg>=0.29.0,<1.0.0
+psycopg2-binary>=2.9.9,<3.0.0
+alembic>=1.13.1,<2.0.0
+
+# Image & Data Processing
+pillow>=10.2.0,<11.0.0
+numpy>=1.26.0,<2.0.0
+python-multipart>=0.0.9
+
+# Trained Inference Engine
+#
+# The production engine FAILS CLOSED without these: it returns HTTP 503 rather
+# than substituting a simulated grade, so an install missing them cannot serve a
+# single assessment. They were absent from this file while the 503 message told
+# operators to install it.
+#
+# On Linux the default PyPI wheels pull the CUDA stack. For a CPU deployment
+# install the CPU build first, then this file:
+#
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r backend/requirements.txt
+#
+torch>=2.2.0,<3.0.0
+torchvision>=0.17.0,<1.0.0
+
+# Clinical PDF Reporting
+reportlab>=4.1.0,<5.0.0
+
+# Security & Authentication
+bcrypt>=4.1.2,<5.0.0
+pyjwt>=2.8.0,<3.0.0
+
+# Utilities
+python-dotenv>=1.0.1
+pydantic[email]>=2.6.0
+
+# Testing & Quality Assurance
+pytest>=8.1.0,<9.0.0
+pytest-asyncio>=0.23.5,<1.0.0
+httpx>=0.27.0,<1.0.0
+aiosqlite>=0.20.0,<1.0.0
