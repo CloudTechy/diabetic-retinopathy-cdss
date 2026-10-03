@@ -89,11 +89,30 @@ def test_fixture_is_the_held_out_aptos_image_it_claims_to_be():
     the name `aptos_sample_fundus.jpg`, and how fifteen placeholders came to sit
     in storage/datasets/ wearing real held-out image ids.
     """
-    manifest_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "docs", "chapter4", "dataset_split_manifest.csv")
-    if not os.path.exists(manifest_path):
-        pytest.skip("dataset_split_manifest.csv not present in this checkout")
+    # Resolve in BOTH layouts. In the repository the manifest is at
+    # docs/chapter4/; in the extracted submission package the assembler places
+    # it at dataset_sample_and_manifest/. Run from the zip with only the first
+    # path, this test SKIPPED - and a skipped provenance check is
+    # indistinguishable from an absent one.
+    here = os.path.dirname(os.path.abspath(__file__))
+    # here is already .../backend/tests, so two levels reach the repo root.
+    repo_root = os.path.dirname(os.path.dirname(here))
+    candidates = [
+        os.path.join(repo_root, "docs", "chapter4", "dataset_split_manifest.csv"),
+        # extracted package: source/backend/tests/ -> package root
+        os.path.join(here, "..", "..", "..", "..",
+                     "dataset_sample_and_manifest", "dataset_split_manifest.csv"),
+        os.path.join(here, "..", "..", "..",
+                     "dataset_sample_and_manifest", "dataset_split_manifest.csv"),
+    ]
+    manifest_path = next(
+        (os.path.abspath(c) for c in candidates if os.path.exists(c)), None)
+
+    if manifest_path is None:
+        pytest.skip(
+            "dataset_split_manifest.csv not found. In the repository it is at "
+            "docs/chapter4/; in the extracted submission package it is at "
+            "dataset_sample_and_manifest/.")
 
     with open(manifest_path, newline="", encoding="utf-8") as fh:
         rows = {r["image_id"]: r for r in csv.DictReader(fh)}

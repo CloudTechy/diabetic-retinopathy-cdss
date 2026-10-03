@@ -206,8 +206,8 @@ classDiagram
         +String id
         +String assessment_id (FK)
         +String agreement (agree/disagree/inconclusive)
-        +Integer certified_grade (0-4)
-        +String certified_grade_label
+        +Integer reviewer_assessed_grade (0-4)
+        +String reviewer_assessed_grade_label
         +String justification_notes
         +String signature_hash (SIG-SHA256-XXXX)
         +Boolean is_immutable (True)

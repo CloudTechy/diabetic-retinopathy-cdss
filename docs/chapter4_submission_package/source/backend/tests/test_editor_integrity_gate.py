@@ -2221,3 +2221,89 @@ def test_the_package_screenshots_match_the_source_exactly():
         + "\n  ".join(problems)
         + "\nThe package is what the examiner reads. Re-run "
           "assemble_submission_package.py and delete anything it leaves behind.")
+
+
+# ======================================================================
+# RULE GROUP X - the schema document must describe the schema that exists
+#
+# database_schema.md listed `certified_grade`, `certified_grade_label` and
+# `referral_plan` on professional_reviews. The model declares
+# reviewer_assessed_grade and reviewer_assessed_grade_label, and has never had a
+# referral_plan column at all.
+#
+# A reviewer asked for those fields to be RENAMED, which was impossible: they do
+# not exist. The document was describing a table the system does not have, in
+# the one vocabulary the scope rules exclude - and an earlier answer defended
+# the names as "historical", treating a false document as a naming problem.
+#
+# A schema document that does not match the model is worse than no schema
+# document: it is confidently wrong.
+# ======================================================================
+
+SCHEMA_DOC = os.path.join(CHAPTER4, "database_schema.md")
+MODELS = os.path.join(REPO_ROOT, "backend", "app", "models", "models.py")
+
+# Tables whose documented columns are checked against the model. Keyed by the
+# SQLAlchemy class name; the value is the heading the document uses.
+CHECKED_TABLES = {"ProfessionalReview": "professional_reviews"}
+
+
+def _model_columns(class_name):
+    """Column attribute names declared on a model class."""
+    tree = ast.parse(read(MODELS), filename=MODELS)
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.ClassDef) and node.name == class_name):
+            continue
+        names = set()
+        for stmt in node.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+            if not (isinstance(stmt.value, ast.Call)
+                    and getattr(stmt.value.func, "id", None) == "Column"):
+                continue
+            for target in stmt.targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+        return names
+    return set()
+
+
+def test_schema_document_only_describes_columns_that_exist():
+    """
+    Every column the schema document names for a checked table must be declared
+    on the corresponding model.
+    """
+    if not (os.path.exists(SCHEMA_DOC) and os.path.exists(MODELS)):
+        pytest.skip("schema document or models absent")
+
+    text = read(SCHEMA_DOC)
+    offenders = []
+
+    for class_name, table in CHECKED_TABLES.items():
+        declared = _model_columns(class_name)
+        assert declared, (
+            f"No Column assignments found on model class {class_name}. If it "
+            "moved, point this rule at the new name rather than dropping it.")
+
+        # Column rows look like:  | `column_name` | TYPE | ... |
+        section = text
+        heading = "`%s`" % table
+        if heading in text:
+            start = text.index(heading)
+            nxt = text.find("\n### ", start)
+            section = text[start:nxt if nxt != -1 else len(text)]
+
+        for match in re.finditer(r"^\|\s*`([a-z_][a-z0-9_]*)`\s*\|", section,
+                                 re.MULTILINE):
+            column = match.group(1)
+            if column not in declared:
+                offenders.append(
+                    "%s: documents column `%s`, which %s does not declare"
+                    % (table, column, class_name))
+
+    assert not offenders, (
+        "database_schema.md describes columns the model does not have:\n  "
+        + "\n  ".join(offenders)
+        + "\nTranscribe the table from backend/app/models/models.py. A schema "
+          "document that does not match the model is confidently wrong, which "
+          "is worse than absent.")

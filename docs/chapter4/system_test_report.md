@@ -6,21 +6,21 @@
 - **Related Research Objective:** Objective i (System verification, quality assurance & security)
 - **Date Test Run:** 2026-10-02
 - **Test Framework:** Pytest 9.1.1, Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **186 collected — 185 passed, 0 failed, 1 skipped**
+- **Overall Result:** **187 collected — 186 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 186 test cases was executed against the complete CDSS platform. 185 passed; 1 was skipped (requires PyTorch without `AI_INFERENCE_ENGINE=mock`, absent from the CI virtual environment configuration). The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 187 test cases was executed against the complete CDSS platform. 186 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      183
-Passed:               182 (99.5%)
+Tests Collected:      186
+Passed:               185 (99.5%)
 Failed:                 0  (0.0%)
-Skipped:                1  (0.5%)  <- requires PyTorch without mock override
+Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: ~77 seconds
 Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 ====================================================================================

@@ -28,6 +28,10 @@ DOC_DIRS = [os.path.join(REPO_ROOT, "docs")]
 # "ignore any line mentioning a fix" would let real regressions slip through.
 CORRECTION_RECORDS = {
     "REVIEWER_RESPONSE.md",
+    # Renaming a correction record silently removed it from this set, and three
+    # rules immediately failed on the old values it exists to record. Register
+    # both names rather than relying on the file never being moved.
+    "REVIEWER_RESPONSE.superseded.md",
     "independent_thesis_qa_gate_audit.md",
     "screenshot_evidence_manifest.md",
 }

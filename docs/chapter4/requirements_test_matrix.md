@@ -7,7 +7,7 @@
 - **Git Commit:** `22cda2c` (Baseline)
 - **Date Approved:** 2026-09-28
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
-- **Overall Verification Status:** **100% PASSED (181/181 Automated Tests)**
+- **Overall Verification Status:** **100% PASSED (187 collected / 186 passed / 1 skipped Automated Tests)**
 
 ---
 
@@ -23,7 +23,7 @@
 | **FR-06** | Fail-Closed Invariant: Gate failure aborts model execution and sets status to `rejected`. | `backend/app/services/assessment_service.py` | `TestSequentialValidationPipelineFailClosed.test_blurry_fundus_halts_at_gate3` | **PASS** |
 | **FR-07** | Automated EfficientNet-B0 inference outputting 5-class score distribution with frozen weights. | `backend/app/services/ai_service.py` | `TestClinicianInTheLoopGovernance.test_model_execution_mode_is_strictly_evaluation` | **PASS** |
 | **FR-08** | Grad-CAM visual attribution generation hooked onto final bottleneck `features.8`. | `backend/app/services/ai_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
-| **FR-09** | Authoritative Clinician Review with Tri-State Agreement (Agree / Disagree / Unable to determine). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_review_friction_justification_rule` | **PASS** |
+| **FR-09** | Clinician Review with Tri-State Agreement (Agree / Disagree / Unable to determine). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_review_friction_justification_rule` | **PASS** |
 | **FR-10** | Tamper-evident PDF Assessment Report generation and immutable append-only audit trail. | `backend/app/services/report_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 
 ---

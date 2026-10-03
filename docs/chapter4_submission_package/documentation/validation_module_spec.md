@@ -86,4 +86,7 @@ held-out images; with it corrected, the contrast threshold still rejected 5 of 1
 ---
 
 ## 2. Empirical Verification
-**Note:** the previous `validation_test_results.csv` was fabricated — zero of its ten rows cited an actual held-out image, six used identifiers absent from APTOS entirely, and its metrics were demonstration constants. It has been removed. Regenerate genuine results with `backend/scripts/generate_validation_evidence.py <aptos>/train_images`, which runs the real gate functions over real held-out images plus negatives derived by a stated transformation. Until then, gate behaviour is evidenced by the automated suite (`backend/tests/test_validation_pipeline.py` and the 38 gate-downsampling tests).
+**Current evidence:** [`validation_test_results.csv`](validation_test_results.csv) — **16 cases, all behaving as declared**: 10 unmodified held-out APTOS images ACCEPTED, and 6 negatives REJECTED, each derived from a held-out image by a transformation stated in the file's `derivation` column. It is produced by `backend/scripts/generate_validation_evidence.py <aptos>/train_images`, which runs the real gate functions rather than describing them.
+
+> [!NOTE]
+> **An earlier file of this name was fabricated** and has been replaced. Zero > of its ten rows cited an actual held-out image, six used identifiers absent > from APTOS entirely, and its metrics were frontend demonstration constants. > Rule group H now rejects any CSV whose `image_id` column cites an identifier > absent from `dataset_split_manifest.csv`.

@@ -165,7 +165,7 @@ flowchart TD
    - Verify boundary disclaimer: *Scores reflect preliminary mathematical associations and do not represent confirmed clinical diagnoses*.
 
 ### Screen 6: Professional Review Modal (Clinician-in-the-Loop)
-1. **Action:** Click **"Initiate Certified Clinician Review (Screen 6)"**.
+1. **Action:** Click **"Record Clinician Review (Screen 6)"**.
 2. **Observe Human-in-the-Loop Safeguards:**
    - Anti-automation bias: No pre-selected default agreement button.
    - **Tri-State Clinical Selection:**

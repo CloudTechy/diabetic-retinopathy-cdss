@@ -1,3 +1,29 @@
+> [!CAUTION]
+> # SUPERSEDED — do not cite this document
+>
+> This was a response to an **earlier** review. Several of its statements were
+> true when written and are false now:
+>
+> | It says | Current state |
+> | :--- | :--- |
+> | Validation rejects all genuine images | All 10 unmodified held-out images are **accepted**; see `logs_and_metrics/validation_test_results.csv` |
+> | Objective b is blocked | **Complete** — all three admission thresholds calibrated from the development corpus |
+> | The blur threshold is 60.0 | **4.3**, the 1st percentile of the 2,979 development images |
+> | Held-out images overlap training | **0 of 525**; the split is byte-hash de-duplicated |
+> | The 212.54 ms benchmark is canonical | **Run C** is canonical: 180.41 ms mean, 342.49 ms P95 |
+> | A corrected corpus re-run is outstanding | Done — 1 verdict change in 3,662, inside the measurement band, zero unexplained |
+>
+> The fabricated clinician identity this document once quoted has been
+> replaced here with a description of it. The strings themselves must
+> not travel in this package in any form: a reader searching the archive
+> would find a GMC-format number with no way to tell it was quoted as a
+> defect rather than used as a credential.
+>
+> It is kept because it records what was answered at that point. For the current
+> position, read `README.md` and run `VERIFY.py`.
+
+---
+
 # Response to the Chapter Four QA Review
 
 **Candidate:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
@@ -146,10 +172,10 @@ I had sanitised the frontend but not the API. Still present until this revision:
 
 | Location | Was |
 | :--- | :--- |
-| `auth.py` seed account | `Dr. Adaeze Okonjo, MBChB, FRCOphth`, `GMC-7492104`, `St. Jude Retinal Diagnostic Unit — Ward 4B` |
-| `auth.py` email | `a.okonjo@retina-clinic.nhs.uk` — implying a real NHS affiliation |
+| `auth.py` seed account | `Dr. [a fabricated consultant name], MBChB, FRCOphth`, `[a fabricated GMC-format registration number]`, `[a fabricated hospital name] Diagnostic Unit — Ward 4B` |
+| `auth.py` email | `[a fabricated nhs.uk address]` — implying a real NHS affiliation |
 | `assessment_service.py` | Same values as review fallbacks |
-| `api_contract.md` | `"licenseNumber": "GMC-7492104"` in the worked example |
+| `api_contract.md` | `"licenseNumber": "[a fabricated GMC-format registration number]"` in the worked example |
 
 Now `Dr. Demo Clinician (Simulated)` / `SIM-000001` / `Research Prototype Environment` / `demo.clinician@research-prototype.invalid`. A test fails the build if any of the old strings reappears in code or documentation.
 

@@ -123,17 +123,25 @@ erDiagram
 | :--- | :--- | :---: | :--- |
 | `id` | VARCHAR(36) | NO | Primary Key (UUIDv4). |
 | `assessment_id` | VARCHAR(64) | NO | Foreign Key (`assessments.id`, Unique). |
-| `clinician_id` | VARCHAR(36) | NO | Foreign Key (`users.id`). |
+| `reviewer_id` | VARCHAR(36) | NO | Foreign Key (`users.id`). |
 | `clinician_name` | VARCHAR(255) | NO | Denormalized signatory name. |
 | `license_number` | VARCHAR(100) | YES | Medical practitioner registration code. |
 | `agreement` | VARCHAR(50) | NO | `agree`, `disagree`, `inconclusive`. |
-| `certified_grade` | INTEGER | NO | The reviewing clinician's **own** recorded ICDR grade ($0-4$). The column name is historical; nothing in the system certifies it. |
-| `certified_grade_label` | VARCHAR(100) | NO | Text form of the clinician's recorded grade. |
+| `reviewer_assessed_grade` | INTEGER | NO | The reviewing clinician's own ICDR grade ($0-4$), recorded independently of the model's observation. |
+| `reviewer_assessed_grade_label` | VARCHAR(100) | NO | Text form of that grade. |
 | `justification_notes` | TEXT | YES | Optional clinician rationale. |
 | `inconclusive_reason` | VARCHAR(255) | YES | Specific ambiguity category if inconclusive. |
-| `referral_plan` | TEXT | NO | Optional free-text field for the reviewing clinician's observational notes. Does not constitute a clinical referral decision or treatment prescription. |
 | `signature_hash` | VARCHAR(64) | NO | Cryptographic integrity hash of review fields. |
 | `signed_at` | TIMESTAMPTZ | NO | Immutability lock timestamp. |
+
+> [!NOTE]
+> **This table is transcribed from `backend/app/models/models.py`, class
+> `ProfessionalReview`.** An earlier revision of this document described columns
+> named `certified_grade`, `certified_grade_label` and `referral_plan`. The first
+> two were renamed in the code and the document was not updated; the third has
+> never existed on the model at all. A schema document describing a table the
+> system does not have is worse than none, and the terminology it used was the
+> same certification language the scope rules exclude.
 
 ### 7. `audit_events`
 *Append-only tamper-evident compliance log tracking every interaction.*
