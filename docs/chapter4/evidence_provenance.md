@@ -12,7 +12,7 @@ cheaper than arguing about it.
 
 ## The run that produced the evidence
 
-**`scripts/colab_train_and_evaluate.py`**, executed on Google Colab with a
+**`notebooks/colab_train_and_evaluate.py`**, executed on Google Colab with a
 Tesla T4, 2026-09-29. One invocation produced the manifest, the trained
 checkpoint, the training transcript, the held-out predictions, the T4 benchmark
 and both plots.
@@ -28,33 +28,34 @@ which only this script emits.
 
 | Artefact | Produced by |
 | :--- | :--- |
-| `dataset_sample_and_manifest/dataset_split_manifest.csv` | `colab_train_and_evaluate.py` |
-| `checkpoint/efficientnet_b0_dr.pth` | `colab_train_and_evaluate.py` |
-| `logs_and_metrics/training_execution.log` | `colab_train_and_evaluate.py` |
-| `logs_and_metrics/epoch_history.csv` | `colab_train_and_evaluate.py` |
-| `logs_and_metrics/training_summary.json` | `colab_train_and_evaluate.py` |
-| `logs_and_metrics/held_out_predictions.csv` | `colab_train_and_evaluate.py` |
-| `logs_and_metrics/evaluation_summary.json` | `colab_train_and_evaluate.py` |
-| `logs_and_metrics/benchmark_timings.csv` | `colab_train_and_evaluate.py` (T4, forward pass) |
-| `logs_and_metrics/benchmark_summary.json` | `colab_train_and_evaluate.py` (T4, forward pass) |
-| `visualizations/learning_curves.png` | `colab_train_and_evaluate.py` |
-| `visualizations/confusion_matrix.png` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/dataset_split_manifest.csv` | `colab_train_and_evaluate.py` |
+| `backend/models/weights/efficientnet_b0_dr.pth` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/training_execution.log` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/epoch_history.csv` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/training_summary.json` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/held_out_predictions.csv` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/evaluation_summary.json` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/benchmark_timings.csv` | `colab_train_and_evaluate.py` (T4, forward pass) |
+| `docs/chapter4/benchmark_summary.json` | `colab_train_and_evaluate.py` (T4, forward pass) |
+| `docs/chapter4/learning_curves.png` | `colab_train_and_evaluate.py` |
+| `docs/chapter4/confusion_matrix.png` | `colab_train_and_evaluate.py` |
 
 ## Derived afterwards, from those artefacts
 
 | Artefact | Produced by | Reads |
 | :--- | :--- | :--- |
-| `logs_and_metrics/clinical_metrics.json` | `scripts/analyze_clinical_metrics.py` | `held_out_predictions.csv`, `dataset_split_manifest.csv` |
-| `logs_and_metrics/cpu_end_to_end_benchmark.json` | `scripts/benchmark_cpu_end_to_end.py` | the checkpoint + held-out images |
-| `logs_and_metrics/cpu_end_to_end_benchmark.csv` | `scripts/benchmark_cpu_end_to_end.py` | same run, flat form |
-| `logs_and_metrics/gate_downsampling_verification.json` | `scripts/verify_gate_downsampling.py` | all 3,662 APTOS images |
-| `logs_and_metrics/validation_test_results.csv` | `scripts/generate_validation_evidence.py` | held-out images + stated derivations |
-| `logs_and_metrics/blur_threshold_calibration.json` | `scripts/calibrate_blur_threshold.py` | the 2,979 train+val images named in `dataset_split_manifest.csv` |
-| `logs_and_metrics/dataset_split_audit.json` | `scripts/build_clean_split.py` | the APTOS image bytes + `train.csv` labels |
+| `docs/chapter4/clinical_metrics.json` | `backend/scripts/analyze_clinical_metrics.py` | `held_out_predictions.csv`, `dataset_split_manifest.csv` |
+| `docs/chapter4/cpu_end_to_end_benchmark.json` | `backend/scripts/benchmark_cpu_end_to_end.py` | the checkpoint + held-out images |
+| `docs/chapter4/cpu_end_to_end_benchmark.csv` | `backend/scripts/benchmark_cpu_end_to_end.py` | same run, flat form |
+| `docs/chapter4/gate_downsampling_verification.json` | `backend/scripts/verify_gate_downsampling.py` | all 3,662 APTOS images |
+| `docs/chapter4/validation_test_results.csv` | `backend/scripts/generate_validation_evidence.py` | held-out images + stated derivations |
+| `docs/chapter4/blur_threshold_calibration.json` | `backend/scripts/calibrate_blur_threshold.py` | the 2,979 train+val images named in `dataset_split_manifest.csv` |
+| `docs/chapter4/dataset_split_audit.json` | `backend/scripts/build_clean_split.py` | the APTOS image bytes + `train.csv` labels |
 | `VERIFY.py` | hand-written; produces no evidence | reads the artefacts above and recomputes their headline figures. Stdlib only, so a reviewer needs no environment. Its recorded transcript is `VERIFICATION.md`. |
-| `logs_and_metrics/test_execution.log` | `pytest tests/ -v` against `backend/.venv` | the committed suite; the single authoritative run |
-| `screenshots/01`–`08` | `frontend/scripts/capture_screenshots.js` | the built frontend |
-| `screenshots/09_confusion_matrix_empirical.png` | copy of `visualizations/confusion_matrix.png` | — |
+| `docs/chapter4/test_execution.log` | `python -m pytest tests/ -v` from `backend/` of a **fresh extraction of this archive**, in a new virtual environment built from `backend/requirements.txt`; its header records the interpreter and `rootdir` | the committed suite; the single authoritative run |
+| `docs/chapter4/test_environment_freeze.txt` | `pip freeze` in that same virtual environment | — |
+| `docs/chapter4/screenshots/01`–`08` | `frontend/scripts/capture_live_screenshots.js`, driving the running stack (real authentication, calibrated gates, digest-verified checkpoint). The rejection frame is written as `04b_validation_stepper_rejected.png` by that script and by `frontend/scripts/capture_rejection.js`, which fires the shutter only on the tick the rejected state is observed; the committed file is renamed `04b_fail_closed_rejection_worklist.png` to describe the frame it holds | the running application |
+| `docs/chapter4/screenshots/09_confusion_matrix_empirical.png` | copy of `docs/chapter4/confusion_matrix.png` | — |
 
 ---
 
@@ -67,8 +68,8 @@ Colab, and because the reviewer asked to see the training and evaluation code.
 
 | Script | Standalone equivalent of | Distinguishable because |
 | :--- | :--- | :--- |
-| `scripts/train_efficientnet_b0.py` | the training stage | emits `Epoch \| Train Loss \| Val Loss \| Val Acc`, not the header above |
-| `scripts/evaluate_model.py` | the evaluation stage | writes its own field ordering |
+| `backend/scripts/train_efficientnet_b0.py` | the training stage | emits `Epoch \| Train Loss \| Val Loss \| Val Acc`, not the header above |
+| `backend/scripts/evaluate_model.py` | the evaluation stage | writes its own field ordering |
 
 Both training implementations are genuine — each defines a `torch.utils.data.Dataset`
 whose `__getitem__` opens a real image file, and iterates a real `DataLoader`.
@@ -80,10 +81,10 @@ The distinction here is **provenance**, not authenticity.
 
 | Script | Purpose |
 | :--- | :--- |
-| `scripts/integrity_gate.py` | Runs the integrity gate locally; `--install-hook` enforces it per commit |
-| `scripts/test_editor_integrity_gate.py` | 63 assertions encoding the QA review's requirements |
-| `scripts/test_spec_doc_consistency.py` | Fails if a document quotes a threshold the code does not enforce |
-| `scripts/benchmark_resources.py` | Forward-pass-only benchmark; selects CUDA when present |
+| `backend/scripts/integrity_gate.py` | Runs the integrity gate locally; `--install-hook` enforces it per commit |
+| `backend/tests/test_editor_integrity_gate.py` | The evidence integrity gate: one executable rule per QA finding, rule groups A–Z and beyond |
+| `backend/tests/test_spec_doc_consistency.py` | Fails if a document quotes a threshold the code does not enforce |
+| `backend/scripts/benchmark_resources.py` | Forward-pass-only benchmark; selects CUDA when present |
 | `dataset_sample_and_manifest/verify_manifest_hashes.py` | Checks manifest hashes against your own APTOS copy |
 
 ---

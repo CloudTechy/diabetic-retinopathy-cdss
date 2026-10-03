@@ -89,30 +89,20 @@ def test_fixture_is_the_held_out_aptos_image_it_claims_to_be():
     the name `aptos_sample_fundus.jpg`, and how fifteen placeholders came to sit
     in storage/datasets/ wearing real held-out image ids.
     """
-    # Resolve in BOTH layouts. In the repository the manifest is at
-    # docs/chapter4/; in the extracted submission package the assembler places
-    # it at dataset_sample_and_manifest/. Run from the zip with only the first
-    # path, this test SKIPPED - and a skipped provenance check is
-    # indistinguishable from an absent one.
+    # The archive is repository-relative, so one path serves both the
+    # repository and an extracted archive. An earlier layout re-homed the
+    # manifest under dataset_sample_and_manifest/ and this test SKIPPED when
+    # run from the zip - and a skipped provenance check is indistinguishable
+    # from an absent one. That layout is retired.
     here = os.path.dirname(os.path.abspath(__file__))
-    # here is already .../backend/tests, so two levels reach the repo root.
+    # here is already .../backend/tests, so two levels reach the root.
     repo_root = os.path.dirname(os.path.dirname(here))
-    candidates = [
-        os.path.join(repo_root, "docs", "chapter4", "dataset_split_manifest.csv"),
-        # extracted package: source/backend/tests/ -> package root
-        os.path.join(here, "..", "..", "..", "..",
-                     "dataset_sample_and_manifest", "dataset_split_manifest.csv"),
-        os.path.join(here, "..", "..", "..",
-                     "dataset_sample_and_manifest", "dataset_split_manifest.csv"),
-    ]
-    manifest_path = next(
-        (os.path.abspath(c) for c in candidates if os.path.exists(c)), None)
+    manifest_path = os.path.abspath(
+        os.path.join(repo_root, "docs", "chapter4", "dataset_split_manifest.csv"))
 
-    if manifest_path is None:
-        pytest.skip(
-            "dataset_split_manifest.csv not found. In the repository it is at "
-            "docs/chapter4/; in the extracted submission package it is at "
-            "dataset_sample_and_manifest/.")
+    assert os.path.exists(manifest_path), (
+        "docs/chapter4/dataset_split_manifest.csv not found. It ships at that "
+        "path in the archive; this test must not skip without it.")
 
     with open(manifest_path, newline="", encoding="utf-8") as fh:
         rows = {r["image_id"]: r for r in csv.DictReader(fh)}
@@ -174,27 +164,16 @@ def test_real_model_end_to_end_pipeline(authed_client):
     old_singleton = ai_svc._service_singleton
     ai_svc._service_singleton = None  # force re-initialisation
 
-    # Resolve the checkpoint in BOTH layouts: the repository, where it lives at
-    # backend/models/weights/, and the extracted submission package, where the
-    # assembler places it at checkpoint/. A reviewer running this from the zip
-    # should get the real checkpoint or a clear refusal, not a path error.
+    # The checkpoint ships at its repository path, backend/models/weights/,
+    # in the archive as well. A reviewer running this from the zip gets the
+    # real checkpoint or a clear refusal, never a silent skip.
     here = os.path.dirname(os.path.abspath(__file__))
-    candidates = [
-        os.path.join(here, "..", "models", "weights", "efficientnet_b0_dr.pth"),
-        os.path.join(here, "..", "..", "..", "..", "checkpoint",
-                     "efficientnet_b0_dr.pth"),
-        os.path.join(here, "..", "..", "..", "checkpoint",
-                     "efficientnet_b0_dr.pth"),
-    ]
-    checkpoint_abs = next(
-        (os.path.abspath(c) for c in candidates if os.path.exists(c)), None)
+    checkpoint_abs = os.path.abspath(
+        os.path.join(here, "..", "models", "weights", "efficientnet_b0_dr.pth"))
 
-    if checkpoint_abs is None:
-        pytest.skip(
-            "efficientnet_b0_dr.pth not found. In the repository it is at "
-            "backend/models/weights/; in the extracted submission package it is "
-            "at checkpoint/. This test grades a real image with the real "
-            "checkpoint and will not run without it.")
+    assert os.path.exists(checkpoint_abs), (
+        "backend/models/weights/efficientnet_b0_dr.pth not found. This test "
+        "grades a real image with the real checkpoint and must not skip without it.")
     old_checkpoint = settings.MODEL_CHECKPOINT_PATH
     settings.MODEL_CHECKPOINT_PATH = checkpoint_abs
 

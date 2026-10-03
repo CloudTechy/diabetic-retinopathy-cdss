@@ -26,9 +26,9 @@ kaggle competitions download -c aptos2019-blindness-detection -p ./aptos2019
 unzip ./aptos2019/aptos2019-blindness-detection.zip -d ./aptos2019
 
 # 2. Verify a sample, one split, or everything
-python verify_manifest_hashes.py ./aptos2019/train_images --sample 25
-python verify_manifest_hashes.py ./aptos2019/train_images --split test
-python verify_manifest_hashes.py ./aptos2019/train_images
+python docs/chapter4/verify_manifest_hashes.py ./aptos2019/train_images --sample 25
+python docs/chapter4/verify_manifest_hashes.py ./aptos2019/train_images --split test
+python docs/chapter4/verify_manifest_hashes.py ./aptos2019/train_images
 ```
 
 Exit code `0` and `[SUCCESS]` mean every image checked matched its recorded digest — i.e. the manifest describes real image bytes.

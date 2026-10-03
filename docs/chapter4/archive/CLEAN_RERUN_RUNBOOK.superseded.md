@@ -49,7 +49,7 @@ contradictory supervision into training. Both require a clean retrain.
 
 ## What the corrected split does
 
-[`build_clean_split.py`](../../backend/scripts/build_clean_split.py):
+[`build_clean_split.py`](../../../backend/scripts/build_clean_split.py):
 
 1. Hashes every image by its actual bytes.
 2. Groups exact duplicates by that hash.

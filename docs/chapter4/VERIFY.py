@@ -38,7 +38,7 @@ Each check prints PASS or FAIL with the numbers it used, so a disagreement is
 visible rather than asserted. The exit code is 0 only if all of them pass.
 
 This script does not run the model. Doing so needs PyTorch and the test suite;
-`documentation/reproducibility_runbook.md` covers that. Everything here is
+`docs/chapter4/reproducibility_runbook.md` covers that. Everything here is
 arithmetic over files in this archive.
 """
 
@@ -52,20 +52,22 @@ from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-CHECKPOINT = os.path.join(HERE, "checkpoint", "efficientnet_b0_dr.pth")
-MANIFEST = os.path.join(HERE, "dataset_sample_and_manifest",
-                        "dataset_split_manifest.csv")
-PREDICTIONS = os.path.join(HERE, "logs_and_metrics", "held_out_predictions.csv")
-METRICS = os.path.join(HERE, "logs_and_metrics", "clinical_metrics.json")
-TEST_LOG = os.path.join(HERE, "logs_and_metrics", "test_execution.log")
-PROVENANCE = os.path.join(HERE, "PROVENANCE.md")
-DOCS = os.path.join(HERE, "documentation")
+# The archive is repository-relative: every file sits at the path it has in
+# the project repository. Only this script, README.md and VERIFICATION.md are
+# lifted to the root.
+DOCS = os.path.join(HERE, "docs", "chapter4")
+CHECKPOINT = os.path.join(HERE, "backend", "models", "weights", "efficientnet_b0_dr.pth")
+MANIFEST = os.path.join(DOCS, "dataset_split_manifest.csv")
+PREDICTIONS = os.path.join(DOCS, "held_out_predictions.csv")
+METRICS = os.path.join(DOCS, "clinical_metrics.json")
+TEST_LOG = os.path.join(DOCS, "test_execution.log")
+PROVENANCE = os.path.join(DOCS, "evidence_provenance.md")
 
 DECLARED_CHECKPOINT_SHA256 = (
     "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7")
 
 FIXTURE_ID = "d1f1ea894da1"
-FIXTURE = os.path.join(HERE, "source", "backend", "tests", "fixtures",
+FIXTURE = os.path.join(HERE, "backend", "tests", "fixtures",
                        "aptos_heldout_%s.png" % FIXTURE_ID)
 
 results = []
@@ -102,7 +104,7 @@ def load_manifest():
 @check("Checkpoint is the evaluated one")
 def _checkpoint(out):
     if not os.path.exists(CHECKPOINT):
-        return out("checkpoint/efficientnet_b0_dr.pth is missing"), False
+        return out("backend/models/weights/efficientnet_b0_dr.pth is missing"), False
     actual = sha256(CHECKPOINT)
     out("declared SHA-256 %s" % DECLARED_CHECKPOINT_SHA256)
     out("file     SHA-256 %s" % actual)
@@ -314,19 +316,26 @@ def _testlog(out):
 @check("Every evidence file names the script that produced it")
 def _provenance(out):
     if not os.path.exists(PROVENANCE):
-        out("PROVENANCE.md is missing"); return None, False
+        out("docs/chapter4/evidence_provenance.md is missing"); return None, False
     text = read_text(PROVENANCE)
 
+    # Evidence is data: anything under docs/chapter4/ that is not prose or
+    # code, plus the trained weights. Each must be named in the provenance
+    # document, which says what produced it.
+    EVIDENCE = (".csv", ".json", ".log", ".png", ".txt", ".pth")
     undeclared = []
-    for folder in ("logs_and_metrics", "visualizations"):
-        d = os.path.join(HERE, folder)
-        if not os.path.isdir(d):
+    candidates = []
+    if os.path.isdir(DOCS):
+        candidates += [os.path.join(DOCS, n) for n in sorted(os.listdir(DOCS))]
+    candidates.append(CHECKPOINT)
+    for path in candidates:
+        name = os.path.basename(path)
+        if not os.path.isfile(path) or name.startswith("."):
             continue
-        for name in sorted(os.listdir(d)):
-            if name.startswith(".") or name.endswith(".md"):
-                continue
-            if name not in text:
-                undeclared.append("%s/%s" % (folder, name))
+        if not name.endswith(EVIDENCE):
+            continue
+        if name not in text:
+            undeclared.append(os.path.relpath(path, HERE).replace("\\", "/"))
 
     if undeclared:
         out("files with no entry in PROVENANCE.md:")
@@ -334,7 +343,7 @@ def _provenance(out):
             out("  %s" % u)
         return None, False
 
-    out("all evidence files in logs_and_metrics/ and visualizations/ are declared")
+    out("every evidence file under docs/chapter4/ and the checkpoint are declared")
     return None, True
 
 

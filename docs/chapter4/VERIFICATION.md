@@ -43,7 +43,7 @@ revision of this package. They are not decoration.
 ## What it does NOT check
 
 It does not run the model, the validation gates or the test suite: those need
-PyTorch, and [`documentation/reproducibility_runbook.md`](documentation/reproducibility_runbook.md)
+PyTorch, and [`docs/chapter4/reproducibility_runbook.md`](docs/chapter4/reproducibility_runbook.md)
 covers them.
 
 It does not establish clinical validity, generalisation beyond APTOS 2019, or
@@ -92,12 +92,12 @@ files in this archive.
       -> PASS
 
 [5] Documents quote the committed test log
-      log records: 188 collected, 187 passed, 0 failed, 1 skipped
-      every test count stated in documentation/ matches this log
+      log records: 195 collected, 194 passed, 0 failed, 1 skipped
+      every test count in every .md in this package matches this log
       -> PASS
 
 [6] Every evidence file names the script that produced it
-      all evidence files in logs_and_metrics/ and visualizations/ are declared
+      every evidence file under docs/chapter4/ and the checkpoint are declared
       -> PASS
 
 ========================================================================
@@ -119,7 +119,7 @@ Check 3 proves the integration fixture is the manifest row it names. To verify
 the **manifest itself** against your own Kaggle download of APTOS 2019:
 
 ```bash
-python scripts/corpus_guard.py <your-path>/aptos2019/train_images --full
+python backend/scripts/corpus_guard.py <your-path>/aptos2019/train_images --full
 ```
 
 It hashes every file and compares against `dataset_split_manifest.csv`, and
