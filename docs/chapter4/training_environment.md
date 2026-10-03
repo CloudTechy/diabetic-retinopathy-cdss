@@ -43,7 +43,12 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 | **Container Runtime** | Docker Compose | — | Service orchestration |
 | **Development OS** | Microsoft Windows 11 (64-bit) | — | Local development workstation |
 
-**Training and serving environments differ, deliberately.** The model is trained once on a GPU and served many times on CPU. The consequence for reported latency is stated explicitly in [`resource_benchmark.md`](resource_benchmark.md): the committed benchmark was measured on the T4, so it is a *training-environment* figure and does not characterise the CPU deployment target.
+**Training and serving environments differ, deliberately.** The model is trained once on a GPU and served many times on CPU, and [`resource_benchmark.md`](resource_benchmark.md) reports both separately:
+
+- **§1 is the deployment figure.** End-to-end request latency over 30 real held-out APTOS images on an x86_64 4-thread CPU, PyTorch 2.11.0+cpu, no accelerator. The harness clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot silently measure a GPU.
+- **§5 is the T4 forward pass alone**, retained for comparison and explicitly **not** a deployment figure.
+
+An earlier version of this paragraph said the committed benchmark was measured on the T4 and did not characterise the CPU target. That was true of §5 and false of §1, which is the figure the latency requirement is assessed against.
 
 ---
 

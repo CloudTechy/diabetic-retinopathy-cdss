@@ -207,9 +207,16 @@ python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
 > flip whose margin exceeds the deviation measured on that same image is not a
 > boundary effect and still fails the run.
 >
-> **Outstanding:** a corpus re-run with the corrected checker, to restate this
-> table against the calibrated thresholds. Until it lands, the figures above
-> describe the superseded configuration and are labelled as such.
+> **The re-run has landed**, and its result is the one stated at the top of this
+> callout: **1 Gate 3 verdict change in 3,662 images (0.027%)** at the calibrated
+> thresholds, with **0 flips unexplained by boundary proximity**. The single flip
+> is `a88f68b0b114.png`, whose contrast margin to the cut-point (**0.01286**) was
+> smaller than the deviation measured on that same image (**0.016208**) — the
+> definition of a boundary effect. No image clear of its boundary changed verdict.
+> The table in 3.3 above it is the *uncalibrated* measurement and is labelled as
+> such; the calibrated figures are in
+> [`gate_downsampling_verification.json`](gate_downsampling_verification.json),
+> whose `thresholds_in_force` block records contrast 8.8 and Laplacian 4.3.
 
 **One deviation needs explaining rather than glossing over.** The red/blue ratio shows a maximum absolute deviation of **127.85**, which looks alarming beside a threshold of 1.15. That metric is $r_{\text{mean}} / (b_{\text{mean}} + 10^{-6})$: on a very dark image with almost no blue signal it takes enormous values, so a small change in $b_{\text{mean}}$ moves it a long way in absolute terms while leaving it orders of magnitude clear of the cutoff. A deviation that large can only arise where the ratio is already far above 1.15, which is why no verdict changed. The verifier now also reports deviation restricted to images *near* each threshold, plus the closest margin any image came to a boundary, so a future run demonstrates this directly instead of resting on the argument.
 

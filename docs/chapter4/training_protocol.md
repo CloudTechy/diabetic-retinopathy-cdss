@@ -89,11 +89,13 @@ Transcribed verbatim from [`epoch_history.csv`](epoch_history.csv).
 
 ## 4. Convergence Analysis
 
-**No overfitting collapse.** Training loss falls monotonically from 1.3625 to 0.4969, while validation loss falls from 0.9476 to a plateau around 0.556–0.573 from epoch 8 onward. The gap between the two curves stays narrow and the validation curve does not turn upward, which is the signature of a run that stopped at roughly the right time rather than one that memorised the training set.
+**No overfitting collapse.** Training loss falls from **1.378736 to 0.493524**. Validation loss falls from **0.911517** into the low 0.50s from epoch 11 onward, reaches its **minimum of 0.502294 at epoch 14 — the selected checkpoint** — and turns back up to 0.514215 at epoch 15. It is not monotone across those last epochs: it moves 0.5223, 0.5210, 0.5069, 0.5071, 0.5023, 0.5142, which is ordinary minibatch noise on a 526-image validation split, not a trend. The two curves stay close and the validation curve does not run away, the signature of a run stopped at roughly the right point rather than one that memorised the training set. Checkpoint selection on validation QWK and the validation-loss minimum independently pick the same epoch, which they were under no obligation to do.
+
+> Every number in this paragraph is read from [`epoch_history.csv`](epoch_history.csv). An earlier version of this paragraph quoted 1.3625 → 0.4969 and a plateau of 0.556–0.573, and described the validation curve as monotone. Those figures belonged to the superseded contaminated run and the monotonicity claim was false of both runs.
 
 **Validation QWK saturates early.** $\kappa$ exceeds 0.86 by epoch 3 and thereafter moves within a 0.0472 band, peaking at 0.9130 at epoch 14. The final four epochs contribute no material improvement — consistent with the cosine schedule having annealed the learning rate below $3 \times 10^{-5}$.
 
-**Macro F1 lags accuracy throughout** (0.686 vs 81.1% at the selected epoch). This gap is the minority-class problem stated plainly: the model learns Grade 0 quickly and the sparse Grades 3 and 4 slowly. It is the same effect that surfaces in the held-out per-class table in [`model_evaluation_report.md`](model_evaluation_report.md).
+**Macro F1 lags accuracy throughout** (**0.7111** against **83.46%** validation accuracy at the selected epoch). This gap is the minority-class problem stated plainly: the model learns Grade 0 quickly and the sparse Grades 3 and 4 slowly. It is the same effect that surfaces in the held-out per-class table in [`model_evaluation_report.md`](model_evaluation_report.md).
 
 **Validation-to-test consistency.** Validation $\kappa = 0.9130$ at selection versus held-out $\kappa = 0.8658$. The 0.0472 drop is small and in the expected direction, indicating the checkpoint-selection step did not materially overfit the validation split.
 
