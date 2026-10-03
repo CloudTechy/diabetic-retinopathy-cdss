@@ -188,7 +188,7 @@ class EdgeInferenceEngine {
       score: Number(laplacianVar.toFixed(2)),
       threshold: 4.3,
       message: gate3Passed
-        ? `Focus variance (${laplacianVar.toFixed(2)} >= 4.3) meets diagnostic quality.`
+        ? `Focus variance (${laplacianVar.toFixed(2)} >= 4.3) meets the configured technical-quality threshold.`
         : `Severe blur detected (variance ${laplacianVar.toFixed(2)} < 4.3). Please retake fundus photograph.`,
     };
 

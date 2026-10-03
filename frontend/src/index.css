@@ -21,7 +21,7 @@ body {
    the sticky header, the navigation, the Grad-CAM viewer's zoom and opacity
    controls, and cards cut in half across page boundaries.
 
-   The authoritative clinical artefact is the generated PDF
+   The generated assessment report is the PDF
    (GET /api/v1/reports/{id}/pdf), which is laid out for paper. These rules
    make the browser's own print a legible fallback rather than a screenshot of
    an application.

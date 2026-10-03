@@ -106,7 +106,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
         </div>
       </div>
 
-      {/* Side-by-Side Verification Summary (Strict Demarcation: AI Output vs Certified Clinician) */}
+      {/* Side-by-Side Summary (Strict Demarcation: AI Output vs Reviewing Professional) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
         {/* Box A: AI Preliminary Domain (Slate / Neutral Gray Container) */}
         <div
