@@ -229,7 +229,7 @@ Two consequences:
    sharing a single reduced copy is the next available gain. It is not
    implemented, and no benefit from it is claimed.
 
-Excluding image I/O, the compute-only mean is 110.32 ms. The measurement was
+Excluding image I/O, the compute-only mean is 89.02 ms (`compute_only_mean_ms` in `cpu_end_to_end_benchmark.json`). The measurement was
 taken on a shared cloud CPU; a dedicated clinical workstation would likely be
 faster, but none was benchmarked, so no figure for one is offered.
 

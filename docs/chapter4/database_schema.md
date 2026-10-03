@@ -23,14 +23,13 @@ erDiagram
 
     ASSESSMENTS ||--|| IMAGE_ASSETS : contains
     ASSESSMENTS ||--|| VALIDATION_RESULTS : validates
-    ASSESSMENTS ||--o{ MODEL_EXECUTIONS : runs
+    ASSESSMENTS ||--o| MODEL_EXECUTIONS : runs
     ASSESSMENTS ||--o| AI_RESULTS : predicts
-    ASSESSMENTS ||--o{ EXPLANATION_ARTIFACTS : generates
     ASSESSMENTS ||--o| PROFESSIONAL_REVIEWS : reviewed-by
     ASSESSMENTS ||--o{ AUDIT_EVENTS : logs
 
     MODEL_EXECUTIONS ||--o| AI_RESULTS : produces
-    MODEL_EXECUTIONS ||--o{ EXPLANATION_ARTIFACTS : yields
+    AI_RESULTS ||--o{ EXPLANATION_ARTIFACTS : explained-by
 ```
 
 ---
@@ -198,3 +197,39 @@ erDiagram
 > earlier revision of this document had all four wrong. `ON DELETE SET NULL` on
 > both foreign keys is what makes the log append-only in practice: removing a
 > user or an assessment blanks the reference but never deletes the event.
+
+### 8. `model_executions`
+*One row per inference run: which model, in which mode, on which device, and how long. `ai_results` points here, so every observation is tied to the run that produced it.*
+
+| Column | Type | Nullable | Description / Constraint |
+| :--- | :--- | :---: | :--- |
+| `id` | VARCHAR(36) | NO | Primary Key (UUIDv4). |
+| `assessment_id` | VARCHAR(64) | NO | Foreign Key (`assessments.id`, Unique, `ON DELETE CASCADE`). One run per assessment. |
+| `model_name` | VARCHAR(100) | NO | Defaults to `EfficientNet-B0`. |
+| `model_version` | VARCHAR(100) | NO | Defaults to `EfficientNet-B0-DR-v1 (fixed weights)`. |
+| `execution_mode` | VARCHAR(50) | NO | Defaults to `evaluation`, the only mode: there is no in-service learning path. |
+| `device` | VARCHAR(50) | NO | Defaults to `cpu`. |
+| `execution_time_ms` | FLOAT | NO | Wall-clock time of the run. Defaults to 0.0. |
+| `started_at` | TIMESTAMPTZ | NO | Run start. |
+| `completed_at` | TIMESTAMPTZ | NO | Run end. |
+
+### 9. `explanation_artifacts`
+*Grad-CAM overlays and their rendering parameters, one row per artefact, keyed to the observation they explain.*
+
+| Column | Type | Nullable | Description / Constraint |
+| :--- | :--- | :---: | :--- |
+| `id` | VARCHAR(36) | NO | Primary Key (UUIDv4). |
+| `ai_result_id` | VARCHAR(36) | NO | Foreign Key (`ai_results.id`, `ON DELETE CASCADE`). |
+| `artifact_type` | VARCHAR(50) | NO | Defaults to `gradcam_heatmap`. |
+| `storage_path` | VARCHAR(500) | NO | On-disk path of the rendered PNG. |
+| `relative_url` | VARCHAR(500) | YES | URL the API serves it at, when exposed. |
+| `target_layer` | VARCHAR(100) | NO | Layer hooked for Grad-CAM. Defaults to `features.8`. |
+| `colormap` | VARCHAR(50) | NO | Defaults to `viridis`. |
+| `metadata_json` | JSONB | YES | Rendering parameters and activation statistics. |
+| `created_at` | TIMESTAMPTZ | NO | Timestamp of rendering. |
+
+> [!NOTE]
+> These two tables were absent from earlier revisions of this document, which
+> described seven of the nine mapped tables. The rule that checks this document
+> against the model now requires the two sets of tables to be equal, and checks
+> the diagram above against the declared foreign keys.

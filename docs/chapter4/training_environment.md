@@ -32,16 +32,18 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 
 | Category | Package / Tool | Version | Functional Role |
 | :--- | :--- | :---: | :--- |
-| **Deep Learning Framework** | `torch` | 2.6.0+ | Inference execution in the backend container |
-| **Vision Library** | `torchvision` | 0.21.0+ | EfficientNet-B0 topology, ImageNet transforms |
-| **Image Processing** | `pillow` (PIL) | 11.1.0 | Decoding, format conversion, resampling |
-| **Scientific Computing** | `numpy` | 2.1.3 | Grad-CAM activation arrays, metric computation |
-| **Backend Web Framework** | `fastapi` | 0.110.0 | RESTful API routing inference requests |
-| **Database Engine** | `PostgreSQL` | 16.2 | Relational metadata and immutable audit logging |
-| **Frontend Framework** | `React` / `TypeScript` | 18.2 / 5.4 | Clinical browser user interface |
+| **Deep Learning Framework** | `torch` | 2.14.1+cpu | Inference execution in the backend container |
+| **Vision Library** | `torchvision` | 0.29.1+cpu | EfficientNet-B0 topology, ImageNet transforms |
+| **Image Processing** | `pillow` (PIL) | 11.3.0 | Decoding, format conversion, resampling |
+| **Scientific Computing** | `numpy` | 2.5.2 | Grad-CAM activation arrays, metric computation |
+| **Backend Web Framework** | `fastapi` | 0.142.2 | RESTful API routing inference requests |
+| **Database Engine** | `PostgreSQL` | 16 (`postgres:16-alpine` image) | Relational metadata and immutable audit logging |
+| **Frontend Framework** | `React` / `TypeScript` | 18.3.1 / 5.9.3 | Clinical browser user interface |
 | **Frontend Build Tool** | `Vite` | 5.4.21 | Development server and production build |
 | **Container Runtime** | Docker Compose | — | Service orchestration |
 | **Development OS** | Microsoft Windows 11 (64-bit) | — | Local development workstation |
+
+> Python package versions above are those recorded in [`test_environment_freeze.txt`](test_environment_freeze.txt), the `pip freeze` of the fresh virtual environment that produced [`test_execution.log`](test_execution.log); a rule in the suite checks they satisfy `backend/requirements.txt`. Frontend versions are the resolved ones in `frontend/package-lock.json`; the database version is the image tag in `docker-compose.yml`. An earlier revision of this table listed `pillow` 11.1.0 and `numpy` 2.1.3, which the requirements bounds of the time could not have installed.
 
 **Training and serving environments differ, deliberately.** The model is trained once on a GPU and served many times on CPU, and [`resource_benchmark.md`](resource_benchmark.md) reports both separately:
 

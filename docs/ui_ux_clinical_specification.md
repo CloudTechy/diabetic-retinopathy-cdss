@@ -289,7 +289,7 @@ graph TD
 
 * **Visual Styling Separation**:
   * **AI Output Box**: Border: `border-slate-200` (`border-slate-700` in dark mode); Background: `bg-slate-50` (`bg-slate-900/50`); Header tag: `[AI Assistive Engine]`.
-  * **Clinician Review Box**: Border: `border-teal-500`; Background: `bg-teal-50/30` (`bg-teal-950/20`); Header tag: `[Official Clinical Evaluation]`.
+  * **Clinician Review Box**: Border: `border-teal-500`; Background: `bg-teal-50/30` (`bg-teal-950/20`); Header tag: `[Professional Review Response]`.
 
 ### 3.3 Friction Engineering & Anti-Automation Bias Controls
 
@@ -649,7 +649,7 @@ These design tokens provide the direct styling contract for `ui_frontend_agent`:
 | **8 Screen Journey** | PRD Section 7 (Clinical User Interface) | Visual & End-to-End Route Test | `ui_frontend_agent` |
 | **Dual Canvas Zoom & Pan** | PRD Section 7.2 (Image Interaction) | Mouse & Touch Gesture Simulation | `ui_frontend_agent` |
 | **Grad-CAM Opacity & Blend** | PRD Section 7.2 & FR-08 (Attribution) | Alpha Render Unit Tests | `ui_frontend_agent` |
-| **Perceptual Uniform Colormap** | NHS DTAC / Prototype Tool Visual Guidelines | CVD Palette Contrast Benchmark | `ui_frontend_agent` |
+| **Perceptual Uniform Colormap** | Colour-vision-deficiency-safe, perceptually uniform palette (`viridis`) | CVD Palette Contrast Benchmark | `ui_frontend_agent` |
 | **Non-Diagnostic Microcopy** | PRD Invariant 2 (Terminology Boundaries) | Automated Linter / String Assertions | `qa_testing_agent` |
 | **Tri-State Clinician Review** | PRD Section 7.3 & FR-09 (Review Protocol) | Form Submission Integration Test | `backend_ai_agent` |
 | **WCAG 2.1 AA Compliance** | PRD Section 11 (Accessibility & Standards) | Axe-Core Automated Audit & Lighthouse | `qa_testing_agent` |

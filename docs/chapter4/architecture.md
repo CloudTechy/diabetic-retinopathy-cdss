@@ -142,10 +142,10 @@ stateDiagram-v2
 ## 4. Key Architectural Safeguards & Design Decisions
 
 1. **Physical & Logical Domain Separation:**
-   - Model predictions (`ai_results`) and human clinician certifications (`professional_reviews`) reside in separate database entities. The system explicitly prevents any automated overwriting of clinical opinions.
+   - Model predictions (`ai_results`) and professional review responses (`professional_reviews`) reside in separate database entities. Nothing automated writes to a review.
 2. **Deterministic Weights Preservation:**
    - The PyTorch inference harness loads weights in read-only mode (`torch.load(..., weights_only=True)`), explicitly sets `model.eval()`, and disables parameter autograd tracking (`requires_grad = False`).
 3. **Fail-Closed Gate Architecture:**
    - Any failure across file integrity, spectral balance, or blur thresholds guarantees that no tensor forward pass is initiated, preventing invalid classification of corrupted data.
 4. **Offline Local First Capability:**
-   - High-efficiency inference (mean ~298 ms on standard CPU) ensures that the system requires no external cloud AI API dependencies, upholding patient data privacy.
+   - The complete request path runs on the deployment CPU — **mean 180.41 ms, P95 342.49 ms** end-to-end over 30 held-out images on the canonical run ([`resource_benchmark.md`](resource_benchmark.md) §1), of which the forward pass itself is 29.22 ms — so the system needs no external cloud AI API and no image leaves the host.

@@ -195,10 +195,15 @@ curl http://localhost:8000/api/v1/health
 
 ## 5. Run the test suite
 
+From a fresh extraction of the archive (or a clean clone), in a new virtual environment built from `backend/requirements.txt`. This is exactly how the committed [`test_execution.log`](test_execution.log) was produced: its header records the interpreter and `rootdir`, and [`test_environment_freeze.txt`](test_environment_freeze.txt) is the `pip freeze` of that environment. A rule in the suite checks that freeze satisfies `requirements.txt`.
+
 ```bash
 cd backend
-.venv/Scripts/python.exe -m pytest tests/ -q      # Windows
-# python -m pytest tests/ -q                       # Linux/macOS
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe -m pytest tests/ -v
+# Linux/macOS: .venv/bin/python in place of .venv/Scripts/python.exe
 ```
 
-Expected: **188 collected — 187 passed, 1 skipped** (wall-clock ≈ 100 s with PyTorch installed). The skip is `test_contaminated_results_are_labelled_superseded`. `test_real_model_end_to_end_pipeline` runs only when `AI_INFERENCE_ENGINE=pytorch` and the full PyTorch stack is available; configure `conftest.py` with `AI_INFERENCE_ENGINE=pytorch` or run `pytest -m slow` to include it.
+Expected: **195 collected — 194 passed, 1 skipped** (wall-clock ≈ 100 s with PyTorch installed). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.
