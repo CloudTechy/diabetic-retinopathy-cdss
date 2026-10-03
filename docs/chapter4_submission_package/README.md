@@ -44,15 +44,15 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Referable DR** (grade ≥ 2) | Sensitivity **91.2%**, specificity **95.6%** |
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **68.2%**, NPV **97.1%** |
 | **Argmax contradictions** | 0 / 525 |
-| **Dataset** | 3,662 APTOS 2019 records, each with the SHA-256 of its real image bytes |
-| **Test suite** | 186 passed, 1 skipped |
+| **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
+| **Test suite** | 187 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 > **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in `documentation/model_evaluation_report.md` §1.
 
 ### Disclosed limitations
 
-1. **Partition contamination — resolved.** The split was rebuilt and the model retrained; 0 of 525 held-out images are byte-identical to a training image, because APTOS's `duplicated_info.csv` is absent from the Kaggle download and the grouping step silently no-opped. Effect: accuracy 77.78% on the affected images vs 78.74% on the clean 522; clean-subset $\kappa$ = 0.877818 vs 0.865832. No metric is inflated. See `documentation/dataset_audit.md` §4.
+1. **Partition contamination — resolved.** The original split leaked because APTOS's `duplicated_info.csv` is absent from the Kaggle download, so the grouping step silently no-opped. The split was rebuilt on image-hash groups and the model retrained. In the committed split **0 of 525 held-out images are byte-identical to a training image**, 0 of 526 validation images are, and **no hash group spans two partitions** (`clinical_metrics.json` → `leakage_audit`). Because nothing leaks, there is no clean-subset comparison to report and `leakage_adjusted` is `null`. An earlier version of this line carried the contaminated run's 77.78%/78.74% and $\kappa$ 0.877818/0.865832 figures; they do not describe these results and have been removed. See `documentation/dataset_audit.md` §4.
 
 2. **Latency is dominated by input handling, not inference.** End-to-end CPU latency is **180.41 ms mean / 342.49 ms P95** on the canonical run. Validation gates 2+3 cost **74.69 ms (41.4%)** — reduced from 59.1% by subsampling their statistics — while the model forward pass is **29.22 ms (16.2%)**. Latency scales with camera resolution, not with disease severity.
 
@@ -93,8 +93,8 @@ docs/chapter4_submission_package/
 │   ├── cpu_end_to_end_benchmark.csv     # the same stage table, flat
 │   ├── benchmark_timings.csv            # 100 raw per-run timings (T4 forward pass)
 │   ├── benchmark_summary.json           # T4 forward-pass aggregate + device
-│   ├── gate_downsampling_verification.json # 3,662 images, zero verdict changes
-│   └── validation_test_results.csv       # Gate behaviour (regenerate: see PROVENANCE.md)
+│   ├── gate_downsampling_verification.json # 3,662 images, 1 boundary flip, 0 unexplained
+│   └── validation_test_results.csv       # Gate behaviour: 16 declared cases
 ├── scripts/
 │   ├── colab_train_and_evaluate.py       # The pipeline that produced everything here
 │   ├── analyze_clinical_metrics.py       # Recomputes all metrics (stdlib only)

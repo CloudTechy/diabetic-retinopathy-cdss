@@ -78,21 +78,37 @@ The complete record-by-record ledger — image identifier, source dataset, relat
 
 ### 4.1 The de-duplication step did not take effect
 
-The manifest generator groups images by `duplicate_group_id`, derived from APTOS's `duplicated_info.csv`. That file is **not part of the Kaggle competition download**, so the code took its fallback path and assigned every image a unique group. The committed manifest shows the result plainly: **3,662 groups for 3,662 images**, every group of size 1.
+The manifest generator groups images by `duplicate_group_id`, derived from APTOS's `duplicated_info.csv`. That file is **not part of the Kaggle competition download**, so the code took its fallback path and assigned every image a unique group. The manifest as it then stood showed the result plainly: **3,662 groups for 3,662 images**, every group of size 1. (The manifest committed today is the rebuilt one: 3,504 groups for 3,504 images, audited in §4.2.)
 
 The grouping code ran. It grouped nothing.
 
-### 4.2 Direct byte-level audit
+### 4.2 Direct byte-level audit of the committed manifest
 
-Rather than trusting the grouping, the committed SHA-256 column was audited directly:
+Rather than trusting `duplicate_group_id`, the `sha256_hash` column of the
+manifest that ships in this package was audited directly:
 
 | Finding | Value |
 | :--- | :---: |
-| Distinct image byte-hashes | 3,534 |
-| Images sharing bytes with another image | 128 |
-| Hashes appearing in more than one split | 48 |
+| Rows | 3,504 |
+| Distinct image byte-hashes | 3,504 |
+| Hashes appearing on more than one row | **0** |
+| Hashes appearing in more than one split | **0** |
 | **Held-out images byte-identical to a training image** | **0 / 525 (0.00%)** |
-| Validation images byte-identical to a training image | 17 / 550 |
+| Validation images byte-identical to a training image | **0 / 526** |
+| Duplicate groups | 3,504, of which **0** hold more than one row |
+
+Reproduce it from the shipped file alone — `python VERIFY.py`, check [4] — or
+over the manifest directly with
+[`corpus_guard.py`](../../backend/scripts/corpus_guard.py).
+
+> [!NOTE]
+> An earlier version of this table mixed the two runs. It reported 3,534
+> distinct hashes, 128 images sharing bytes and 48 hashes spanning splits —
+> all **contaminated-split** values — on the same rows as 0 / 525 held-out
+> leakage, a **clean-split** value, and gave validation leakage as 17 / 550
+> while §4.3 below gave 0. The contaminated figures are not lost: they are in
+> §4.3's two-column comparison, where the column heading says which run each
+> belongs to.
 
 ### 4.3 Resolution: the split was rebuilt and the model retrained
 
