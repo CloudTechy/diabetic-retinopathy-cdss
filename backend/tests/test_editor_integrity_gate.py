@@ -28,9 +28,11 @@ Grouped by the reviewer's own findings:
 import ast
 import csv
 import hashlib
+import importlib.util
 import json
 import math
 import os
+import posixpath
 import re
 from collections import Counter
 
@@ -446,6 +448,12 @@ OVERCLAIM_PHRASES = [
     "FDA SaMD", "NHS DTAC", "FDA/NHS",
     "referralPlan", "referral_plan",
     "certifiedGrade", "certified_grade",
+    # Found by the sixth independent review, in prose, a stylesheet comment, a
+    # TSX comment, a validation message and the PDF footer respectively.
+    "human clinician certifications", "human clinical certifications",
+    "authoritative clinical artefact", "Certified Clinician",
+    "meets diagnostic quality", "CLINICAL CONSULTATION RECORD",
+    "legal and medical responsibility",
 ]
 
 
@@ -460,7 +468,9 @@ def _walk_repo(suffixes):
 
 
 def _code_files():
-    return _walk_repo((".py", ".ts", ".tsx"))
+    # .css joined the list after "authoritative clinical artefact" was found in
+    # a stylesheet comment, outside the scan.
+    return _walk_repo((".py", ".ts", ".tsx", ".css"))
 
 
 def _prose_files():
@@ -737,8 +747,7 @@ def test_no_superseded_regulatory_or_identity_claims_in_screenshots_manifest():
     were removed rather than reshipped.
     """
     for name in ("10_tamper_evident_pdf_report.png", "live_vercel_verified.png"):
-        for d in (os.path.join(CHAPTER4, "screenshots"),
-                  os.path.join(REPO_ROOT, "docs", "chapter4_submission_package", "screenshots")):
+        for d in (os.path.join(CHAPTER4, "screenshots"),):
             assert not os.path.exists(os.path.join(d, name)), (
                 f"{name} is non-compliant and must not be shipped; "
                 "regenerate it from the corrected build or leave it out")
@@ -762,19 +771,18 @@ def test_programme_is_described_consistently():
 
 def test_withdrawn_qa_audit_is_archived_not_presented_as_current_evidence():
     """
-    The QA audit narrates withdrawn 544-image / 86.40% results. It belongs in
-    archive/, not documentation/. A hand-move was silently undone by the next
-    package assembly because the layout still pointed at documentation/, so
-    this asserts the outcome rather than the intent.
+    The QA audit narrates withdrawn 544-image / 86.40% results. In a
+    repository-relative archive, "archived" means the directory it sits in:
+    docs/chapter4/archive/, never docs/chapter4/ itself.
     """
-    pkg = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package")
-    if not os.path.isdir(pkg):
-        pytest.skip("package not built")
     name = "independent_thesis_qa_gate_audit.md"
-    assert not os.path.exists(os.path.join(pkg, "documentation", name)), (
-        f"{name} is in documentation/, where it reads as current evidence")
-    assert os.path.exists(os.path.join(pkg, "archive", name)), (
-        f"{name} should be retained in archive/ as a correction record")
+    assert not os.path.exists(os.path.join(CHAPTER4, name)), (
+        f"{name} is in docs/chapter4/, where it reads as current evidence")
+    archived = os.path.join(CHAPTER4, "archive", name)
+    assert os.path.exists(archived), (
+        f"{name} should be retained in docs/chapter4/archive/ as a correction record")
+    assert "SUPERSEDED" in read(archived)[:600], (
+        f"{name} must open by saying it is superseded")
 
 
 # =====================================================================
@@ -1797,7 +1805,7 @@ def test_documents_quote_the_committed_test_log():
 
     targets = [
         os.path.join(REPO_ROOT, "docs", "chapter4", "system_test_report.md"),
-        os.path.join(REPO_ROOT, "docs", "chapter4",
+        os.path.join(REPO_ROOT, "docs", "chapter4", "archive",
                      "independent_thesis_qa_gate_audit.md"),
         os.path.join(REPO_ROOT, "docs", "chapter4",
                      "reproducibility_runbook.md"),
@@ -1837,23 +1845,15 @@ def test_documents_quote_the_committed_test_log():
 def test_only_one_test_log_ships():
     """
     A second, older log beside the first is how the package came to carry two
-    different answers. The package mirrors the canonical log; nothing else may
-    sit beside it claiming to be a run.
+    different answers. Exactly one file matching a test-log name may be in the
+    archive manifest.
     """
-    package_logs = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package",
-                                "logs_and_metrics")
-    if not os.path.isdir(package_logs):
-        pytest.skip("submission package not assembled")
-
-    found = sorted(
-        name for name in os.listdir(package_logs)
-        if re.search(r"test.*(execution|run|output)", name, re.I))
-
-    assert len(found) <= 1, (
-        "More than one test log ships in the submission package:\n  "
-        + "\n  ".join(found)
-        + "\nKeep exactly one. A superseded log beside the current one is "
-          "indistinguishable from the current one to a reader.")
+    asm = _assembler()
+    found = sorted(dst for _, dst in asm.manifest()
+                   if asm.TEST_LOG_PATTERN.search(posixpath.basename(dst)))
+    assert len(found) == 1, (
+        "Exactly one test log must ship; the manifest has %d:\n  %s"
+        % (len(found), "\n  ".join(found) or "(none)"))
 
 
 # ======================================================================
@@ -2191,36 +2191,19 @@ def test_exactly_one_epoch_is_marked_selected():
 # present in the artefact that goes out.
 # ======================================================================
 
-def test_the_package_screenshots_match_the_source_exactly():
+def test_every_chapter4_file_ships_and_the_staged_copy_is_retired():
     """
-    A figure in the package that the source no longer has is an orphan, and an
-    orphan is a figure nobody is maintaining.
+    The archive is built from the repository tree by assemble_submission_package
+    .py. Its own consistency check must pass here: every listed source exists,
+    nothing under docs/chapter4 is silently left out, exactly one test log
+    ships, the checkpoint digest is the evaluated one, and the retired staging
+    directory - the second copy that once reverted a corrected VERIFY.py - has
+    not come back.
     """
-    src = os.path.join(CHAPTER4, "screenshots")
-    pkg = os.path.join(REPO_ROOT, "docs", "chapter4_submission_package",
-                       "screenshots")
-    if not (os.path.isdir(src) and os.path.isdir(pkg)):
-        pytest.skip("screenshot directories absent")
-
-    source = {f for f in os.listdir(src) if not f.startswith(".")}
-    packaged = {f for f in os.listdir(pkg) if not f.startswith(".")}
-
-    orphans = sorted(packaged - source)
-    missing = sorted(source - packaged)
-
-    problems = []
-    if orphans:
-        problems.append("in the package but not in the source: "
-                        + ", ".join(orphans))
-    if missing:
-        problems.append("in the source but not in the package: "
-                        + ", ".join(missing))
-
-    assert not problems, (
-        "The submission package's figures disagree with the source:\n  "
-        + "\n  ".join(problems)
-        + "\nThe package is what the examiner reads. Re-run "
-          "assemble_submission_package.py and delete anything it leaves behind.")
+    asm = _assembler()
+    found = asm.problems()
+    assert not found, (
+        "The archive cannot be built from this tree:\n  " + "\n  ".join(found))
 
 
 # ======================================================================
@@ -2243,11 +2226,12 @@ def test_the_package_screenshots_match_the_source_exactly():
 def _resolve(*candidates):
     """First path that exists, so the rule runs in BOTH layouts.
 
-    Repo:      <repo>/docs/chapter4/database_schema.md
-    Extracted: <package>/documentation/database_schema.md, with the tests at
-               <package>/source/backend/tests/ so REPO_ROOT is <package>/source.
+    The archive is repository-relative, so the first candidate resolves both
+    in the repository and inside an extracted archive. The later candidates
+    describe the superseded documentation/ + source/ layout and are kept so a
+    reviewer holding that older archive still gets a verdict, not a skip.
 
-    The previous version looked only in the repo layout and skipped silently in
+    An earlier version looked only in the repo layout and skipped silently in
     the package - for the reviewer, who has no other way to check the claim.
     """
     for c in candidates:
@@ -2345,6 +2329,16 @@ def test_schema_document_matches_the_model_in_both_directions():
         % os.path.basename(SCHEMA_DOC))
 
     offenders = []
+
+    # Equality of the TABLE SET too. A loop over documented tables cannot fail
+    # for a table the document never mentions - which is how model_executions
+    # and explanation_artifacts went unchecked while this rule was described
+    # as bidirectional.
+    for table in sorted(set(model) - set(documented)):
+        offenders.append(
+            "`%s`: declared on %s, but the document has no section for it"
+            % (table, model[table][0]))
+
     for table in sorted(documented):
         if table not in model:
             offenders.append(
@@ -2486,3 +2480,419 @@ def test_prose_cites_only_model_attributes_that_exist():
         + "\nA document that states what was verified must itself be verified. "
           "Correct the attribute name against backend/app/models/models.py, or "
           "if the line is recording a past error, say so explicitly in it.")
+
+
+# ======================================================================
+# RULE GROUP X (continued) - the ER diagram must draw the foreign keys that exist
+#
+# database_schema.md drew ASSESSMENTS ||--o{ MODEL_EXECUTIONS (many runs per
+# assessment) where model_executions.assessment_id is UNIQUE, and drew
+# ASSESSMENTS ||--o{ EXPLANATION_ARTIFACTS where explanation_artifacts has no
+# assessment column at all - it keys to ai_results. A diagram is a claim about
+# the schema and is checked like one.
+# ======================================================================
+
+ER_EDGE = re.compile(r"^\s*([A-Z_]+)\s+([|o}{]{2})--([|o}{]{2})\s+([A-Z_]+)\s*:", re.M)
+ONE_MARKERS = {"||", "o|"}
+MANY_MARKERS = {"o{", "|{", "}o", "}|"}
+
+
+def _model_foreign_keys():
+    """{(child_table, parent_table): fk_column_is_unique}"""
+    tree = ast.parse(read(MODELS), filename=MODELS)
+    tables = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
+            continue
+        table, fks = None, []
+        for stmt in node.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+            for target in stmt.targets:
+                if isinstance(target, ast.Name) and target.id == "__tablename__":
+                    table = getattr(stmt.value, "value", None)
+            if not (isinstance(stmt.value, ast.Call)
+                    and getattr(stmt.value.func, "id", None) == "Column"):
+                continue
+            unique = any(kw.arg == "unique" and getattr(kw.value, "value", False)
+                         for kw in stmt.value.keywords)
+            for arg in stmt.value.args:
+                if (isinstance(arg, ast.Call)
+                        and getattr(arg.func, "id", None) == "ForeignKey"
+                        and arg.args and isinstance(arg.args[0], ast.Constant)):
+                    parent = str(arg.args[0].value).split(".")[0]
+                    fks.append((parent, unique))
+        if table:
+            tables[table] = fks
+    out = {}
+    for child, fks in tables.items():
+        for parent, unique in fks:
+            out[(child, parent)] = unique
+    return out
+
+
+def test_er_diagram_edges_are_the_declared_foreign_keys():
+    assert SCHEMA_DOC and MODELS, "schema document or models unresolved"
+    fks = _model_foreign_keys()
+    offenders = []
+    edges = ER_EDGE.findall(read(SCHEMA_DOC))
+    assert edges, "no erDiagram edges parsed from database_schema.md"
+    for left, lm, rm, right in edges:
+        a, b = left.lower(), right.lower()
+        if (b, a) in fks:
+            child, child_marker, unique = b, rm, fks[(b, a)]
+        elif (a, b) in fks:
+            child, child_marker, unique = a, lm, fks[(a, b)]
+        else:
+            offenders.append("%s -- %s: no ForeignKey between these tables" % (left, right))
+            continue
+        if unique and child_marker not in ONE_MARKERS:
+            offenders.append("%s -- %s: %s's foreign key is UNIQUE, so the edge is "
+                             "one-to-one, but the diagram draws %r" % (left, right, child, child_marker))
+        if not unique and child_marker not in MANY_MARKERS:
+            offenders.append("%s -- %s: %s's foreign key is not unique, so the edge is "
+                             "one-to-many, but the diagram draws %r" % (left, right, child, child_marker))
+    assert not offenders, (
+        "The ER diagram disagrees with the declared foreign keys:\n  "
+        + "\n  ".join(offenders))
+
+
+# ======================================================================
+# RULE GROUP Z - every link in every shipped document resolves inside the archive
+#
+# The sixth review counted 94 unresolved links. The documents were right; the
+# archive had moved their targets. Links are therefore checked where they are
+# READ: resolved from each document's archive location, against the archive
+# manifest, so a document that links correctly in the repository but not in
+# the archive fails here.
+# ======================================================================
+
+MARKDOWN_LINK = re.compile(r"\]\(([^)\s]+)\)")
+
+
+def _assembler():
+    path = os.path.join(SCRIPTS, "assemble_submission_package.py")
+    spec = importlib.util.spec_from_file_location("assemble_submission_package", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_every_link_in_every_shipped_document_resolves_inside_the_archive():
+    asm = _assembler()
+    entries = asm.manifest()
+    destinations = {dst for _, dst in entries}
+    directories = set()
+    for dst in destinations:
+        parts = dst.split("/")
+        for i in range(1, len(parts)):
+            directories.add("/".join(parts[:i]))
+
+    offenders = []
+    for src, dst in entries:
+        if not src.endswith(".md"):
+            continue
+        base = posixpath.dirname(dst)
+        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, src)).split("\n"), 1):
+            for href in MARKDOWN_LINK.findall(line):
+                href = href.split("#", 1)[0].strip("<>")
+                if not href or re.match(r"^[a-z][a-z0-9+.-]*:", href):
+                    continue
+                if href.startswith("/"):
+                    target = posixpath.normpath(href.lstrip("/"))
+                else:
+                    target = posixpath.normpath(posixpath.join(base, href))
+                target = target.rstrip("/")
+                if target.startswith("..") or (target not in destinations
+                                                and target not in directories):
+                    offenders.append("%s:%d -> %s  (resolves to %s, not in the archive)"
+                                     % (src, lineno, href, target))
+
+    assert not offenders, (
+        "Links that do not resolve inside the shipped archive:\n  "
+        + "\n  ".join(offenders[:40])
+        + ("\n  ... and %d more" % (len(offenders) - 40) if len(offenders) > 40 else "")
+        + "\nFix the link or ship the target. A reviewer reads the archive, "
+          "not the repository.")
+
+
+# ======================================================================
+# RULE GROUP AA - the recorded environment is the one the documents describe,
+# and it satisfies requirements.txt
+#
+# training_environment.md listed pillow 11.1.0 and numpy 2.1.3 against
+# requirements bounds of pillow<11 and numpy<2 - an environment that
+# requirements.txt could not have produced. system_test_report.md said
+# "Pytest 9.1.1" while the log it cites recorded pytest-8.4.2. The deployment
+# versions are now read from test_environment_freeze.txt, the `pip freeze` of
+# the environment that produced the committed log, and both are checked.
+# ======================================================================
+
+FREEZE = os.path.join(CHAPTER4, "test_environment_freeze.txt")
+REQUIREMENTS = os.path.join(REPO_ROOT, "backend", "requirements.txt")
+TRAINING_ENV_DOC = os.path.join(CHAPTER4, "training_environment.md")
+SYSTEM_TEST_REPORT = os.path.join(CHAPTER4, "system_test_report.md")
+
+
+def _norm_name(name):
+    return name.strip().lower().replace("_", "-")
+
+
+def _freeze():
+    out = {}
+    for line in read(FREEZE).splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "==" not in line:
+            continue
+        name, version = line.split("==", 1)
+        out[_norm_name(name)] = version.strip()
+    return out
+
+
+def _version_tuple(v):
+    v = v.split("+", 1)[0]
+    parts = []
+    for piece in v.split("."):
+        m = re.match(r"\d+", piece)
+        parts.append(int(m.group()) if m else 0)
+    return tuple(parts)
+
+
+def _satisfies(version, spec):
+    for clause in spec.split(","):
+        clause = clause.strip()
+        if not clause:
+            continue
+        m = re.match(r"(>=|<=|==|!=|~=|>|<)\s*([\w.+*-]+)", clause)
+        assert m, "unparsed requirement clause %r" % clause
+        op, want = m.groups()
+        a, b = _version_tuple(version), _version_tuple(want)
+        n = max(len(a), len(b))
+        a, b = a + (0,) * (n - len(a)), b + (0,) * (n - len(b))
+        ok = {">=": a >= b, "<=": a <= b, "==": a == b, "!=": a != b,
+              ">": a > b, "<": a < b, "~=": a >= b}[op]
+        if not ok:
+            return False
+    return True
+
+
+def test_recorded_test_environment_satisfies_requirements_txt():
+    """
+    Every requirement in backend/requirements.txt must be present in the
+    recorded environment at a version its specifier admits. Otherwise the
+    committed log was produced by an environment requirements.txt cannot
+    reproduce, and "reproducible" is not a checkable claim.
+    """
+    assert os.path.exists(FREEZE), (
+        "docs/chapter4/test_environment_freeze.txt is missing: record `pip freeze` "
+        "from the environment that produced test_execution.log")
+    freeze = _freeze()
+    offenders = []
+    for line in read(REQUIREMENTS).splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        m = re.match(r"([A-Za-z0-9_.-]+)(\[[^\]]*\])?\s*(.*)$", line)
+        name, spec = _norm_name(m.group(1)), m.group(3).strip()
+        if name not in freeze:
+            offenders.append("%s: required, but absent from the recorded environment" % name)
+        elif spec and not _satisfies(freeze[name], spec):
+            offenders.append("%s==%s does not satisfy %r" % (name, freeze[name], spec))
+    assert not offenders, (
+        "requirements.txt and the recorded test environment disagree:\n  "
+        + "\n  ".join(offenders))
+
+
+def test_documented_versions_are_the_recorded_ones():
+    """
+    system_test_report.md's framework line must quote the pytest and Python
+    versions the committed log header records. training_environment.md's
+    deployment table must quote, for every Python package it names, the
+    version in the recorded freeze.
+    """
+    header = read(TEST_LOG).split("\n")[1] if os.path.exists(TEST_LOG) else ""
+    log_pytest = re.search(r"pytest-(\d+\.\d+\.\d+)", header)
+    log_python = re.search(r"Python (\d+\.\d+\.\d+)", header)
+    assert log_pytest and log_python, "the test log header does not record pytest/Python versions"
+
+    offenders = []
+    report = read(SYSTEM_TEST_REPORT)
+    doc_pytest = re.search(r"Pytest (\d+\.\d+\.\d+)", report)
+    if not doc_pytest:
+        offenders.append("system_test_report.md does not state the Pytest version")
+    elif doc_pytest.group(1) != log_pytest.group(1):
+        offenders.append("system_test_report.md says Pytest %s; the log records %s"
+                         % (doc_pytest.group(1), log_pytest.group(1)))
+    doc_python = re.search(r"Python (\d+\.\d+\.\d+)", report)
+    if doc_python and doc_python.group(1) != log_python.group(1):
+        offenders.append("system_test_report.md says Python %s; the log records %s"
+                         % (doc_python.group(1), log_python.group(1)))
+
+    freeze = _freeze()
+    checked = 0
+    for name, version in re.findall(
+            r"^\|[^|]*\|\s*`([A-Za-z][A-Za-z0-9_-]*)`[^|]*\|\s*([^|]+?)\s*\|",
+            read(TRAINING_ENV_DOC), re.M):
+        key = _norm_name(name)
+        if key not in freeze:
+            continue
+        checked += 1
+        if version.strip("`* ") != freeze[key]:
+            offenders.append("training_environment.md says %s %s; the recorded environment has %s"
+                             % (name, version.strip(), freeze[key]))
+    assert checked >= 4, (
+        "training_environment.md's deployment table names fewer than four packages "
+        "that appear in the recorded freeze; it should name at least torch, "
+        "torchvision, pillow and numpy")
+    assert not offenders, (
+        "Documented versions are not the recorded ones:\n  " + "\n  ".join(offenders))
+
+
+# ======================================================================
+# RULE GROUP AB - a "mean ... ms" claim is the canonical CPU run
+#
+# architecture.md said "mean ~298 ms on standard CPU". No run recorded 298 ms.
+# Outside the two documents that discuss the earlier runs explicitly
+# (resource_benchmark.md, requirements_test_matrix.md), any latency stated as
+# a mean must be a number in cpu_end_to_end_benchmark.json.
+# ======================================================================
+
+BENCHMARK_JSON = os.path.join(CHAPTER4, "cpu_end_to_end_benchmark.json")
+MEAN_MS_CLAIMS = [
+    re.compile(r"mean[^.\n]*?(\d+(?:\.\d+)?)\s*ms", re.I),
+    # Only a number described AS the mean: "180.41 ms mean", "180.41 ms (mean)".
+    # "350 ms budget passes on the mean" names a budget, not a measurement.
+    re.compile(r"(\d+(?:\.\d+)?)\s*ms\**\s*\(?\s*mean\b", re.I),
+]
+LATENCY_DISCUSSION_DOCS = {"resource_benchmark.md", "requirements_test_matrix.md"}
+
+
+def _benchmark_numbers():
+    values = set()
+
+    def walk(obj):
+        if isinstance(obj, dict):
+            for v in obj.values():
+                walk(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                walk(v)
+        elif isinstance(obj, (int, float)) and not isinstance(obj, bool):
+            values.add(round(float(obj), 2))
+            values.add(round(float(obj), 1))
+    walk(json.loads(read(BENCHMARK_JSON)))
+    return values
+
+
+def test_mean_latency_claims_are_the_canonical_run():
+    allowed = _benchmark_numbers()
+    offenders = []
+    for base, dirs, files in os.walk(CHAPTER4):
+        dirs[:] = [d for d in dirs if d != "archive"]
+        for name in sorted(files):
+            if not name.endswith(".md") or name in LATENCY_DISCUSSION_DOCS:
+                continue
+            rel = os.path.relpath(os.path.join(base, name), REPO_ROOT)
+            for lineno, line in enumerate(read(os.path.join(base, name)).split("\n"), 1):
+                for pattern in MEAN_MS_CLAIMS:
+                    for value in pattern.findall(line):
+                        if round(float(value), 2) not in allowed:
+                            offenders.append("%s:%d states a mean of %s ms" % (rel, lineno, value))
+    assert not offenders, (
+        "Latency means that no recorded run produced:\n  " + "\n  ".join(sorted(set(offenders)))
+        + "\nQuote cpu_end_to_end_benchmark.json, or move the discussion of other "
+          "runs into resource_benchmark.md where they are labelled.")
+
+
+# ======================================================================
+# RULE GROUP AC - the README's headline table is the metrics files
+#
+# The package README carried "NPV 97.1%" for sight-threatening DR. The
+# committed clinical_metrics.json says 95.39%. 97.1% was the superseded run's
+# figure, surviving in the one document every reader opens first.
+# ======================================================================
+
+# Lifted to the archive root as README.md by the assembler, so the rule must
+# read it there when run from an extracted archive - it failed to on the first
+# extraction run, which is exactly the kind of layout blindness it polices.
+SUBMISSION_README = _resolve(
+    os.path.join(CHAPTER4, "SUBMISSION_README.md"),
+    os.path.join(REPO_ROOT, "README.md"),
+)
+CLINICAL_METRICS = os.path.join(CHAPTER4, "clinical_metrics.json")
+
+
+def _readme_row(text, label):
+    m = re.search(r"^\|\s*\*\*%s\*\*[^|]*\|(.*)\|\s*$" % re.escape(label), text, re.M)
+    return m.group(1) if m else None
+
+
+def test_submission_readme_headline_table_matches_the_metrics_files():
+    metrics = json.loads(read(CLINICAL_METRICS))
+    bench = json.loads(read(BENCHMARK_JSON))
+    text = read(SUBMISSION_README)
+    ops = {o["name"]: o for o in metrics["operating_points"]}
+    cm = metrics["confusion_matrix"]
+    correct = sum(cm[i][i] for i in range(len(cm)))
+
+    expected = {
+        "Held-out cohort": ["N = %d" % metrics["n_test"]],
+        "Quadratic Weighted Kappa": ["%.4f" % metrics["quadratic_weighted_kappa"]],
+        "Exact accuracy": ["%.2f%%" % metrics["exact_accuracy_pct"],
+                           "(%d / %d)" % (correct, metrics["n_test"])],
+        "Within-one-grade agreement": ["%.2f%%" % metrics["within_one_grade_pct"]],
+        "Referable DR": ["%.1f%%" % ops["Referable DR"]["sensitivity_pct"],
+                         "%.1f%%" % ops["Referable DR"]["specificity_pct"]],
+        "Sight-threatening DR": ["%.1f%%" % ops["Sight-threatening DR"]["sensitivity_pct"],
+                                 "%.1f%%" % ops["Sight-threatening DR"]["npv_pct"]],
+        "End-to-end CPU latency": ["%.2f ms" % bench["total_mean_ms"],
+                                   "%.2f ms" % bench["total_median_ms"],
+                                   "%.2f ms" % bench["total_p95_ms"]],
+    }
+    offenders = []
+    for label, tokens in expected.items():
+        row = _readme_row(text, label)
+        if row is None:
+            offenders.append("row **%s** not found" % label)
+            continue
+        for token in tokens:
+            if token not in row:
+                offenders.append("row **%s** should contain %r; it reads: %s"
+                                 % (label, token, row.strip()))
+    assert not offenders, (
+        "SUBMISSION_README.md's headline table disagrees with the metrics files:\n  "
+        + "\n  ".join(offenders))
+
+
+# ======================================================================
+# The overclaim phrases are banned in prose too, not only in code
+# ======================================================================
+
+CORRECTION_LINE_MARKERS = ("superseded", "never existed", "earlier revision",
+                           "earlier version", "withdrawn", "replaced", "removed")
+
+
+def test_no_clinical_authority_overclaims_in_documents():
+    """
+    The code rule never read the prose, and "human clinician certifications"
+    sat in architecture.md through five reviews. A line that records a past
+    error may name the phrase it corrects; any other occurrence fails.
+    """
+    offenders = []
+    for rel, text in iter_markdown(include_correction_records=False):
+        if "/archive/" in rel.replace("\\", "/"):
+            continue
+        lines = text.splitlines()
+        for lineno, line in enumerate(lines, 1):
+            low = line.lower()
+            # Markdown soft-wraps a sentence, so the marker may sit on the
+            # previous line of the same paragraph.
+            previous = lines[lineno - 2].lower() if lineno >= 2 else ""
+            if any(marker in low or marker in previous
+                   for marker in CORRECTION_LINE_MARKERS):
+                continue
+            for phrase in OVERCLAIM_PHRASES:
+                if phrase.lower() in low:
+                    offenders.append("%s:%d: %r" % (rel, lineno, phrase))
+    assert not offenders, (
+        "Authority or certification language in documents:\n  " + "\n  ".join(offenders))
