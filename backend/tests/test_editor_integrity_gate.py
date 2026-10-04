@@ -34,6 +34,7 @@ import math
 import os
 import posixpath
 import re
+import sys
 from collections import Counter
 
 import pytest
@@ -43,6 +44,7 @@ from app.core.config import settings
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHAPTER4 = os.path.join(REPO_ROOT, "docs", "chapter4")
 SCRIPTS = os.path.join(REPO_ROOT, "backend", "scripts")
+CONFIG_PY = os.path.join(REPO_ROOT, "backend", "app", "core", "config.py")
 NOTEBOOKS = os.path.join(REPO_ROOT, "notebooks")
 
 EXPECTED_CHECKPOINT_SHA256 = "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
@@ -478,6 +480,11 @@ OVERCLAIM_PHRASES = [
     "Legal Traceability", "Official Review", "biomarkers", "hash-sealed",
     # Ninth round: served route descriptions and code comments.
     "digital signature", "strictly immutable", "Immutable Locked", "signs off on",
+    # Editor round on rev10: a browser check implied diagnostic adequacy; three
+    # architectural statements overstated the design.
+    "diagnostic resolution", "adheres strictly to third normal form",
+    "absolute physical domain separation", "HTTPS / TLS 1.3 REST",
+    "wired to run on every commit",
 ]
 
 
@@ -2640,9 +2647,13 @@ def test_every_link_in_every_shipped_document_resolves_inside_the_archive():
                 if not href or re.match(r"^[a-z][a-z0-9+.-]*:", href):
                     continue
                 if href.startswith("/"):
-                    target = posixpath.normpath(href.lstrip("/"))
-                else:
-                    target = posixpath.normpath(posixpath.join(base, href))
+                    # Only this scanner would treat "/" as the archive root;
+                    # GitHub and ordinary renderers treat it as the domain
+                    # root. Thirty-nine such links shipped in rev10.
+                    offenders.append("%s:%d -> %s  (root-absolute; must be relative)"
+                                     % (src, lineno, href))
+                    continue
+                target = posixpath.normpath(posixpath.join(base, href))
                 target = target.rstrip("/")
                 if target.startswith("..") or (target not in destinations
                                                 and target not in directories):
@@ -3256,3 +3267,217 @@ def test_evaluation_report_per_class_table_recomputes_from_the_predictions():
         "model_evaluation_report.md per-class table disagrees with held_out_predictions.csv:\n  "
         + "\n  ".join(offenders))
 
+
+# ======================================================================
+# RULE GROUP AE - the editor's round on rev10: the delivered package must
+# not be able to contradict the evidence
+# ======================================================================
+
+ENV_EXAMPLE = os.path.join(REPO_ROOT, ".env.example")
+RETINAL_VALIDATOR = os.path.join(REPO_ROOT, "frontend", "src", "utils", "retinalValidator.ts")
+ANALYZE_SCRIPT = os.path.join(SCRIPTS, "analyze_clinical_metrics.py")
+COMPOSE_FILE = os.path.join(REPO_ROOT, "docker-compose.yml")
+FRONTEND_PACKAGE = os.path.join(REPO_ROOT, "frontend", "package.json")
+
+
+def _config_defaults():
+    """{NAME: literal} for every annotated default on the Settings class."""
+    tree = ast.parse(read(CONFIG_PY), filename=CONFIG_PY)
+    out = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value is not None:
+            try:
+                out[node.target.id] = ast.literal_eval(node.value)
+            except (ValueError, SyntaxError):
+                pass
+    return out
+
+
+def _env_example():
+    out = {}
+    for line in read(ENV_EXAMPLE).splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        out[k.strip()] = v.strip().strip('"').strip("'")
+    return out
+
+
+def test_env_example_cannot_restore_the_rejected_thresholds():
+    """
+    .env.example carried 512 / 60.0 / 18.0 - the a-priori thresholds that
+    rejected 99.5% of genuine images - after config.py had been calibrated to
+    480 / 4.3 / 8.8. Settings read the environment, so the shipped template
+    could silently restore the defect. Every threshold and the checkpoint
+    digest in the template must equal the config default.
+    """
+    cfg, env = _config_defaults(), _env_example()
+    offenders = []
+    for key in ("MIN_IMAGE_DIMENSION", "LAPLACIAN_BLUR_THRESHOLD", "CONTRAST_THRESHOLD",
+                "ILLUMINATION_EXTREME_RATIO_MAX", "RETINAL_MIN_COVERAGE", "RETINAL_MAX_COVERAGE",
+                "RETINAL_RED_RATIO_MIN", "VALIDATION_ANALYSIS_MAX_DIM", "MODEL_CHECKPOINT_SHA256"):
+        if key not in env:
+            offenders.append("%s missing from .env.example" % key); continue
+        if key not in cfg:
+            offenders.append("%s has no literal default in config.py" % key); continue
+        want, got = cfg[key], env[key]
+        same = (str(want) == got) if isinstance(want, str) else (abs(float(got) - float(want)) < 1e-9)
+        if not same:
+            offenders.append("%s: .env.example says %s, config.py says %s" % (key, got, want))
+    if "MODEL_CHECKPOINT_PATH" in env and "MODEL_CHECKPOINT_PATH" in cfg:
+        if os.path.basename(env["MODEL_CHECKPOINT_PATH"]) != os.path.basename(str(cfg["MODEL_CHECKPOINT_PATH"])):
+            offenders.append("MODEL_CHECKPOINT_PATH names a different file than config.py")
+    assert not offenders, ".env.example disagrees with config.py:\n  " + "\n  ".join(offenders)
+
+
+def test_browser_precheck_uses_the_backends_minimum_dimension():
+    """
+    The browser pre-check accepted 256x256 while the backend requires 480; a
+    user could pass the browser and be refused by the server, and the message
+    implied diagnostic adequacy. The constant must equal MIN_IMAGE_DIMENSION
+    and the file must say the server is authoritative.
+    """
+    cfg = _config_defaults()
+    src = read(RETINAL_VALIDATOR)
+    m = re.search(r"width\s*>=\s*(\d+)\s*&&\s*height\s*>=\s*(\d+)", src)
+    assert m, "dimension check not found in retinalValidator.ts"
+    assert int(m.group(1)) == int(m.group(2)) == cfg["MIN_IMAGE_DIMENSION"], (
+        "retinalValidator.ts requires %s px; config.py requires %s" % (m.group(1), cfg["MIN_IMAGE_DIMENSION"]))
+    assert "re-checks every image" in src, "the browser check must say the server re-checks every image"
+
+
+def test_every_checkpoint_filename_is_the_configured_one():
+    """
+    The integration guide told the reader seven times to place
+    efficientnet_b0_dr_v1.pth; the configured, evaluated and packaged file is
+    efficientnet_b0_dr.pth. Every .pth filename in shipped text must be it.
+    """
+    names = sorted(set(re.findall(r"[\w.-]+\.pth\b", read(CONFIG_PY))))
+    assert len(names) == 1, "config.py names %s .pth files; expected exactly one" % names
+    want = names[0]
+    asm = _assembler()
+    offenders = []
+    for src, _dst in asm.manifest():
+        if not src.endswith((".md", ".py", ".ts", ".tsx", ".yml", ".yaml", ".example")):
+            continue
+        if "/archive/" in src:
+            continue
+        # The test suite deliberately names checkpoints that do not exist
+        # (does_not_exist.pth, impostor.pth) to prove the engine refuses them.
+        if src.startswith("backend/tests/"):
+            continue
+        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, src)).split("\n"), 1):
+            low = line.lower()
+            if any(marker in low for marker in CORRECTION_LINE_MARKERS):
+                continue
+            for name in re.findall(r"[\w.-]+\.pth\b", line):
+                if name != want:
+                    offenders.append("%s:%d names %s" % (src, lineno, name))
+    assert not offenders, (
+        "Checkpoint filenames that are not %s:\n  " % want + "\n  ".join(offenders))
+
+
+def _dockerfile_copies(path):
+    """Context-relative single files a Dockerfile COPYs (not '.' and not directories)."""
+    files = []
+    for line in read(path).splitlines():
+        m = re.match(r"\s*COPY\s+(.+)", line)
+        if not m:
+            continue
+        parts = m.group(1).split()
+        for src in parts[:-1]:
+            if src in (".", "./") or src.startswith("--"):
+                continue
+            files.append(src)
+    return files
+
+
+def test_archive_carries_everything_the_build_instructions_consume():
+    """
+    The runbook said `docker compose up --build`; the archive had neither
+    Dockerfile, nor package.json, index.html, vite.config.ts or the tsconfigs.
+    Every build input the compose file, the Dockerfiles and the frontend
+    build script need must be in the manifest.
+    """
+    asm = _assembler()
+    shipped = {src for src, _ in asm.manifest()}
+    required = {"docker-compose.yml", "backend/requirements.txt", "backend/main.py",
+                "frontend/package.json", "frontend/package-lock.json"}
+    compose = read(COMPOSE_FILE)
+    for ctx, df in re.findall(r"context:\s*\./(\w+)\s*\n\s*dockerfile:\s*(\S+)", compose):
+        dockerfile = "%s/%s" % (ctx, df)
+        required.add(dockerfile)
+        if os.path.exists(os.path.join(REPO_ROOT, dockerfile)):
+            for f in _dockerfile_copies(os.path.join(REPO_ROOT, dockerfile)):
+                required.add("%s/%s" % (ctx, f))
+    pkg = json.loads(read(FRONTEND_PACKAGE))
+    build = pkg.get("scripts", {}).get("build", "")
+    if "tsc" in build:
+        required.add("frontend/tsconfig.json")
+        tsconfig = re.sub(r"/\*.*?\*/", "", read(os.path.join(REPO_ROOT, "frontend", "tsconfig.json")), flags=re.S)
+        tsconfig = re.sub(r"^\s*//[^\n]*$", "", tsconfig, flags=re.M)
+        for ref in json.loads(tsconfig).get("references", []):
+            required.add("frontend/" + ref["path"].lstrip("./"))
+    if "vite" in build:
+        required.update({"frontend/index.html", "frontend/vite.config.ts"})
+    for cfg in ("frontend/postcss.config.js", "frontend/tailwind.config.js"):
+        if os.path.exists(os.path.join(REPO_ROOT, cfg)):
+            required.add(cfg)
+    missing = sorted(r for r in required if r not in shipped)
+    assert not missing, (
+        "Build inputs the archive does not carry:\n  " + "\n  ".join(missing)
+        + "\nAdd them to SINGLE_FILES in assemble_submission_package.py, or remove the "
+          "instruction that needs them.")
+
+
+def test_analysis_script_output_rounds_exactly_once():
+    """
+    analyze_clinical_metrics.py printed Any-DR sensitivity and Grade-0
+    specificity as 97.7%: it stored 97.65 and rounded that again. This runs
+    the script and checks every printed one-decimal figure against the
+    counts, and checks the JSON holds the unrounded values.
+    """
+    import subprocess
+    proc = subprocess.run([sys.executable, ANALYZE_SCRIPT], cwd=REPO_ROOT,
+                          capture_output=True, text=True, timeout=120)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    out = proc.stdout
+    raw_ops = _operating_points_from_predictions()
+    raw_cls = _per_class_from_predictions()
+    offenders = []
+    for name, th in (("Referable DR", 2), ("Sight-threatening DR", 3), ("Any DR", 1)):
+        after_header = out.split("--- %s" % name, 1)[1].split("\n", 1)[1]
+        block = after_header.split("\n---", 1)[0]
+        for label, key in (("Sensitivity", "sensitivity_pct"), ("Specificity", "specificity_pct"),
+                           ("PPV", "ppv_pct"), ("NPV", "npv_pct")):
+            m = re.search(r"%s ([\d.]+)%%" % label, block)
+            want = "%.1f" % raw_ops[name][key]
+            if not m or m.group(1) != want:
+                offenders.append("%s %s printed %s; the counts give %s" % (name, label, m and m.group(1), want))
+    for g in range(5):
+        m = re.search(r"^%d\s+(\d+)\s+([\d.]+)\s+\S+\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*$" % g, out, re.M)
+        if not m:
+            offenders.append("per-class row %d not printed" % g); continue
+        for got, key, fmt in ((m.group(2), "sens", "%.1f"), (m.group(3), "spec", "%.1f"),
+                              (m.group(4), "prec", "%.1f"), (m.group(5), "f1", "%.3f")):
+            if got != fmt % raw_cls[g][key]:
+                offenders.append("grade %d %s printed %s; the counts give %s" % (g, key, got, fmt % raw_cls[g][key]))
+    metrics = json.loads(read(CLINICAL_METRICS))
+    for o in metrics["operating_points"]:
+        for key in ("sensitivity_pct", "specificity_pct", "ppv_pct", "npv_pct"):
+            if abs(o[key] - raw_ops[o["name"]][key]) > 1e-9:
+                offenders.append("JSON %s %s is %r, not the unrounded %r" % (o["name"], key, o[key], raw_ops[o["name"]][key]))
+    assert not offenders, "\n  ".join(["analyze_clinical_metrics.py rounds twice:"] + offenders)
+
+
+def test_tls_is_stated_as_a_production_requirement():
+    """
+    The architecture diagram said HTTPS / TLS 1.3; the packaged stack serves
+    plain HTTP. Any mention of TLS in the architecture must say it is a
+    production deployment requirement.
+    """
+    text = read(os.path.join(CHAPTER4, "architecture.md"))
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if "TLS" in line and "production" not in line.lower():
+            raise AssertionError("architecture.md:%d mentions TLS without stating it is a production requirement" % lineno)

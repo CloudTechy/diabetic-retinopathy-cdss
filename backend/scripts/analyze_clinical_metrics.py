@@ -115,12 +115,15 @@ def binary_operating_point(y_true, y_pred, threshold, name):
         "n_positive": tp + fn,
         "n_negative": tn + fp,
         "tp": tp, "fn": fn, "fp": fp, "tn": tn,
-        "sensitivity_pct": round(100 * sens, 2),
+        # Full precision. An earlier version stored two decimals, and every
+        # consumer that rounded to one decimal rounded twice: 249/255 is
+        # 97.647%, stored 97.65, shown 97.7. Presentation rounds exactly once.
+        "sensitivity_pct": 100 * sens,
         "sensitivity_ci95": wilson_ci(tp, tp + fn),
-        "specificity_pct": round(100 * spec, 2),
+        "specificity_pct": 100 * spec,
         "specificity_ci95": wilson_ci(tn, tn + fp),
-        "ppv_pct": round(100 * ppv, 2),
-        "npv_pct": round(100 * npv, 2),
+        "ppv_pct": 100 * ppv,
+        "npv_pct": 100 * npv,
     }
 
 
@@ -142,11 +145,11 @@ def per_class_metrics(y_true, y_pred):
             "grade": g,
             "label": ICDR[g],
             "support": tp + fn,
-            "sensitivity_pct": round(100 * sens, 2),
+            "sensitivity_pct": 100 * sens,
             "sensitivity_ci95": wilson_ci(tp, tp + fn),
-            "specificity_pct": round(100 * spec, 2),
-            "precision_pct": round(100 * prec, 2),
-            "f1": round(f1, 4),
+            "specificity_pct": 100 * spec,
+            "precision_pct": 100 * prec,
+            "f1": f1,
         })
     return rows
 
@@ -245,11 +248,11 @@ def main():
 
     result = {
         "n_test": n,
-        "exact_accuracy_pct": round(100 * exact / n, 2),
-        "within_one_grade_pct": round(100 * within_one / n, 2),
-        "over_called_pct": round(100 * over / n, 2),
-        "under_called_pct": round(100 * under / n, 2),
-        "quadratic_weighted_kappa": round(quadratic_weighted_kappa(y_true, y_pred), 6),
+        "exact_accuracy_pct": 100 * exact / n,
+        "within_one_grade_pct": 100 * within_one / n,
+        "over_called_pct": 100 * over / n,
+        "under_called_pct": 100 * under / n,
+        "quadratic_weighted_kappa": quadratic_weighted_kappa(y_true, y_pred),
         "confusion_matrix": confusion,
         "per_class": per_class_metrics(y_true, y_pred),
         "operating_points": [

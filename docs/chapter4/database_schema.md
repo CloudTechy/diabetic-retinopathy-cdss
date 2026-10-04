@@ -12,7 +12,7 @@
 
 ## 1. Entity-Relationship Overview
 
-The database design adheres strictly to third normal form (3NF) while maintaining absolute physical domain separation between automated model observations and the professional review responses recorded beside them:
+The database design is generally normalised, with one documented denormalisation: `professional_reviews` copies the signatory's name, registration code and facility at recording time so a review keeps the identity it was recorded under even if the user record later changes. Model observations and professional review responses are logically separated in distinct tables of the same PostgreSQL database — separate tables, not separate physical stores:
 
 ```mermaid
 erDiagram

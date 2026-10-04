@@ -59,6 +59,7 @@ which only this script emits.
 | `VERIFY.py` | hand-written; produces no evidence | reads the artefacts above and recomputes their headline figures. Stdlib only, so a reviewer needs no environment. Its recorded transcript is `VERIFICATION.md`. |
 | `docs/chapter4/test_execution.log` | `python -m pytest tests/ -v` from `backend/` of a **fresh extraction of this archive**, in a new virtual environment built from `backend/requirements.txt`; its header records the interpreter and `rootdir` | the committed suite; the single authoritative run |
 | `docs/chapter4/test_environment_freeze.txt` | `pip freeze` in that same virtual environment | — |
+| `docs/chapter4/build_verification.log` | `npm ci && npm run build`, `docker compose config` and `docker compose up --build` run from a **clean extraction of this archive**, followed by the backend `/health` response; recorded verbatim | the shipped build manifests |
 | `docs/chapter4/screenshots/01`–`08` | `frontend/scripts/capture_live_screenshots.js`, driving the running stack (real authentication, calibrated gates, digest-verified checkpoint). The rejection frame is written as `04b_validation_stepper_rejected.png` by that script and by `frontend/scripts/capture_rejection.js`, which fires the shutter only on the tick the rejected state is observed; the committed file is renamed `04b_fail_closed_rejection_worklist.png` to describe the frame it holds | the running application |
 | `docs/chapter4/screenshots/09_confusion_matrix_empirical.png` | copy of `docs/chapter4/confusion_matrix.png` | — |
 

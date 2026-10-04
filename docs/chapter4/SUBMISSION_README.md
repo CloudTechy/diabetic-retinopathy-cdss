@@ -44,7 +44,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Any DR** (grade ≥ 1) | Sensitivity 97.6%, specificity 98.5% |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 207 passed, 1 skipped |
+| **Test suite** | 213 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.
@@ -128,7 +128,7 @@ DR-CDSS_Chapter4_Evidence/
 5. [`docs/chapter4/evidence_provenance.md`](docs/chapter4/evidence_provenance.md) — which script produced each file, and which scripts produced nothing.
 6. [`docs/chapter4/archive/`](docs/chapter4/archive/) — earlier QA responses and runbooks, superseded and labelled as such. They record what was wrong; they are not current evidence.
 
-The evidence integrity gate — `backend/tests/test_editor_integrity_gate.py` and `backend/tests/test_spec_doc_consistency.py` — encodes every finding from the QA rounds as an executable rule. It is wired to run on every commit (pre-commit hook) and on every push (`.github/workflows/evidence-integrity-gate.yml`); the archive carries that configuration, not a CI run record. The rules run unchanged from inside this archive.
+The evidence integrity gate — `backend/tests/test_editor_integrity_gate.py` and `backend/tests/test_spec_doc_consistency.py` — encodes every finding from the QA rounds as an executable rule. It can be installed as a pre-commit hook (`python backend/scripts/integrity_gate.py --install-hook`) and the shipped workflow (`.github/workflows/evidence-integrity-gate.yml`) runs it on every push in CI; the archive carries that configuration, not a CI run record or proof that the hook is installed. The rules run unchanged from inside this archive.
 
 ---
 
@@ -176,7 +176,20 @@ python -m venv .venv
 
 This is exactly how [`docs/chapter4/test_execution.log`](docs/chapter4/test_execution.log) was produced — from a fresh extraction of this archive, in a new virtual environment built from `backend/requirements.txt`. The log's header records the interpreter and `rootdir`; [`docs/chapter4/test_environment_freeze.txt`](docs/chapter4/test_environment_freeze.txt) is the `pip freeze` of that environment, and a rule in the suite checks it satisfies `requirements.txt`.
 
-### 4.5 Cross-check the confusion matrix
+### 4.5 Build and run the application from this archive
+
+The archive is also a runnable copy of the application. From the archive root:
+
+```bash
+cd frontend && npm ci && npm run build && cd ..     # type-check + production bundle
+docker compose config                               # validates the compose file
+docker compose up --build                           # db + backend + frontend
+# backend health: http://127.0.0.1:8000/api/v1/health   frontend: http://127.0.0.1:3000
+```
+
+On Windows, extract the archive to a short path (for example `C:/tmp`): paths longer than 260 characters break the extraction of nested `node_modules` binaries during `npm ci`. All compose variables have defaults, so no `.env` is required; `.env.example` carries the calibrated thresholds and a rule keeps it equal to `config.py`. [`docs/chapter4/build_verification.log`](docs/chapter4/build_verification.log) records these commands run from a clean extraction of this archive, with the backend's `/health` reporting the digest-verified checkpoint loaded.
+
+### 4.6 Cross-check the confusion matrix
 
 `docs/chapter4/evaluation_summary.json` must agree with `docs/chapter4/confusion_matrix.png` and with §2 of `docs/chapter4/model_evaluation_report.md`:
 

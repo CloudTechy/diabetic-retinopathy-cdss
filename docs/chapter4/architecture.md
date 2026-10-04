@@ -34,7 +34,7 @@ graph TD
         Vault[(Secure Private Binary Storage: /storage)]
     end
 
-    UI -->|HTTPS / TLS 1.3 REST| Router
+    UI -->|HTTP REST — TLS termination is a production deployment requirement, not part of the packaged development stack| Router
     PreFlight -.->|Pre-screens files| UI
     Router --> StateMachine
     StateMachine --> ValPipe

@@ -159,7 +159,7 @@ Trained model weights must be stored in the dedicated backend weights directory:
 backend/
 ├── models/
 │   └── weights/
-│       ├── efficientnet_b0_dr_v1.pth   <-- Place your checkpoint file here
+│       ├── efficientnet_b0_dr.pth   <-- Place your checkpoint file here
 │       └── .gitkeep
 ```
 
@@ -168,10 +168,10 @@ Before loading weights into memory, the backend computes the SHA-256 digest of t
 
 ```bash
 # On Linux / macOS:
-sha256sum backend/models/weights/efficientnet_b0_dr_v1.pth
+sha256sum backend/models/weights/efficientnet_b0_dr.pth
 
 # On Windows PowerShell:
-Get-FileHash -Algorithm SHA256 .\backend\models\weights\efficientnet_b0_dr_v1.pth
+Get-FileHash -Algorithm SHA256 .\backend\models\weights\efficientnet_b0_dr.pth
 ```
 
 ### 5.3 Safe State Dict Loading Routine
@@ -376,7 +376,7 @@ In `backend/.env` (or environment settings):
 AI_INFERENCE_ENGINE=mock
 
 # Checkpoint settings (active when AI_INFERENCE_ENGINE=pytorch)
-MODEL_CHECKPOINT_PATH=./backend/models/weights/efficientnet_b0_dr_v1.pth
+MODEL_CHECKPOINT_PATH=./backend/models/weights/efficientnet_b0_dr.pth
 MODEL_DEVICE=cpu
 MODEL_TARGET_LAYER=features.8
 MODEL_EXPECTED_SHA256=d3b07384d113edec49eaa6238ad5ff00f898394b9f076b666a337181c015b6d5
@@ -432,14 +432,14 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 Copy your trained model checkpoint into the designated location:
 ```bash
 mkdir -p backend/models/weights/
-cp /path/to/my_dr_model.pth backend/models/weights/efficientnet_b0_dr_v1.pth
+cp /path/to/<your-checkpoint> backend/models/weights/efficientnet_b0_dr.pth
 ```
 
 ### Step 3: Compute Checkpoint Hash
 Generate the SHA-256 digest:
 ```powershell
 # Windows PowerShell:
-Get-FileHash -Algorithm SHA256 .\backend\models\weights\efficientnet_b0_dr_v1.pth
+Get-FileHash -Algorithm SHA256 .\backend\models\weights\efficientnet_b0_dr.pth
 ```
 Copy the hash into `backend/.env` under `MODEL_EXPECTED_SHA256`.
 
@@ -447,7 +447,7 @@ Copy the hash into `backend/.env` under `MODEL_EXPECTED_SHA256`.
 Update `backend/.env`:
 ```ini
 AI_INFERENCE_ENGINE=pytorch
-MODEL_CHECKPOINT_PATH=./backend/models/weights/efficientnet_b0_dr_v1.pth
+MODEL_CHECKPOINT_PATH=./backend/models/weights/efficientnet_b0_dr.pth
 ```
 
 ### Step 5: Execute Automated Verification Test

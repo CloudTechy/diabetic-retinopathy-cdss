@@ -47,7 +47,10 @@ export function analyzeRetinalImageOnCanvas(
   const validMimes = ['image/jpeg', 'image/jpg', 'image/png'];
   const mimePassed = validMimes.includes(mimeType.toLowerCase()) || mimeType === '';
   const sizePassed = fileSizeBytes <= 15 * 1024 * 1024;
-  const dimensionPassed = width >= 256 && height >= 256;
+  // The backend's MIN_IMAGE_DIMENSION (backend/app/core/config.py) is the rule;
+  // this browser check is a preliminary courtesy and the server re-checks
+  // every image. A rule in the suite keeps this constant equal to the backend's.
+  const dimensionPassed = width >= 480 && height >= 480;
 
   const gate1Passed = mimePassed && sizePassed && dimensionPassed;
   let gate1Reason: string | undefined;
@@ -58,10 +61,10 @@ export function analyzeRetinalImageOnCanvas(
     gate1Action = 'Export retinal photography from the camera workstation in standard JPEG or PNG format.';
   } else if (!sizePassed) {
     gate1Reason = `File size (${(fileSizeBytes / 1024 / 1024).toFixed(1)} MB) exceeds 15 MB limit.`;
-    gate1Action = 'Export at standard diagnostic resolution without uncompressed multi-layer payloads.';
+    gate1Action = 'Export the image at a supported technical resolution and file size (JPEG or PNG, 15 MB or less).';
   } else if (!dimensionPassed) {
-    gate1Reason = `Native resolution (${width}x${height} px) is below minimum allowable dimension (256x256 px).`;
-    gate1Action = 'Provide standard high-resolution digital fundus photography.';
+    gate1Reason = `Native resolution (${width}x${height} px) is below the backend's minimum of 480x480 px (preliminary browser check; the server re-checks every image).`;
+    gate1Action = 'Provide a fundus photograph at or above the supported technical resolution.';
   }
 
   // --- GATE 2: Retinal Relevance & Chromatic Signature ---

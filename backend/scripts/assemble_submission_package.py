@@ -81,6 +81,19 @@ SINGLE_FILES = [
     # training_environment.md sources its frontend and database versions from these.
     "frontend/package-lock.json",
     "docker-compose.yml",
+    # Everything `docker compose up --build` and `npm ci && npm run build`
+    # consume. The runbook advertises both; an archive that cannot do what
+    # its runbook says is a defect, and a rule checks these against the
+    # Dockerfiles and package.json.
+    "backend/Dockerfile",
+    "frontend/Dockerfile",
+    "frontend/package.json",
+    "frontend/index.html",
+    "frontend/vite.config.ts",
+    "frontend/tsconfig.json",
+    "frontend/tsconfig.node.json",
+    "frontend/tailwind.config.js",
+    "frontend/postcss.config.js",
 ]
 
 # Whole trees, shipped at their repository paths. A suffix tuple limits what

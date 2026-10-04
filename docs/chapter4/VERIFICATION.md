@@ -74,7 +74,7 @@ files in this archive.
 [2] Reported metrics recompute from held_out_predictions.csv
       recomputed from 525 raw predictions
         accuracy  84.00%   reported 84.0
-        QWK       0.865832   reported 0.865832
+        QWK       0.865832   reported 0.8658318425760286
         correct   441 / 525
       prediction ids == manifest test split: yes (525 vs 525)
       README headline table quotes the recomputed values: yes
@@ -98,7 +98,7 @@ files in this archive.
       -> PASS
 
 [5] Documents quote the committed test log
-      log records: 208 collected, 207 passed, 0 failed, 1 skipped
+      log records: 214 collected, 213 passed, 0 failed, 1 skipped
       every test count in every .md in this package matches this log
       -> PASS
 
