@@ -138,8 +138,8 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
     contrast_dynamic_range = round(contrast_std, 1)
 
     # 3. Illumination uniformity & extreme pixel ratio
-    underexposed_count = np.sum(fg_pixels < 25.0)
-    overexposed_count = np.sum(fg_pixels > 235.0)
+    underexposed_count = np.sum(fg_pixels < settings.ILLUMINATION_UNDEREXPOSED_BELOW)
+    overexposed_count = np.sum(fg_pixels > settings.ILLUMINATION_OVEREXPOSED_ABOVE)
     total_fg = max(len(fg_pixels), 1)
     extreme_ratio = float((underexposed_count + overexposed_count) / total_fg)
     illumination_index = round(max(0.0, 1.0 - extreme_ratio), 2)

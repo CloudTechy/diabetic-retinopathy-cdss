@@ -49,6 +49,9 @@ def main():
     parser.add_argument("--max-dim", type=int, default=None,
                         help="Analysis resolution to test (default: the configured value)")
     parser.add_argument("--seed", type=int, default=42, help="Sampling seed when --limit is used")
+    parser.add_argument("--out", default=None,
+                        help="Write the JSON here instead of beside the shipped artefacts "
+                             "(a smoke run must not overwrite the full-corpus evidence)")
     parser.add_argument("--full-corpus-check", action="store_true",
                         help="Hash every manifest image rather than a sample of 64")
 
@@ -205,8 +208,8 @@ def main():
              abs(f2.red_to_blue_ratio_exact - r2.red_to_blue_ratio_exact)),
             ("coverage_lo", f2.mask_coverage_exact,
              abs(f2.mask_coverage_exact - r2.mask_coverage_exact)),
-            ("coverage_hi", f2.mask_coverage_exact,
-             abs(f2.mask_coverage_exact - r2.mask_coverage_exact)),
+            ("red_share", f2.red_channel_ratio,
+             abs(f2.red_channel_ratio - r2.red_channel_ratio)),
             ("contrast", f3.contrast_dynamic_range_exact,
              abs(f3.contrast_dynamic_range_exact - r3.contrast_dynamic_range_exact)),
             ("extreme", f3.extreme_pixel_ratio_exact,
@@ -231,8 +234,8 @@ def main():
     print()
     print("Largest metric deviations observed (full resolution vs reduced),")
     print("measured on the full-precision values the gates decide on:")
-    print(f"  aperture coverage    {worst['coverage']:.5f}   (thresholds "
-          f"{settings.RETINAL_MIN_COVERAGE} / {settings.RETINAL_MAX_COVERAGE})")
+    print(f"  aperture coverage    {worst['coverage']:.5f}   (threshold "
+          f">= {settings.RETINAL_MIN_COVERAGE}; no upper bound)")
     print(f"  red/blue ratio       {worst['rb']:.5f}   (threshold "
           f"{settings.RETINAL_RED_RATIO_MIN})")
     print(f"  contrast std         {worst['contrast']:.5f}   (threshold "
@@ -274,7 +277,7 @@ def main():
     package_target = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                   "logs_and_metrics")
     target = repo_target if os.path.isdir(repo_target) else package_target
-    out = os.path.join(target, "gate_downsampling_verification.json")
+    out = args.out or os.path.join(target, "gate_downsampling_verification.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as fh:
         json.dump({

@@ -10,17 +10,17 @@
 
 ## 1. Fail-Closed 3-Stage Gating Architecture
 
-Pre-inference validation prevents invalid, corrupted, or non-retinal photographs from reaching the neural network. Any gate failure triggers an immediate abort and generates non-diagnostic recapture feedback.
+Pre-inference validation reduces the chance that invalid, corrupted, poor-quality or non-fundus-looking photographs reach the neural network. Any gate failure triggers an immediate abort and generates non-diagnostic recapture feedback.
 
 ### Gate 1: File Integrity & Security
 - **MIME Type & Magic Bytes:** Validates 0xFFD8FF (JPEG) and 0x89504E47 (PNG).
 - **Payload Size Bound:** Rejects files > 15.0 MB to prevent denial-of-service memory exhaustion.
-- **De-identification:** Strips proprietary EXIF metadata and generates a random UUID filename.
+- **Storage:** the uploaded bytes are stored unchanged under `<record id>_<8 hex>.<jpg|png>` (extension from the magic bytes). **No EXIF metadata is stripped**: an earlier revision claimed de-identification by EXIF stripping and a random UUID filename, neither of which the code performs.
 
 ### Gate 2: Technical retinal-image relevance (geometry and colour profile)
 
 > Three heuristics, none of which identifies anatomy. Passing them means the input meets the configured geometry and colour-profile thresholds; it does not confirm retinal identity, anatomical correctness or clinical gradability. An earlier revision of this heading called the gate "Retinal Anatomical Relevance".
-- **Calibrated Aspect Ratio Threshold:** Accepts $0.65 \leq \text{aspect ratio} \leq 1.65$. This range accommodates standard ophthalmic fundus cameras (4:3 = 1.333, 3:2 = 1.500, and square 1:1 apertures) while rejecting extreme panoramic strips (> 1.65) or elongated documents (< 0.65).
+- **Aspect-ratio bounds (a-priori literals, not calibrated):** Accepts $0.65 \leq \text{aspect ratio} \leq 1.65$. This range accommodates standard ophthalmic fundus cameras (4:3 = 1.333, 3:2 = 1.500, and square 1:1 apertures) while rejecting extreme panoramic strips (> 1.65) or elongated documents (< 0.65).
 - **Foreground (aperture) coverage:** foreground is luminance > 15; coverage must be at least 20.0% of the frame (`RETINAL_MIN_COVERAGE`). No upper bound is enforced: an earlier revision stated an upper bound of 98.0% from a setting (`RETINAL_MAX_COVERAGE`) that was declared but never used by the gate; the setting has been removed.
 - **Colour profile:** Red/Blue channel ratio $\ge 1.15$ (`RETINAL_RED_RATIO_MIN`) and red channel share $\ge 36.0\%$ (`RETINAL_RED_SHARE_MIN`). An earlier revision stated 38.0% while the code tested 36%.
 
@@ -83,7 +83,7 @@ held-out images; with it corrected, the contrast threshold still rejected 5 of 1
 *Applied 2026-10-01 by `apply_validation_thresholds.py`.*
 
 
-- **Illumination Uniformity:** Analyzes extreme underexposed (< 10) and overexposed (> 245) pixel ratios, rejecting acquisitions with extreme ratio $> 0.35$.
+- **Illumination Uniformity:** counts foreground pixels with luminance < 25 (`ILLUMINATION_UNDEREXPOSED_BELOW`) or > 235 (`ILLUMINATION_OVEREXPOSED_ABOVE`) and rejects when their share exceeds 0.35 (`ILLUMINATION_EXTREME_RATIO_MAX`). An earlier revision stated < 10 and > 245, which the code never used.
 
 ---
 

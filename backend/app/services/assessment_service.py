@@ -151,7 +151,10 @@ class AssessmentService:
 
         # Save image file to storage
         os.makedirs(settings.STORAGE_IMAGES_PATH, exist_ok=True)
-        stored_filename = f"{assessment_id}_{uuid.uuid4().hex[:8]}.jpg"
+        # extension from the magic bytes: PNG bytes were stored as .jpg and served
+        # with the wrong media type
+        ext = ".png" if image_bytes.startswith(b"\x89PNG") else ".jpg"
+        stored_filename = f"{assessment_id}_{uuid.uuid4().hex[:8]}{ext}"
         storage_path = os.path.join(settings.STORAGE_IMAGES_PATH, stored_filename)
         with open(storage_path, "wb") as f:
             f.write(image_bytes)

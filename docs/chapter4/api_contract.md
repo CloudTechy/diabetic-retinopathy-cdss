@@ -14,7 +14,7 @@
 ## 1. Authentication & Session Endpoints (`/api/v1/auth`)
 
 ### `POST /api/v1/auth/login`
-- **Description:** Authenticates clinical user and issues an HMAC-SHA256 signed JWT bearer token.
+- **Description:** Authenticates the user and issues an HMAC-SHA256 signed JWT bearer token. The token itself is valid for `ACCESS_TOKEN_EXPIRE_MINUTES` (24 hours); the 15-minute inactivity lock (`sessionTimeoutMinutes`) is enforced by the browser, not by the token.
 - **Request Body:**
   ```json
   {
@@ -28,12 +28,15 @@
     {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
       "token_type": "bearer",
-      "expires_in": 900,
       "user": {
-        "id": "usr-01",
+        "id": "1",
         "name": "Dr. Demo Clinician (Simulated)",
+        "email": "demo.clinician@research-prototype.invalid",
         "role": "Simulated Reviewer — Research Prototype",
-        "licenseNumber": "SIM-000001"
+        "licenseNumber": "SIM-000001",
+        "facility": "Research Prototype Environment",
+        "sessionTimeoutMinutes": 15,
+        "loginTime": "2026-10-04T06:55:02.118Z"
       }
     }
     ```
@@ -81,22 +84,34 @@
   ```json
   [
     {
+      "name": "Gate 1",
       "gateIndex": 1,
+      "status": "passed",
       "title": "File Integrity & Safe Decode",
-      "status": "passed",
-      "metrics": { "mimeType": "image/jpeg", "fileSizeBytes": 1420950 }
+      "metric": "MIME image/png, SHA-256 computed, 0.87 MB",
+      "details": "Valid binary signature (0x89504E47), dimension 1844x1226 px.",
+      "rejectionReason": null,
+      "clinicalAction": null
     },
     {
+      "name": "Gate 2",
       "gateIndex": 2,
-      "title": "Technical retinal-image relevance",
       "status": "passed",
-      "metrics": { "aspectRatio": 1.0, "chromaticRatioRB": 1.48 }
+      "title": "Technical retinal-image relevance",
+      "metric": "Aperture coverage: 71.5%, R/B ratio: 6.31",
+      "details": "Input meets the configured geometry and colour-profile thresholds (foreground coverage 71.5%, R/B 6.31). This does not confirm retinal identity, anatomical correctness or clinical gradability.",
+      "rejectionReason": null,
+      "clinicalAction": null
     },
     {
+      "name": "Gate 3",
       "gateIndex": 3,
-      "title": "Technical Quality & Sharpness",
       "status": "passed",
-      "metrics": { "laplacianVariance": 12.2, "illuminationIndex": 0.97 }
+      "title": "Technical Quality & Sharpness",
+      "metric": "Laplacian: 12.2 (>= 4.3), Illumination index: 1.00",
+      "details": "The image met the configured technical thresholds (illumination index 1.00, dynamic range 55.3). This does not confirm retinal identity, anatomical correctness or clinical gradability.",
+      "rejectionReason": null,
+      "clinicalAction": null
     }
   ]
   ```
@@ -124,15 +139,15 @@
   ```
 
 ### `POST /api/v1/assessments/{id}/review`
-- **Description:** Records the reviewing professional's own independent response under the signed-in account and write-locks the assessment record. `clinicianName`, `licenseNumber` and `facility` in the body are ignored; the signatory is always the authenticated user.
+- **Description:** Records the reviewing professional's own independent response under the signed-in account and write-locks the assessment record. `clinicianName`, `licenseNumber` and `facility` in the body are ignored; the signatory is always the authenticated user. `justificationNotes` (at least 15 characters) is required for `disagree` and `inconclusive`; `inconclusiveReason` is required for `inconclusive` (422 otherwise). Unknown fields are ignored.
 - **Request Body:**
   ```json
   {
-    "agreement": "agree",
+    "agreement": "inconclusive",
     "reviewerAssessedGrade": 2,
     "reviewerAssessedGradeLabel": "Grade 2: Moderate NPDR",
-    "justificationNotes": "Macular exudates corroborated on slit lamp exam.",
-    "optionalObservation": "Clinician's free-text note. The system records it verbatim and draws no referral conclusion from it. e.g. discussed findings with patient at clinic."
+    "justificationNotes": "Media haze over the posterior pole prevents a confident grade.",
+    "inconclusiveReason": "Media Opacity / Cataract"
   }
   ```
 - **Response `200 OK`:** Finalized assessment object with its record hash anchor (an unkeyed SHA-256 over the review fields, truncated to 24 hexadecimal characters) and state `completed`.

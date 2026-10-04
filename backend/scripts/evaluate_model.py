@@ -8,6 +8,9 @@ records per-image logits/scores/predictions, and computes all metrics
 exclusively from the resulting CSV.
 """
 
+# NOTE: this standalone script imports scikit-learn, which is NOT in requirements.txt
+# (the served application does not need it); install it separately to run this
+# script. It produces no artefact shipped in the evidence package.
 import os
 import csv
 import sys

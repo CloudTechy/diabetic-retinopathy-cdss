@@ -11,6 +11,9 @@ Trains on ACTUAL APTOS 2019 retinal fundus images using:
 - Real validation metrics (loss, accuracy, QWK, F1) from genuine predictions
 """
 
+# NOTE: this standalone script imports scikit-learn, which is NOT in requirements.txt
+# (the served application does not need it); install it separately to run this
+# script. It produces no artefact shipped in the evidence package.
 import os
 import csv
 import sys

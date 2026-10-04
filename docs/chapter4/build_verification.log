@@ -1,14 +1,14 @@
 BUILD VERIFICATION - run from a clean extraction of the archive
-date (UTC): 2026-10-04T12:29:30Z
-sha256 of the pre-build archive this tree produced: 113fe0e7972158c60abce517223e7f131b5d8c60542a70f0b745a0bcd44ee930
+date (UTC): 2026-10-04T20:16:27Z
+sha256 of the pre-build archive this tree produced: 75c0dea2eb0f951bc2409f6dda57d8df191a518381b7312770d0ba17fa3a6ce1
   (the shipped archive differs from it only by this log, the test log, the container freeze and the regenerated transcript - no code or build input differs)
 node v24.9.0   npm 11.6.0   Docker Compose version v2.40.2-desktop.1
-extraction path: C:/tmp/r26_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
+extraction path: C:/tmp/r27_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
 
 $ cd frontend && npm ci
 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
 
-added 347 packages in 55s
+added 347 packages in 33s
 
 $ npm run build
 transforming...
@@ -17,8 +17,8 @@ rendering chunks...
 computing gzip size...
 dist/index.html                   0.53 kB │ gzip:   0.35 kB
 dist/assets/index-BrV95zl2.css   38.01 kB │ gzip:   7.03 kB
-dist/assets/index-BrXcsJ4y.js   348.62 kB │ gzip: 102.75 kB
-✓ built in 1m 6s
+dist/assets/index-COVK9lbo.js   348.61 kB │ gzip: 102.71 kB
+✓ built in 23.99s
 dist/index.html produced: yes
 
 $ docker compose config --quiet
@@ -39,17 +39,17 @@ exit: 0
  Container dr_cdss_frontend  Started
 
 $ docker compose -p drcdss_evidence ps
-NAME               IMAGE                      COMMAND                  SERVICE    CREATED          STATUS                    PORTS
-dr_cdss_backend    drcdss_evidence-backend    "uvicorn main:app --…"   backend    41 seconds ago   Up 6 seconds              0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
-dr_cdss_db         postgres:16-alpine         "docker-entrypoint.s…"   db         42 seconds ago   Up 19 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
-dr_cdss_frontend   drcdss_evidence-frontend   "docker-entrypoint.s…"   frontend   40 seconds ago   Up 4 seconds              0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
+NAME               IMAGE                      COMMAND                  SERVICE    CREATED          STATUS                   PORTS
+dr_cdss_backend    drcdss_evidence-backend    "uvicorn main:app --…"   backend    18 seconds ago   Up 1 second              0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+dr_cdss_db         postgres:16-alpine         "docker-entrypoint.s…"   db         19 seconds ago   Up 7 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+dr_cdss_frontend   drcdss_evidence-frontend   "docker-entrypoint.s…"   frontend   17 seconds ago   Up 1 second              0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
 
 $ curl http://127.0.0.1:8000/api/v1/health   (polled until inference_ready)
 {
   "status": "healthy",
   "app_name": "Diabetic Retinopathy CDSS",
   "environment": "development",
-  "timestamp": "2026-10-04T12:40:13.036081+00:00",
+  "timestamp": "2026-10-04T20:20:23.040502+00:00",
   "storage_accessible": true,
   "inference_ready": true,
   "inference_engine": "pytorch",

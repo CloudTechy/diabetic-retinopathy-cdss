@@ -225,9 +225,9 @@ export function analyzeRetinalImageOnCanvas(
       redShare,
       isDocumentOrDiagram,
       metric: gate2Passed
-        ? `Retinal FoV confirmed, R/B ratio: ${redToBlueRatio.toFixed(2)}`
+        ? `Aperture coverage and colour profile within thresholds, R/B ratio: ${redToBlueRatio.toFixed(2)}`
         : isDocumentOrDiagram
-        ? 'Non-retinal diagram/document detected'
+        ? 'Bright uniform corners and neutral colour profile (document/diagram pattern)'
         : `R/B spectral ratio: ${redToBlueRatio.toFixed(2)} (Min: 1.15)`,
       rejectionReason: gate2Reason,
       clinicalAction: gate2Action,

@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     LAPLACIAN_BLUR_THRESHOLD: float = 4.3
     CONTRAST_THRESHOLD: float = 8.8
     ILLUMINATION_EXTREME_RATIO_MAX: float = 0.35
+    # The luminance cut-offs that define an "extreme" foreground pixel. They were
+    # literals (25 / 235) while the specification said 10 / 245.
+    ILLUMINATION_UNDEREXPOSED_BELOW: float = 25.0
+    ILLUMINATION_OVEREXPOSED_ABOVE: float = 235.0
     RETINAL_MIN_COVERAGE: float = 0.20
     # No upper coverage bound is enforced. An earlier revision declared
     # RETINAL_MAX_COVERAGE = 0.98, documented it as a rejection, and never used it.
@@ -68,8 +72,8 @@ class Settings(BaseSettings):
     RETINAL_RED_SHARE_MIN: float = 0.36
     # Longest side used when computing Gate 2/3 DISTRIBUTION statistics
     # (coverage ratios, channel means, contrast std, extreme-pixel proportions).
-    # Nearest-neighbour subsampling leaves these unbiased while removing ~59%
-    # of end-to-end request latency. Set to 0 to analyse at full resolution.
+    # Nearest-neighbour subsampling leaves these unbiased; gates 2+3 were 59.1%
+    # of the request before this optimisation (41.4% after); see resource_benchmark.md.
     # Gate 3's Laplacian variance is a spatial derivative and is NOT affected
     # by this; it keeps its own separate 1024px resize.
     VALIDATION_ANALYSIS_MAX_DIM: int = 512
@@ -89,7 +93,6 @@ class Settings(BaseSettings):
                 "efficientnet_b0_dr.pth"))
     )
     MODEL_DEVICE: str = "cpu"
-    MODEL_SCORE_THRESHOLD: float = 0.5
     # SHA-256 of the evaluated checkpoint. When set, the engine refuses to load
     # any other weights, tying served predictions to the graded artefact.
     MODEL_CHECKPOINT_SHA256: str = (

@@ -526,7 +526,12 @@ OVERCLAIM_PHRASES = [
     # messages, and a claim that single-cohort metrics predict runtime.
     "vascular characteristics", "Vascular edge sharpness", "ocular media opacities",
     "pupil dilation", "spectral balance confirmed", "media haze",
-    "ophthalmic vascular pigmentation", "predictor of runtime behaviour", "valid predictor",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
+    "ophthalmic vascular pigmentation", "predictor of runtime behaviour", "valid predictor",
+    # Reviewer round on rev26: the upload screen and the browser check still
+    # asserted retinal identity or its absence; a colormap implied lesions.
+    "Non-Retinal Modality Detected", "Non-Retinal Content Detected", "Non-retinal content detected",
+    "Non-retinal diagram/document detected", "non-retinal subject", "Retinal FoV confirmed", "Modality Detected",
+    "High Lesion Contrast", "Strips proprietary EXIF", "random UUID filename",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
     "Authorized for credentialed healthcare practitioners",
 ]
 
@@ -4044,7 +4049,7 @@ def test_api_contract_examples_are_labelled_and_respect_the_thresholds():
     assert blocks, "no JSON examples found"
     checked = 0
     for block in blocks:
-        for m in re.finditer(r'"laplacianVariance":\s*([\d.]+),\s*"illuminationIndex":\s*([\d.]+)', block):
+        for m in re.finditer(r'"metric": "Laplacian: ([\d.]+) \(>= [\d.]+\), Illumination index: ([\d.]+)"', block):
             checked += 1
             lap, idx = float(m.group(1)), float(m.group(2))
             assert lap >= cfg["LAPLACIAN_BLUR_THRESHOLD"], "example Laplacian %s would be rejected" % lap
@@ -4445,10 +4450,17 @@ def test_every_declared_validation_threshold_is_used_by_a_gate():
     threshold the code does not execute is documentation of nothing.
     """
     names = re.findall(r"^\s+((?:RETINAL_|LAPLACIAN_|CONTRAST_|ILLUMINATION_|MIN_IMAGE_|VALIDATION_ANALYSIS_)[A-Z_]+):", read(CONFIG_PY), re.M)
-    assert len(names) >= 7, names
+    assert len(names) >= 9, names
     used = "\n".join(read(path) for path in python_sources(VALIDATION_DIR))
     unused = [n for n in names if "settings.%s" % n not in used]
     assert not unused, "declared in config.py but read by no gate: %s" % unused
+    # and no threshold-like setting anywhere in config.py may be read by nothing
+    # (MODEL_SCORE_THRESHOLD = 0.5 was declared, shipped and read nowhere)
+    all_names = re.findall(r"^\s+([A-Z][A-Z0-9_]*(?:_THRESHOLD|_MIN|_MAX|_BELOW|_ABOVE|_RATIO_MAX))\s*:", read(CONFIG_PY), re.M)
+    everywhere = "\n".join(read(os.path.join(dp, f)) for dp, _, fs in os.walk(os.path.join(REPO_ROOT, "backend", "app")) for f in fs if f.endswith(".py"))
+    everywhere += "\n".join(read(path) for path in python_sources(os.path.join(REPO_ROOT, "backend", "scripts")))
+    dead = [n for n in all_names if "settings.%s" % n not in everywhere]
+    assert not dead, "declared in config.py but read nowhere in the application or its scripts: %s" % dead
 
 
 def test_documented_gate2_thresholds_are_the_executed_ones():
@@ -4549,3 +4561,100 @@ def test_transcript_date_is_not_older_than_the_build_check():
     b = re.search(r"date \(UTC\): (\d{4}-\d{2}-\d{2})", read(os.path.join(CHAPTER4, "build_verification.log")))
     assert m and b, "dates not found"
     assert m.group(1) >= b.group(1), "the transcript (%s) predates the build check (%s)" % (m.group(1), b.group(1))
+
+
+# ======================================================================
+# RULE GROUP AO - the reviewer's audit of rev26
+# ======================================================================
+
+VERIFIER_PY = os.path.join(REPO_ROOT, "backend", "scripts", "verify_gate_downsampling.py")
+FIXTURE_DIR = os.path.join(REPO_ROOT, "backend", "tests", "fixtures")
+
+
+def test_gate3_cutoffs_are_settings_the_spec_quotes():
+    """The spec said < 10 / > 245; the code used literals 25 / 235. Both are settings now, quoted by the spec."""
+    cfg = _config_defaults()
+    gate3 = read(GATE3_PY)
+    assert "settings.ILLUMINATION_UNDEREXPOSED_BELOW" in gate3 and "settings.ILLUMINATION_OVEREXPOSED_ABOVE" in gate3
+    assert not re.search(r"fg_pixels [<>] \d", gate3), "gate3 compares against a literal cut-off"
+    spec = read(VALIDATION_SPEC)
+    sec = spec[spec.index("### Gate 3"):]
+    m = re.search(r"luminance < ([\d.]+) \(`ILLUMINATION_UNDEREXPOSED_BELOW`\) or > ([\d.]+) \(`ILLUMINATION_OVEREXPOSED_ABOVE`\)", sec)
+    assert m, "the spec does not quote the cut-off settings"
+    assert float(m.group(1)) == cfg["ILLUMINATION_UNDEREXPOSED_BELOW"] and float(m.group(2)) == cfg["ILLUMINATION_OVEREXPOSED_ABOVE"], (
+        "the spec's cut-offs differ from config.py")
+    for stale in ("(< 10)", "(> 245)"):
+        assert stale not in sec.split("An earlier revision")[0]
+
+
+def test_gate1_claims_only_what_it_does():
+    """
+    The spec claimed EXIF stripping and a random UUID filename; the service
+    writes the bytes unchanged under <record id>_<8 hex>.<ext>. The Gate 1
+    docstring said >= 512x512 (MIN_IMAGE_DIMENSION is 480).
+    """
+    spec = read(VALIDATION_SPEC)
+    sec = spec[spec.index("### Gate 1"):spec.index("### Gate 2")]
+    assert "No EXIF metadata is stripped" in sec, "the spec does not say that no metadata is stripped"
+    doc = read(os.path.join(VALIDATION_DIR, "gate1_integrity.py"))
+    assert "MIN_IMAGE_DIMENSION" in doc.split("def evaluate_gate1")[1].split('"""')[1], "the Gate 1 docstring does not name MIN_IMAGE_DIMENSION"
+    assert not re.search(r">= \d+x\d+", doc.split("def evaluate_gate1")[1].split('"""')[1]), "the Gate 1 docstring hard-codes a resolution"
+    svc = read(os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py"))
+    assert 'ext = ".png" if image_bytes.startswith(b"\\x89PNG") else ".jpg"' in svc, "PNG bytes are stored as .jpg"
+    assert "exif" not in svc.lower() or "no exif" in svc.lower()
+
+
+def test_downsampling_verifier_runs_on_the_fixture():
+    """
+    Round twenty-six removed RETINAL_MAX_COVERAGE from config and left the
+    verifier iterating a 'coverage_hi' key it no longer defined: the script
+    that produced shipped evidence crashed on its first image. It must run.
+    """
+    import subprocess, sys, tempfile
+    src = read(VERIFIER_PY)
+    code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))   # a comment records the removal
+    assert '"coverage_hi"' not in code and "settings.RETINAL_MAX_COVERAGE" not in code
+    assert '"red_share"' in src.split("for key, value, deviation in")[1][:600], "the loop does not measure red_share"
+    shipped = os.path.join(CHAPTER4, "gate_downsampling_verification.json")
+    before = sha256_of(shipped) if os.path.exists(shipped) else None
+    with tempfile.TemporaryDirectory() as out:
+        # --out keeps the smoke run away from the shipped full-corpus JSON
+        r = subprocess.run([sys.executable, VERIFIER_PY, FIXTURE_DIR, "--out", os.path.join(out, "v.json")],
+                           cwd=os.path.join(REPO_ROOT, "backend"), capture_output=True, text=True, timeout=600)
+        assert r.returncode == 0, "verify_gate_downsampling.py failed on the fixture:\n" + (r.stderr or r.stdout)[-1500:]
+        assert os.path.exists(os.path.join(out, "v.json")), "the verifier wrote no JSON to --out"
+    if before is not None:
+        assert sha256_of(shipped) == before, "the smoke run overwrote the shipped gate_downsampling_verification.json"
+
+
+def _schema_fields(module, cls):
+    import importlib
+    return set(getattr(importlib.import_module(module), cls).model_fields)
+
+
+def test_api_contract_examples_match_their_schemas():
+    """
+    Round sixteen compared the /result example with its schema; the login,
+    validation and review examples still carried fields the schemas do not
+    have (expires_in, metrics objects, optionalObservation) and lacked ones
+    they do. Response examples must have exactly the schema's keys; request
+    examples may use only the schema's keys.
+    """
+    text = read(API_CONTRACT)
+    login = _json_example_after(text, "### `POST /api/v1/auth/login`")
+    assert set(login) == {"username", "password"} == _schema_fields("app.schemas.auth", "LoginRequest")
+    token = json.loads(re.findall(r"```json\n(.*?)```", text[text.index("### `POST /api/v1/auth/login`"):], re.S)[1])
+    assert set(token) == _schema_fields("app.schemas.auth", "TokenResponse"), sorted(token)
+    assert set(token["user"]) == _schema_fields("app.schemas.auth", "ClinicianUserResponse"), sorted(token["user"])
+    gates = _json_example_after(text, "### `GET /api/v1/assessments/{id}/validation`")
+    want = _schema_fields("app.schemas.assessment", "GateResultSchema")
+    assert len(gates) == 3 and all(set(g) == want for g in gates), [sorted(g) for g in gates]
+    pipeline_titles = re.findall(r'"title": "([^"]+)"', read(os.path.join(VALIDATION_DIR, "pipeline.py")))
+    assert [g["title"] for g in gates] == pipeline_titles
+    review = _json_example_after(text, "### `POST /api/v1/assessments/{id}/review`")
+    allowed = _schema_fields("app.schemas.assessment", "ClinicianReviewSubmitRequest")
+    assert set(review) <= allowed, sorted(set(review) - allowed)
+    if review["agreement"] == "inconclusive":
+        assert review.get("inconclusiveReason"), "the example would be refused by the server"
+    create = _json_example_after(text, "### `POST /api/v1/assessments`")
+    assert set(create) <= _schema_fields("app.schemas.assessment", "AssessmentCreateRequest")

@@ -30,7 +30,7 @@ export const COLORMAPS: Record<ColormapType, ColormapDefinition> = {
   },
   inferno: {
     id: 'inferno',
-    name: 'Inferno (High Lesion Contrast)',
+    name: 'Inferno (high contrast)',
     description: 'Black to vivid violet, red and yellow. Excellent for microaneurysm focal hot-spots.',
     cssGradient: 'linear-gradient(to right, #000004, #320a5e, #781c6d, #bb3754, #ed6925, #fcb014, #fcffa4)',
     stops: [

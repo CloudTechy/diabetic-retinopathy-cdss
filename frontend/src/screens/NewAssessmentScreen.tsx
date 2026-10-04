@@ -94,7 +94,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
           if (analysis.failedGate === 2) {
             setValidationWarning(
               analysis.gate2.rejectionReason ||
-              'Non-retinal content detected: Image does not exhibit ophthalmic fundus chromatic characteristics (mean R/B ratio < 1.15) or circular aperture. Suspected document, schematic, or non-ocular photography.'
+              'The image did not meet the configured geometry or colour-profile thresholds in the browser pre-check.'
             );
           } else if (analysis.failedGate === 3) {
             setValidationWarning(
@@ -387,7 +387,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                       <ShieldAlert className="w-4 h-4 text-rose-600" />
                       <span>
                         {clientValidation.failedGate === 2
-                          ? 'Non-Retinal Content Detected (Gate 2 Failure)'
+                          ? 'Geometry / colour-profile threshold not met (browser Gate 2)'
                           : clientValidation.failedGate === 3
                           ? 'Quality Issue Detected (Gate 3)'
                           : 'Format / File Issue (Gate 1)'}
@@ -435,7 +435,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
             <div className="p-3.5 bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs rounded-xl flex items-start gap-2.5">
               <ShieldAlert className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <span className="font-bold block text-sm">Gate 2 Safeguard Alert: Non-Retinal Modality Detected</span>
+                <span className="font-bold block text-sm">Browser pre-check: geometry / colour-profile threshold not met</span>
                 <p className="text-[11px] leading-relaxed font-medium">{validationWarning}</p>
                 <p className="text-[10px] text-rose-700 font-mono">
                   Proceeding will trigger the fail-closed validation rejection. Downstream model evaluation and Grad-CAM will be strictly prohibited.
