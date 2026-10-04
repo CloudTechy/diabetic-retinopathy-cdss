@@ -2998,50 +2998,97 @@ def test_no_clinical_authority_overclaims_in_documents():
     offenders = []
     # The screenshot register was once excluded wholesale as a "correction
     # record", and "tamper-evident" sat in an ACTIVE figure caption through
-    # two reviews. Every document is read; only a line that records a past
-    # error, or a blockquote paragraph that does, may name a banned phrase.
+    # two reviews. Then a LINE that mentioned the superseded run sheltered a
+    # "cryptographic audit" claim at the other end of the same line, and the
+    # independent reviewer showed that "replaced" or "removed" anywhere on
+    # the line - or on the previous line - did the same. The unit is now the
+    # SENTENCE (a table cell counts as one): a correction marker exempts only
+    # the sentence it is in, plus phrases inside double quotes in a paragraph
+    # that records a correction.
     for rel, text in iter_markdown(include_correction_records=True):
         if "/archive/" in rel.replace("\\", "/"):
             continue
-        lines = text.splitlines()
-        for lineno, line in enumerate(lines, 1):
-            low = line.lower()
-            # Markdown soft-wraps a sentence, so the marker may sit on the
-            # previous line of the same paragraph.
-            previous = lines[lineno - 2].lower() if lineno >= 2 else ""
-            if any(marker in low or marker in previous
-                   for marker in CORRECTION_LINE_MARKERS):
-                continue
-            # A blockquote is exempt only when it is a correction RECORD: it
-            # must say so with one of the explicit markers. "superseded" alone
-            # does not qualify - a note that mentions the superseded split while
-            # overstating something else was slipping through on that word.
-            if line.startswith(">") and any(
-                    marker in para for marker in BLOCKQUOTE_RECORD_MARKERS
-                    for para in [_blockquote_paragraph(lines, lineno - 1)]):
-                continue
-            for phrase in OVERCLAIM_PHRASES:
-                if phrase.lower() in low:
-                    offenders.append("%s:%d: %r" % (rel, lineno, phrase))
+        for lineno, phrase, sentence in _offending_phrases(text, OVERCLAIM_PHRASES):
+            offenders.append("%s:%d: %r in: %s" % (rel, lineno, phrase, sentence[:90]))
     assert not offenders, (
         "Authority or certification language in documents:\n  " + "\n  ".join(offenders))
 
 
-BLOCKQUOTE_RECORD_MARKERS = ("earlier revision", "earlier version", "removed, not regenerated",
-                             "never existed", "withdrawn", "deleted rather than")
+# A sentence records a correction when it says so. "replaced", "removed" and
+# "withdrawn" alone do not: they describe ordinary engineering too.
+RECORD_MARKERS = ("earlier revision", "earlier version", "earlier set", "an earlier", "previously",
+                  "superseded run", "superseded contaminated", "superseded result", "superseded set",
+                  "superseded sharpness", "never existed", "removed, not regenerated",
+                  "deleted rather than", "was withdrawn", "were withdrawn", "no longer")
 
 
-def _blockquote_paragraph(lines, idx):
-    """The whole contiguous '>' block around idx (bare '>' lines included), lower-cased."""
-    def live(i):
-        return 0 <= i < len(lines) and lines[i].startswith(">")
-    lo = idx
-    while live(lo - 1):
-        lo -= 1
-    hi = idx
-    while live(hi + 1):
-        hi += 1
-    return "\n".join(lines[lo:hi + 1]).lower()
+def _units(text):
+    """
+    Yield (lineno, unit_lower, paragraph_lower) for every sentence of prose
+    and every cell of every table row, outside code fences. Soft-wrapped
+    lines of one paragraph are joined before sentences are split, so a
+    sentence that wraps is still one unit; a table row never joins its
+    neighbours; a bare '>' or a blank line ends a paragraph.
+    """
+    lines = text.split("\n")
+    in_code = False
+    para = []   # [(lineno, text)]
+
+    def flush():
+        if not para:
+            return
+        first = para[0][0]
+        joined = " ".join(t for _, t in para)
+        # map each sentence start back to a line number
+        starts, pos = [], 0
+        for ln, t in para:
+            starts.append((pos, ln))
+            pos += len(t) + 1
+        offset = 0
+        for sent in re.split(r"(?<=[.!?])\s+", joined):
+            if not sent.strip():
+                continue
+            ln = max((l for p, l in starts if p <= offset), default=first)
+            yield ln, sent.lower(), joined.lower()
+            offset += len(sent) + 1
+
+    for i, raw in enumerate(lines, 1):
+        line = re.sub(r"^(\s*>\s?)+", "", raw).strip()
+        if line.startswith("```"):
+            in_code = not in_code
+            yield from flush(); para = []
+            continue
+        if in_code:
+            continue
+        if not line:
+            yield from flush(); para = []
+            continue
+        if line.startswith("|"):
+            yield from flush(); para = []
+            for cell in _table_cells(line):
+                if cell.strip():
+                    yield i, cell.lower(), line.lower()
+            continue
+        if re.match(r"^#{1,6}\s", line):
+            yield from flush(); para = []
+            yield i, line.lower(), line.lower()
+            continue
+        para.append((i, line))
+    yield from flush()
+
+
+def _offending_phrases(text, phrases):
+    """[(lineno, phrase, unit)] for every banned phrase outside a correction sentence."""
+    out = []
+    for lineno, unit, para in _units(text):
+        if any(m in unit for m in RECORD_MARKERS):
+            continue
+        quoted = " ".join(re.findall(r'"([^"]*)"', unit)) if any(m in para for m in RECORD_MARKERS) else ""
+        for phrase in phrases:
+            pl = phrase.lower()
+            if pl in unit and pl not in quoted:
+                out.append((lineno, phrase, unit))
+    return out
 
 
 # ======================================================================
@@ -3756,14 +3803,18 @@ def test_no_unqualified_append_only_or_cryptographic_control_claims():
             continue
         if src.endswith("test_editor_integrity_gate.py"):
             continue
-        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, src)).split("\n"), 1):
-            low = line.lower()
-            if any(marker in low for marker in CORRECTION_LINE_MARKERS):
+        text = read(os.path.join(REPO_ROOT, src))
+        if src.endswith(".md"):
+            units = _units(text)
+        else:   # code: a line is the unit; a correction comment exempts only itself
+            units = ((n, l.lower(), l.lower()) for n, l in enumerate(text.split("\n"), 1))
+        for lineno, unit, _para in units:
+            if any(m in unit for m in RECORD_MARKERS):
                 continue
-            if "append-only" in low and "application-level" not in low:
-                offenders.append("%s:%d: 'append-only' without 'application-level' on the line" % (src, lineno))
-            if "cryptograph" in low:
-                offenders.append("%s:%d: %r" % (src, lineno, line.strip()[:90]))
+            if "append-only" in unit and "application-level" not in unit:
+                offenders.append("%s:%d: 'append-only' without 'application-level' in the same sentence" % (src, lineno))
+            if "cryptograph" in unit:
+                offenders.append("%s:%d: %r" % (src, lineno, unit.strip()[:90]))
     assert not offenders, "Controls described more strongly than they operate:\n  " + "\n  ".join(offenders)
     for rel in ("docs/chapter4/database_schema.md", "docs/chapter4/api_contract.md"):
         text = read(os.path.join(REPO_ROOT, rel))
@@ -4044,3 +4095,40 @@ def test_illumination_index_is_described_as_the_code_computes_it():
     assert ("1 −" in row or "1 -" in row) and "0.35" in row, "illumination_index is not described as 1 - extreme ratio with the 0.35 limit"
     edge = next(l for l in read(DATABASE_SCHEMA).splitlines() if "PROFESSIONAL_REVIEWS :" in l and "USERS" in l)
     assert "signs" not in edge, "the ER edge still says a user 'signs' a review"
+
+
+# ======================================================================
+# RULE GROUP AJ - the reviewer's audit of rev16
+# ======================================================================
+
+def test_result_example_region_is_a_cell_the_code_can_name():
+    """The example said "centre cell"; the code names the middle cell "central"."""
+    source = read(AI_SERVICE)
+    rows = re.search(r'row = \("(\w+)", "(\w+)", "(\w+)"\)', source).groups()
+    cols = re.search(r'col = \("(\w+)", "(\w+)", "(\w+)"\)', source).groups()
+    cells = {"central"} | {"%s-%s" % (r, c) for r in rows for c in cols if (r, c) != (rows[1], cols[1])}
+    example = _json_example_after(read(API_CONTRACT), "### `GET /api/v1/assessments/{id}/result`")
+    m = re.search(r"in the ([\w-]+) cell of a 3x3 grid", example["topActivationRegion"])
+    assert m and m.group(1) in cells, "the example names a cell the code cannot emit: %s (code: %s)" % (
+        m.group(1) if m else example["topActivationRegion"], sorted(cells))
+
+
+def test_manifest_attributes_each_figure_to_its_producer():
+    """
+    The manifest's evidence paragraph attributed figures 4.1-4.9 and the
+    "every API call returned 2xx" guarantee to capture_live_screenshots.js;
+    figure 4.5 (04b) is produced by capture_rejection.js, which has no such
+    guard. The paragraph must exclude 4.5 from both claims.
+    """
+    text = read(os.path.join(CHAPTER4, "screenshot_evidence_manifest.md"))
+    lines = text.splitlines()
+    start = next(i for i, l in enumerate(lines) if "**What these figures evidence.**" in l)
+    block = []
+    for l in lines[start:]:
+        if not l.startswith(">"):
+            break
+        block.append(l)
+    para = "\n".join(block)
+    assert "Figures 4.1–4.9 were captured" not in para, "the paragraph still attributes all nine figures to the live script"
+    assert "except 4.5" in para or "4.5 excepted" in para or "other than 4.5" in para, "the paragraph does not except figure 4.5"
+    assert "capture_rejection.js" in para, "the paragraph does not name figure 4.5's producer"

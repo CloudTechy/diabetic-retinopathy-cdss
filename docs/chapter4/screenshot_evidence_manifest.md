@@ -29,11 +29,13 @@
 > [!NOTE]
 > **What these figures evidence.**
 >
-> Figures 4.1–4.9 were captured on 2026-10-04 **against the running system**, by
+> Figures 4.1–4.9, except 4.5, were captured on 2026-10-04 **against the running system**, by
 > [`frontend/scripts/capture_live_screenshots.js`](../../frontend/scripts/capture_live_screenshots.js):
 > a real authenticated session, the three admission gates at their calibrated
 > thresholds, and the real digest-verified EfficientNet-B0 checkpoint
-> (`67d0b896…`). Every API call made during capture returned 2xx, and the
+> (`67d0b896…`). Every API call made during that capture returned 2xx (the script
+> exits non-zero otherwise). Figure 4.5 is produced by `capture_rejection.js`, which
+> fires only on the tick it observes the rejected state and carries no such guard. The
 > Grad-CAM overlay was fetched from the server as PNG bytes rather than drawn by
 > the browser. The uploaded image is the genuine held-out APTOS fixture
 > `d1f1ea894da1` (manifest split `test`, ground-truth grade 2); the model graded

@@ -117,7 +117,7 @@
       { "grade": 4, "label": "Grade 4: Proliferative DR", "score": 0.01 }
     ],
     "targetLayer": "features.8 (Conv2d Bottleneck Residual)",
-    "topActivationRegion": "Peak Grad-CAM activation in the centre cell of a 3x3 grid over the frame (focal: 9% of the map is above half the peak).",
+    "topActivationRegion": "Peak Grad-CAM activation in the central cell of a 3x3 grid over the frame (focal: 9% of the map is above half the peak).",
     "modelVersion": "EfficientNet-B0-DR-v1 (fixed weights)",
     "inferenceTimestamp": "2026-10-04T06:55:12.418Z"
   }
