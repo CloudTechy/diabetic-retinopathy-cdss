@@ -43,7 +43,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **68.2%**, NPV **95.4%** |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 204 passed, 1 skipped |
+| **Test suite** | 206 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.
@@ -56,7 +56,7 @@ Every number in this table is checked against `docs/chapter4/clinical_metrics.js
 
 2. **Latency is dominated by input handling, not inference.** End-to-end CPU latency is **180.41 ms mean / 342.49 ms P95** on the canonical run. Validation gates 2+3 cost **74.69 ms (41.4%)** — reduced from 59.1% by subsampling their statistics — while the model forward pass is **29.22 ms (16.2%)**. Latency scales with camera resolution, not with disease severity.
 
-   Two earlier runs of the same harness are retained in [`docs/chapter4/resource_benchmark.md`](docs/chapter4/resource_benchmark.md) §1b purely as a **measurement of between-session variance**: two runs of identical code over identical images came out 1.41× apart in absolute time while their stage shares agreed to within half a percentage point. Cite the shares, not the milliseconds.
+   Two earlier runs of the same harness are retained in [`docs/chapter4/resource_benchmark.md`](docs/chapter4/resource_benchmark.md) §1b purely as a **measurement of between-session variance**: two runs of the same harness and checkpoint over the same 30 images came out 1.41× apart in absolute time; their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`). Cite the combined gate share and the ordering of stages, not the milliseconds.
 
 ---
 

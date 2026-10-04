@@ -45,7 +45,7 @@ python -m pytest backend/tests/ -v
 - **Gate 2 (Retinal Field Relevance):** Enforces ophthalmic aperture aspect ratio ($0.65 - 1.65$), dark corner boundary check, and chromatic red/blue spectral ratio ($R/B > 1.15$). Rejects documents, portraits, and radiographs.
 - **Gate 3 (Technical Image Quality):** Convolves discrete Laplacian operator ($3 \times 3$) to quantify blur variance ($\sigma_L^2 \ge 4.3$) and measures normalized luminance ($0.20 \le \bar{Y} \le 0.85$).
 - **Fail-Closed Safety Invariant:** Failure at any gate permanently prohibits model tensor execution and locks the encounter in `rejected` status.
-- **Clinician-in-the-Loop Governance:** AI model observations and professional review responses reside in distinct, decoupled database entities; a signed review is hash-sealed and write-locked (`is_immutable`).
+- **Clinician-in-the-Loop Governance:** AI model observations and professional review responses reside in distinct, decoupled database entities; a signed review is hash-anchored and write-locked (`is_immutable`).
 
 ---
 
@@ -185,8 +185,8 @@ flowchart TD
      - Left Container (Neutral Gray): Preliminary Model Observation (`EfficientNet-B0`, `features.8`).
      - Right Container (Clinical Teal): Authoritative **"Professional Review Response"** with clinician name, registration code, and timestamped digital signature hash.
 2. **Actions:**
-   - Click **"Inspect Immutable Audit Trail"** to open Screen 8 drawer.
-   - Click **"Download Tamper-Evident Report"** to generate the official clinical PDF.
+   - Click **"Inspect Audit Trail"** to open the Screen 8 drawer.
+   - Click **"Download Report (hash-anchored PDF)"** to generate the assessment report PDF.
 
 ### Screen 8: Record History & Audit Trail Drawer
 1. **Historical Records:** Filter completed, pending, and rejected assessments.
@@ -195,7 +195,7 @@ flowchart TD
 
 ---
 
-## 5. Tamper-Evident PDF Assessment Report Verification
+## 5. Hash-Anchored PDF Assessment Report Verification
 
 1. Download the generated PDF report from Screen 7.
 2. **Verify Document Specifications:**

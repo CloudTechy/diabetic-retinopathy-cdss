@@ -37,7 +37,7 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 | **Image Processing** | `pillow` (PIL) | 11.3.0 | Decoding, format conversion, resampling |
 | **Scientific Computing** | `numpy` | 2.5.2 | Grad-CAM activation arrays, metric computation |
 | **Backend Web Framework** | `fastapi` | 0.142.2 | RESTful API routing inference requests |
-| **Database Engine** | `PostgreSQL` | 16 (`postgres:16-alpine` image) | Relational metadata and immutable audit logging |
+| **Database Engine** | `PostgreSQL` | 16 (`postgres:16-alpine` image) | Relational metadata and append-only audit logging |
 | **Frontend Framework** | `React` / `TypeScript` | 18.3.1 / 5.9.3 | Clinical browser user interface |
 | **Frontend Build Tool** | `Vite` | 5.4.21 | Development server and production build |
 | **Container Runtime** | Docker Compose | — | Service orchestration |

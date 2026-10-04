@@ -7,7 +7,7 @@
 - **API Standard:** OpenAPI 3.1.0 / RESTful JSON / RFC 7807 Problem Details
 - **Base Endpoint:** `/api/v1`
 - **Git Commit:** `22cda2c` (Baseline)
-- **Date Approved:** 2026-09-28
+- **Last Revised:** 2026-10-04
 
 ---
 
@@ -139,9 +139,9 @@
 - **Response `200 OK`:** Finalized assessment object with cryptographic signature and state `completed`.
 
 ### `GET /api/v1/assessments/{id}/report`
-- **Description:** Streams server-rendered tamper-evident PDF assessment report.
+- **Description:** Streams the server-rendered PDF assessment report, hash-anchored to the original image.
 - **Response `200 OK`:** `Content-Type: application/pdf`.
 
 ### `GET /api/v1/assessments/{id}/audit`
-- **Description:** Returns chronological append-only audit trail for legal compliance.
+- **Description:** Returns the chronological append-only audit trail for governance review.
 - **Response `200 OK`:** Array of timestamped audit events.

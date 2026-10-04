@@ -5,9 +5,9 @@
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Git Commit:** `22cda2c` (Baseline)
-- **Date Approved:** 2026-09-28
+- **Last Revised:** 2026-10-04
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
-- **Overall Verification Status:** **204 of 205 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
+- **Overall Verification Status:** **206 of 207 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
 
@@ -24,7 +24,7 @@
 | **FR-07** | Automated EfficientNet-B0 inference outputting 5-class score distribution with frozen weights. | `backend/app/services/ai_service.py` | `TestClinicianInTheLoopGovernance.test_model_execution_mode_is_strictly_evaluation` | **PASS** |
 | **FR-08** | Grad-CAM visual attribution generation hooked onto final bottleneck `features.8`. | `backend/app/services/ai_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 | **FR-09** | Clinician Review with Tri-State Agreement (Agree / Disagree / Unable to determine). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_review_friction_justification_rule` | **PASS** |
-| **FR-10** | Tamper-evident PDF Assessment Report generation and immutable append-only audit trail. | `backend/app/services/report_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
+| **FR-10** | Hash-anchored PDF assessment report generation and append-only audit trail. | `backend/app/services/report_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 
 ---
 
@@ -58,7 +58,7 @@
 | **NFR-02** | **Memory Footprint:** Peak backend memory usage under load. | $< 512.0$ MB RSS | `backend/scripts/benchmark_resources.py` (Peak 328.8 MB) | **PASS** |
 | **NFR-03** | **Weights Storage:** Compressed checkpoint disk footprint. | $< 50.0$ MB | `backend/models/weights/efficientnet_b0_dr.pth` (15.6 MB) | **PASS** |
 | **NFR-04** | **Parameter Efficiency:** Total neural network parameter count. | $\approx 4.01$ M | Parameter inspection: exactly 4,013,953 parameters | **PASS** |
-| **NFR-05** | **Tamper Evidence:** SHA-256 digest on original image and reviews. | Cryptographic immutability | `TestClinicianInTheLoopGovernance.test_completed_review_immutability` | **PASS** |
+| **NFR-05** | **Hash anchoring:** SHA-256 digest of the original image; SHA-256 over the review fields; the API refuses a second review. | Hash anchoring + API write-lock (not enforced at the database) | `TestClinicianInTheLoopGovernance.test_completed_review_immutability` | **PASS** |
 | **NFR-06** | **Separation of Domains:** AI output and Reviewer-assessed grade stored in separate tables. | Independent DB entities | `TestClinicianInTheLoopGovernance.test_separate_storage_of_ai_result_and_review` | **PASS** |
 | **NFR-07** | **Terminology Compliance:** Model outputs strictly labeled "model-generated class score". | Zero diagnostic claims | `TestClinicalTerminologyCompliance.test_api_result_terminology_compliance` | **PASS** |
 | **NFR-08** | **Session Inactivity:** Automatic 15-minute inactivity workstation auto-lock. | Clinical workstation safety | `frontend/src/components/Header.tsx` timer listener | **PASS** |

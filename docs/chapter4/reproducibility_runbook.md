@@ -4,7 +4,7 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objectives:** d, e, f, g, h, i
-- **Date:** 2026-09-29
+- **Last Revised:** 2026-10-04
 - **Reference run:** Google Colab Tesla T4, PyTorch 2.11.0+cu128, 2026-09-30 (clean rerun), checkpoint `67d0b896…`
 
 ---
@@ -90,7 +90,7 @@ This same digest is asserted at runtime by the inference service, and by `test_r
 [`dataset_split_manifest.csv`](dataset_split_manifest.csv) carries the SHA-256 of each image's **actual bytes**. With the APTOS `train_images/` directory available:
 
 ```bash
-python docs/chapter4_submission_package/dataset_sample_and_manifest/verify_manifest_hashes.py
+python docs/chapter4/verify_manifest_hashes.py
 ```
 
 Or spot-check a single row by hand:
@@ -206,4 +206,4 @@ python -m venv .venv
 # Linux/macOS: .venv/bin/python in place of .venv/Scripts/python.exe
 ```
 
-Expected: **205 collected — 204 passed, 1 skipped** (wall-clock ≈ 60–75 s with PyTorch installed; the committed log records 61 s). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.
+Expected: **207 collected — 206 passed, 1 skipped** (wall-clock ≈ 60–75 s with PyTorch installed; the committed log records 61 s). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.

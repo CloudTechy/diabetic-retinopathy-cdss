@@ -4,7 +4,7 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective h (Classification-performance evaluation)
-- **Date:** 2026-09-29
+- **Last Revised:** 2026-10-04
 - **Basis:** Every figure cited below is recomputed from [`held_out_predictions.csv`](held_out_predictions.csv).
 
 ---
@@ -148,8 +148,11 @@ Retinal datasets differ systematically in sensor spectral response, illumination
 
 The partition used for all superseded results was contaminated: 3,662 records
 over 3,534 unique image hashes, 48 duplicate groups spanning partitions (27 test
-images byte-identical to a training image, 17 validation, 6 test-to-validation),
-and 30 duplicate groups carrying conflicting severity labels.
+images byte-identical to a training image, 17 validation, 6 test-to-validation —
+image counts, which exceed 48 because 1 group span all three partitions),
+and 30 duplicate groups carrying conflicting severity labels. Those figures
+recompute from that manifest, archived as
+[`archive/dataset_split_manifest.superseded_65edf3d.csv`](archive/dataset_split_manifest.superseded_65edf3d.csv).
 
 **This has been corrected.** The split was rebuilt by hashing image bytes,
 excluding the 30 label-conflicting groups, keeping one representative per
@@ -170,15 +173,18 @@ clinician could adjudicate them and restore them to a future split.
 End-to-end CPU latency is **180.41 ms mean / 147.45 ms median / 342.49 ms P95**
 over 30 held-out images on a 4-thread x86_64 CPU
 ([`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json)). All figures
-in this section come from that single run, measured at the calibrated admission
-thresholds so every image executes the full path.
+in this section come from that single run. The harness times gates 2 and 3 and
+continues regardless of their verdict, so every image executes the full path
+whatever the thresholds; it measures the cost of the accepted path, not the
+rejection path.
 
 **The absolute figure is a property of the machine as much as of the system.**
-Two runs of identical code over identical images, differing only in which
-machine Colab allocated, came out **1.41× apart** (254.31 ms and 180.41 ms)
-while their stage shares agreed to within half a percentage point
-([`resource_benchmark.md`](resource_benchmark.md) §1b). The shares below are the
-durable finding; the milliseconds are an order of magnitude.
+Two runs of the same harness and checkpoint over the same 30 images, differing in
+which machine Colab allocated, came out **1.41× apart** (254.31 ms and 180.41 ms);
+their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`)
+([`resource_benchmark.md`](resource_benchmark.md) §1b). The combined gate share and
+the ordering of stages are the durable finding; the milliseconds are an order of
+magnitude.
 
 **The tail is the part worth stating.** NFR-01 sets a 350 ms budget and is
 specified on the mean, which passes in all three runs. The **P95 breaches it in

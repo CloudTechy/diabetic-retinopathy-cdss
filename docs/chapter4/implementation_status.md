@@ -65,7 +65,7 @@ docs/chapter4/
 ├── requirements_test_matrix.md             <-- FR/NFR traceability matrix
 ├── screenshot_evidence_manifest.md         <-- 11 required interface figures & captions
 ├── architecture.md                         <-- Layered architecture & component breakdown
-├── database_schema.md                      <-- Relational schema & immutable audit ledger
+├── database_schema.md                      <-- Relational schema & append-only audit ledger
 ├── api_contract.md                         <-- OpenAPI/REST endpoint schemas
 ├── reproducibility_runbook.md              <-- Step-by-step replication commands
 └── known_limitations.md                    <-- Clinical boundaries, Mild NPDR, hardware scope

@@ -5,7 +5,7 @@
 - **Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Programme:** PGD Computer Science, Faculty of Physical Sciences
 - **Benchmark Objective:** Objective i supporting evidence (inference latency & efficiency)
-- **Execution Date:** 2026-10-01 (§1, §2 — calibrated admission thresholds); 2026-09-29 (§1a baseline comparison, §3 corrections)
+- **Execution Dates:** 2026-10-01 (§1, §2: run C); 2026-09-29 and 2026-09-30 (§1a: baseline and post-optimisation); 2026-09-30 and 2026-10-01 (§1b: runs A and B)
 - **Raw Evidence:** [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), [`cpu_end_to_end_benchmark.csv`](cpu_end_to_end_benchmark.csv), [`benchmark_timings.csv`](benchmark_timings.csv), [`benchmark_summary.json`](benchmark_summary.json)
 
 ---
@@ -27,9 +27,9 @@ The complete request path, on the CPU the system deploys to, over 30 real held-o
 Comfortably interactive for an assisted-review workflow on a commodity 4-thread CPU with no accelerator.
 
 > [!IMPORTANT]
-> **Cite the stage shares, not the milliseconds.** See §1b — two runs of
-> identical code over identical images differed by **1.41×** in absolute time
-> while their stage shares agreed to within half a percentage point.
+> **Cite the combined gate share and the ordering of stages, not the
+> milliseconds.** See §1b — two runs of the same harness and checkpoint over the
+> same 30 images differed by **1.41×** in absolute time; their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`).
 
 ### Stage breakdown
 
@@ -52,21 +52,19 @@ Stage means sum to 178.98 ms against a measured total of 180.41 ms. The 1.44 ms 
 
 ## 1b. How much of this figure is the machine? Measured, not assumed.
 
-Three runs of this harness exist over the same 30 held-out images:
+Three runs of this harness exist on the clean checkpoint. Runs B and C share the same 30 clean-split images; run A's image set is that of the earlier runs (the superseded split):
 
-| Run | Date | Thresholds | Mean | Median | P95 | Gates 2+3 share |
-| :--- | :--- | :--- | ---: | ---: | ---: | ---: |
-| A | 2026-09-30 | a priori (rejected the corpus) | 212.54 ms | 179.68 ms | 373.39 ms | 44.5% |
-| B | 2026-10-01 | calibrated | 254.31 ms | 213.30 ms | 447.95 ms | 41.9% |
+| Run | Date | Checkpoint pinned at its commit | Images (mean size) | Mean | Median | P95 | Gates 2+3 share |
+| :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: |
+| A | 2026-09-30 | commit installed `67d0b896…`; session's checkpoint not establishable (see provenance) | superseded split (1,807 KB) | 212.54 ms | 179.68 ms | 373.39 ms | 44.5% |
+| B | 2026-10-01 | `67d0b896…` | clean split (1,798 KB) | 254.31 ms | 213.30 ms | 447.95 ms | 41.9% |
+| **C — CANONICAL (§1)** | 2026-10-01 | `67d0b896…` | clean split (1,798 KB), same 30 as B | **180.41 ms** | **147.45 ms** | **342.49 ms** | **41.4%** |
 
 Every run of this harness that is cited anywhere in this package ships as a JSON file: run C is [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json); runs A and B, the 2026-09-29 baseline and the 2026-09-30 post-optimisation run are under [`benchmark_history/`](benchmark_history/), each recorded with the git commit it was committed at in [`evidence_provenance.md`](evidence_provenance.md). An earlier revision of this table dated run A 2026-09-29 and gave its gate share as 43.9%; the file says 2026-09-30 and 44.5% — 43.9% belongs to the post-optimisation run.
-| **C — CANONICAL (§1)** | 2026-10-01 | calibrated | **180.41 ms** | **147.45 ms** | **342.49 ms** | **41.4%** |
 
-**B and C are identical in everything under our control** — same commit, same
-thresholds, same images, same 30 measured requests after 3 warm-ups. They differ
-only in which machine Colab allocated. The absolute times differ by **1.41×**.
+**B and C were measured with the same harness, the same checkpoint, the same 30 images and the same 30 requests after 3 warm-ups.** They are *not* the same commit: run B was committed while `config.py` still held the a-priori threshold values and run C after calibration — a difference the harness does not act on, because it times gates 2 and 3 and continues regardless of their verdict. Otherwise they differ in which machine Colab allocated. The absolute times differ by **1.41×**.
 
-Their stage shares differ by **half a percentage point**.
+Their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`). The combined share and the ordering of the stages are the durable finding; per-stage decimals are not.
 
 That is the whole argument for quoting shares. A reader who takes 180.41 ms as a
 property of the system will be wrong by up to 40% on different hardware; a reader
@@ -91,6 +89,14 @@ Every value in §1 and §2 is reproduced verbatim from [`cpu_end_to_end_benchmar
 > run: §1 was measured later, on a different session, at calibrated thresholds.
 > These numbers are kept verbatim because the argument below depends on the two
 > columns having been measured against each other.
+>
+> **Both runs were measured with the withdrawn checkpoint `8ee14d7591a8…`**,
+> pinned in `config.py` at both commits, over 30 held-out images of the
+> superseded split. The comparison concerns pipeline stages — decode, gates,
+> composition, encode — whose cost does not depend on the weights; the forward
+> pass is the same EfficientNet-B0 topology. Nothing in this section describes
+> the evaluated model's accuracy, and the machine-normalised factor below is a
+> statement about that pipeline, not about the checkpoint that ships.
 
 An earlier run of this harness, before the validation gates were optimised, measured **315.25 ms** mean against the post-optimisation **164.79 ms**. Comparing the two naively gives 1.91×, and that number would be misleading.
 
@@ -118,7 +124,7 @@ For gates 2 and 3 specifically:
 
 ### Gate 2 is still the largest stage, and the reason is instructive
 
-At **59.03 ms it remains 32.7%** of the request in §1 (56.06 ms, 34.0% in the 2026-09-30 post-optimisation run), far more than the 5.2× local speedup predicted. The residual is not the statistics — those now run on a 512px subsample — it is **the downsampling itself**. Reducing a 3216×2136 image requires reading every source pixel once, and `rgb_image = pil_image.convert("RGB")` runs at full resolution before that.
+At **59.03 ms it remains 32.7%** of the request in §1 (56.06 ms, 34.0% in the 2026-09-30 post-optimisation run). The residual is not the statistics — those now run on a 512px subsample — it is **the downsampling itself**. Reducing a 3216×2136 image requires reading every source pixel once, and `rgb_image = pil_image.convert("RGB")` runs at full resolution before that.
 
 Gates 1, 2 and 3 each decode or convert the full-resolution image independently. Decoding once and sharing a single reduced copy across all three is the next available gain, and it is **not** implemented. `gate2` also retains the widest spread in the run (32.33 ms median against a 142.99 ms P95), consistent with cost tracking source resolution.
 
@@ -155,9 +161,8 @@ Two defects were found while producing this figure. Both are recorded because ea
 | :--- | ---: | ---: |
 | `compose` (512×512 overlay) | not retained as an artefact | **28.86 ms** in the 2026-09-29 baseline run |
 
-Before that fix, this same harness measured a markedly higher end-to-end total (that run predates the first committed artefact, is not retained, and no figure for it is claimed) with composition alone at 52% of the request.
+Before that fix, this same harness measured a markedly higher end-to-end total (that run predates the first committed artefact, is not retained, and no figure for it is claimed).
 
-**The harness initially measured a stale copy of that loop.** It held its own inline copy of the composition code, written before the vectorisation and not updated alongside it, so its first run reported timings for code the application no longer executed. It now imports `viridis_rgba_array`, the same function the inference service calls. The 592.02 ms figure is withdrawn; §1 comes from the corrected harness.
 
 ### 3.3 Validation gates now analyse a subsample
 
@@ -177,7 +182,7 @@ Gate 3 improves less because its Laplacian variance is deliberately excluded. Sh
 python backend/scripts/verify_gate_downsampling.py aptos2019/train_images
 ```
 
-**At the uncalibrated thresholds, this reported zero verdict changes across all 3,662 APTOS images** (790.7 s), with Laplacian deviation exactly 0.000000 and largest deviations of 0.0032 on aperture coverage and 0.30 on contrast standard deviation.
+At the uncalibrated thresholds an earlier run of this checker reported zero verdict changes across all 3,662 APTOS images. That run is not retained as an artefact and its figures are withdrawn; the callout below explains why the result was not meaningful.
 
 > [!IMPORTANT]
 > **That result was measured at thresholds that rejected every genuine image**,

@@ -5,7 +5,7 @@
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective a (System architecture, workflow & database design)
 - **Git Commit:** `22cda2c` (Baseline)
-- **Date Approved:** 2026-09-28
+- **Last Revised:** 2026-10-04
 
 ---
 
@@ -103,14 +103,14 @@ graph TD
   |   | REVIEWING OPHTHALMOL. |
   |   +-----------------------+
   |
-  | 4. Submits Official Review (Agree / Disagree / Unable to determine)
+  | 4. Submits Professional Review (Agree / Disagree / Unable to determine)
   v
 +-------------------------------------------------------+
 | Process 4.0: Review Sign-off, Report & Audit Storage |
 +-------------------------------------------------------+
   |
-  +---> Persists immutable review to PostgreSQL
-  +---> Generates tamper-evident Assessment Report PDF
+  +---> Persists the write-locked review to PostgreSQL
+  +---> Generates the hash-anchored Assessment Report PDF
 ```
 
 ---

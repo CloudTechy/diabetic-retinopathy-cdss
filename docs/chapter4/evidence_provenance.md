@@ -45,16 +45,17 @@ which only this script emits.
 | Artefact | Produced by | Reads |
 | :--- | :--- | :--- |
 | `docs/chapter4/clinical_metrics.json` | `backend/scripts/analyze_clinical_metrics.py` | `held_out_predictions.csv`, `dataset_split_manifest.csv` |
-| `docs/chapter4/cpu_end_to_end_benchmark.json` | `backend/scripts/benchmark_cpu_end_to_end.py` | the checkpoint + held-out images |
+| `docs/chapter4/cpu_end_to_end_benchmark.json` | `backend/scripts/benchmark_cpu_end_to_end.py` | checkpoint `67d0b89641f0…` over 30 held-out images of the clean split (mean 1,798 KB), the same 30 as run B; calibrated thresholds in `config.py` |
 | `docs/chapter4/cpu_end_to_end_benchmark.csv` | `backend/scripts/benchmark_cpu_end_to_end.py` | same run, flat form |
-| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-29_baseline_pre_optimisation.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `d05ef60b4033` (2026-09-29) | the checkpoint + the same 30 held-out images |
-| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-30_post_optimisation.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `bba9ce43948e` (2026-09-30) | the checkpoint + the same 30 held-out images |
-| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-30_run_A_a_priori_thresholds.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `422dcb72c96f` (2026-09-30) | the checkpoint + the same 30 held-out images |
-| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-10-01_run_B_calibrated.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `1a7b5d251e6b` (2026-10-01) | the checkpoint + the same 30 held-out images |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-29_baseline_pre_optimisation.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `d05ef60b4033` (2026-09-29) | checkpoint `8ee14d7591a8…` — the **withdrawn** contaminated-run checkpoint, pinned in `config.py` at that commit — over 30 held-out images of the superseded split (mean 1,807 KB) |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-30_post_optimisation.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `bba9ce43948e` (2026-09-30) | checkpoint `8ee14d7591a8…` (withdrawn; pinned at that commit) over the same 30 superseded-split images (mean 1,807 KB) |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-30_run_A_a_priori_thresholds.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `422dcb72c96f` (2026-09-30) | committed in the same commit that installed the clean checkpoint `67d0b89641f0…`, but its image set is that of the earlier runs (mean 1,807 KB, the superseded split) and its `pytorch` field records a CUDA build on `device: cpu`; which checkpoint that session loaded cannot be established from the artefacts |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-10-01_run_B_calibrated.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `1a7b5d251e6b` (2026-10-01) | checkpoint `67d0b89641f0…` over 30 held-out images of the clean split (mean 1,798 KB); `config.py` at that commit still held the a-priori threshold values, which the harness does not act on |
 | `docs/chapter4/gate_downsampling_verification.json` | `backend/scripts/verify_gate_downsampling.py` | all 3,662 APTOS images |
 | `docs/chapter4/validation_test_results.csv` | `backend/scripts/generate_validation_evidence.py` | held-out images + stated derivations. VAL-14's derivation label reads "2.2:1 panorama": the operation reduces the height to 45% of the original, so the measured `gate2_aspect_ratio` (2.938 for that source) is the authoritative value and the label describes the intent |
 | `docs/chapter4/blur_threshold_calibration.json` | `backend/scripts/calibrate_blur_threshold.py` | the 2,979 train+val images named in `dataset_split_manifest.csv` |
 | `docs/chapter4/dataset_split_audit.json` | `backend/scripts/build_clean_split.py` | the APTOS image bytes + `train.csv` labels |
+| `docs/chapter4/archive/dataset_split_manifest.superseded_65edf3d.csv` | `notebooks/colab_train_and_evaluate.py` as committed at git `65edf3d6d6aa` (2026-09-29): the contaminated split, kept so the leakage figures in `known_limitations.md` §6 can be recomputed | the APTOS image bytes |
 | `VERIFY.py` | hand-written; produces no evidence | reads the artefacts above and recomputes their headline figures. Stdlib only, so a reviewer needs no environment. Its recorded transcript is `VERIFICATION.md`. |
 | `docs/chapter4/test_execution.log` | `python -m pytest tests/ -v` from `backend/` of a **fresh extraction of this archive**, in a new virtual environment built from `backend/requirements.txt`; its header records the interpreter and `rootdir` | the committed suite; the single authoritative run |
 | `docs/chapter4/test_environment_freeze.txt` | `pip freeze` in that same virtual environment | — |
@@ -98,7 +99,7 @@ The distinction here is **provenance**, not authenticity.
 | File | Reason |
 | :--- | :--- |
 | `validation_test_results.csv` *(previous version)* | Fabricated. Zero of its ten rows cited an actual held-out image: two were training images presented as held-out, six used identifiers absent from APTOS entirely (`NONRET-XRAY-01`, `CORRUPT-BYTE-01`, …), and its metrics were demonstration constants copied from the frontend mock. Regenerate with `generate_validation_evidence.py`. |
-| `sample_test_images/` | 640×480 synthetic placeholders, eight byte-identical, matching no real APTOS file. See `dataset_sample_and_manifest/README.md`. |
+| `sample_test_images/` | 640×480 synthetic placeholders, eight byte-identical, matching no real APTOS file. See `DATASET_MANIFEST_README.md`. |
 | `hash_verification_output.txt` | Reported those placeholders as "VERIFIED MATCH". |
 | `create_evaluated_checkpoint.py` | Built a randomly-initialised network and saved it to the production weights path. |
 | `generate_dataset_manifest.py` | Invented the N = 8,000 multi-cohort manifest. |

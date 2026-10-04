@@ -6,7 +6,6 @@
 - **Related Research Objective:** Objective a (System architecture, workflow & database design)
 - **Database Engine:** PostgreSQL 16 (`postgres:16-alpine`); columns typed `JSON` in the model map to PostgreSQL `json`
 - **ORM Mapping:** SQLAlchemy 2.1.3 / Pydantic 2.13.5
-- **Git Commit:** `22cda2c` (Baseline)
 - **Last Revised:** 2026-10-04 (transcribed from `backend/app/models/models.py`; checked by rule group X)
 
 ---
@@ -66,7 +65,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `camera_model` | VARCHAR(255) | YES | Make and model of fundus camera. |
 | `is_mydriatic` | BOOLEAN | NO | Pupillary dilation indicator. |
 | `clinical_notes` | TEXT | YES | Indication or clinical history notes. |
-| `status` | VARCHAR(50) | NO | State machine status (e.g. `needs_review`, `completed`, `rejected`). |
+| `status` | VARCHAR(50) | NO | Stored state-machine status: `accepted`, `completed`, `draft`, `inference`, `preprocessing`, `rejected`, `result_ready`, `uploaded`, `validating`. (`needs_review` is a display status derived for the worklist; it is never stored.) |
 | `created_by_id` | VARCHAR(36) | YES | Foreign Key (`users.id`). |
 | `created_at` | TIMESTAMPTZ | NO | Encounter creation timestamp. |
 | `updated_at` | TIMESTAMPTZ | NO | Last status transition timestamp. |
@@ -159,8 +158,8 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `clinician_name` | VARCHAR(255) | NO | Denormalized signatory name, captured at signing time. |
 | `license_number` | VARCHAR(100) | YES | Practitioner registration code, captured at signing time. |
 | `facility` | VARCHAR(255) | YES | Reviewing site, captured at signing time. |
-| `signature_hash` | VARCHAR(128) | NO | Integrity hash over the review fields. |
-| `is_immutable` | BOOLEAN | NO | Write-lock flag. Defaults to true: once signed, the row is not editable through the API. |
+| `signature_hash` | VARCHAR(128) | NO | Unkeyed SHA-256 (truncated to 24 hex characters) over assessment id, patient id, image hash, agreement, grade, justification, inconclusive reason, signatory name, licence, facility and timestamp. It anchors the recorded values; it does not prove who recorded them. |
+| `is_immutable` | BOOLEAN | NO | Write-lock flag. Defaults to true: once a review is recorded the API refuses a second one (state machine); the database itself does not enforce it. |
 | `signed_at` | TIMESTAMPTZ | NO | Immutability lock timestamp. |
 
 > [!NOTE]
@@ -178,7 +177,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 > signed, even if the user record changes afterwards.
 
 ### 7. `audit_events`
-*Append-only tamper-evident compliance log tracking every interaction.*
+*Append-only event log recording every interaction.*
 
 | Column | Type | Nullable | Description / Constraint |
 | :--- | :--- | :---: | :--- |

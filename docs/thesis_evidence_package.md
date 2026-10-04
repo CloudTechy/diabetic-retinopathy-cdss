@@ -121,7 +121,7 @@ The clinical decision boundaries, intended use and technical limitations of this
 
 ## 4. Academic Evidence & Research Integrity Declaration
 
-I hereby confirm that the test results, computational benchmarks, and traceability matrices presented in this evidence package reflect genuine automated test executions against the system codebase. All architectural invariants—including fail-closed gating, human-in-the-loop governance, immutable review auditing, and non-diagnostic microcopy—have been verified through automated test suites.
+I hereby confirm that the test results, computational benchmarks, and traceability matrices presented in this evidence package reflect genuine automated test executions against the system codebase. All architectural invariants—including fail-closed gating, human-in-the-loop governance, write-locked review auditing, and non-diagnostic microcopy—have been verified through automated test suites.
 
 **Researcher Signature**:  
 *Onyekelu Chukwuebuka Elochukwu*  

@@ -6,19 +6,19 @@
 - **Related Research Objective:** Objective i (Functional testing and end-to-end evaluation)
 - **Date Test Run:** 2026-10-03
 - **Test Framework:** Pytest 8.4.2 on Python 3.13.5 (as recorded in the header of [`test_execution.log`](test_execution.log)), Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **205 collected — 204 passed, 0 failed, 1 skipped**
+- **Overall Result:** **207 collected — 206 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 205 test cases was executed against the complete CDSS platform. 204 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 207 test cases was executed against the complete CDSS platform. 206 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      205
-Passed:               204 (99.5%)
+Tests Collected:      207
+Passed:               206 (99.5%)
 Failed:                 0  (0.0%)
 Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: ~77 seconds
@@ -71,7 +71,7 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 | Test Identifier | Test Target | Key Verification Invariant | Result |
 | :--- | :--- | :--- | :---: |
 | `test_separate_storage_of_ai_result_and_review` | Domain Separation | AI outputs and Clinician reviews in distinct DB tables | **PASS** |
-| `test_completed_review_immutability` | Legal Traceability | Final review signatures cannot be altered or overwritten | **PASS** |
+| `test_completed_review_immutability` | Traceability | A recorded review cannot be altered or overwritten through the API | **PASS** |
 | `test_model_execution_mode_is_strictly_evaluation` | Weights Protection | PyTorch model parameters strictly frozen (`eval()`) | **PASS** |
 | `test_api_result_terminology_compliance` | Language Bounds | Returns strictly "model-generated class score" | **PASS** |
 | `test_ai_result_model_disclaimer_invariant` | Regulatory Notice | Mandated non-diagnostic disclaimer on all outputs | **PASS** |

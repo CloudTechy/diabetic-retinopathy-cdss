@@ -40,7 +40,7 @@ flowchart TD
 ```
 
 ### Screen 1: Sign-In & Authenticated Clinical Session
-* **Clinical Purpose**: Authenticate credentialed clinicians, enforce session security, and tie every subsequent assessment to an identifiable reviewer for medical-legal traceability.
+* **Clinical Purpose**: Authenticate credentialed clinicians, enforce session security, and tie every subsequent assessment to an identifiable reviewer for traceability.
 * **Key Components**:
   * Clean, distraction-free authentication card with institutional branding.
   * Form fields: Staff ID / Email, Password, Clinical Facility / Ward selector.
@@ -151,7 +151,7 @@ stateDiagram-v2
     * Box A (AI Preliminary Output): Generated timestamp, model version (`EfficientNet-B0-DR-v1`), candidate class score.
     * Box B (Certified Clinical Diagnosis): Reviewing Clinician Name, Confirmed ICDR Stage, Justification Notes, Referral Recommendation, Signature Timestamp.
   * **Export Actions**:
-    * "Download Tamper-Evident Clinical Report (PDF)" (Includes cryptographic SHA-256 hash of original image and assessment).
+    * "Download Report (hash-anchored PDF)" (includes the SHA-256 hash of the original image and the hash over the review fields).
     * "Print Record".
 
 ### Screen 8: Record History, Search & Longitudinal Audit
@@ -159,7 +159,7 @@ stateDiagram-v2
 * **Key Components**:
   * **Faceted Search Filters**: Date range picker, ICDR severity filter, Agreement filter (`Clinician Agreed`, `Clinician Overrode`, `Inconclusive`), Reviewer filter.
   * **Tabular Historical View**: Pagination, sortable headers, exportable to CSV/JSON for clinical audit committees.
-  * **Audit Event Drawer**: Slide-over panel detailing full immutable audit ledger for any selected record (Logins, Uploads, Gate evaluations, Review submissions, PDF downloads).
+  * **Audit Event Drawer**: Slide-over panel detailing the append-only audit ledger for any selected record (Logins, Uploads, Gate evaluations, Review submissions, PDF downloads).
 
 ---
 
