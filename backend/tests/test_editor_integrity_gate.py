@@ -3053,7 +3053,7 @@ def _units(text):
             starts.append((pos, ln))
             pos += len(t) + 1
         offset = 0
-        for sent in re.split(r"(?<=[.!?;])(?:\*\*)?\s+", joined):
+        for sent in re.split(r"(?<=[.!?;:])(?:\*\*)?\s+|\s+[—–]\s+", joined):
             if not sent.strip():
                 continue
             ln = max((l for p, l in starts if p <= offset), default=first)
@@ -3074,7 +3074,7 @@ def _units(text):
         if line.startswith("|"):
             yield from flush(); para = []
             for cell in _table_cells(line):
-                for clause in re.split(r"(?<=[.!?;])(?:\*\*)?\s+", cell):
+                for clause in re.split(r"(?<=[.!?;:])(?:\*\*)?\s+|\s+[—–]\s+", cell):
                     if clause.strip():
                         yield i, clause.lower(), "cell"
             continue
@@ -3088,10 +3088,26 @@ def _units(text):
     yield from flush()
 
 
+def _normalise(unit):
+    """
+    The reviewer matched "tamper‑evident" (non-breaking hyphen), "tamper-
+evident"
+    (hyphen at a soft wrap), "immutable **audit**" and "immutable  audit" past
+    the rule. Emphasis markers and backticks are stripped, Unicode hyphens and
+    spaces mapped to ASCII, a hyphen followed by whitespace rejoined, and
+    whitespace collapsed, BEFORE matching.
+    """
+    unit = unit.replace("‐", "-").replace("‑", "-").replace("‒", "-").replace(" ", " ")
+    unit = re.sub(r"[*_`]", "", unit)
+    unit = re.sub(r"-\s+", "-", unit)
+    return re.sub(r"\s+", " ", unit)
+
+
 def _offending_phrases(text, phrases):
     """[(lineno, phrase, unit)] for every banned phrase outside a correction sentence."""
     out = []
     for lineno, unit, kind in _units(text):
+        unit = _normalise(unit)
         # a heading is never a correction record; a sentence or cell is one
         # only when IT carries a correction phrase - and then only the words
         # it quotes are sheltered, plus the phrase named in the same sentence.
@@ -3821,6 +3837,7 @@ def test_no_unqualified_append_only_or_cryptographic_control_claims():
         else:   # code: a line is the unit; a correction comment exempts only itself
             units = ((n, l.lower(), l.lower()) for n, l in enumerate(text.split("\n"), 1))
         for lineno, unit, kind in units:
+            unit = _normalise(unit)
             if kind != "heading" and any(m in unit for m in RECORD_MARKERS):
                 continue
             if "append-only" in unit and "application-level" not in unit:
