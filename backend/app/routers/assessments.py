@@ -304,10 +304,15 @@ async def download_report_pdf_alias(
     return await download_report_pdf(assessment_id, db, current_user)
 
 
-# Static file streaming for private storage
+# Static file streaming for the viewer's <img> tags.
+#
+# UNAUTHENTICATED: these two routes take no credential, because an <img> tag
+# cannot send the bearer token. Anyone holding a filename can fetch the file.
+# This is disclosed in docs/chapter4/known_limitations.md section 12; a rule in
+# the suite fails if the disclosure or this statement disappears.
 @router.get("/storage/images/{filename}")
 async def serve_image(filename: str):
-    """Serve uploaded retinal images securely."""
+    """Serve an uploaded retinal image. UNAUTHENTICATED: see the note above."""
     safe_filename = os.path.basename(filename)
     file_path = os.path.join(settings.STORAGE_IMAGES_PATH, safe_filename)
     if not os.path.exists(file_path):
@@ -317,7 +322,7 @@ async def serve_image(filename: str):
 
 @router.get("/storage/attributions/{filename}")
 async def serve_attribution(filename: str):
-    """Serve Grad-CAM attribution heatmaps securely."""
+    """Serve a Grad-CAM attribution heatmap. UNAUTHENTICATED: see the note above."""
     safe_filename = os.path.basename(filename)
     file_path = os.path.join(settings.STORAGE_ATTRIBUTIONS_PATH, safe_filename)
     if not os.path.exists(file_path):

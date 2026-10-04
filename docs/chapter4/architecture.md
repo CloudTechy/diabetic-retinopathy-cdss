@@ -31,7 +31,7 @@ graph TD
 
     subgraph Tier3["Data & Persistence Tier"]
         DB[(PostgreSQL 16 Relational Store)]
-        Vault[(Local application binary storage: /storage)]
+        Vault[(Local application binary storage: /storage — image and heatmap files are served by filename without authentication)]
     end
 
     UI -->|HTTP REST — TLS termination is a production deployment requirement, not part of the packaged development stack| Router

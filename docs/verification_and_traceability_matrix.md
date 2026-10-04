@@ -209,7 +209,7 @@ classDiagram
         +Integer reviewer_assessed_grade (0-4)
         +String reviewer_assessed_grade_label
         +String justification_notes
-        +String signature_hash (SIG-SHA256-XXXX)
+        +String signature_hash (HASH-SHA256-XXXX)
         +Boolean is_immutable (True)
         +DateTime signed_at
     }

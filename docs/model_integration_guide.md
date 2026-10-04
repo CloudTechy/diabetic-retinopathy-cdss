@@ -44,7 +44,7 @@ flowchart TD
 ### 2.1 Theoretical Rationale for EfficientNet-B0
 EfficientNet-B0 utilizes compound coefficient scaling to systematically balance network depth, width, and image resolution. For ophthalmic screening:
 - **Parameter Efficiency**: ~4.0 million parameters, avoiding excessive overfitting on high-resolution medical datasets (such as EyePACS, Messidor-2, and APTOS 2019).
-- **Inference Latency**: Sub-100ms CPU inference time per image, ensuring real-time responsiveness without mandating hospital-grade GPUs.
+- **Inference Latency**: in the cited CPU benchmark run the EfficientNet-B0 forward pass measured 29.22 ms and the whole request a mean of 180.41 ms ([`resource_benchmark.md`](chapter4/resource_benchmark.md)); input handling, not the model, dominates. No real-time guarantee is claimed.
 - **Hierarchical Receptive Field**: Mobile Inverted Bottleneck Convolution (MBConv) blocks with Squeeze-and-Excitation (SE) optimizations capture both micro-scale vascular lesions (parafoveal microaneurysms, $< 50\mu m$) and macro-scale structural arcades (venous beading, neo-vessels).
 
 ### 2.2 Network Topology & Head Adaptation

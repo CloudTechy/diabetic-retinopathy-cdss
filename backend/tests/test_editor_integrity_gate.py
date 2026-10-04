@@ -492,6 +492,14 @@ OVERCLAIM_PHRASES = [
     "cryptographic signature", "cryptographic immutability", "cryptographic audit",
     "Cryptographic Audit", "cryptographically verified", "Secure Private Binary Storage",
     "TLS badge", "Every artefact in this package derives",
+    # Reviewer round on rev14: signature vocabulary survived in the PDF, the
+    # stored hash prefix and the audit text; two routes said "securely" while
+    # taking no credential; a latency claim and an error-format standard
+    # predated the benchmark and the code; ids are not UUIDs.
+    "Signature Timestamp", "SIG-SHA256", "Clinician signed record", "Signature Strip",
+    "Integrity ID", "Sub-100ms", "sub-100ms", "sub-100 ms", "RFC 7807",
+    "assigned UUID", "unique UUID", "Serve uploaded retinal images securely",
+    "attribution heatmaps securely", "private storage",
 ]
 
 
@@ -3640,30 +3648,42 @@ def test_every_markdown_table_row_has_the_header_width():
     the blockquote below. A table row with fewer cells than its header renders
     as a broken table, and no rule looked at table structure.
     """
+    # Second version. The first only looked at rows directly under a
+    # header, so eight NFR rows stranded after a blockquote (no header above
+    # them: literal pipe text in the rendered page) passed, and a table inside
+    # a blockquote was never read. Now: blockquote markers are stripped, a
+    # pipe row with no header above it is an orphan, and tables inside
+    # blockquotes are checked like any other.
     asm = _assembler()
     offenders = []
     for src, _dst in asm.manifest():
         if not src.endswith(".md") or "/archive/" in src:
             continue
-        lines = read(os.path.join(REPO_ROOT, src)).split("\n")
+        raw = read(os.path.join(REPO_ROOT, src)).split("\n")
+        lines = [re.sub(r"^(\s*>\s?)+", "", l) for l in raw]   # unwrap blockquotes
         i, in_code = 0, False
         while i < len(lines):
             line = lines[i]
             if line.strip().startswith("```"):
                 in_code = not in_code
-            if (not in_code and line.lstrip().startswith("|") and i + 1 < len(lines)
-                    and re.match(r"^\s*\|?\s*:?-{3,}", lines[i + 1])):
-                width = len(_table_cells(line))
-                j = i + 2
-                while j < len(lines) and lines[j].lstrip().startswith("|"):
-                    cells = len(_table_cells(lines[j]))
-                    if cells != width:
-                        offenders.append("%s:%d has %d cells under a %d-column header" % (src, j + 1, cells, width))
-                    j += 1
-                i = j
+                i += 1
                 continue
-            i += 1
-    assert not offenders, "Markdown table rows that do not match their header:\n  " + "\n  ".join(offenders)
+            if in_code or not line.lstrip().startswith("|") or len(_table_cells(line)) < 2:
+                i += 1
+                continue
+            if not (i + 1 < len(lines) and re.match(r"^\s*\|?\s*:?-+:?\s*\|", lines[i + 1])):
+                offenders.append("%s:%d is a table row with no header above it (renders as literal text)" % (src, i + 1))
+                i += 1
+                continue
+            width = len(_table_cells(line))
+            j = i + 2
+            while j < len(lines) and lines[j].lstrip().startswith("|"):
+                cells = len(_table_cells(lines[j]))
+                if cells != width:
+                    offenders.append("%s:%d has %d cells under a %d-column header" % (src, j + 1, cells, width))
+                j += 1
+            i = j
+    assert not offenders, "Markdown table structure:\n  " + "\n  ".join(offenders)
 
 
 def test_binary_collapse_rows_match_the_predictions():
@@ -3753,3 +3773,166 @@ def test_quoted_suite_durations_match_the_committed_log():
                 if abs(float(quoted) - actual) > 0.005:
                     offenders.append("%s:%d quotes %s s; the log records %.2f s" % (rel, lineno, quoted, actual))
     assert not offenders, "\n  ".join(["Quoted suite durations disagree with the log:"] + offenders)
+
+
+# ======================================================================
+# RULE GROUP AH - the reviewer's audit of rev14
+# ======================================================================
+
+REQUIREMENTS_MATRIX = os.path.join(CHAPTER4, "requirements_test_matrix.md")
+IMPLEMENTATION_STATUS = os.path.join(CHAPTER4, "implementation_status.md")
+API_CONTRACT = os.path.join(CHAPTER4, "api_contract.md")
+KNOWN_LIMITATIONS = os.path.join(CHAPTER4, "known_limitations.md")
+ASSESSMENTS_ROUTER = os.path.join(REPO_ROOT, "backend", "app", "routers", "assessments.py")
+
+
+def _matrix_rows(text):
+    """[(req_id, cells)] for every FR-/NFR- row of the requirements matrix."""
+    rows = []
+    for line in text.splitlines():
+        m = re.match(r"^\|\s*\*\*((?:N)?FR-\d+)\*\*\s*\|", line)
+        if m:
+            # _table_cells blanks code spans, so the raw line travels too: the
+            # citations live in backticks.
+            rows.append((m.group(1), _table_cells(line), line))
+    return rows
+
+
+def test_every_pass_in_the_requirements_matrix_cites_something_that_exists():
+    """
+    NFR-02 said PASS on "Peak 328.8 MB" from benchmark_resources.py, a script
+    that measures no memory; nothing shipped could have produced the number.
+    A PASS must point at a file in the archive and, where it names a test,
+    a test that exists in the suite. A row that measures nothing says so.
+    """
+    shipped = {dst for _src, dst in _assembler().manifest()}
+    test_ids = set()
+    for path in python_sources(os.path.join(REPO_ROOT, "backend", "tests")):
+        test_ids.update(re.findall(r"^\s*(?:async\s+)?def (test_\w+)", read(path), re.M))
+    offenders, checked, citations = [], 0, 0
+    for req, cells, raw in _matrix_rows(read(REQUIREMENTS_MATRIX)):
+        status, evidence = cells[-1], cells[-2]
+        if "PASS" not in status:
+            if re.search(r"\d+(\.\d+)?\s*MB", evidence) and "earlier revision" not in evidence:
+                offenders.append("%s quotes a measurement while not PASS: %s" % (req, evidence[:60]))
+            continue
+        checked += 1
+        for token in re.findall(r"`([^`]+)`", raw):
+            if "/" in token:
+                citations += 1
+                if token not in shipped:
+                    offenders.append("%s cites %s, which is not in the archive" % (req, token))
+            elif "." in token and token.split(".")[-1].startswith("test_"):
+                citations += 1
+                if token.split(".")[-1] not in test_ids:
+                    offenders.append("%s cites %s, which is not in the suite" % (req, token))
+    assert checked >= 15, "fewer PASS rows than expected were checked (%d)" % checked
+    assert citations >= 20, "fewer citations than expected were resolved (%d) - is the rule reading the backticks?" % citations
+    nfr02 = {r: c for r, c, _ in _matrix_rows(read(REQUIREMENTS_MATRIX))}["NFR-02"]
+    assert "NOT MEASURED" in nfr02[-1], "NFR-02 claims a status although nothing shipped measures memory"
+    assert "328.8" not in nfr02[-1], "NFR-02 still carries the unmeasured figure as its status"
+    assert not offenders, "Requirements matrix cites what does not exist:\n  " + "\n  ".join(offenders)
+
+
+def test_requirements_matrix_thresholds_and_counts_match_code_and_itself():
+    """
+    FR-05 gave an "illumination check (0.20-0.85)"; the code rejects on an
+    extreme-pixel ratio above 0.35 and nothing uses 0.20-0.85. The status
+    page claimed FR-01..FR-17 and NFR-01..NFR-12; the matrix has 10 and 8.
+    """
+    cfg = _config_defaults()
+    text = read(REQUIREMENTS_MATRIX)
+    rows = {r: c for r, c, _ in _matrix_rows(text)}
+    fr05 = rows["FR-05"][1]
+    assert "0.20-0.85" not in fr05 and "0.20–0.85" not in fr05, "FR-05 still quotes a range the code does not use"
+    nums = [float(x) for x in re.findall(r"(?<![\d.])(\d+\.\d+)(?![\d.])", fr05)]
+    assert cfg["LAPLACIAN_BLUR_THRESHOLD"] in nums, "FR-05 does not quote LAPLACIAN_BLUR_THRESHOLD=%s" % cfg["LAPLACIAN_BLUR_THRESHOLD"]
+    assert cfg["ILLUMINATION_EXTREME_RATIO_MAX"] in nums, "FR-05 does not quote ILLUMINATION_EXTREME_RATIO_MAX=%s" % cfg["ILLUMINATION_EXTREME_RATIO_MAX"]
+    for n in nums:
+        assert n in (cfg["LAPLACIAN_BLUR_THRESHOLD"], cfg["ILLUMINATION_EXTREME_RATIO_MAX"]), "FR-05 quotes %s, which is no Gate 3 threshold" % n
+    fr = sorted(int(r[3:]) for r in rows if r.startswith("FR-"))
+    nfr = sorted(int(r[4:]) for r in rows if r.startswith("NFR-"))
+    assert fr == list(range(1, len(fr) + 1)) and nfr == list(range(1, len(nfr) + 1)), "requirement ids are not contiguous"
+    status = read(IMPLEMENTATION_STATUS)
+    m = re.search(r"FR-01–FR-(\d+)\) and non-functional requirements \(NFR-01–NFR-(\d+)\)", status)
+    assert m, "implementation_status.md no longer states the requirement ranges"
+    assert (int(m.group(1)), int(m.group(2))) == (len(fr), len(nfr)), (
+        "implementation_status.md claims FR-01..FR-%s / NFR-01..NFR-%s; the matrix has %d / %d" % (m.group(1), m.group(2), len(fr), len(nfr)))
+
+
+def test_unauthenticated_storage_routes_say_so_everywhere():
+    """
+    /storage/images and /storage/attributions take no credential (an <img>
+    tag cannot send the bearer token). Their docstrings said "securely" and
+    the comment said "private storage". Either the routes authenticate, or
+    the code, the API contract and the limitations say plainly that they do
+    not. Checked on the AST, not on prose about it.
+    """
+    import ast
+    tree = ast.parse(read(ASSESSMENTS_ROUTER))
+    open_routes = []
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        paths = [a.value for d in node.decorator_list if isinstance(d, ast.Call)
+                 for a in d.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
+        if not any(str(pth).startswith("/storage/") for pth in paths):
+            continue
+        authenticated = any(
+            isinstance(dflt, ast.Call) and getattr(dflt.func, "id", "") == "Depends"
+            and any(getattr(a, "id", "") == "get_current_user" for a in dflt.args)
+            for dflt in node.args.defaults + node.args.kw_defaults if dflt is not None)
+        if not authenticated:
+            open_routes.append(node.name)
+            doc = ast.get_docstring(node) or ""
+            assert "UNAUTHENTICATED" in doc, "%s takes no credential and its docstring does not say so" % node.name
+            assert "securely" not in doc.lower(), "%s says 'securely' while taking no credential" % node.name
+    assert len(open_routes) in (0, 2), "unexpected storage route set: %s" % open_routes
+    if open_routes:
+        assert "Authentication: none" in read(API_CONTRACT), "api_contract.md does not state that the storage routes are unauthenticated"
+        assert "served without authentication" in read(KNOWN_LIMITATIONS), "known_limitations.md does not disclose the open storage routes"
+        assert "without authentication" in read(os.path.join(CHAPTER4, "architecture.md")), "architecture.md still presents the storage as protected"
+
+
+def test_api_contract_examples_are_labelled_and_respect_the_thresholds():
+    """
+    The contract's examples showed a PASSING Gate 3 with illuminationIndex
+    0.54 (the index is 1 - extreme ratio; 0.54 means 46% extreme pixels,
+    rejected above 35%) and a Laplacian variance above anything in the
+    corpus, unlabelled. Examples are now labelled illustrative and must be
+    consistent with the calibrated thresholds.
+    """
+    cfg = _config_defaults()
+    text = read(API_CONTRACT)
+    assert "illustrative example" in text, "api_contract.md does not label its JSON bodies as illustrative"
+    blocks = re.findall(r"```json\n(.*?)```", text, re.S)
+    assert blocks, "no JSON examples found"
+    checked = 0
+    for block in blocks:
+        for m in re.finditer(r'"laplacianVariance":\s*([\d.]+),\s*"illuminationIndex":\s*([\d.]+)', block):
+            checked += 1
+            lap, idx = float(m.group(1)), float(m.group(2))
+            assert lap >= cfg["LAPLACIAN_BLUR_THRESHOLD"], "example Laplacian %s would be rejected" % lap
+            assert (1.0 - idx) <= cfg["ILLUMINATION_EXTREME_RATIO_MAX"] + 1e-9, (
+                "example illuminationIndex %s implies an extreme-pixel ratio of %.2f, above the %.2f limit"
+                % (idx, 1.0 - idx, cfg["ILLUMINATION_EXTREME_RATIO_MAX"]))
+    assert checked >= 1, "the Gate 3 metrics example was not found"
+
+
+def test_no_paragraph_has_an_odd_number_of_bold_markers():
+    """
+    PROGRESS_TRACKER.md's objective-g row ended with a stray '**' that
+    rendered as literal asterisks. Bold markers pair up within a paragraph.
+    """
+    asm = _assembler()
+    offenders = []
+    for src, _dst in asm.manifest():
+        if not src.endswith(".md") or "/archive/" in src:
+            continue
+        text = read(os.path.join(REPO_ROOT, src))
+        text = re.sub(r"```.*?```", "", text, flags=re.S)
+        text = re.sub(r"`[^`\n]*`", "", text)
+        for n, para in enumerate(re.split(r"\n\s*\n", text)):
+            if para.count("**") % 2:
+                offenders.append("%s: paragraph %d has an odd number of '**': %s" % (src, n + 1, para.strip()[:70]))
+    assert not offenders, "Unbalanced bold markers:\n  " + "\n  ".join(offenders)

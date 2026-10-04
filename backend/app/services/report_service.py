@@ -272,9 +272,9 @@ class ReportService:
                               "action plan; those are outside this system's scope.", body_style),
                 ],
                 [
-                    Paragraph("<strong>Signature Timestamp:</strong>", body_style),
+                    Paragraph("<strong>Review recorded at:</strong>", body_style),
                     Paragraph(rev.signed_at.strftime("%Y-%m-%d %H:%M:%S UTC"), body_style),
-                    Paragraph("<strong>Assessment Integrity Hash:</strong>", body_style),
+                    Paragraph("<strong>Record hash anchor (unkeyed SHA-256, truncated):</strong>", body_style),
                     Paragraph(f"<font face='Courier' size=7>{rev.signature_hash}</font>", body_style),
                 ],
             ]

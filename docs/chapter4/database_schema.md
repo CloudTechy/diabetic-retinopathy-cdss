@@ -160,7 +160,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `facility` | VARCHAR(255) | YES | Reviewing site, captured at signing time. |
 | `signature_hash` | VARCHAR(128) | NO | Unkeyed SHA-256 (truncated to 24 hex characters) over assessment id, patient id, image hash, agreement, grade, justification, inconclusive reason, signatory name, licence, facility and timestamp. It anchors the recorded values; it does not prove who recorded them. |
 | `is_immutable` | BOOLEAN | NO | Write-lock flag. Defaults to true: once a review is recorded the API refuses a second one (state machine); the database itself does not enforce it. |
-| `signed_at` | TIMESTAMPTZ | NO | Immutability lock timestamp. |
+| `signed_at` | TIMESTAMPTZ | NO | Time the review was recorded (the API write-lock applies from then). The column names `signature_hash` / `signed_at` are historical; the value is a record hash anchor, not a signature, and the stored prefix is `HASH-SHA256-`. |
 
 > [!NOTE]
 > **This table is transcribed from `backend/app/models/models.py`, class

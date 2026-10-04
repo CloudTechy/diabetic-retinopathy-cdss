@@ -18,7 +18,7 @@
 | **d** | CNN classification architecture design | [`preprocessing_and_augmentation_spec.md`](docs/chapter4/preprocessing_and_augmentation_spec.md), [`checkpoint_manifest.md`](docs/chapter4/checkpoint_manifest.md) | **VERIFIED** |
 | **e** | Baseline / Model Implementation | [`efficientnet_b0_dr.pth`](backend/models/weights/efficientnet_b0_dr.pth), [`ai_service.py`](backend/app/services/ai_service.py), [`checkpoint_manifest.md`](docs/chapter4/checkpoint_manifest.md) | **VERIFIED** |
 | **f** | CNN Classifier Training | [`training_protocol.md`](docs/chapter4/training_protocol.md), [`epoch_history.csv`](docs/chapter4/epoch_history.csv), [`training_execution.log`](docs/chapter4/training_execution.log) | **EVALUATED** |
-| **g** | Model integration & decision-support workflow | [`assessments.py`](backend/app/routers/assessments.py), [`screenshot_evidence_manifest.md`](docs/chapter4/screenshot_evidence_manifest.md), [`model_integration_guide.md`](docs/model_integration_guide.md) | **INTEGRATED** Grad-CAM visual explainability is delivered as part of this objective: forward activations and gradients are hooked at `features.8` (1,280 channels) and rendered as a Viridis saliency overlay in the fundus viewer.** |
+| **g** | Model integration & decision-support workflow | [`assessments.py`](backend/app/routers/assessments.py), [`screenshot_evidence_manifest.md`](docs/chapter4/screenshot_evidence_manifest.md), [`model_integration_guide.md`](docs/model_integration_guide.md) | **INTEGRATED** Grad-CAM visual explainability is delivered as part of this objective: forward activations and gradients are hooked at `features.8` (1,280 channels) and rendered as a Viridis saliency overlay in the fundus viewer. |
 | **h** | Classification-performance evaluation | [`model_evaluation_report.md`](docs/chapter4/model_evaluation_report.md), [`held_out_predictions.csv`](docs/chapter4/held_out_predictions.csv), [`clinical_metrics.json`](docs/chapter4/clinical_metrics.json) | **EVALUATED** |
 | **i** | Functional testing and end-to-end evaluation | [`system_test_report.md`](docs/chapter4/system_test_report.md), [`resource_benchmark.md`](docs/chapter4/resource_benchmark.md), [`test_execution.log`](docs/chapter4/test_execution.log) | **EVALUATED** |
 
@@ -97,7 +97,7 @@ Of 205 referable cases, **18 were missed** (predicted below grade 2): 11 of Grad
 
 ## 5. Test Suite
 
-**222 collected — 221 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
+**227 collected — 226 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q

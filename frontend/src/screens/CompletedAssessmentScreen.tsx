@@ -242,7 +242,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
             )}
           </div>
 
-          {/* Clinician Signature Strip */}
+          {/* Reviewer identity and record hash anchor */}
           {review && (
             <div className="pt-3 border-t border-teal-200 text-[11px] space-y-1 text-teal-950 font-mono">
               <div className="flex justify-between">
@@ -251,7 +251,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
               </div>
               <div className="flex justify-between text-slate-500 text-[10px]">
                 <span>Recorded: {new Date(review.signedAt).toLocaleString()}</span>
-                <span className="truncate max-w-[160px]">Integrity ID: {review.signatureHash?.substring(0, 16)}...</span>
+                <span className="truncate max-w-[180px]">Hash anchor: {review.signatureHash?.substring(0, 18)}...</span>
               </div>
             </div>
           )}

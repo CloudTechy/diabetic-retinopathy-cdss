@@ -4,7 +4,8 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective g (Model integration & decision-support workflow)
-- **API Standard:** OpenAPI 3.1.0 / RESTful JSON / RFC 7807 Problem Details
+- **API Standard:** OpenAPI 3.1.0 / RESTful JSON; errors are FastAPI's `{"detail": ...}` bodies
+- **Examples:** every JSON body below is an illustrative example of the response shape. The values are not taken from a recorded run; the gate metrics shown are consistent with the calibrated thresholds in `backend/app/core/config.py`.
 - **Base Endpoint:** `/api/v1`
 - **Last Revised:** 2026-10-04
 
@@ -64,7 +65,7 @@
     "clinicalNotes": "Screening for Type 2 Diabetes (HbA1c 8.4%)."
   }
   ```
-- **Response `201 Created`:** Draft assessment object with assigned UUID.
+- **Response `201 Created`:** Draft assessment object with its assigned record identifier (`REC-YYYY-XXXXXX`).
 
 ### `POST /api/v1/assessments/{id}/upload`
 - **Description:** Ingests fundus image binary (`multipart/form-data`) and initiates the sequential 3-gate validation pipeline. If passed, triggers real PyTorch EfficientNet-B0 inference and Grad-CAM generation.
@@ -95,7 +96,7 @@
       "gateIndex": 3,
       "title": "Technical Image Quality",
       "status": "passed",
-      "metrics": { "laplacianVariance": 142.4, "illuminationIndex": 0.54 }
+      "metrics": { "laplacianVariance": 12.2, "illuminationIndex": 0.97 }
     }
   ]
   ```
@@ -118,7 +119,7 @@
     "targetLayer": "features.8 (Conv2d Bottleneck Residual)",
     "topActivationRegion": "Inferotemporal quadrant parafoveal hemorrhages and exudates",
     "modelVersion": "EfficientNet-B0-DR-v1 (Weights frozen)",
-    "executionTimeMs": 284.5,
+    "executionTimeMs": 190.0,
     "disclaimer": "NOTICE: CLINICAL DECISION SUPPORT ONLY — NOT FOR INDEPENDENT DIAGNOSIS..."
   }
   ```
@@ -140,6 +141,10 @@
 ### `GET /api/v1/assessments/{id}/report`
 - **Description:** Streams the server-rendered PDF assessment report, hash-anchored to the original image.
 - **Response `200 OK`:** `Content-Type: application/pdf`.
+
+### `GET /storage/images/{filename}` and `GET /storage/attributions/{filename}`
+- **Description:** Stream the stored fundus photograph and the Grad-CAM heatmap for the `<img>` tags in the viewer.
+- **Authentication: none.** These two routes take no credential; anyone holding a filename can fetch the file. Stored names are `REC-YYYY-XXXXXX_<8 hex>.jpg`, hard to guess but not secret. This is a disclosed limitation of the prototype ([`known_limitations.md`](known_limitations.md) §12), not a security property.
 
 ### `GET /api/v1/assessments/{id}/audit`
 - **Description:** Returns the chronological application-level append-only event log for governance review. The application does not expose audit-event update or deletion operations, and assessment deletion does not cascade to audit events. However, database-level immutability is not enforced through triggers or restricted database privileges.

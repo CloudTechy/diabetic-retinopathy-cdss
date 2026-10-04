@@ -264,3 +264,20 @@ faster, but none was benchmarked, so no figure for one is offered.
 ## 11. Scope of the artefact
 
 This is a **research prototype supporting a PGD dissertation**. It is not a medical device, carries no regulatory clearance (FDA, CE, MHRA or otherwise), has undergone no prospective clinical trial, and must not be used for patient care. Every output is positioned as decision *support* requiring clinician review and sign-off, and the system records that review as part of the audit trail.
+
+---
+
+## 12. Image and attribution files are served without authentication
+
+`GET /storage/images/{filename}` and `GET /storage/attributions/{filename}`
+(`backend/app/routers/assessments.py`) take no credential. The viewer loads
+them through `<img>` tags, which cannot carry the bearer token the rest of the
+API requires, so the routes were left open. Anyone holding a filename can fetch
+the fundus photograph or the heatmap. Stored names are
+`REC-YYYY-XXXXXX_<8 hex>.jpg` — hard to guess, but not secret, and a filename
+appears in every assessment response.
+
+An earlier revision described these routes as serving images "securely" from
+"private storage". They do neither. A deployment that needs the files
+protected must put them behind the same authentication as the API (a
+cookie-bound session, or signed short-lived URLs) — neither is implemented.

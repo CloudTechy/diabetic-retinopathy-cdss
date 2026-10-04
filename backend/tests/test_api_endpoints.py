@@ -107,7 +107,7 @@ class TestAssessmentEndpoints:
         reviewed = review_res.json()
         assert reviewed["status"] == "completed"
         assert reviewed["clinicianReview"] is not None
-        assert reviewed["clinicianReview"]["signatureHash"].startswith("SIG-SHA256-")
+        assert reviewed["clinicianReview"]["signatureHash"].startswith("HASH-SHA256-")
 
         # 8. Download PDF Report
         report_res = test_client.get(f"/api/v1/assessments/{assessment_id}/report")

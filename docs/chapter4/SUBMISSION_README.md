@@ -44,7 +44,7 @@ All model-performance artefacts derive from the documented leakage-free training
 | **Any DR** (grade ≥ 1) | Sensitivity 97.6%, specificity 98.5% |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 221 passed, 1 skipped |
+| **Test suite** | 226 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.

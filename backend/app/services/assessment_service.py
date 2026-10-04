@@ -408,7 +408,9 @@ class AssessmentService:
             f"{review_input.justificationNotes or ''}|{review_input.inconclusiveReason or ''}|"
             f"{clinician_name}|{license_num}|{facility}|{now.isoformat()}"
         )
-        sig_hash = f"SIG-SHA256-{hashlib.sha256(sig_payload.encode('utf-8')).hexdigest()[:24]}"
+        # A record hash anchor: unkeyed, truncated, and named as such. The
+        # earlier "SIG-" prefix called it a signature, which it is not.
+        sig_hash = f"HASH-SHA256-{hashlib.sha256(sig_payload.encode('utf-8')).hexdigest()[:24]}"
 
         # Save ProfessionalReview
         review_record = ProfessionalReview(
@@ -440,7 +442,7 @@ class AssessmentService:
             user_id=reviewer.id if reviewer else None,
             action="Clinician Professional Review Finalized",
             actor=clinician_name,
-            details=f"Clinician signed record. Classification: {confirmed_label}. Agreement: {review_input.agreement.upper()}.",
+            details=f"Professional review recorded. Classification: {confirmed_label}. Agreement: {review_input.agreement.upper()}.",
             badge_type=badge,
         )
         db.add(audit)

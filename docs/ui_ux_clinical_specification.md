@@ -149,7 +149,7 @@ stateDiagram-v2
   * **Lock Status Indicator**: Shield icon with "Assessment completed — review recorded and write-locked".
   * **Side-by-Side Verification Summary**:
     * Box A (AI Preliminary Output): Generated timestamp, model version (`EfficientNet-B0-DR-v1`), candidate class score.
-    * Box B (Certified Clinical Diagnosis): Reviewing Clinician Name, Confirmed ICDR Stage, Justification Notes, Referral Recommendation, Signature Timestamp.
+    * Box B (Certified Clinical Diagnosis): Reviewing Clinician Name, Confirmed ICDR Stage, Justification Notes, Referral Recommendation, Review recorded at.
   * **Export Actions**:
     * "Download Report (hash-anchored PDF)" (includes the SHA-256 hash of the original image and the hash over the review fields).
     * "Print Record".
