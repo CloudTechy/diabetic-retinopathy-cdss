@@ -3014,21 +3014,29 @@ def test_no_clinical_authority_overclaims_in_documents():
         "Authority or certification language in documents:\n  " + "\n  ".join(offenders))
 
 
-# A sentence records a correction when it says so. "replaced", "removed" and
-# "withdrawn" alone do not: they describe ordinary engineering too.
-RECORD_MARKERS = ("earlier revision", "earlier version", "earlier set", "an earlier", "previously",
+# A sentence records a correction when it says so with a correction PHRASE.
+# "replaced", "removed", "withdrawn", "previously", "no longer" and "an
+# earlier" alone do not: the independent reviewer built current claims
+# around each of them ("...and no longer needs manual checks") and the rule
+# let them through.
+RECORD_MARKERS = ("earlier revision", "earlier version", "earlier set of", "earlier draft",
                   "superseded run", "superseded contaminated", "superseded result", "superseded set",
                   "superseded sharpness", "never existed", "removed, not regenerated",
-                  "deleted rather than", "was withdrawn", "were withdrawn", "no longer")
+                  "deleted rather than", "was withdrawn", "were withdrawn", "were removed, not",
+                  "which contradicted", "was wrong", "were wrong", "had all four wrong")
 
 
 def _units(text):
     """
-    Yield (lineno, unit_lower, paragraph_lower) for every sentence of prose
-    and every cell of every table row, outside code fences. Soft-wrapped
-    lines of one paragraph are joined before sentences are split, so a
-    sentence that wraps is still one unit; a table row never joins its
-    neighbours; a bare '>' or a blank line ends a paragraph.
+    Yield (lineno, unit_lower, kind) for every sentence of prose and every
+    cell of every table row, outside code fences. Soft-wrapped lines of one
+    paragraph are joined before sentences are split, so a sentence that
+    wraps is still one unit; a table row never joins its neighbours; a bare
+    '>' or a blank line ends a paragraph; so does a list item (each item is
+    its own paragraph - items without full stops were merging). Sentences
+    split on . ! ? and ; (a clause after a semicolon is its own claim), with
+    a closing ** tolerated before the space. kind is "heading", "cell" or
+    "sentence"; a heading is never exempt.
     """
     lines = text.split("\n")
     in_code = False
@@ -3045,11 +3053,11 @@ def _units(text):
             starts.append((pos, ln))
             pos += len(t) + 1
         offset = 0
-        for sent in re.split(r"(?<=[.!?])\s+", joined):
+        for sent in re.split(r"(?<=[.!?;])(?:\*\*)?\s+", joined):
             if not sent.strip():
                 continue
             ln = max((l for p, l in starts if p <= offset), default=first)
-            yield ln, sent.lower(), joined.lower()
+            yield ln, sent.lower(), "sentence"
             offset += len(sent) + 1
 
     for i, raw in enumerate(lines, 1):
@@ -3066,13 +3074,16 @@ def _units(text):
         if line.startswith("|"):
             yield from flush(); para = []
             for cell in _table_cells(line):
-                if cell.strip():
-                    yield i, cell.lower(), line.lower()
+                for clause in re.split(r"(?<=[.!?;])(?:\*\*)?\s+", cell):
+                    if clause.strip():
+                        yield i, clause.lower(), "cell"
             continue
         if re.match(r"^#{1,6}\s", line):
             yield from flush(); para = []
-            yield i, line.lower(), line.lower()
+            yield i, line.lower(), "heading"
             continue
+        if re.match(r"^(?:[-*+]|\d+[.)])\s", line):
+            yield from flush(); para = []
         para.append((i, line))
     yield from flush()
 
@@ -3080,13 +3091,14 @@ def _units(text):
 def _offending_phrases(text, phrases):
     """[(lineno, phrase, unit)] for every banned phrase outside a correction sentence."""
     out = []
-    for lineno, unit, para in _units(text):
-        if any(m in unit for m in RECORD_MARKERS):
+    for lineno, unit, kind in _units(text):
+        # a heading is never a correction record; a sentence or cell is one
+        # only when IT carries a correction phrase - and then only the words
+        # it quotes are sheltered, plus the phrase named in the same sentence.
+        if kind != "heading" and any(m in unit for m in RECORD_MARKERS):
             continue
-        quoted = " ".join(re.findall(r'"([^"]*)"', unit)) if any(m in para for m in RECORD_MARKERS) else ""
         for phrase in phrases:
-            pl = phrase.lower()
-            if pl in unit and pl not in quoted:
+            if phrase.lower() in unit:
                 out.append((lineno, phrase, unit))
     return out
 
@@ -3808,8 +3820,8 @@ def test_no_unqualified_append_only_or_cryptographic_control_claims():
             units = _units(text)
         else:   # code: a line is the unit; a correction comment exempts only itself
             units = ((n, l.lower(), l.lower()) for n, l in enumerate(text.split("\n"), 1))
-        for lineno, unit, _para in units:
-            if any(m in unit for m in RECORD_MARKERS):
+        for lineno, unit, kind in units:
+            if kind != "heading" and any(m in unit for m in RECORD_MARKERS):
                 continue
             if "append-only" in unit and "application-level" not in unit:
                 offenders.append("%s:%d: 'append-only' without 'application-level' in the same sentence" % (src, lineno))
@@ -4092,7 +4104,9 @@ def test_capture_script_photographs_only_what_it_can_verify():
 def test_illumination_index_is_described_as_the_code_computes_it():
     """gate3 stores 1 - extreme_ratio; the schema said 'proportion of extreme pixels', the inverse."""
     row = next(l for l in read(DATABASE_SCHEMA).splitlines() if l.startswith("| `illumination_index`"))
-    assert ("1 −" in row or "1 -" in row) and "0.35" in row, "illumination_index is not described as 1 - extreme ratio with the 0.35 limit"
+    # "1 - ratio" or "one minus the share": the inverse of the extreme-pixel proportion
+    assert ("1 −" in row or "1 -" in row or "one minus" in row.lower()) and "0.35" in row, (
+        "illumination_index is not described as one minus the extreme-pixel proportion with the 0.35 limit")
     edge = next(l for l in read(DATABASE_SCHEMA).splitlines() if "PROFESSIONAL_REVIEWS :" in l and "USERS" in l)
     assert "signs" not in edge, "the ER edge still says a user 'signs' a review"
 

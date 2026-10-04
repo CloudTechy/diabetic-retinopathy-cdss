@@ -106,7 +106,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `failure_reason` | TEXT | YES | Non-diagnostic technical explanation. |
 | `actionable_guidance` | TEXT | YES | What the operator should change before retrying. |
 | `laplacian_variance` | FLOAT | YES | Measured focus metric ($\sigma_L^2$). |
-| `illumination_index` | FLOAT | YES | 1 − proportion of extreme-luminance pixels (higher is better); Gate 3 rejects when that proportion exceeds `ILLUMINATION_EXTREME_RATIO_MAX` (0.35), i.e. when the index falls below 0.65. An earlier revision described the inverse. |
+| `illumination_index` | FLOAT | YES | One minus the share of extreme-luminance pixels (higher is better); Gate 3 rejects when that proportion exceeds `ILLUMINATION_EXTREME_RATIO_MAX` (0.35), i.e. when the index falls below 0.65. An earlier revision described the inverse. |
 | `contrast_dynamic_range` | FLOAT | YES | Measured contrast standard deviation. |
 | `native_resolution` | VARCHAR(50) | YES | Submitted dimensions as `WxH`, before any analysis subsampling. |
 | `evaluated_at` | TIMESTAMPTZ | NO | Timestamp the gates were run. |
