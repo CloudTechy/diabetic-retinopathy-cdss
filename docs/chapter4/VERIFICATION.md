@@ -67,6 +67,8 @@ files in this archive.
       declared SHA-256 67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7
       file     SHA-256 67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7
       size 16,358,249 bytes
+      config.py              67d0b89641f08057... agrees
+      training_summary.json  67d0b89641f08057... agrees
       -> PASS
 
 [2] Reported metrics recompute from held_out_predictions.csv
@@ -74,6 +76,8 @@ files in this archive.
         accuracy  84.00%   reported 84.0
         QWK       0.865832   reported 0.865832
         correct   441 / 525
+      prediction ids == manifest test split: yes (525 vs 525)
+      README headline table quotes the recomputed values: yes
       -> PASS
 
 [3] Integration fixture is a genuine held-out APTOS image
@@ -88,11 +92,13 @@ files in this archive.
       manifest rows 3504   {'test': 525, 'train': 2453, 'val': 526}
       held-out images byte-identical to a training image: 0
       validation images byte-identical to a training image: 0
+      held-out images byte-identical to a validation image: 0
       duplicate groups 3504, of which 0 hold more than one row
+      hashes appearing in more than one split: 0
       -> PASS
 
 [5] Documents quote the committed test log
-      log records: 195 collected, 194 passed, 0 failed, 1 skipped
+      log records: 205 collected, 204 passed, 0 failed, 1 skipped
       every test count in every .md in this package matches this log
       -> PASS
 
