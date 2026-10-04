@@ -78,6 +78,8 @@ SINGLE_FILES = [
     "frontend/scripts/capture_live_screenshots.js",
     "frontend/scripts/capture_rejection.js",
     "frontend/scripts/check_preflight.cjs",
+    "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.rgba",
+    "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.json",
     "docs/model_integration_guide.md",
     # training_environment.md sources its frontend and database versions from these.
     "frontend/package-lock.json",

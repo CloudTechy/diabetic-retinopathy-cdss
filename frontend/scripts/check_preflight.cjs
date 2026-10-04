@@ -16,8 +16,12 @@
  *
  * No test runner and no new dependency: the validator is bundled with the
  * esbuild that vite already installs, and run in Node against a stub canvas
- * fed with synthetic 256x256 pixel data built below. The inputs are synthetic
- * patterns, not photographs, and are labelled as such.
+ * fed with 256x256 pixel data. All inputs but one are synthetic patterns built
+ * below, not photographs, and are labelled as such. The one photograph is the
+ * held-out test fixture, exported to a 256x256 RGBA dump by
+ * backend/scripts/export_preflight_fixture.py (a nearest-neighbour sample, not
+ * the browser's own scaling); the figures expected for it are computed by that
+ * Python script, not by this one.
  *
  * Usage (after `npm ci`):   node scripts/check_preflight.cjs
  * Exit status 0 only if every case behaves as asserted.
@@ -31,9 +35,14 @@ const SRC = path.resolve(__dirname, '..', 'src', 'utils');
 const VALIDATOR = path.join(SRC, 'retinalValidator.ts');
 const THRESHOLDS = path.join(SRC, 'validationThresholds.ts');
 
+const FIXTURE_SIDECAR = path.join(__dirname, 'fixtures', 'aptos_heldout_d1f1ea894da1_256.json');
+
 const norm = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
+// The hash covers this script and the fixture's sidecar as well as the validator:
+// a recorded run cannot be passed off as the run of a harness whose expectations
+// were changed afterwards.
 const sourceHash = crypto.createHash('sha256')
-  .update(norm(VALIDATOR) + '\n--\n' + norm(THRESHOLDS), 'utf8').digest('hex');
+  .update([VALIDATOR, THRESHOLDS, __filename, FIXTURE_SIDECAR].map(norm).join('\n--\n'), 'utf8').digest('hex');
 
 // the thresholds the validator is supposed to apply, read from the generated file
 const T = {};
@@ -67,6 +76,11 @@ const SMALL_DISC_REDDISH = pixels((x, y) => inDisc(x, y, 40) ? reddish(x, y) : [
 // a bright disc with a DIM ring (luminance ~40) around it: the ring counts as
 // foreground only if the cut-off is the server's 15
 const SOFT_EDGED_DISC = pixels((x, y) => inDisc(x, y, 120) ? reddish(x, y) : inDisc(x, y, 140) ? [70, 30, 15] : [0, 0, 0]);
+// the reddish disc with a ring of ONE colour around it; whether the ring counts as
+// foreground pins the cut-off and the luminance weights
+const ringed = (rgb) => pixels((x, y) => inDisc(x, y, 120) ? reddish(x, y) : inDisc(x, y, 140) ? rgb : [0, 0, 0]);
+// a uniform frame: every pixel, the four corners included, has this colour
+const uniform = (rgb) => pixels(() => rgb);
 const DISC_GREY = pixels((x, y) => inDisc(x, y, 120) ? [120, 120, 120] : [0, 0, 0]);
 // R/B = 1.25 (above the minimum) but red share = 33.3% (below it): fails on red share alone
 const DISC_LOW_RED_SHARE = pixels((x, y) => inDisc(x, y, 120) ? [100, 120, 80] : [0, 0, 0]);
@@ -111,6 +125,7 @@ function check(name, result, expectations) {
   if (result.gate3.status !== 'notEvaluated') problems.push('gate3.status is not notEvaluated');
   if ('passed' in result.gate3) problems.push('gate3 carries a passed field');
   if (result.preflightPassed !== (result.gate1.passed && result.gate2.passed)) problems.push('preflightPassed is not gate1 && gate2');
+  if (!result.gate1.passed && result.gate2.passed) problems.push('gate2.passed is true although Gate 1 failed (the server never reaches Gate 2)');
   if (/signature valid/i.test(result.gate1.metric)) problems.push('gate1 claims a signature check the browser does not perform');
   if (!result.gate2.passed && result.gate3.focusEstimate !== null) problems.push('a focus estimate is reported although none was computed');
   if (/within thresholds/.test(result.gate2.metric) && !result.gate2.passed) problems.push('"within thresholds" on a failed Gate 2');
@@ -126,7 +141,7 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
 const failsGate = (r, gate) => r.preflightPassed === false && r.failedGate === gate;
 
 console.log(`PREFLIGHT CHECK source sha256 ${sourceHash}`);
-console.log('  (retinalValidator.ts + validationThresholds.ts, executed in Node against synthetic 256x256 patterns)');
+console.log('  (retinalValidator.ts + validationThresholds.ts + this script + the fixture sidecar; executed in Node against 256x256 inputs)');
 
 // ---- the passing case
 check('reddish disc on a dark frame', run(DISC_REDDISH), (r) => [
@@ -170,6 +185,19 @@ check('2400x800 panorama (aspect 3.00)', run(DISC_REDDISH, { width: 2400, height
 check('600x1000 portrait (aspect 0.60)', run(DISC_REDDISH, { width: 600, height: 1000 }), (r) => [
   ['fails Gate 2 on the lower aspect bound', failsGate(r, 2) && /Aspect ratio 0\.60/.test(r.gate2.rejectionReason || '')],
 ]);
+// the bounds themselves, and one pixel beyond each
+check('1650x1000 (aspect exactly 1.65)', run(DISC_REDDISH, { width: 1650, height: 1000 }), (r) => [
+  ['passes: the upper bound is inclusive', r.preflightPassed === true],
+]);
+check('1651x1000 (aspect just above 1.65)', run(DISC_REDDISH, { width: 1651, height: 1000 }), (r) => [
+  ['fails Gate 2 on the upper aspect bound', failsGate(r, 2) && /Aspect ratio/.test(r.gate2.rejectionReason || '')],
+]);
+check('650x1000 (aspect exactly 0.65)', run(DISC_REDDISH, { width: 650, height: 1000 }), (r) => [
+  ['passes: the lower bound is inclusive', r.preflightPassed === true],
+]);
+check('649x1000 (aspect just below 0.65)', run(DISC_REDDISH, { width: 649, height: 1000 }), (r) => [
+  ['fails Gate 2 on the lower aspect bound', failsGate(r, 2) && /Aspect ratio/.test(r.gate2.rejectionReason || '')],
+]);
 
 // ---- Gate 2: coverage
 check('small reddish disc (colour profile valid)', run(SMALL_DISC_REDDISH), (r) => [
@@ -189,6 +217,20 @@ check('coverage one pixel below the minimum', run(exactlyForeground(MIN_COVERAGE
 check('bright disc with a dim ring (luminance ~40)', run(SOFT_EDGED_DISC), (r) => [
   ['the dim ring counts as foreground (cut-off 15, as on the server)', near(r.gate2.foregroundCoverage, share(140), 1e-9)],
   ['and not only the bright disc', r.gate2.foregroundCoverage > share(120) + 0.1],
+]);
+// the cut-off itself: luminance exactly 15 is background, 16 is foreground
+check('ring of luminance exactly 15 (grey 15)', run(ringed([15, 15, 15])), (r) => [
+  ['the ring is background: the cut-off is exclusive', near(r.gate2.foregroundCoverage, share(120), 1e-9)],
+]);
+check('ring of luminance 16 (grey 16)', run(ringed([16, 16, 16])), (r) => [
+  ['the ring is foreground', near(r.gate2.foregroundCoverage, share(140), 1e-9)],
+]);
+// the weights: green counts for more than blue, as on the server
+check('green ring (0,30,0): weighted luminance 17.6, plain mean 10', run(ringed([0, 30, 0])), (r) => [
+  ['the ring is foreground', near(r.gate2.foregroundCoverage, share(140), 1e-9)],
+]);
+check('blue ring (0,0,60): weighted luminance 6.8, plain mean 20', run(ringed([0, 0, 60])), (r) => [
+  ['the ring is background', near(r.gate2.foregroundCoverage, share(120), 1e-9)],
 ]);
 check('all-dark frame', run(ALL_DARK), (r) => [
   ['fails Gate 2', failsGate(r, 2)],
@@ -228,6 +270,31 @@ check('bright reddish frame (bright corners, valid colour profile)', run(BRIGHT_
   ['passes gates 1 and 2', r.preflightPassed === true],
   ['coverage 100%', r.gate2.foregroundCoverage === 1],
 ]);
+// the corner threshold itself: a neutral frame at 160 is not a document, at 161 it is
+check('uniform neutral frame at 160', run(uniform([160, 160, 160])), (r) => [
+  ['not flagged as a document: the corner threshold is exclusive', r.gate2.isDocumentOrDiagram === false],
+  ['fails Gate 2 on colour profile instead', failsGate(r, 2) && /Colour profile outside/.test(r.gate2.rejectionReason || '')],
+]);
+check('uniform neutral frame at 161', run(uniform([161, 161, 161])), (r) => [
+  ['flagged as document/diagram', r.gate2.isDocumentOrDiagram === true && /document or diagram/.test(r.gate2.rejectionReason || '')],
+]);
+
+// ---- the held-out fixture (a photograph; nearest-neighbour 256x256 sample)
+const SIDE = JSON.parse(norm(FIXTURE_SIDECAR));
+const DUMP = fs.readFileSync(path.resolve(__dirname, '..', '..', SIDE.dump));
+const DUMP_HASH = crypto.createHash('sha256').update(DUMP).digest('hex');
+const E = SIDE.expected;
+check('held-out fixture aptos_heldout_d1f1ea894da1 (256x256 sample)',
+  run(new Uint8ClampedArray(DUMP), { width: SIDE.source_width, height: SIDE.source_height, size: SIDE.source_size_bytes }), (r) => [
+    ['the dump is the one its sidecar describes', DUMP.length === N * N * 4 && DUMP_HASH === SIDE.dump_sha256],
+    ['the dump has pixels near the cut-off, so this case is not vacuous', E.pixels_with_luminance_in_5_to_40 > 0],
+    ['passes gates 1 and 2', r.preflightPassed === true && r.failedGate === null],
+    ['foreground count equals the figure computed in Python', Math.round(r.gate2.foregroundCoverage * N * N) === E.foreground_pixels
+      && near(r.gate2.foregroundCoverage, E.foreground_coverage, 1e-12)],
+    ['R/B ratio equals the figure computed in Python', near(r.gate2.redToBlueRatio, E.red_to_blue_ratio, 1e-9)],
+    ['red share equals the figure computed in Python', near(r.gate2.redShare, E.red_share, 1e-9)],
+    ['not flagged as a document', r.gate2.isDocumentOrDiagram === false],
+  ]);
 
 // ---- nothing is reported without a canvas
 check('no canvas available', run(DISC_REDDISH, { canvas: false }), (r) => [

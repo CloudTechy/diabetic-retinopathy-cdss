@@ -166,7 +166,8 @@ export function analyzeRetinalImageOnCanvas(
     redShare = meanR / (meanR + meanG + meanB + 1e-6);
 
     // Flag document/diagram if corners are bright white/gray (mean > 160) and the R/B ratio is below the minimum
-    if (cornerAvgIntensity > 160 && redToBlueRatio < RETINAL_RED_RATIO_MIN && foregroundCount > 0) {
+    // (bright corners are themselves foreground, so no separate foreground condition is needed)
+    if (cornerAvgIntensity > 160 && redToBlueRatio < RETINAL_RED_RATIO_MIN) {
       isDocumentOrDiagram = true;
     }
   }

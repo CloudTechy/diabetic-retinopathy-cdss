@@ -1,0 +1,18 @@
+{
+  "source": "backend/tests/fixtures/aptos_heldout_d1f1ea894da1.png",
+  "source_sha256": "d6eb606b07cdcd6045f2477f9fa3899df7f112f862897286a21f0eece06f2acf",
+  "source_width": 1844,
+  "source_height": 1226,
+  "source_size_bytes": 911050,
+  "dump": "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.rgba",
+  "dump_sha256": "5e87c7033359c9c6165fff298ebf5e440dd8453d5971200ca2f444b6a3bdb910",
+  "method": "nearest-neighbour sample at the centres of a 256x256 grid (integer arithmetic); not the browser's drawImage scaling",
+  "expected": {
+    "computed_by": "numpy in backend/scripts/export_preflight_fixture.py, from the definitions in gate2_relevance.py; not by running the TypeScript",
+    "foreground_pixels": 46878,
+    "foreground_coverage": 0.715301513671875,
+    "pixels_with_luminance_in_5_to_40": 224,
+    "red_to_blue_ratio": 6.308949057437928,
+    "red_share": 0.6056777987704104
+  }
+}

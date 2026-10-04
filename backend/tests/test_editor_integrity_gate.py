@@ -4831,13 +4831,15 @@ def test_gate_descriptions_claim_no_retinal_identity():
 
 PREFLIGHT_CHECK = os.path.join(REPO_ROOT, "frontend", "scripts", "check_preflight.cjs")
 BUILD_LOG = os.path.join(CHAPTER4, "build_verification.log")
+PREFLIGHT_FIXTURE_SIDECAR = os.path.join(REPO_ROOT, "frontend", "scripts", "fixtures", "aptos_heldout_d1f1ea894da1_256.json")
 
 
 def _preflight_source_hash():
     import hashlib
-    v = read(RETINAL_VALIDATOR_TS).replace("\r\n", "\n")
-    t = read(THRESHOLDS_TS).replace("\r\n", "\n")
-    return hashlib.sha256((v + "\n--\n" + t).encode("utf-8")).hexdigest()
+    # the validator, its thresholds, the harness and the fixture's sidecar: an
+    # expectation weakened after the recorded run changes this hash
+    parts = [read(p).replace("\r\n", "\n") for p in (RETINAL_VALIDATOR_TS, THRESHOLDS_TS, PREFLIGHT_CHECK, PREFLIGHT_FIXTURE_SIDECAR)]
+    return hashlib.sha256("\n--\n".join(parts).encode("utf-8")).hexdigest()
 
 
 def test_browser_precheck_returns_no_placeholder_values():
@@ -4881,13 +4883,14 @@ def test_browser_precheck_was_executed_against_this_source():
     assert "const total" not in script and "${ran - failures.length}/${ran}" in script, (
         "the executed check does not compute its own count")
     calls = len(re.findall(r"^check\(", script, re.M))
-    assert calls >= 21, "the executed check has only %d cases" % calls
+    assert calls >= 32, "the executed check has only %d cases" % calls
+    assert "__filename, FIXTURE_SIDECAR" in script, "the recorded hash does not cover the harness itself"
 
     log = read(BUILD_LOG)
     m = re.search(r"PREFLIGHT CHECK source sha256 ([0-9a-f]{64})", log)
     assert m, "build_verification.log does not record an executed pre-check"
     assert m.group(1) == _preflight_source_hash(), (
-        "the recorded pre-check ran a different retinalValidator.ts / validationThresholds.ts than the one shipped")
+        "the recorded pre-check ran a different validator, thresholds, harness or fixture sidecar than the ones shipped")
     section = log.split("PREFLIGHT CHECK source", 1)[1]
     final = re.search(r"PREFLIGHT CHECK: (\d+)/(\d+) cases as expected", section)
     assert final, "the recorded pre-check has no result line"
@@ -4901,5 +4904,29 @@ def test_browser_precheck_was_executed_against_this_source():
                    "height below the minimum", "exactly the minimum dimension", "undeclared MIME type", "panorama",
                    "portrait", "small reddish disc", "one pixel above the minimum", "one pixel below the minimum",
                    "dim ring", "all-dark frame", "grey disc", "red share below", "R/B below it", "bright corners",
-                   "document-like", "no canvas available"):
+                   "document-like", "no canvas available",
+                   "aspect exactly 1.65", "aspect just above 1.65", "aspect exactly 0.65", "aspect just below 0.65",
+                   "luminance exactly 15", "luminance 16", "green ring", "blue ring",
+                   "neutral frame at 160", "neutral frame at 161", "held-out fixture"):
         assert any(needle in name for name in ok_names), "no recorded case covers: %s" % needle
+
+
+def test_preflight_fixture_dump_is_what_the_fixture_yields():
+    """
+    The executed pre-check runs one photograph: a 256x256 dump of the held-out
+    fixture. The dump and the figures expected for it must be what
+    export_preflight_fixture.py produces from the shipped fixture now, and both
+    must be in the archive.
+    """
+    import subprocess
+    script = os.path.join(REPO_ROOT, "backend", "scripts", "export_preflight_fixture.py")
+    done = subprocess.run([sys.executable, script, "--check"], capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    shipped = {dst for _src, dst in _assembler().manifest()}
+    for rel in ("frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.rgba",
+                "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.json",
+                "backend/scripts/export_preflight_fixture.py"):
+        assert rel in shipped, "%s is not in the archive" % rel
+    side = json.loads(read(PREFLIGHT_FIXTURE_SIDECAR))
+    assert side["source_sha256"] == sha256_of(os.path.join(REPO_ROOT, *side["source"].split("/")))
+    assert side["expected"]["pixels_with_luminance_in_5_to_40"] > 0
