@@ -256,9 +256,11 @@ export function analyzeRetinalImageOnCanvas(
       fileSizeBytes,
       // The browser reads the DECLARED type, not the file's bytes; an earlier
       // revision said "Signature Valid" for a signature it never read.
-      metric: gate1Passed
-        ? 'Declared type, size and dimensions within limits; the file signature is checked by the server'
-        : 'Declared type, size or dimensions outside limits',
+      metric: !gate1Passed
+        ? 'Declared type, size or dimensions outside limits'
+        : mimeType === ''
+        ? 'Type not declared; size and dimensions within limits; the file signature is checked by the server'
+        : 'Declared type, size and dimensions within limits; the file signature is checked by the server',
       rejectionReason: gate1Reason,
       clinicalAction: gate1Action,
     },

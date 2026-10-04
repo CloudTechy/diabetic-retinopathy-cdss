@@ -1,14 +1,14 @@
 BUILD VERIFICATION - run from a clean extraction of the archive
-date (UTC): 2026-10-04T21:58:00Z
-sha256 of the pre-build archive this tree produced: db9d2d700ee1795c1d6b24b2a2ea456dff0132db12ffdaf6745ef74f90b8dd1b
+date (UTC): 2026-10-04T22:24:19Z
+sha256 of the pre-build archive this tree produced: 25f77f014068b0a3e480f710a9a345a47c1019f45ebd63e90bfba86c712ef26c
   (the shipped archive differs from it only by this log, the test log, the container freeze and the regenerated transcript - no code or build input differs)
 node v24.9.0   npm 11.6.0   Docker Compose version v2.40.2-desktop.1
-extraction path: C:/tmp/r30_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
+extraction path: C:/tmp/r31_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
 
 $ cd frontend && npm ci
 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
 
-added 347 packages in 27s
+added 347 packages in 25s
 
 $ npm run build
 transforming...
@@ -17,22 +17,35 @@ rendering chunks...
 computing gzip size...
 dist/index.html                   0.53 kB │ gzip:   0.35 kB
 dist/assets/index-BhhNRUZT.css   38.20 kB │ gzip:   7.04 kB
-dist/assets/index-DCQgVcqx.js   349.80 kB │ gzip: 103.07 kB
-✓ built in 1m 24s
+dist/assets/index-DTonnslP.js   349.91 kB │ gzip: 103.08 kB
+✓ built in 23.31s
 dist/index.html produced: yes
 
 $ npm run check:preflight   (node scripts/check_preflight.cjs: the browser pre-check, executed)
-PREFLIGHT CHECK source sha256 b030edd2b640027be5763a309e36c1eaccbb98c8beb59bb1d5cbf1a547ba91d2
+PREFLIGHT CHECK source sha256 1fdd44176455b71fa5bff6108f3904e66544021dc1a194e09fe26d2f4c63b385
   (retinalValidator.ts + validationThresholds.ts, executed in Node against synthetic 256x256 patterns)
-  ok   reddish disc on a dark frame (synthetic): preflight=true failedGate=null coverage=69.0% gate3=notEvaluated
-  ok   all-dark frame: preflight=false failedGate=2 coverage=0.0% gate3=notEvaluated
-  ok   small reddish disc (coverage ~8%, colour profile valid): preflight=false failedGate=2 coverage=7.7% gate3=notEvaluated
-  ok   bright neutral frame (document-like): preflight=false failedGate=2 coverage=100.0% gate3=notEvaluated
-  ok   300x200 image: preflight=false failedGate=1 coverage=69.0% gate3=notEvaluated
-  ok   2400x800 panorama: preflight=false failedGate=2 coverage=69.0% gate3=notEvaluated
-  ok   grey disc on a dark frame: preflight=false failedGate=2 coverage=69.0% gate3=notEvaluated
+  ok   reddish disc on a dark frame: preflight=true failedGate=null coverage=69.008% gate3=notEvaluated
+  ok   declared type image/gif: preflight=false failedGate=1 coverage=69.008% gate3=notEvaluated
+  ok   file of 15 MiB + 1 byte: preflight=false failedGate=1 coverage=69.008% gate3=notEvaluated
+  ok   file of exactly 15 MiB: preflight=true failedGate=null coverage=69.008% gate3=notEvaluated
+  ok   narrow image: width below the minimum, height above: preflight=false failedGate=1 coverage=69.008% gate3=notEvaluated
+  ok   short image: height below the minimum, width above: preflight=false failedGate=1 coverage=69.008% gate3=notEvaluated
+  ok   image of exactly the minimum dimension: preflight=true failedGate=null coverage=69.008% gate3=notEvaluated
+  ok   undeclared MIME type: preflight=true failedGate=null coverage=69.008% gate3=notEvaluated
+  ok   2400x800 panorama (aspect 3.00): preflight=false failedGate=2 coverage=69.008% gate3=notEvaluated
+  ok   600x1000 portrait (aspect 0.60): preflight=false failedGate=2 coverage=69.008% gate3=notEvaluated
+  ok   small reddish disc (colour profile valid): preflight=false failedGate=2 coverage=7.668% gate3=notEvaluated
+  ok   coverage one pixel above the minimum: preflight=true failedGate=null coverage=20.001% gate3=notEvaluated
+  ok   coverage one pixel below the minimum: preflight=false failedGate=2 coverage=20.000% gate3=notEvaluated
+  ok   bright disc with a dim ring (luminance ~40): preflight=true failedGate=null coverage=88.341% gate3=notEvaluated
+  ok   all-dark frame: preflight=false failedGate=2 coverage=0.000% gate3=notEvaluated
+  ok   grey disc (R/B 1.00): preflight=false failedGate=2 coverage=69.008% gate3=notEvaluated
+  ok   disc with R/B above the minimum but red share below it: preflight=false failedGate=2 coverage=69.008% gate3=notEvaluated
+  ok   disc with red share above the minimum but R/B below it: preflight=false failedGate=2 coverage=69.008% gate3=notEvaluated
+  ok   bright neutral frame (document-like): preflight=false failedGate=2 coverage=100.000% gate3=notEvaluated
+  ok   bright reddish frame (bright corners, valid colour profile): preflight=true failedGate=null coverage=100.000% gate3=notEvaluated
   ok   no canvas available: preflight=false failedGate=2 coverage=not evaluated gate3=notEvaluated
-PREFLIGHT CHECK: 8/8 cases as expected
+PREFLIGHT CHECK: 21/21 cases as expected
 
 $ docker compose config --quiet
 compose file valid
@@ -53,16 +66,16 @@ exit: 0
 
 $ docker compose -p drcdss_evidence ps
 NAME               IMAGE                      COMMAND                  SERVICE    CREATED          STATUS                   PORTS
-dr_cdss_backend    drcdss_evidence-backend    "uvicorn main:app --…"   backend    14 seconds ago   Up 1 second              0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
-dr_cdss_db         postgres:16-alpine         "docker-entrypoint.s…"   db         14 seconds ago   Up 7 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
-dr_cdss_frontend   drcdss_evidence-frontend   "docker-entrypoint.s…"   frontend   14 seconds ago   Up Less than a second    0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
+dr_cdss_backend    drcdss_evidence-backend    "uvicorn main:app --…"   backend    15 seconds ago   Up 1 second              0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+dr_cdss_db         postgres:16-alpine         "docker-entrypoint.s…"   db         15 seconds ago   Up 7 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+dr_cdss_frontend   drcdss_evidence-frontend   "docker-entrypoint.s…"   frontend   15 seconds ago   Up 1 second              0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
 
 $ curl http://127.0.0.1:8000/api/v1/health   (polled until inference_ready)
 {
   "status": "healthy",
   "app_name": "Diabetic Retinopathy CDSS",
   "environment": "development",
-  "timestamp": "2026-10-04T22:04:06.103014+00:00",
+  "timestamp": "2026-10-04T22:28:20.402874+00:00",
   "storage_accessible": true,
   "inference_ready": true,
   "inference_engine": "pytorch",

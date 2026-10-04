@@ -4871,16 +4871,35 @@ def test_browser_precheck_was_executed_against_this_source():
     """
     assert os.path.exists(PREFLIGHT_CHECK), "frontend/scripts/check_preflight.cjs is missing"
     script = read(PREFLIGHT_CHECK)
-    for case in ("reddish disc", "small reddish disc", "all-dark frame", "bright neutral frame", "300x200 image", "2400x800 panorama",
-                 "grey disc", "no canvas available"):
-        assert case in script, "the executed check no longer covers: %s" % case
     assert '"check:preflight": "node scripts/check_preflight.cjs"' in read(os.path.join(REPO_ROOT, "frontend", "package.json"))
     shipped = {dst for _src, dst in _assembler().manifest()}
     assert "frontend/scripts/check_preflight.cjs" in shipped, "the executed check is not in the archive"
+
+    # The script's first version printed a hard-coded "8/8": a case could be
+    # disabled and the line stayed the same. The total must be what ran, and
+    # this rule reads the recorded case lines rather than the summary alone.
+    assert "const total" not in script and "${ran - failures.length}/${ran}" in script, (
+        "the executed check does not compute its own count")
+    calls = len(re.findall(r"^check\(", script, re.M))
+    assert calls >= 21, "the executed check has only %d cases" % calls
+
     log = read(BUILD_LOG)
     m = re.search(r"PREFLIGHT CHECK source sha256 ([0-9a-f]{64})", log)
     assert m, "build_verification.log does not record an executed pre-check"
     assert m.group(1) == _preflight_source_hash(), (
         "the recorded pre-check ran a different retinalValidator.ts / validationThresholds.ts than the one shipped")
-    assert re.search(r"PREFLIGHT CHECK: 8/8 cases as expected", log), "the recorded pre-check did not pass all eight cases"
-    assert "  FAIL " not in log.split("PREFLIGHT CHECK source")[1].split("PREFLIGHT CHECK: ")[0]
+    section = log.split("PREFLIGHT CHECK source", 1)[1]
+    final = re.search(r"PREFLIGHT CHECK: (\d+)/(\d+) cases as expected", section)
+    assert final, "the recorded pre-check has no result line"
+    section = section[:section.index(final.group(0))]
+    assert "  FAIL " not in section, "the recorded pre-check has a failing case"
+    ok_names = re.findall(r"^  ok   (.+?): preflight=", section, re.M)
+    assert int(final.group(1)) == int(final.group(2)) == len(ok_names) == calls, (
+        "recorded %s/%s, %d ok lines, %d cases in the script" % (final.group(1), final.group(2), len(ok_names), calls))
+    # one case per criterion, each of which must have RUN
+    for needle in ("reddish disc on a dark frame", "declared type image/gif", "MiB + 1 byte", "width below the minimum",
+                   "height below the minimum", "exactly the minimum dimension", "undeclared MIME type", "panorama",
+                   "portrait", "small reddish disc", "one pixel above the minimum", "one pixel below the minimum",
+                   "dim ring", "all-dark frame", "grey disc", "red share below", "R/B below it", "bright corners",
+                   "document-like", "no canvas available"):
+        assert any(needle in name for name in ok_names), "no recorded case covers: %s" % needle

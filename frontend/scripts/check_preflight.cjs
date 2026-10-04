@@ -8,6 +8,12 @@
  * 180.0 and colour figures of 1.00 / 33% that it had never computed. Rules that
  * read the source could not see any of that; running the code does.
  *
+ * Each criterion has an input that fails on that criterion ALONE, so removing
+ * or weakening one rule turns exactly that case red. An earlier version of this
+ * script had no such inputs for most rules and printed a hard-coded "8/8": a
+ * reviewer removed six rules one at a time and it stayed green. The count
+ * printed at the end is now the number of cases that actually ran.
+ *
  * No test runner and no new dependency: the validator is bundled with the
  * esbuild that vite already installs, and run in Node against a stub canvas
  * fed with synthetic 256x256 pixel data built below. The inputs are synthetic
@@ -29,6 +35,10 @@ const norm = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const sourceHash = crypto.createHash('sha256')
   .update(norm(VALIDATOR) + '\n--\n' + norm(THRESHOLDS), 'utf8').digest('hex');
 
+// the thresholds the validator is supposed to apply, read from the generated file
+const T = {};
+for (const m of norm(THRESHOLDS).matchAll(/export const (\w+) = ([\d.]+);/g)) T[m[1]] = Number(m[2]);
+
 // ---- bundle the real validator
 const bundled = esbuild.buildSync({
   entryPoints: [VALIDATOR], bundle: true, format: 'cjs', platform: 'node', write: false, logLevel: 'silent',
@@ -45,15 +55,37 @@ function pixels(fn) {
   }
   return d;
 }
-const inDisc = (x, y, radius) => (x - 128) ** 2 + (y - 128) ** 2 <= radius * radius;
-// a reddish disc on a dark frame, with a little texture so a gradient exists
-const DISC_REDDISH = pixels((x, y) => inDisc(x, y, 120) ? [170 + ((x * 7 + y * 3) % 40), 80 + ((x + y) % 20), 40] : [0, 0, 0]);
-// the same colours in a disc covering only ~8% of the frame: coverage is the ONLY criterion it fails
-const SMALL_DISC_REDDISH = pixels((x, y) => inDisc(x, y, 40) ? [170 + ((x * 7 + y * 3) % 40), 80 + ((x + y) % 20), 40] : [0, 0, 0]);
+const dist2 = (x, y) => (x - 128) ** 2 + (y - 128) ** 2;
+const inDisc = (x, y, radius) => dist2(x, y) <= radius * radius;
+const share = (radius) => { let c = 0; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (inDisc(x, y, radius)) c++; return c / (N * N); };
+// reddish, with a little texture so a gradient exists; luminance stays above 100
+const reddish = (x, y) => [170 + ((x * 7 + y * 3) % 40), 80 + ((x + y) % 20), 40];
+
+const DISC_REDDISH = pixels((x, y) => inDisc(x, y, 120) ? reddish(x, y) : [0, 0, 0]);
+// the same colours in a disc covering only ~8% of the frame: fails on coverage alone
+const SMALL_DISC_REDDISH = pixels((x, y) => inDisc(x, y, 40) ? reddish(x, y) : [0, 0, 0]);
+// a bright disc with a DIM ring (luminance ~40) around it: the ring counts as
+// foreground only if the cut-off is the server's 15
+const SOFT_EDGED_DISC = pixels((x, y) => inDisc(x, y, 120) ? reddish(x, y) : inDisc(x, y, 140) ? [70, 30, 15] : [0, 0, 0]);
 const DISC_GREY = pixels((x, y) => inDisc(x, y, 120) ? [120, 120, 120] : [0, 0, 0]);
+// R/B = 1.25 (above the minimum) but red share = 33.3% (below it): fails on red share alone
+const DISC_LOW_RED_SHARE = pixels((x, y) => inDisc(x, y, 120) ? [100, 120, 80] : [0, 0, 0]);
+// red share 37.5% (above the minimum) but R/B = 1.09 (below it): fails on R/B alone
+const DISC_LOW_RB = pixels((x, y) => inDisc(x, y, 120) ? [120, 90, 110] : [0, 0, 0]);
+// a full bright frame with a valid colour profile: bright corners, but not a document
+const BRIGHT_REDDISH_FRAME = pixels((x, y) => [245, 170 + ((x + y) % 6), 110]);   // corner mean (r+g+b)/3 = 175, above the heuristic's 160
 const ALL_DARK = pixels(() => [0, 0, 0]);
 // light page with dark "text" rows; the rows avoid y = 0 and y = 255 so all four corners are bright
 const BRIGHT_NEUTRAL = pixels((x, y) => (y % 16 >= 6 && y % 16 < 8 ? [60, 60, 60] : [235, 235, 235]));
+// exactly K foreground pixels, from the centre outwards in raster order (corners stay dark)
+function exactlyForeground(k) {
+  const order = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) order.push([dist2(x, y), x, y]);
+  order.sort((a, b) => a[0] - b[0] || a[2] - b[2] || a[1] - b[1]);
+  const lit = new Set(order.slice(0, k).map(([, x, y]) => y * N + x));
+  return pixels((x, y) => (lit.has(y * N + x) ? reddish(x, y) : [0, 0, 0]));
+}
+const MIN_COVERAGE_PIXELS = Math.ceil(T.RETINAL_MIN_COVERAGE * N * N);   // the fewest pixels that reach the minimum
 
 // ---- run the validator against a stub canvas
 function run(data, { width = 1024, height = 1024, mime = 'image/png', size = 900000, canvas = true } = {}) {
@@ -69,8 +101,10 @@ function run(data, { width = 1024, height = 1024, mime = 'image/png', size = 900
   return mod.exports.analyzeRetinalImageOnCanvas(img, size, mime);
 }
 
+let ran = 0;
 const failures = [];
 function check(name, result, expectations) {
+  ran += 1;
   const problems = [];
   for (const [label, ok] of expectations(result)) if (!ok) problems.push(label);
   // invariants of EVERY result
@@ -83,59 +117,126 @@ function check(name, result, expectations) {
   if (!result.gate2.coverageEvaluated && (result.gate2.redToBlueRatio !== null || result.gate2.redShare !== null)) {
     problems.push('colour figures reported without a canvas');
   }
-  const cov = result.gate2.coverageEvaluated ? (result.gate2.foregroundCoverage * 100).toFixed(1) + '%' : 'not evaluated';
+  const cov = result.gate2.coverageEvaluated ? (result.gate2.foregroundCoverage * 100).toFixed(3) + '%' : 'not evaluated';
   const summary = `preflight=${result.preflightPassed} failedGate=${result.failedGate} coverage=${cov} gate3=${result.gate3.status}`;
   if (problems.length) { failures.push(name); console.log(`  FAIL ${name}: ${summary}\n        ` + problems.join('\n        ')); }
   else console.log(`  ok   ${name}: ${summary}`);
 }
+const near = (a, b, tol) => Math.abs(a - b) <= tol;
+const failsGate = (r, gate) => r.preflightPassed === false && r.failedGate === gate;
 
 console.log(`PREFLIGHT CHECK source sha256 ${sourceHash}`);
 console.log('  (retinalValidator.ts + validationThresholds.ts, executed in Node against synthetic 256x256 patterns)');
 
-check('reddish disc on a dark frame (synthetic)', run(DISC_REDDISH), (r) => [
+// ---- the passing case
+check('reddish disc on a dark frame', run(DISC_REDDISH), (r) => [
   ['passes gates 1 and 2', r.preflightPassed === true && r.failedGate === null],
-  ['coverage is the measured disc share (~69%)', Math.abs(r.gate2.foregroundCoverage - Math.PI * 120 * 120 / (N * N)) < 0.01],
+  ['coverage is the measured disc share', near(r.gate2.foregroundCoverage, share(120), 1e-9)],
   ['coverage evaluated', r.gate2.coverageEvaluated === true],
   ['colour figures computed', r.gate2.redToBlueRatio > 3 && r.gate2.redShare > 0.5],
   ['metric says within thresholds', /within thresholds/.test(r.gate2.metric)],
   ['a focus estimate was computed', typeof r.gate3.focusEstimate === 'number'],
+  ['gate 1 metric names the declared type', /^Declared type, size and dimensions within limits/.test(r.gate1.metric)],
+]);
+
+// ---- Gate 1: one input per rule
+check('declared type image/gif', run(DISC_REDDISH, { mime: 'image/gif' }), (r) => [
+  ['fails Gate 1 on the declared type', failsGate(r, 1) && /Unsupported MIME format/.test(r.gate1.rejectionReason || '')],
+]);
+check(`file of ${T.MAX_UPLOAD_SIZE_MB} MiB + 1 byte`, run(DISC_REDDISH, { size: T.MAX_UPLOAD_SIZE_MB * 1024 * 1024 + 1 }), (r) => [
+  ['fails Gate 1 on size', failsGate(r, 1) && /exceeds the \d+ MB limit/.test(r.gate1.rejectionReason || '')],
+]);
+check(`file of exactly ${T.MAX_UPLOAD_SIZE_MB} MiB`, run(DISC_REDDISH, { size: T.MAX_UPLOAD_SIZE_MB * 1024 * 1024 }), (r) => [
+  ['passes (the limit is inclusive, as on the server)', r.preflightPassed === true],
+]);
+check('narrow image: width below the minimum, height above', run(DISC_REDDISH, { width: T.MIN_IMAGE_DIMENSION - 1, height: 600 }), (r) => [
+  ['fails Gate 1 on width alone', failsGate(r, 1) && /minimum of \d+x\d+ px/.test(r.gate1.rejectionReason || '')],
+]);
+check('short image: height below the minimum, width above', run(DISC_REDDISH, { width: 600, height: T.MIN_IMAGE_DIMENSION - 1 }), (r) => [
+  ['fails Gate 1 on height alone', failsGate(r, 1) && /minimum of \d+x\d+ px/.test(r.gate1.rejectionReason || '')],
+]);
+check('image of exactly the minimum dimension', run(DISC_REDDISH, { width: T.MIN_IMAGE_DIMENSION, height: T.MIN_IMAGE_DIMENSION }), (r) => [
+  ['passes', r.preflightPassed === true],
+]);
+check('undeclared MIME type', run(DISC_REDDISH, { mime: '' }), (r) => [
+  ['reports the type as not declared', r.gate1.mime === 'not declared'],
+  ['gate 1 metric does not claim a declared type', /^Type not declared/.test(r.gate1.metric)],
+]);
+
+// ---- Gate 2: aspect ratio, both bounds
+check('2400x800 panorama (aspect 3.00)', run(DISC_REDDISH, { width: 2400, height: 800 }), (r) => [
+  ['fails Gate 2 on the upper aspect bound', failsGate(r, 2) && /Aspect ratio 3\.00/.test(r.gate2.rejectionReason || '')],
+]);
+check('600x1000 portrait (aspect 0.60)', run(DISC_REDDISH, { width: 600, height: 1000 }), (r) => [
+  ['fails Gate 2 on the lower aspect bound', failsGate(r, 2) && /Aspect ratio 0\.60/.test(r.gate2.rejectionReason || '')],
+]);
+
+// ---- Gate 2: coverage
+check('small reddish disc (colour profile valid)', run(SMALL_DISC_REDDISH), (r) => [
+  ['fails Gate 2', failsGate(r, 2)],
+  ['coverage is the measured disc share', near(r.gate2.foregroundCoverage, share(40), 1e-9)],
+  ['the colour profile alone would pass, so coverage is the sole cause', r.gate2.redToBlueRatio > 3 && r.gate2.redShare > 0.5 && r.gate2.isDocumentOrDiagram === false],
+  ['reason names coverage', /Foreground coverage \d+\.\d% is below the configured minimum/.test(r.gate2.rejectionReason || '')],
+]);
+check('coverage one pixel above the minimum', run(exactlyForeground(MIN_COVERAGE_PIXELS)), (r) => [
+  ['passes', r.preflightPassed === true],
+  ['coverage is exactly the lit share', near(r.gate2.foregroundCoverage, MIN_COVERAGE_PIXELS / (N * N), 1e-12)],
+]);
+check('coverage one pixel below the minimum', run(exactlyForeground(MIN_COVERAGE_PIXELS - 1)), (r) => [
+  ['fails Gate 2 on coverage alone', failsGate(r, 2) && /Foreground coverage/.test(r.gate2.rejectionReason || '')],
+  ['the colour profile alone would pass', r.gate2.redToBlueRatio > 3 && r.gate2.redShare > 0.5],
+]);
+check('bright disc with a dim ring (luminance ~40)', run(SOFT_EDGED_DISC), (r) => [
+  ['the dim ring counts as foreground (cut-off 15, as on the server)', near(r.gate2.foregroundCoverage, share(140), 1e-9)],
+  ['and not only the bright disc', r.gate2.foregroundCoverage > share(120) + 0.1],
 ]);
 check('all-dark frame', run(ALL_DARK), (r) => [
-  ['fails Gate 2', r.preflightPassed === false && r.failedGate === 2],
+  ['fails Gate 2', failsGate(r, 2)],
   ['coverage 0% and evaluated', r.gate2.coverageEvaluated === true && r.gate2.foregroundCoverage === 0],
   ['reason names coverage', /Foreground coverage 0\.0% is below the configured minimum/.test(r.gate2.rejectionReason || '')],
   ['colour figures are the whole-frame values, as the server computes them', r.gate2.redToBlueRatio === 0 && r.gate2.redShare === 0],
 ]);
-check('small reddish disc (coverage ~8%, colour profile valid)', run(SMALL_DISC_REDDISH), (r) => [
-  ['fails Gate 2', r.preflightPassed === false && r.failedGate === 2],
-  ['coverage is the measured disc share (~7.7%)', Math.abs(r.gate2.foregroundCoverage - Math.PI * 40 * 40 / (N * N)) < 0.005],
-  ['the colour profile alone would pass, so coverage is the sole cause', r.gate2.redToBlueRatio > 3 && r.gate2.redShare > 0.5 && r.gate2.isDocumentOrDiagram === false],
-  ['reason names coverage', /Foreground coverage 7\.\d% is below the configured minimum/.test(r.gate2.rejectionReason || '')],
-  ['no "within thresholds"', !/within thresholds/.test(r.gate2.metric)],
+
+// ---- Gate 2: colour profile, each half alone
+check('grey disc (R/B 1.00)', run(DISC_GREY), (r) => [
+  ['fails Gate 2 on colour profile', failsGate(r, 2) && /Colour profile outside/.test(r.gate2.rejectionReason || '')],
+  ['R/B is below the minimum', r.gate2.redToBlueRatio < T.RETINAL_RED_RATIO_MIN],
+  ['coverage itself passes', r.gate2.foregroundCoverage > T.RETINAL_MIN_COVERAGE],
 ]);
+check('disc with R/B above the minimum but red share below it', run(DISC_LOW_RED_SHARE), (r) => [
+  ['R/B alone would pass', r.gate2.redToBlueRatio >= T.RETINAL_RED_RATIO_MIN],
+  ['red share is below the minimum', r.gate2.redShare < T.RETINAL_RED_SHARE_MIN],
+  ['fails Gate 2 on colour profile (red share alone)', failsGate(r, 2) && /Colour profile outside/.test(r.gate2.rejectionReason || '')],
+]);
+
+check('disc with red share above the minimum but R/B below it', run(DISC_LOW_RB), (r) => [
+  ['red share alone would pass', r.gate2.redShare >= T.RETINAL_RED_SHARE_MIN],
+  ['R/B is below the minimum', r.gate2.redToBlueRatio < T.RETINAL_RED_RATIO_MIN],
+  ['not flagged as a document (corners are dark)', r.gate2.isDocumentOrDiagram === false],
+  ['fails Gate 2 on colour profile (R/B alone)', failsGate(r, 2) && /Colour profile outside/.test(r.gate2.rejectionReason || '')],
+]);
+
+// ---- Gate 2: the browser-only document heuristic
 check('bright neutral frame (document-like)', run(BRIGHT_NEUTRAL), (r) => [
-  ['fails Gate 2', r.preflightPassed === false && r.failedGate === 2],
+  ['fails Gate 2', failsGate(r, 2)],
   ['flagged as document/diagram', r.gate2.isDocumentOrDiagram === true],
   ['reason is the document reason', /document or diagram/.test(r.gate2.rejectionReason || '')],
 ]);
-check('300x200 image', run(DISC_REDDISH, { width: 300, height: 200 }), (r) => [
-  ['fails Gate 1', r.preflightPassed === false && r.failedGate === 1],
-  ['reason names the minimum dimension', /minimum of \d+x\d+ px/.test(r.gate1.rejectionReason || '')],
+
+check('bright reddish frame (bright corners, valid colour profile)', run(BRIGHT_REDDISH_FRAME), (r) => [
+  ['not flagged as a document: the heuristic needs a neutral colour profile too', r.gate2.isDocumentOrDiagram === false],
+  ['passes gates 1 and 2', r.preflightPassed === true],
+  ['coverage 100%', r.gate2.foregroundCoverage === 1],
 ]);
-check('2400x800 panorama', run(DISC_REDDISH, { width: 2400, height: 800 }), (r) => [
-  ['fails Gate 2 on aspect ratio', r.failedGate === 2 && /Aspect ratio 3\.00/.test(r.gate2.rejectionReason || '')],
-]);
-check('grey disc on a dark frame', run(DISC_GREY), (r) => [
-  ['fails Gate 2 on colour profile', r.failedGate === 2 && /Colour profile outside/.test(r.gate2.rejectionReason || '')],
-  ['coverage itself passes (~69%)', r.gate2.foregroundCoverage > 0.6],
-]);
+
+// ---- nothing is reported without a canvas
 check('no canvas available', run(DISC_REDDISH, { canvas: false }), (r) => [
-  ['cannot pass', r.preflightPassed === false && r.failedGate === 2],
+  ['cannot pass', failsGate(r, 2)],
   ['coverage not evaluated', r.gate2.coverageEvaluated === false],
   ['metric says not evaluated', /Not evaluated in the browser/.test(r.gate2.metric)],
   ['no colour figure and no focus estimate', r.gate2.redToBlueRatio === null && r.gate2.redShare === null && r.gate3.focusEstimate === null],
 ]);
 
-const total = 8;
-console.log(`PREFLIGHT CHECK: ${total - failures.length}/${total} cases as expected`);
+// The count is what ran, not a constant.
+console.log(`PREFLIGHT CHECK: ${ran - failures.length}/${ran} cases as expected`);
 process.exit(failures.length ? 1 : 0);

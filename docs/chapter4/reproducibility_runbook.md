@@ -201,7 +201,7 @@ docker compose config
 docker compose up --build
 ```
 
-On Windows, extract to a short path first (paths beyond 260 characters break `npm ci`'s nested binaries). The frontend build is `tsc && vite build`; `npm run check:preflight` executes the browser pre-check on eight synthetic inputs and asserts every field it returns (its output, with the hash of the source it ran, is in the build log); the compose stack builds `backend/Dockerfile` and `frontend/Dockerfile` and needs no `.env` (every variable has a default). [`build_verification.log`](build_verification.log) is the transcript of exactly these commands from a clean extraction, ending with the backend's health response (`inference_ready: true` and the verified checkpoint SHA-256) and the container's own `pip freeze` ([`container_environment_freeze.txt`](container_environment_freeze.txt)).
+On Windows, extract to a short path first (paths beyond 260 characters break `npm ci`'s nested binaries). The frontend build is `tsc && vite build`; `npm run check:preflight` executes the browser pre-check on synthetic inputs, one failing on each rule alone, and asserts every field it returns (its output, with the hash of the source it ran, is in the build log); the compose stack builds `backend/Dockerfile` and `frontend/Dockerfile` and needs no `.env` (every variable has a default). [`build_verification.log`](build_verification.log) is the transcript of exactly these commands from a clean extraction, ending with the backend's health response (`inference_ready: true` and the verified checkpoint SHA-256) and the container's own `pip freeze` ([`container_environment_freeze.txt`](container_environment_freeze.txt)).
 
 ## 5. Run the test suite
 
