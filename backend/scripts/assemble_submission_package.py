@@ -286,9 +286,14 @@ def _refresh_transcript(transcript):
         return False
     new = m.group(1) + transcript.strip("\n") + m.group(3)
     updated = text[:m.start()] + new + text[m.end():]
-    # the "Produced on" line names the day this transcript was produced
-    import datetime as _dt
-    updated = re.sub(r"Produced on \d{4}-\d{2}-\d{2}", "Produced on %s" % _dt.date.today().isoformat(), updated, count=1)
+    # The date beside the transcript is the date of the recorded build check
+    # (build_verification.log), a file in the archive - never the clock. An
+    # earlier version wrote today's date here, so the same commit built on two
+    # days gave two archives while the README said a rebuild was byte-identical.
+    with open(os.path.join(CHAPTER4, "build_verification.log"), encoding="utf-8") as fh:
+        checked = re.search(r"date \(UTC\): (\d{4}-\d{2}-\d{2})", fh.read())
+    if checked:
+        updated = re.sub(r"build check of \d{4}-\d{2}-\d{2}", "build check of %s" % checked.group(1), updated, count=1)
     if updated == text:
         return False
     with open(path, "w", encoding="utf-8", newline="\n") as fh:

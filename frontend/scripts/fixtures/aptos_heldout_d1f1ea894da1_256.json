@@ -14,5 +14,12 @@
     "pixels_with_luminance_in_5_to_40": 224,
     "red_to_blue_ratio": 6.308949057437928,
     "red_share": 0.6056777987704104
+  },
+  "production_gate2": {
+    "computed_by": "evaluate_gate2 in backend/app/services/validation/gate2_relevance.py, called on the dump",
+    "passed": true,
+    "foreground_coverage": 0.715301513671875,
+    "red_to_blue_ratio": 6.308949356980513,
+    "red_share_rounded_3dp": 0.606
   }
 }

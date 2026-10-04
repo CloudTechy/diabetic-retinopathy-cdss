@@ -218,6 +218,10 @@ check('bright disc with a dim ring (luminance ~40)', run(SOFT_EDGED_DISC), (r) =
   ['the dim ring counts as foreground (cut-off 15, as on the server)', near(r.gate2.foregroundCoverage, share(140), 1e-9)],
   ['and not only the bright disc', r.gate2.foregroundCoverage > share(120) + 0.1],
 ]);
+// saturated pixels are foreground once, like any other
+check('reddish disc with a saturated highlight (255,255,255)', run(pixels((x, y) => inDisc(x, y, 30) ? [255, 255, 255] : inDisc(x, y, 120) ? reddish(x, y) : [0, 0, 0])), (r) => [
+  ['coverage is exactly the disc share', near(r.gate2.foregroundCoverage, share(120), 1e-12)],
+]);
 // the cut-off itself: luminance exactly 15 is background, 16 is foreground
 check('ring of luminance exactly 15 (grey 15)', run(ringed([15, 15, 15])), (r) => [
   ['the ring is background: the cut-off is exclusive', near(r.gate2.foregroundCoverage, share(120), 1e-9)],
@@ -284,6 +288,7 @@ const SIDE = JSON.parse(norm(FIXTURE_SIDECAR));
 const DUMP = fs.readFileSync(path.resolve(__dirname, '..', '..', SIDE.dump));
 const DUMP_HASH = crypto.createHash('sha256').update(DUMP).digest('hex');
 const E = SIDE.expected;
+const P = SIDE.production_gate2;
 check('held-out fixture aptos_heldout_d1f1ea894da1 (256x256 sample)',
   run(new Uint8ClampedArray(DUMP), { width: SIDE.source_width, height: SIDE.source_height, size: SIDE.source_size_bytes }), (r) => [
     ['the dump is the one its sidecar describes', DUMP.length === N * N * 4 && DUMP_HASH === SIDE.dump_sha256],
@@ -294,6 +299,10 @@ check('held-out fixture aptos_heldout_d1f1ea894da1 (256x256 sample)',
     ['R/B ratio equals the figure computed in Python', near(r.gate2.redToBlueRatio, E.red_to_blue_ratio, 1e-9)],
     ['red share equals the figure computed in Python', near(r.gate2.redShare, E.red_share, 1e-9)],
     ['not flagged as a document', r.gate2.isDocumentOrDiagram === false],
+    ['the production gate passes the same pixels', P.passed === true],
+    ['coverage equals the production gate\'s', near(r.gate2.foregroundCoverage, P.foreground_coverage, 1e-12)],
+    ['R/B ratio equals the production gate\'s (float32 means there: 1e-5)', near(r.gate2.redToBlueRatio, P.red_to_blue_ratio, 1e-5)],
+    ['red share equals the production gate\'s, which is rounded to 3 decimals', near(r.gate2.redShare, P.red_share_rounded_3dp, 5.0001e-4)],
   ]);
 
 // ---- nothing is reported without a canvas

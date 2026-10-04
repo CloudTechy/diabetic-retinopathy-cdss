@@ -4560,14 +4560,40 @@ def test_preprocessing_parity_claims_consistency_not_generalisation():
     assert "does not establish performance on images from populations, cameras or clinical environments outside the evaluated APTOS cohort" in spec
 
 
-def test_transcript_date_is_not_older_than_the_build_check():
-    """VERIFICATION.md said "Produced on 2026-10-03" in an archive built on the 4th."""
+def test_transcript_date_is_the_build_checks_date():
+    """
+    VERIFICATION.md said "Produced on 2026-10-03" in an archive built on the
+    4th; then the assembler wrote today's date, and the same commit built on
+    two days gave two archives. The date is the recorded build check's.
+    """
     # lifted to the archive root by the assembler; in the repository it lives under docs/chapter4
-    m = re.search(r"Produced on (\d{4}-\d{2}-\d{2})", read(_resolve(
-        os.path.join(CHAPTER4, "VERIFICATION.md"), os.path.join(REPO_ROOT, "VERIFICATION.md"))))
+    text = read(_resolve(os.path.join(CHAPTER4, "VERIFICATION.md"), os.path.join(REPO_ROOT, "VERIFICATION.md")))
+    assert "Produced on" not in text
+    m = re.search(r"build check of (\d{4}-\d{2}-\d{2})", text)
     b = re.search(r"date \(UTC\): (\d{4}-\d{2}-\d{2})", read(os.path.join(CHAPTER4, "build_verification.log")))
     assert m and b, "dates not found"
-    assert m.group(1) >= b.group(1), "the transcript (%s) predates the build check (%s)" % (m.group(1), b.group(1))
+    assert m.group(1) == b.group(1), "the transcript says %s, the build check %s" % (m.group(1), b.group(1))
+
+
+def test_the_build_reads_no_clock():
+    """
+    The README says a rebuild of identical content is byte-identical. That is
+    false the moment the assembler asks what day it is, so it may not: no
+    call to today(), now(), utcnow(), time() or the like anywhere in it.
+    """
+    path = os.path.join(REPO_ROOT, "backend", "scripts", "assemble_submission_package.py")
+    tree = ast.parse(read(path))
+    clock = {"today", "now", "utcnow", "time", "time_ns", "localtime", "gmtime", "ctime", "strftime", "fromtimestamp"}
+    found = sorted({node.func.attr for node in ast.walk(tree)
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in clock})
+    assert not found, "the assembler reads the clock: %s" % ", ".join(found)
+    imported = sorted({alias.name for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))
+                       for alias in ([ast.alias(name=node.module or "")] if isinstance(node, ast.ImportFrom) else node.names)
+                       if alias.name.split(".")[0] in ("datetime", "time")})
+    assert not imported, "the assembler imports %s" % ", ".join(imported)
+    readme = read(_resolve(os.path.join(CHAPTER4, "SUBMISSION_README.md"), os.path.join(REPO_ROOT, "README.md")))
+    assert "Nothing in it is generated at build time" not in readme
+    assert "a rebuild of identical content is byte-identical" in readme
 
 
 # ======================================================================
@@ -4883,7 +4909,7 @@ def test_browser_precheck_was_executed_against_this_source():
     assert "const total" not in script and "${ran - failures.length}/${ran}" in script, (
         "the executed check does not compute its own count")
     calls = len(re.findall(r"^check\(", script, re.M))
-    assert calls >= 32, "the executed check has only %d cases" % calls
+    assert calls >= 33, "the executed check has only %d cases" % calls
     assert "__filename, FIXTURE_SIDECAR" in script, "the recorded hash does not cover the harness itself"
 
     log = read(BUILD_LOG)
@@ -4907,7 +4933,7 @@ def test_browser_precheck_was_executed_against_this_source():
                    "document-like", "no canvas available",
                    "aspect exactly 1.65", "aspect just above 1.65", "aspect exactly 0.65", "aspect just below 0.65",
                    "luminance exactly 15", "luminance 16", "green ring", "blue ring",
-                   "neutral frame at 160", "neutral frame at 161", "held-out fixture"):
+                   "neutral frame at 160", "neutral frame at 161", "held-out fixture", "saturated highlight"):
         assert any(needle in name for name in ok_names), "no recorded case covers: %s" % needle
 
 
@@ -4930,3 +4956,5 @@ def test_preflight_fixture_dump_is_what_the_fixture_yields():
     side = json.loads(read(PREFLIGHT_FIXTURE_SIDECAR))
     assert side["source_sha256"] == sha256_of(os.path.join(REPO_ROOT, *side["source"].split("/")))
     assert side["expected"]["pixels_with_luminance_in_5_to_40"] > 0
+    # the second set of figures is the production gate's own, not a reimplementation's
+    assert "evaluate_gate2" in read(script) and side["production_gate2"]["passed"] is True

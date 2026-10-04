@@ -16,10 +16,13 @@ depend on any library's resampling filter. It is NOT the browser's own
 figures below describe this dump, not what a given browser would compute for
 the same file.
 
-The expected figures are computed with numpy from the definitions in
+Two sets of expected figures are written, neither by running the TypeScript:
+"expected" is computed here with numpy from the definitions in
 backend/app/services/validation/gate2_relevance.py (foreground = luminance
-above 15; channel means over the foreground), not by running the TypeScript,
-so the executed check compares two implementations.
+above 15; channel means over the foreground), and "production_gate2" is what
+the production function evaluate_gate2 itself returns for the dump. The first
+is exact but is a reimplementation; the second is the server's own code, whose
+red share is exposed only rounded to three decimals.
 
 Usage:
     python backend/scripts/export_preflight_fixture.py           # write the dump and its sidecar
@@ -34,6 +37,8 @@ import numpy as np
 from PIL import Image
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO_ROOT, "backend"))
+from app.services.validation.gate2_relevance import evaluate_gate2  # noqa: E402
 FIXTURE_REL = "backend/tests/fixtures/aptos_heldout_d1f1ea894da1.png"
 DUMP_REL = "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.rgba"
 SIDECAR_REL = "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.json"
@@ -66,6 +71,8 @@ def render():
     else:
         mean_r, mean_g, mean_b = (float(c.sum()) / (SIZE * SIZE) for c in (r, g, b))
 
+    production = evaluate_gate2(Image.fromarray(rgb, "RGB"))
+
     sidecar = {
         "source": FIXTURE_REL,
         "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
@@ -84,6 +91,13 @@ def render():
             "pixels_with_luminance_in_5_to_40": int(((luminance > 5) & (luminance <= 40)).sum()),
             "red_to_blue_ratio": mean_r / (mean_b + 1e-6),
             "red_share": mean_r / (mean_r + mean_g + mean_b + 1e-6),
+        },
+        "production_gate2": {
+            "computed_by": "evaluate_gate2 in backend/app/services/validation/gate2_relevance.py, called on the dump",
+            "passed": bool(production.passed),
+            "foreground_coverage": float(production.mask_coverage_exact),
+            "red_to_blue_ratio": float(production.red_to_blue_ratio_exact),
+            "red_share_rounded_3dp": float(production.red_channel_ratio),
         },
     }
     return dump, (json.dumps(sidecar, indent=2) + "\n").encode("utf-8")
