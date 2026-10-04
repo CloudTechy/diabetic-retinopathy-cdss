@@ -47,83 +47,59 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
   ]);
 
   const [hasCompleted, setHasCompleted] = useState<boolean>(false);
-  const [finalStatus, setFinalStatus] = useState<'passed' | 'failed'>('passed');
+  const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | 'incomplete'>('passed');
   const [failedGate, setFailedGate] = useState<GateResult | null>(null);
 
   useEffect(() => {
-    const targetGates = assessment.validationGates;
-    const failsAt = targetGates.find((g) => g.status === 'failed')?.gateIndex || null;
+    // Replay the SERVER'S stored gate results one gate at a time. Pacing is
+    // the only thing added here: each gate is shown with the status the API
+    // returned ('passed', 'failed' or 'pending'). An earlier revision rewrote
+    // every gate after the first failure to 'passed', so a gate the server
+    // reported as 'pending' / "Not evaluated" got a green tick and the screen
+    // announced "All 3 Validation Gates Successfully Passed".
+    const server = assessment.validationGates;
+    const inProgress = [
+      'Checking file signature, size and decodability...',
+      'Checking geometry and colour-profile thresholds...',
+      'Calculating Laplacian blur variance and contrast...',
+    ];
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Replay the SERVER'S stored gate results one step at a time. This is
-    // presentation pacing only: every status, metric and reason below comes
-    // from assessment.validationGates, nothing is generated here.
-    const timer1 = setTimeout(() => {
-      // Step 1 Finish
-      if (failsAt === 1) {
-        setStepperGates([
-          { ...targetGates[0], status: 'failed' },
-          { ...targetGates[1], status: 'pending' },
-          { ...targetGates[2], status: 'pending' },
-        ]);
-        setFailedGate(targetGates[0]);
+    const frame = (revealed: number, running: number | null) =>
+      server.map((g, i) => {
+        if (i < revealed) return g;                                   // the server's status, verbatim
+        if (i === running) return { ...g, status: 'in_progress' as const, metric: inProgress[i] };
+        return { ...g, status: 'pending' as const, metric: `Pending Gate ${i} completion...` };
+      });
+
+    const finish = (revealed: number) => {
+      setStepperGates(frame(revealed, null));
+      const stopped = server.slice(0, revealed).find((g) => g.status !== 'passed');
+      if (!stopped) {
+        setFinalStatus(revealed === server.length ? 'passed' : 'incomplete');
+      } else if (stopped.status === 'failed') {
+        setFailedGate(stopped);
         setFinalStatus('failed');
-        setHasCompleted(true);
       } else {
-        setStepperGates([
-          { ...targetGates[0], status: 'passed' },
-          { ...targetGates[1], status: 'in_progress', metric: 'Checking geometry and colour-profile thresholds...' },
-          { ...targetGates[2], status: 'pending' },
-        ]);
-        setCurrentStepIndex(2);
-
-        // Step 2 Finish
-        const timer2 = setTimeout(() => {
-          if (failsAt === 2) {
-            setStepperGates([
-              { ...targetGates[0], status: 'passed' },
-              { ...targetGates[1], status: 'failed' },
-              { ...targetGates[2], status: 'pending' },
-            ]);
-            setFailedGate(targetGates[1]);
-            setFinalStatus('failed');
-            setHasCompleted(true);
-          } else {
-            setStepperGates([
-              { ...targetGates[0], status: 'passed' },
-              { ...targetGates[1], status: 'passed' },
-              { ...targetGates[2], status: 'in_progress', metric: 'Calculating Laplacian blur variance and contrast...' },
-            ]);
-            setCurrentStepIndex(3);
-
-            // Step 3 Finish
-            const timer3 = setTimeout(() => {
-              if (failsAt === 3) {
-                setStepperGates([
-                  { ...targetGates[0], status: 'passed' },
-                  { ...targetGates[1], status: 'passed' },
-                  { ...targetGates[2], status: 'failed' },
-                ]);
-                setFailedGate(targetGates[2]);
-                setFinalStatus('failed');
-                setHasCompleted(true);
-              } else {
-                setStepperGates([
-                  { ...targetGates[0], status: 'passed' },
-                  { ...targetGates[1], status: 'passed' },
-                  { ...targetGates[2], status: 'passed' },
-                ]);
-                setFinalStatus('passed');
-                setHasCompleted(true);
-              }
-            }, 900);
-            return () => clearTimeout(timer3);
-          }
-        }, 900);
-        return () => clearTimeout(timer2);
+        setFailedGate(stopped);
+        setFinalStatus('incomplete');
       }
-    }, 800);
+      setHasCompleted(true);
+    };
 
-    return () => clearTimeout(timer1);
+    const step = (k: number) => {
+      if (k >= server.length) { finish(server.length); return; }
+      setStepperGates(frame(k, k));
+      setCurrentStepIndex(k + 1);
+      timers.push(setTimeout(() => {
+        const g = server[k];
+        if (g.status === 'passed') step(k + 1);
+        else finish(k + 1);
+      }, k === 0 ? 800 : 900));
+    };
+
+    step(0);
+    return () => timers.forEach(clearTimeout);
   }, [assessment]);
 
   return (
@@ -183,7 +159,7 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
             <div>
               <p className="font-bold">Automated Technical Screening in Progress</p>
               <p className="text-[11px] text-blue-700">
-                Evaluating input file integrity, anatomical field-of-view, and Laplacian sharpness metrics...
+                Checking file integrity, geometry and colour profile, and Laplacian sharpness...
               </p>
             </div>
           </div>
@@ -229,6 +205,34 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Recapture & Re-Upload Image
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Not evaluated: the server holds no verdict for a gate */}
+        {hasCompleted && finalStatus === 'incomplete' && (
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-xl flex items-start space-x-3 text-xs">
+              <ShieldAlert className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-amber-900 text-sm">Validation not completed for this record</h4>
+                <p className="text-amber-800 leading-relaxed">
+                  {failedGate
+                    ? `Gate ${failedGate.gateIndex} (${failedGate.title}) is "${failedGate.status}": ${failedGate.metric || 'no result was recorded'}.`
+                    : 'Not every gate has a recorded result.'}{' '}
+                  No decision support is available until an image has been validated.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={onRetry}
+                className="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg shadow-xs flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Upload an image for this assessment
               </button>
             </div>
           </div>

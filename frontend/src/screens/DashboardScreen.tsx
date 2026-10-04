@@ -79,7 +79,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   });
 
   // Calculate Metrics
-  const totalToday = records.length;
+  const totalRecords = records.length;   // every record the API returned, not today's
   const pendingReview = records.filter((r) => r.status === 'needs_review').length;
   const rejectedCount = records.filter((r) => r.status === 'rejected').length;
   const highPriority = records.filter((r) => {
@@ -140,8 +140,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         {/* Metric 1 */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Total Today</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">{totalToday}</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">Total records</p>
+            <p className="text-2xl font-black text-slate-900 mt-1">{totalRecords}</p>
             <p className="text-[11px] text-slate-400">Retinal Encounters</p>
           </div>
           <div className="p-3 bg-slate-100 text-slate-700 rounded-xl">
@@ -258,7 +258,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
                 <th scope="col" className="px-4 py-3">Patient / Study ID</th>
-                <th scope="col" className="px-4 py-3">Acquisition</th>
+                <th scope="col" className="px-4 py-3">Record created</th>
                 <th scope="col" className="px-4 py-3">Eye</th>
                 <th scope="col" className="px-4 py-3">Quality Gates</th>
                 <th scope="col" className="px-4 py-3">Preliminary Model Score</th>
@@ -303,7 +303,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         <span className="text-[10px] text-slate-400 font-mono">{rec.id}</span>
                       </td>
 
-                      {/* Acquisition Time */}
+                      {/* record creation time */}
                       <td className="px-4 py-3 whitespace-nowrap text-slate-600 font-mono text-[11px]">
                         <div>{new Date(rec.acquisitionDate).toLocaleDateString()}</div>
                         <span className="text-slate-400">

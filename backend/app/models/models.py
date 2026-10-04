@@ -56,7 +56,7 @@ class Assessment(Base):
     id = Column(String(64), primary_key=True, default=lambda: f"REC-2026-{uuid.uuid4().hex[:6].upper()}")
     patient_id = Column(String(100), nullable=False, index=True)
     eye_laterality = Column(String(10), nullable=False)  # 'OD' (Right) or 'OS' (Left)
-    camera_model = Column(String(255), nullable=True, default="Topcon TRC-NW400 Non-Mydriatic")
+    camera_model = Column(String(255), nullable=True)   # no default: an earlier revision invented one
     is_mydriatic = Column(Boolean, default=False, nullable=False)
     clinical_notes = Column(Text, nullable=True)
     

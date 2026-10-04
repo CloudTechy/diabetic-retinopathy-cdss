@@ -65,7 +65,7 @@
     "clinicalNotes": "Screening for Type 2 Diabetes (HbA1c 8.4%)."
   }
   ```
-- **Response `201 Created`:** Draft assessment object with its assigned record identifier (`REC-YYYY-XXXXXX`).
+- **Response `201 Created`:** Draft assessment object with its assigned record identifier (`REC-YYYY-XXXXXX`). `cameraModel` is optional: omitted or empty is stored as null and shown as "Not recorded"; nothing is preset.
 
 ### `POST /api/v1/assessments/{id}/upload`
 - **Description:** Ingests fundus image binary (`multipart/form-data`) and initiates the sequential 3-gate validation pipeline. If passed, triggers real PyTorch EfficientNet-B0 inference and Grad-CAM generation.

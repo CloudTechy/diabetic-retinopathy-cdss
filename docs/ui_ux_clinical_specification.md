@@ -54,7 +54,7 @@ flowchart TD
   * **Top Metrics Ribbon**: Total Assessments Today, Pending Clinician Review, Technical Rejections, High-Priority Flagged Cases.
   * **Quick-Action Bar**: "New Assessment Upload" (primary visual prominence), "Search Records", "Export Daily Audit Log".
   * **Interactive Worklist Table**:
-    * Columns: Patient / Study ID, Acquisition Date/Time, Laterality (OD / OS), Technical Quality Status, Preliminary Model Class Score (categorized with neutral indicator tags), Review Status (`Pending Review`, `Under Review`, `Completed`, `Rejected`), Action Button.
+    * Columns: Patient / Study ID, record creation date/Time, Laterality (OD / OS), Technical Quality Status, Preliminary Model Class Score (categorized with neutral indicator tags), Review Status (`Pending Review`, `Under Review`, `Completed`, `Rejected`), Action Button.
   * **Status Pills**:
     * `Validating`: Blue pulsating badge.
     * `Needs Review`: Amber pill with high-contrast icon.

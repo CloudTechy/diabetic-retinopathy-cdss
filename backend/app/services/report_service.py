@@ -117,12 +117,12 @@ class ReportService:
             [
                 Paragraph("<strong>Eye Laterality:</strong>", body_style),
                 Paragraph("OD (Right Eye)" if assessment.eye_laterality == "OD" else "OS (Left Eye)", body_style),
-                Paragraph("<strong>Acquisition Date:</strong>", body_style),
+                Paragraph("<strong>Record created:</strong>", body_style),
                 Paragraph(assessment.created_at.strftime("%Y-%m-%d %H:%M UTC"), body_style),
             ],
             [
                 Paragraph("<strong>Camera Model:</strong>", body_style),
-                Paragraph(assessment.camera_model or "Standard Fundus Camera", body_style),
+                Paragraph(assessment.camera_model or "Not recorded", body_style),
                 Paragraph("<strong>Dilation Protocol:</strong>", body_style),
                 Paragraph("Mydriatic" if assessment.is_mydriatic else "Non-Mydriatic", body_style),
             ],
@@ -255,7 +255,7 @@ class ReportService:
                     Paragraph("<strong>Reviewing Clinician:</strong>", body_style),
                     Paragraph(rev.clinician_name, body_style),
                     Paragraph("<strong>Registration Number (simulated):</strong>", body_style),
-                    Paragraph(rev.license_number or "SIM-000001", body_style),
+                    Paragraph(rev.license_number or "Not recorded", body_style),
                 ],
                 [
                     Paragraph("<strong>Clinical Agreement:</strong>", body_style),

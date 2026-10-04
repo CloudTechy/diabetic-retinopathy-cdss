@@ -177,7 +177,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
                 <span className="font-bold text-slate-800">{assessment.patientId}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">Acquired:</span>
+                <span className="text-slate-400 block text-[11px]">Record created:</span>
                 <span className="font-mono text-slate-700 text-[11px]">
                   {new Date(assessment.acquisitionDate).toLocaleString([], {
                     dateStyle: 'short',

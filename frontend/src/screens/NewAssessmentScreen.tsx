@@ -35,7 +35,9 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   // Patient Context State
   const [patientId, setPatientId] = useState<string>('PT-');
   const [laterality, setLaterality] = useState<EyeLaterality>('OD');
-  const [cameraModel, setCameraModel] = useState<string>('Topcon TRC-NW400 Non-Mydriatic');
+  // No camera is preset: an earlier revision defaulted every record to a
+  // named model nobody had entered, and it was printed in figures and PDFs.
+  const [cameraModel, setCameraModel] = useState<string>('');
   const [isMydriatic, setIsMydriatic] = useState<boolean>(false);
   const [clinicalNotes, setClinicalNotes] = useState<string>('');
 
@@ -167,8 +169,8 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
       isMydriatic,
       clinicalNotes,
       imageDataUrl: previewUrl,
-      fileSizeBytes: selectedFile?.size || 3400000,
-      filename: selectedFile?.name || `fundus_${laterality}.jpg`,
+      fileSizeBytes: selectedFile?.size ?? 0,
+      filename: selectedFile?.name ?? '',
       clientValidation: clientValidation || undefined,
     });
   };
@@ -266,6 +268,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                 onChange={(e) => setCameraModel(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white shadow-xs focus:ring-2 focus:ring-clinical-primary"
               >
+                <option value="">Not recorded</option>
                 <option value="Topcon TRC-NW400 Non-Mydriatic">Topcon TRC-NW400 (45° Non-Mydriatic)</option>
                 <option value="Canon CR-2 AF Digital Retinal Camera">Canon CR-2 AF (45° Non-Mydriatic)</option>
                 <option value="Zeiss Visucam 500">Zeiss Visucam 500 (Field 45°/30°)</option>
@@ -396,10 +399,10 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                     </div>
                   )}
                   <p className="text-slate-600 font-mono text-[11px]">
-                    {selectedFile?.name || 'synthetic_retinal_fundus.jpg'}
+                    {selectedFile?.name ?? ''}
                   </p>
                   <p className="text-slate-500 text-[11px]">
-                    Size: {selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : '3.4'} MB
+                    {selectedFile ? `Size: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : ''}
                   </p>
                   {fileDimensions && (
                     <p className="text-teal-700 font-mono text-[11px] font-semibold">

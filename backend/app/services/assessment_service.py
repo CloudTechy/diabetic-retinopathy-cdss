@@ -93,7 +93,7 @@ class AssessmentService:
             id=assessment_id,
             patient_id=payload.patientId.strip().upper(),
             eye_laterality=payload.laterality,
-            camera_model=payload.cameraModel or "Topcon TRC-NW400 Non-Mydriatic",
+            camera_model=(payload.cameraModel or "").strip() or None,   # nothing is invented
             is_mydriatic=payload.isMydriatic or False,
             clinical_notes=payload.clinicalNotes,
             status="draft",

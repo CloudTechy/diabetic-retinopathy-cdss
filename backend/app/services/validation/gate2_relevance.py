@@ -153,7 +153,7 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
             clinical_action="Ensure you are uploading posterior pole retinal fundus photography rather than external ocular or non-retinal images.",
         )
 
-    metric = f"Retinal field-of-view: {mask_coverage * 100:.1f}%, R/B spectral ratio: {red_to_blue:.2f}"
+    metric = f"Aperture coverage: {mask_coverage * 100:.1f}%, R/B ratio: {red_to_blue:.2f}"
     details = (f"Input meets the configured geometry and colour-profile thresholds "
                f"(foreground coverage {mask_coverage * 100:.1f}%, R/B {red_to_blue:.2f}). "
                "This does not confirm retinal identity, anatomical correctness or clinical gradability.")

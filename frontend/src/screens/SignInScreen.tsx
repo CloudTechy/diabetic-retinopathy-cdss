@@ -66,7 +66,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
             <div className="space-y-1">
               <span className="font-bold block">Restricted Clinical Decision Support System</span>
               <p className="text-[11px] text-amber-800 leading-relaxed">
-                Authorized for credentialed healthcare practitioners only. All activity is logged against the signed-in account.
+                Research prototype: no real practitioner accounts exist. All activity is logged against the signed-in (simulated) account.
               </p>
             </div>
           </div>

@@ -93,7 +93,7 @@ class AssessmentRecordResponse(BaseModel):
     id: str
     patientId: str
     laterality: EyeLaterality
-    acquisitionDate: str
+    acquisitionDate: str   # record creation time; the field name is historical
     status: str
     cameraModel: Optional[str] = None
     isMydriatic: Optional[bool] = False

@@ -121,7 +121,7 @@ export interface AssessmentRecord {
   id: string;
   patientId: string;
   laterality: EyeLaterality;
-  acquisitionDate: string;
+  acquisitionDate: string;   // the record's creation time, not an image-acquisition time (name is historical)
   status: ReviewStatus;
   cameraModel?: string;
   isMydriatic?: boolean;

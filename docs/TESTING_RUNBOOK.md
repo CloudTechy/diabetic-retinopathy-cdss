@@ -122,7 +122,7 @@ flowchart TD
 
 ### Screen 2: Assessment Dashboard / Worklist
 1. **Observe Summary Ribbon:**
-   - **Total Today:** Retinal encounters count.
+   - **Total records:** Retinal encounters count.
    - **Pending Review:** Encounters awaiting human clinician sign-off.
    - **Marked for Attention:** Patients presenting with Grade 3/4 observations (Severe NPDR or PDR).
    - **Technical Rejections:** Images rejected by Gates 1–3.
@@ -200,7 +200,7 @@ flowchart TD
 1. Download the generated PDF report from Screen 7.
 2. **Verify Document Specifications:**
    - **Document Title:** Displays clean standard title: `Assessment Report`.
-   - **Patient & Encounter Metadata:** Displays Assessment ID, Patient Identifier, Camera Model, Eye Laterality (OD/OS), and Acquisition Date.
+   - **Patient & Encounter Metadata:** Displays Assessment ID, Patient Identifier, Camera Model, Eye Laterality (OD/OS), and record creation date.
    - **Section 1 (Validation Telemetry):** Reports Gate 1 (File Integrity), Gate 2 (Retinal Relevance), and Gate 3 (Laplacian variance $\sigma_L^2 = 142.4$).
    - **Section 2 (Model Observation):** Tabulates full 5-class score distribution with target layer `features.8`.
    - **Section 3 (Professional Review Response):** Contains reviewing clinician name, GMC/license number, clinical agreement status, certified grade, and **Assessment Integrity Hash**.

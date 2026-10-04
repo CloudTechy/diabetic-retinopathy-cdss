@@ -89,7 +89,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
             </span>
 
             <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
-              Acquired: {new Date(assessment.acquisitionDate).toLocaleDateString()}
+              Record created: {new Date(assessment.acquisitionDate).toLocaleDateString()}
             </span>
           </div>
         </div>

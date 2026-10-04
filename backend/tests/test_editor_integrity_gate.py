@@ -515,6 +515,13 @@ OVERCLAIM_PHRASES = [
     "Anatomical Relevance", "aperture confirmed", "spectral balance verified",
     "retinal anatomy", "retinal structure only", "landmarks",
     "Quality Gate Satisfied", "Production & Thesis", "Optom. Demo", "optometrist.demo",
+    # Reviewer round on rev22: UI text that claimed anatomy for a coverage
+    # heuristic, a dashboard tile that counted every record as "today", an
+    # "acquisition" date that is the row's creation time, invented file
+    # fallbacks, and a camera model preset on every record.
+    "anatomical field-of-view", "Retinal field-of-view", "Total Today", "Acquisition Date",
+    "Acquired:", "3400000", "Standard Fundus Camera",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
+    "Authorized for credentialed healthcare practitioners",
 ]
 
 
@@ -4297,3 +4304,58 @@ def test_no_gate_result_is_synthesised_as_passed():
     assert not re.search(r'metric="(Laplacian: [\d.]+|Retinal FOV [\d.]+%|Valid JPEG)"', src), "invented gate metrics are back"
     for fallback in ("Sharpness confirmed", "Retinal aperture confirmed", "thresholds met\""):
         assert fallback not in src, "a fallback metric claims an outcome: %r" % fallback
+
+
+# ======================================================================
+# RULE GROUP AL - the reviewer's audit of rev22 (application data honesty)
+# ======================================================================
+
+STEPPER_TSX = os.path.join(REPO_ROOT, "frontend", "src", "screens", "ValidationStepperScreen.tsx")
+APP_TSX = os.path.join(REPO_ROOT, "frontend", "src", "App.tsx")
+NEW_ASSESSMENT_TSX = os.path.join(REPO_ROOT, "frontend", "src", "screens", "NewAssessmentScreen.tsx")
+MODELS_PY = os.path.join(REPO_ROOT, "backend", "app", "models", "models.py")
+REPORT_PY = os.path.join(REPO_ROOT, "backend", "app", "services", "report_service.py")
+
+
+def test_stepper_never_rewrites_a_gate_status():
+    """
+    The stepper found the first 'failed' gate and rewrote every other gate
+    to 'passed', so a 'pending' / "Not evaluated" gate got a green tick and
+    the screen announced all three gates passed. The replay may set only
+    'in_progress' and 'pending' as pacing states; 'passed' and 'failed' must
+    come from the server object itself.
+    """
+    src = read(STEPPER_TSX)
+    body = src[src.index("useEffect(() => {"):src.index("}, [assessment]);")]
+    assert not re.search(r"status:\s*'passed'", body), "the replay writes 'passed' itself"
+    assert not re.search(r"status:\s*'failed'", body), "the replay writes 'failed' itself"
+    assert "'incomplete'" in src, "a gate without a server verdict has no outcome state of its own"
+    assert "Validation not completed for this record" in src
+
+
+def test_deep_links_substitute_no_record():
+    """App.tsx fell back to records[0] / [1] / [2] when the requested kind of record did not exist."""
+    src = "\n".join(l for l in read(APP_TSX).splitlines() if not l.lstrip().startswith("//"))   # comments record the old fallbacks
+    assert not re.search(r"records\[\d+\]", src), "a deep link falls back to an arbitrary record"
+    assert "was not found" in src, "a missing record must be reported, not substituted"
+
+
+def test_nothing_about_acquisition_is_invented():
+    """
+    A camera model was preset on every record (screen default, service
+    default, ORM default) and printed in figures and PDFs; file-size and
+    file-name fallbacks named values of a file that was never selected; the
+    PDF printed a fixed licence number when none existed.
+    """
+    nas = read(NEW_ASSESSMENT_TSX)
+    assert re.search(r"const \[cameraModel, setCameraModel\] = useState<string>\(''\)", nas), "the camera model is preset"
+    assert 'value="">Not recorded</option>' in nas, "the camera select has no 'Not recorded' option"
+    assert "|| 3400000" not in nas and "synthetic_retinal_fundus" not in nas and "'3.4'" not in nas, "invented file fallbacks are back"
+    svc = read(os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py"))
+    assert "Topcon" not in svc, "the service invents a camera model"
+    models = read(MODELS_PY)
+    m = re.search(r"camera_model = Column\(([^\n]*)\)", models)
+    assert m and "default=" not in m.group(1), "the ORM invents a camera model"
+    report = read(REPORT_PY)
+    assert 'or "SIM-' not in report and "Standard Fundus Camera" not in report, "the PDF invents a licence number or camera"
+    assert "Record created" in report, "the PDF still labels the row's creation time as an acquisition date"

@@ -89,7 +89,7 @@ export const App: React.FC = () => {
       setCurrentUser(storedUser);
 
       try {
-        const records = await clinicalApi.getWorklist();
+        await clinicalApi.getWorklist();   // session check: a 401 here signs the user out
         const session = browserStorage.getSessionState();
         const [hashScreen, hashRecordId] = rawHash.split('/');
 
@@ -107,9 +107,19 @@ export const App: React.FC = () => {
           }
         }
 
-        const pendingRecord = records.find(r => r.status === 'needs_review') || records[0];
-        const completedRecord = records.find(r => r.status === 'completed') || records[1];
-        const rejectedRecord = records.find(r => r.status === 'rejected') || records[2] || records[0];
+        // A deep link to a record screen shows THAT record or nothing. An
+        // earlier revision fell back to records[0] / records[1] / records[2]
+        // when the requested kind did not exist, presenting a real record
+        // under a state it was not in.
+        const needsRecord = ['validation', 'rejected', 'decision_support', 'review', 'completed_assessment'];
+        if (needsRecord.includes(targetScreen) && !targetRecord) {
+          setActiveAssessment(null);
+          setActiveScreen('dashboard');
+          setShowReviewModal(false);
+          showToast(targetRecordId ? `Assessment ${targetRecordId} was not found.` : 'Select an assessment from the worklist.');
+          browserStorage.saveSessionState('dashboard', null);
+          return;
+        }
 
         if (targetScreen === 'dashboard') {
           setActiveScreen('dashboard');
@@ -118,28 +128,23 @@ export const App: React.FC = () => {
           setActiveScreen('new_assessment');
           setShowReviewModal(false);
         } else if (targetScreen === 'validation') {
-          const ass = targetRecord || pendingRecord;
-          setActiveAssessment(ass || null);
+          setActiveAssessment(targetRecord);
           setActiveScreen('validation');
           setShowReviewModal(false);
         } else if (targetScreen === 'rejected') {
-          const ass = targetRecord || rejectedRecord;
-          setActiveAssessment(ass || null);
+          setActiveAssessment(targetRecord);
           setActiveScreen('validation');
           setShowReviewModal(false);
         } else if (targetScreen === 'decision_support') {
-          const ass = targetRecord || pendingRecord;
-          setActiveAssessment(ass || null);
+          setActiveAssessment(targetRecord);
           setActiveScreen('decision_support');
           setShowReviewModal(false);
         } else if (targetScreen === 'review') {
-          const ass = targetRecord || pendingRecord;
-          setActiveAssessment(ass || null);
+          setActiveAssessment(targetRecord);
           setActiveScreen('decision_support');
           setShowReviewModal(true);
         } else if (targetScreen === 'completed_assessment') {
-          const ass = targetRecord || completedRecord;
-          setActiveAssessment(ass || null);
+          setActiveAssessment(targetRecord);
           setActiveScreen('completed_assessment');
           setShowReviewModal(false);
         } else if (targetScreen === 'history') {
@@ -229,7 +234,7 @@ export const App: React.FC = () => {
   const handleValidationComplete = (passed: boolean) => {
     if (passed && activeAssessment) {
       navigateTo('decision_support', activeAssessment);
-      showToast('All 3 validation gates passed. Decision-support generated.');
+      showToast('All 3 validation gates passed on the server. Decision support is available.');
     } else {
       navigateTo('dashboard', null);
     }

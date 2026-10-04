@@ -80,7 +80,7 @@ export const ValidationStepper: React.FC<ValidationStepperProps> = ({ gates }) =
                   </p>
                   <span className="sr-only">Status: {gate.status}</span>
                   {gate.metric && (
-                    <p className="text-[11px] text-slate-500 font-mono truncate hidden sm:block">
+                    <p className="text-[11px] text-slate-500 font-mono break-words hidden sm:block">
                       {gate.metric}
                     </p>
                   )}

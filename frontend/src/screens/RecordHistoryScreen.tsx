@@ -88,7 +88,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
       'Assessment ID',
       'Patient ID',
       'Laterality',
-      'Acquisition Date',
+      'Record created',
       'Validation Status',
       'Laplacian Variance',
       'Model Candidate Stage',
@@ -271,7 +271,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
               <tr>
                 <th scope="col" className="px-4 py-3">Patient / ID</th>
                 <th scope="col" className="px-4 py-3">Eye</th>
-                <th scope="col" className="px-4 py-3">Acquired</th>
+                <th scope="col" className="px-4 py-3">Record created</th>
                 <th scope="col" className="px-4 py-3">Model Candidate Score</th>
                 <th scope="col" className="px-4 py-3">Professional Review Response</th>
                 <th scope="col" className="px-4 py-3">Agreement</th>

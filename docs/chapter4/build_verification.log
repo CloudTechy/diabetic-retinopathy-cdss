@@ -1,24 +1,24 @@
 BUILD VERIFICATION - run from a clean extraction of the archive
-date (UTC): 2026-10-04T08:25:08Z
-sha256 of the pre-build archive this tree produced: 29c619ca0d3c08cd134f30ea3e2a2a3db4021de9e1bfa4d773317081d659ecf5
+date (UTC): 2026-10-04T09:01:23Z
+sha256 of the pre-build archive this tree produced: 64d1e73f9083729aaebc57a0127a16e5f4583d0407274e38856b840ac7ce33ef
   (the shipped archive differs from it only by this log, the test log, the container freeze and the regenerated transcript - no code or build input differs)
 node v24.9.0   npm 11.6.0   Docker Compose version v2.40.2-desktop.1
-extraction path: C:/tmp/r22_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
+extraction path: C:/tmp/r23_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
 
 $ cd frontend && npm ci
 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
 
-added 347 packages in 32s
+added 347 packages in 26s
 
 $ npm run build
 transforming...
 ✓ 1560 modules transformed.
 rendering chunks...
 computing gzip size...
-dist/index.html                   0.53 kB │ gzip:   0.35 kB
-dist/assets/index-ByInwrZ4.css   38.41 kB │ gzip:   7.06 kB
-dist/assets/index-9nS-MTiA.js   348.13 kB │ gzip: 102.72 kB
-✓ built in 29.94s
+dist/index.html                   0.53 kB │ gzip:   0.34 kB
+dist/assets/index-BV-l3-Yq.css   38.45 kB │ gzip:   7.07 kB
+dist/assets/index-BEXaBtDg.js   348.85 kB │ gzip: 102.90 kB
+✓ built in 28.67s
 dist/index.html produced: yes
 
 $ docker compose config --quiet
@@ -26,8 +26,8 @@ compose file valid
 
 $ docker compose -p drcdss_evidence up --build -d   (image build output not reproduced; exit code and service states are the record)
 exit: 0
- drcdss_evidence-frontend  Built
  drcdss_evidence-backend  Built
+ drcdss_evidence-frontend  Built
  Network drcdss_evidence_dr_network  Created
  Volume drcdss_evidence_postgres_data  Created
  Container dr_cdss_db  Created
@@ -40,16 +40,16 @@ exit: 0
 
 $ docker compose -p drcdss_evidence ps
 NAME               IMAGE                      COMMAND                  SERVICE    CREATED          STATUS                   PORTS
-dr_cdss_backend    drcdss_evidence-backend    "uvicorn main:app --…"   backend    13 seconds ago   Up 1 second              0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
-dr_cdss_db         postgres:16-alpine         "docker-entrypoint.s…"   db         14 seconds ago   Up 6 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
-dr_cdss_frontend   drcdss_evidence-frontend   "docker-entrypoint.s…"   frontend   13 seconds ago   Up Less than a second    0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
+dr_cdss_backend    drcdss_evidence-backend    "uvicorn main:app --…"   backend    12 seconds ago   Up Less than a second    0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+dr_cdss_db         postgres:16-alpine         "docker-entrypoint.s…"   db         13 seconds ago   Up 6 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+dr_cdss_frontend   drcdss_evidence-frontend   "docker-entrypoint.s…"   frontend   11 seconds ago   Up Less than a second    0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp, 0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
 
 $ curl http://127.0.0.1:8000/api/v1/health   (polled until inference_ready)
 {
   "status": "healthy",
   "app_name": "Diabetic Retinopathy CDSS",
   "environment": "development",
-  "timestamp": "2026-10-04T08:29:10.592802+00:00",
+  "timestamp": "2026-10-04T09:05:14.436095+00:00",
   "storage_accessible": true,
   "inference_ready": true,
   "inference_engine": "pytorch",
