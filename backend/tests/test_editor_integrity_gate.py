@@ -3053,6 +3053,9 @@ def _units(text):
             starts.append((pos, ln))
             pos += len(t) + 1
         offset = 0
+        # A correction that puts its claim after a colon ("An earlier revision
+        # said: every PDF was tamper-evident.") is split from its marker and
+        # FLAGGED. That is the safe direction: reword it, the gate fails closed.
         for sent in re.split(r"(?<=[.!?;:])(?:\*\*)?\s+|\s+[—–]\s+", joined):
             if not sent.strip():
                 continue
@@ -3097,7 +3100,13 @@ evident"
     spaces mapped to ASCII, a hyphen followed by whitespace rejoined, and
     whitespace collapsed, BEFORE matching.
     """
-    unit = unit.replace("‐", "-").replace("‑", "-").replace("‒", "-").replace(" ", " ")
+    # Reviewer's second pass: an en dash used as the hyphen inside a phrase, a
+    # soft hyphen, a zero-width space and the &nbsp; entity each let a phrase
+    # through. Invisible characters are deleted; dashes and entities mapped.
+    unit = unit.replace("&nbsp;", " ").replace("­", "").replace("​", "").replace("‌", "").replace("﻿", "")
+    for dash in ("‐", "‑", "‒", "–", "—"):
+        unit = unit.replace(dash, "-")
+    unit = unit.replace(" ", " ")
     unit = re.sub(r"[*_`]", "", unit)
     unit = re.sub(r"-\s+", "-", unit)
     return re.sub(r"\s+", " ", unit)
