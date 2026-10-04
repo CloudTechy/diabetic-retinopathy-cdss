@@ -218,10 +218,28 @@ def _metrics(out):
             "Within-one-grade agreement": "%.2f%%" % within,
             "Held-out cohort": "N = %d" % n,
         }
+        # Operating points, recomputed here from the predictions.
+        def op(threshold):
+            tp = sum(1 for t, p in zip(y_true, y_pred) if t >= threshold and p >= threshold)
+            fn = sum(1 for t, p in zip(y_true, y_pred) if t >= threshold and p < threshold)
+            fp = sum(1 for t, p in zip(y_true, y_pred) if t < threshold and p >= threshold)
+            tn = sum(1 for t, p in zip(y_true, y_pred) if t < threshold and p < threshold)
+            return (100.0 * tp / (tp + fn), 100.0 * tn / (tn + fp), 100.0 * tn / (tn + fn))
+        r_sens, r_spec, _ = op(2)
+        s_sens, _, s_npv = op(3)
+        wanted_many = {
+            "Referable DR": ["%.1f%%" % r_sens, "%.1f%%" % r_spec],
+            "Sight-threatening DR": ["%.1f%%" % s_sens, "%.1f%%" % s_npv],
+        }
         for label, token in wanted.items():
             m = re.search(r"^\|\s*\*\*%s\*\*[^|]*\|(.*)\|\s*$" % re.escape(label), text, re.M)
             if not m or token not in m.group(1):
                 out("  README row **%s** does not state %s" % (label, token)); ok = False
+        for label, tokens in wanted_many.items():
+            m = re.search(r"^\|\s*\*\*%s\*\*[^|]*\|(.*)\|\s*$" % re.escape(label), text, re.M)
+            for token in tokens:
+                if not m or token not in m.group(1):
+                    out("  README row **%s** does not state %s" % (label, token)); ok = False
         out("README headline table quotes the recomputed values: %s" % ("yes" if ok else "NO"))
     return None, ok
 
@@ -428,6 +446,32 @@ def _provenance(out):
             if name in key and producer and "none" not in producer.lower():
                 return True
         return False
+
+    # A named producer must be a script in this archive that mentions the
+    # artefact it is said to write - a static check, but one a wrong name
+    # cannot pass. Rows whose producer is a notebook, a shell command or a
+    # recorded git commit are checked where a script path is given.
+    wrong_producer = []
+    for key, producer in declared_rows.items():
+        base = os.path.basename(key)
+        if not base.endswith(EVIDENCE) or "none" in producer.lower():
+            continue
+        m = re.search(r"`((?:backend/scripts|notebooks)/[\w./-]+\.py)`", producer)
+        if not m:
+            continue
+        script = os.path.join(HERE, m.group(1))
+        if not os.path.exists(script):
+            wrong_producer.append("%s: producer %s is not in the archive" % (key, m.group(1)))
+            continue
+        stem = base.rsplit(".", 1)[0]
+        stem = re.sub(r"_\d{4}-\d{2}-\d{2}_.*$", "", stem)   # benchmark_history dated copies
+        stem = re.sub(r"\.superseded_[0-9a-f]+$", "", stem)   # archived copies renamed by commit
+        if stem not in read_text(script) and base not in read_text(script):
+            wrong_producer.append("%s: %s never mentions it" % (key, m.group(1)))
+    for w in wrong_producer:
+        out("  " + w)
+    if wrong_producer:
+        return None, False
 
     for path in candidates:
         name = os.path.basename(path)

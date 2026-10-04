@@ -470,6 +470,12 @@ OVERCLAIM_PHRASES = [
     "Consultation", "consultation", "cryptographically bound", "Cryptographically Bound",
     "SIGNED & IMMUTABLE", "Finalized & Signed", "Ada Okonjo", "adjunct diagnostic",
     "21 CFR", "ISO 13485", "IEC 62304", "Non-Repudiation", "Top Saliency Zone",
+    # Eighth round, same family: a truncated unkeyed SHA-256 is hash anchoring,
+    # not tamper evidence; the API write-lock is not immutability; nothing here
+    # is a legal or official instrument; Grad-CAM names no biomarker.
+    "tamper-evident", "Tamper-Evident", "Tamper Evidence", "Immutable Clinical Audit",
+    "immutable audit", "Immutable Audit", "immutable review", "legal compliance",
+    "Legal Traceability", "Official Review", "biomarkers", "hash-sealed",
 ]
 
 
@@ -3056,8 +3062,31 @@ def test_peak_activation_region_is_derived_from_the_cam_not_a_constant():
     """
     src = read(AI_SERVICE)
     assert '"top_activation"' not in src, "a per-grade constant attribution string is back"
-    assert "_peak_activation_region(cam)" in src, "the real engine must derive the region from its CAM"
-    assert "top_activation_region=peak_region" in src
+    tree = ast.parse(src, filename=AI_SERVICE)
+    helper = next((n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)
+                   and n.name == "_peak_activation_region"), None)
+    assert helper is not None, "_peak_activation_region is missing"
+    assert any(isinstance(n, ast.Attribute) and n.attr == "argmax" for n in ast.walk(helper)), (
+        "_peak_activation_region must locate the CAM's maximum (argmax); a region not "
+        "read from the map is a constant with extra steps")
+    # Every InferenceOutput built in the file: the region keyword must be a
+    # NAME bound from the helper, except the simulated engine's, which must say so.
+    seen_name = False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        for kw in node.keywords:
+            if kw.arg != "top_activation_region":
+                continue
+            if isinstance(kw.value, ast.Name):
+                seen_name = True
+            elif isinstance(kw.value, ast.Constant):
+                assert "imulated" in str(kw.value.value), (
+                    "a constant top_activation_region that does not declare itself simulated: %r"
+                    % kw.value.value)
+            else:
+                raise AssertionError("top_activation_region built from %s" % type(kw.value).__name__)
+    assert seen_name, "the real engine does not pass a derived region"
 
 
 def test_review_signatory_is_the_authenticated_reviewer_only():
@@ -3106,3 +3135,41 @@ def test_audit_events_do_not_cascade_delete_with_their_assessment():
                 raise AssertionError("audit_events cascade=%r deletes events with the assessment"
                                      % kw.value.value)
     assert found, "audit_events relationship not found on the model"
+
+
+def test_review_hash_covers_every_review_field():
+    """
+    The UI and schema say the hash is "over the review fields". It omitted the
+    justification and the inconclusive reason. Found by walking the f-string
+    that builds sig_payload: every review field must be referenced.
+    """
+    tree = ast.parse(read(ASSESSMENT_SERVICE), filename=ASSESSMENT_SERVICE)
+    attrs = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id == "sig_payload" for t in node.targets):
+            for sub in ast.walk(node.value):
+                if isinstance(sub, ast.Attribute):
+                    attrs.add(sub.attr)
+                if isinstance(sub, ast.Name):
+                    attrs.add(sub.id)
+    assert attrs, "sig_payload assignment not found"
+    required = {"agreement", "reviewerAssessedGrade", "justificationNotes", "inconclusiveReason",
+                "clinician_name", "license_num", "facility", "sha256_hash"}
+    missing = sorted(required - attrs)
+    assert not missing, "sig_payload does not cover: %s" % ", ".join(missing)
+
+
+def test_rejected_records_are_not_shown_as_pending_review():
+    """
+    The ledger rendered "Pending Human Review" for any record without a review,
+    including rejected ones, which can never be reviewed. The branch for the
+    rejected status must precede the pending badge.
+    """
+    path = os.path.join(REPO_ROOT, "frontend", "src", "screens", "RecordHistoryScreen.tsx")
+    src = read(path)
+    pending = src.find("Pending Human Review")
+    assert pending != -1, "ledger no longer renders a pending badge; update this rule"
+    guard = src.rfind("rec.status === 'rejected'", 0, pending)
+    assert guard != -1 and pending - guard < 800, (
+        "the pending badge is not guarded by a rejected-status branch")
