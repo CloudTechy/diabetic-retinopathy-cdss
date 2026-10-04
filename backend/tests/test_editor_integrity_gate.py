@@ -531,7 +531,10 @@ OVERCLAIM_PHRASES = [
     # asserted retinal identity or its absence; a colormap implied lesions.
     "Non-Retinal Modality Detected", "Non-Retinal Content Detected", "Non-retinal content detected",
     "Non-retinal diagram/document detected", "non-retinal subject", "Retinal FoV confirmed", "Modality Detected",
-    "High Lesion Contrast", "Strips proprietary EXIF", "random UUID filename",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
+    "High Lesion Contrast", "Strips proprietary EXIF", "random UUID filename",
+    # Editor round on rev28: descriptions that say the heuristics establish
+    # retinal identity or verify quality.
+    "Prevents non-retinal images", "strictly prevent", "Quality verified for inference",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
     "Authorized for credentialed healthcare practitioners",
 ]
 
@@ -3504,10 +3507,12 @@ def test_browser_precheck_uses_the_backends_minimum_dimension():
     """
     cfg = _config_defaults()
     src = read(RETINAL_VALIDATOR)
-    m = re.search(r"width\s*>=\s*(\d+)\s*&&\s*height\s*>=\s*(\d+)", src)
-    assert m, "dimension check not found in retinalValidator.ts"
-    assert int(m.group(1)) == int(m.group(2)) == cfg["MIN_IMAGE_DIMENSION"], (
-        "retinalValidator.ts requires %s px; config.py requires %s" % (m.group(1), cfg["MIN_IMAGE_DIMENSION"]))
+    # the dimension comes from the generated constants (rule group AQ checks
+    # that file against config.py); a bare number here is a regression
+    assert "width >= MIN_IMAGE_DIMENSION && height >= MIN_IMAGE_DIMENSION" in src, (
+        "the browser dimension check does not use the generated MIN_IMAGE_DIMENSION")
+    assert not re.search(r"width\s*>=\s*\d", src), "the browser dimension check uses a literal"
+    assert cfg["MIN_IMAGE_DIMENSION"] > 0
     assert "re-checks every image" in src, "the browser check must say the server re-checks every image"
 
     # The aspect range must be the server's (it was 0.60-1.70 against 0.65-1.65).
@@ -4487,8 +4492,8 @@ def test_documented_gate2_thresholds_are_the_executed_ones():
     assert "RETINAL_MAX_COVERAGE" not in gate2 and not re.search(r"^\s+RETINAL_MAX_COVERAGE:", read(CONFIG_PY), re.M), (
         "the unused upper-coverage setting is declared again")
     browser = read(RETINAL_VALIDATOR_TS)
-    m = re.search(r"redShare >= ([\d.]+)", browser)
-    assert m and abs(float(m.group(1)) - cfg["RETINAL_RED_SHARE_MIN"]) < 1e-9, "the browser's red-share floor differs from config.py"
+    assert "redShare >= RETINAL_RED_SHARE_MIN" in browser and not re.search(r"redShare >= \d", browser), (
+        "the browser's red-share floor is not the generated RETINAL_RED_SHARE_MIN")
 
 
 def test_gate3_source_describes_its_calibrated_thresholds():
@@ -4711,3 +4716,109 @@ def test_login_example_uses_the_seeded_accounts_identity():
     token = json.loads(re.findall(r"```json\n(.*?)```", read(API_CONTRACT)[read(API_CONTRACT).index("### `POST /api/v1/auth/login`"):], re.S)[1])
     assert token["user"]["id"] == seeded, "the login example shows id %r; the seeded account is %r" % (token["user"]["id"], seeded)
     assert token["user"]["licenseNumber"] == "SIM-000001"
+
+
+# ======================================================================
+# RULE GROUP AQ - the editor's review of rev28: the browser pre-check
+# performs what it reports and reports nothing it did not perform
+# ======================================================================
+
+THRESHOLDS_TS = os.path.join(REPO_ROOT, "frontend", "src", "utils", "validationThresholds.ts")
+EXPORTER_PY = os.path.join(REPO_ROOT, "backend", "scripts", "export_frontend_thresholds.py")
+
+
+def _validator_code():
+    """retinalValidator.ts with // and /* */ comments removed."""
+    src = read(RETINAL_VALIDATOR_TS)
+    src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
+    return "\n".join(l.split("//")[0] if "://" not in l else l for l in src.splitlines())
+
+
+def test_browser_thresholds_are_generated_from_the_server_configuration():
+    """
+    The browser's thresholds were literals typed beside the server's and
+    drifted three times (256 vs 480 px, 0.60-1.70 vs 0.65-1.65, and a
+    coverage floor never applied). validationThresholds.ts is generated from
+    config.py; the committed file must equal the generator's output, and the
+    validator must import every threshold from it.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("export_frontend_thresholds", EXPORTER_PY)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert read(THRESHOLDS_TS).replace("\r\n", "\n") == mod.render(), (
+        "validationThresholds.ts is stale: run backend/scripts/export_frontend_thresholds.py")
+    cfg = _config_defaults()
+    for name, _purpose in mod.EXPORTED:
+        m = re.search(r"export const %s = ([\d.]+);" % name, read(THRESHOLDS_TS))
+        assert m and float(m.group(1)) == float(cfg[name]), "%s in the generated file differs from config.py" % name
+    code = _validator_code()
+    for name in ("MIN_IMAGE_DIMENSION", "MAX_UPLOAD_SIZE_MB", "RETINAL_MIN_COVERAGE", "RETINAL_RED_RATIO_MIN", "RETINAL_RED_SHARE_MIN"):
+        assert re.search(r"\b%s\b" % name, code.split("export interface")[0]), "the validator does not import %s" % name
+    # no bare copy of a server threshold may remain in the validator's code
+    for literal in (r">=\s*480\b", r"<=\s*15\s*\*\s*1024", r">=\s*1\.15\b", r"<\s*1\.15\b", r">=\s*0\.36\b", r">=\s*0\.20?\b"):
+        assert not re.search(literal, code), "the validator still compares against a literal threshold: %s" % literal
+
+
+def test_browser_gate2_computes_and_applies_foreground_coverage():
+    """
+    The browser counted foreground pixels, never divided, never compared, and
+    reported "Aperture coverage and colour profile within thresholds". It must
+    compute the coverage, compare it with the server's minimum, require it for
+    Gate 2, carry the measured value in the result, and say "within
+    thresholds" only where gate2Passed is true.
+    """
+    code = _validator_code()
+    assert re.search(r"foregroundCoverage\s*=\s*foregroundCount\s*/\s*\(sampleSize\s*\*\s*sampleSize\)", code), (
+        "foreground coverage is not computed")
+    assert re.search(r"const coveragePassed\s*=\s*coverageEvaluated\s*&&\s*foregroundCoverage\s*>=\s*RETINAL_MIN_COVERAGE", code), (
+        "coverage is not compared with the server's RETINAL_MIN_COVERAGE")
+    m = re.search(r"const gate2Passed\s*=\s*([^;]+);", code)
+    assert m, "gate2Passed not found"
+    for term in ("gate1Passed", "aspectPassed", "coveragePassed", "colorPassed", "notDiagramPassed"):
+        assert term in m.group(1), "gate2Passed does not require %s" % term
+    assert re.search(r"foregroundCoverage,\s*\n\s*coverageEvaluated,", code), "the measured coverage is not carried in the result"
+    # every "within thresholds" is guarded by gate2Passed on the same expression
+    for hit in re.finditer(r"within thresholds", code):
+        window = code[max(0, hit.start() - 60):hit.start()]
+        assert "gate2Passed ?" in window, "'within thresholds' is asserted without gate2Passed: ...%s" % window[-50:]
+    gate2 = read(GATE2_PY)
+    assert "settings.RETINAL_MIN_COVERAGE" in gate2, "the server no longer applies RETINAL_MIN_COVERAGE"
+    screen = read(NEW_ASSESSMENT_TSX)
+    assert "clientValidation.gate2.metric" in screen, "the upload screen does not display the measured coverage"
+
+
+def test_browser_never_reports_gate3_as_passed():
+    """
+    The validator said it issues no sharpness verdict and then set
+    gate3Passed = gate2Passed, serialised Gate 3 as passed and folded it into
+    allPassed. Gate 3 is 'notEvaluated' in the browser; the browser's result
+    is gates 1 and 2; only the server's response carries a Gate 3 verdict.
+    """
+    code = _validator_code()
+    assert "gate3Passed" not in code and "allPassed" not in code, "the browser still carries a Gate 3 / all-gates pass state"
+    assert re.search(r"const preflightPassed\s*=\s*gate1Passed\s*&&\s*gate2Passed\s*;", code), (
+        "the browser's result is not exactly gates 1 and 2")
+    block = code[code.rindex("gate3: {"):]
+    block = block[:block.index("}")]
+    assert "status: 'notEvaluated'" in block and "passed" not in block, "the returned Gate 3 is not notEvaluated"
+    iface = read(RETINAL_VALIDATOR_TS)
+    assert re.search(r"gate3: \{[^}]*status: 'notEvaluated';", iface, re.S), "the type allows a Gate 3 verdict from the browser"
+    assert re.search(r"failedGate: 1 \| 2 \| null;", iface), "the browser can still report Gate 3 as the failed gate"
+    for rel in _walk_repo((".ts", ".tsx")):
+        src = read(os.path.join(REPO_ROOT, rel))
+        assert "allPassed" not in src and "failedGate === 3" not in src and "gate3.passed" not in src, (
+            "%s still reads a browser Gate 3 verdict" % rel)
+    screen = read(NEW_ASSESSMENT_TSX)
+    assert "not evaluated in the browser" in screen, "the upload screen does not say Gate 3 is not evaluated in the browser"
+    # the pass line needs a result: an earlier branch showed "passed" while clientValidation was still null
+    assert ") : clientValidation ? (" in screen and "browser pre-check pending" in screen
+
+
+def test_gate_descriptions_claim_no_retinal_identity():
+    gate2 = read(GATE2_PY)
+    assert "passing these checks does not establish retinal identity" in gate2
+    svc = read(os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py"))
+    assert "All three configured technical gates passed; the image is eligible for model inference." in svc
+    head = read(RETINAL_VALIDATOR_TS).split("export function")[0]
+    assert "does not establish retinal identity" in head and "issues\n * no Gate 3 verdict" in head

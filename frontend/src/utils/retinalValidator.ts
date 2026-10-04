@@ -1,6 +1,15 @@
+import {
+  MIN_IMAGE_DIMENSION,
+  MAX_UPLOAD_SIZE_MB,
+  RETINAL_MIN_COVERAGE,
+  RETINAL_RED_RATIO_MIN,
+  RETINAL_RED_SHARE_MIN,
+} from './validationThresholds';
+
 export interface ClientValidationResult {
-  allPassed: boolean;
-  failedGate: 1 | 2 | 3 | null;
+  /** Gates 1 and 2 only. The browser never evaluates Gate 3. */
+  preflightPassed: boolean;
+  failedGate: 1 | 2 | null;
   gate1: {
     passed: boolean;
     mime: string;
@@ -14,25 +23,29 @@ export interface ClientValidationResult {
     aspectRatio: number;
     redToBlueRatio: number;
     redShare: number;
+    /** foreground pixels / all pixels of the analysis canvas */
+    foregroundCoverage: number;
+    /** false when no canvas was available, in which case Gate 2 cannot pass */
+    coverageEvaluated: boolean;
     isDocumentOrDiagram: boolean;
     metric: string;
     rejectionReason?: string;
     clinicalAction?: string;
   };
   gate3: {
-    passed: boolean;
+    /** The browser issues no Gate 3 verdict; only the server's result can be passed or failed. */
+    status: 'notEvaluated';
     focusEstimate: number;
     metric: string;
-    rejectionReason?: string;
-    clinicalAction?: string;
   };
 }
 
 /**
- * Client-Side Computer Vision Retinal Validation
- * Evaluates uploaded imagery in real-time using HTML5 Canvas to strictly prevent
- * non-retinal images (diagrams, flowcharts, documents, external ocular photos)
- * from passing to downstream AI inference engines.
+ * Browser pre-check (preliminary, not authoritative).
+ * Applies Gate 1 and Gate 2 with the server's own thresholds (generated into
+ * validationThresholds.ts from config.py) so an unsuitable file can be flagged
+ * before upload. Passing it does not establish retinal identity, and it issues
+ * no Gate 3 verdict: the server re-checks every image and alone decides.
  */
 export function analyzeRetinalImageOnCanvas(
   img: HTMLImageElement,
@@ -46,11 +59,11 @@ export function analyzeRetinalImageOnCanvas(
   // --- GATE 1: File Integrity & Formats ---
   const validMimes = ['image/jpeg', 'image/jpg', 'image/png'];
   const mimePassed = validMimes.includes(mimeType.toLowerCase()) || mimeType === '';
-  const sizePassed = fileSizeBytes <= 15 * 1024 * 1024;
+  const sizePassed = fileSizeBytes <= MAX_UPLOAD_SIZE_MB * 1024 * 1024;
   // The backend's MIN_IMAGE_DIMENSION (backend/app/core/config.py) is the rule;
   // this browser check is a preliminary courtesy and the server re-checks
   // every image. A rule in the suite keeps this constant equal to the backend's.
-  const dimensionPassed = width >= 480 && height >= 480;
+  const dimensionPassed = width >= MIN_IMAGE_DIMENSION && height >= MIN_IMAGE_DIMENSION;
 
   const gate1Passed = mimePassed && sizePassed && dimensionPassed;
   let gate1Reason: string | undefined;
@@ -60,14 +73,14 @@ export function analyzeRetinalImageOnCanvas(
     gate1Reason = `Unsupported MIME format (${mimeType}). DR-CDSS requires JPEG or PNG retinal imagery.`;
     gate1Action = 'Export retinal photography from the camera workstation in standard JPEG or PNG format.';
   } else if (!sizePassed) {
-    gate1Reason = `File size (${(fileSizeBytes / 1024 / 1024).toFixed(1)} MB) exceeds 15 MB limit.`;
-    gate1Action = 'Export the image at a supported technical resolution and file size (JPEG or PNG, 15 MB or less).';
+    gate1Reason = `File size (${(fileSizeBytes / 1024 / 1024).toFixed(1)} MB) exceeds the ${MAX_UPLOAD_SIZE_MB} MB limit.`;
+    gate1Action = 'Export the image at a supported technical resolution and file size (JPEG or PNG within the size limit).';
   } else if (!dimensionPassed) {
-    gate1Reason = `Native resolution (${width}x${height} px) is below the backend's minimum of 480x480 px (preliminary browser check; the server re-checks every image).`;
+    gate1Reason = `Native resolution (${width}x${height} px) is below the backend's minimum of ${MIN_IMAGE_DIMENSION}x${MIN_IMAGE_DIMENSION} px (preliminary browser check; the server re-checks every image).`;
     gate1Action = 'Provide a fundus photograph at or above the supported technical resolution.';
   }
 
-  // --- GATE 2: Retinal Relevance & Chromatic Signature ---
+  // --- GATE 2: technical retinal-image relevance (geometry, coverage, colour profile) ---
   // Off-screen canvas analysis
   const sampleSize = 256;
   const canvas = document.createElement('canvas');
@@ -77,6 +90,8 @@ export function analyzeRetinalImageOnCanvas(
 
   let redToBlueRatio = 1.0;
   let redShare = 0.33;
+  let foregroundCoverage = 0;
+  let coverageEvaluated = false;
   let isDocumentOrDiagram = false;
   let cornerAvgIntensity = 0;
 
@@ -91,7 +106,7 @@ export function analyzeRetinalImageOnCanvas(
     let foregroundCount = 0;
 
     // Check corner pixels (0,0), (sampleSize-1, 0), (0, sampleSize-1), (sampleSize-1, sampleSize-1)
-    // Real fundus images have dark/black circular aperture borders in corners (< 40 intensity).
+    // Fundus photographs usually have dark corners outside the aperture (< 40 intensity).
     // Flowcharts, whitepapers, diagrams, and photos have white or bright backgrounds (> 180 intensity).
     const cornerIndices = [
       0, // top-left
@@ -116,7 +131,7 @@ export function analyzeRetinalImageOnCanvas(
       const b = data[i + 2];
       const lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      // In real fundus, foreground is the illuminated retina (lum > 15)
+      // foreground = luminance > 15, the server's definition (gate2_relevance.py)
       if (lum > 15) {
         totalR += r;
         totalG += g;
@@ -124,6 +139,12 @@ export function analyzeRetinalImageOnCanvas(
         foregroundCount++;
       }
     }
+
+    // The share of the frame that is foreground. An earlier revision counted
+    // these pixels and never divided: the pass message said coverage was within
+    // thresholds without the check having been made.
+    foregroundCoverage = foregroundCount / (sampleSize * sampleSize);
+    coverageEvaluated = true;
 
     if (foregroundCount > 0) {
       const meanR = totalR / foregroundCount;
@@ -135,29 +156,36 @@ export function analyzeRetinalImageOnCanvas(
       redShare = meanR / totalRGB;
     }
 
-    // Flag document/diagram if corners are bright white/gray (mean > 160) and R/B ratio is neutral (< 1.15)
-    if (cornerAvgIntensity > 160 && redToBlueRatio < 1.15) {
+    // Flag document/diagram if corners are bright white/gray (mean > 160) and the R/B ratio is below the minimum
+    if (cornerAvgIntensity > 160 && redToBlueRatio < RETINAL_RED_RATIO_MIN) {
       isDocumentOrDiagram = true;
     }
   }
 
-  // Gate 2 Rules:
-  // 1. Aspect ratio: 0.65 to 1.65 (Standard fundus camera field)
-  // 2. Red to Blue ratio >= 1.15 (Fundus vascular orange/red dominance)
-  // 3. Red share >= 0.36
-  // 4. Must not be a white-background diagram/document
+  // Gate 2 rules, as the server applies them:
+  // 1. Aspect ratio 0.65 to 1.65
+  // 2. Foreground coverage >= RETINAL_MIN_COVERAGE
+  // 3. R/B ratio >= RETINAL_RED_RATIO_MIN and red share >= RETINAL_RED_SHARE_MIN
+  // 4. (browser only) not a bright-cornered, neutral-coloured document/diagram
   // The server's range (backend/app/services/validation/gate2_relevance.py);
   // a rule in the suite keeps these two numbers equal to it.
   const aspectPassed = aspectRatio >= 0.65 && aspectRatio <= 1.65;
-  const colorPassed = redToBlueRatio >= 1.15 && redShare >= 0.36;
+  const coveragePassed = coverageEvaluated && foregroundCoverage >= RETINAL_MIN_COVERAGE;
+  const colorPassed = redToBlueRatio >= RETINAL_RED_RATIO_MIN && redShare >= RETINAL_RED_SHARE_MIN;
   const notDiagramPassed = !isDocumentOrDiagram;
 
-  const gate2Passed = gate1Passed && aspectPassed && colorPassed && notDiagramPassed;
+  const gate2Passed = gate1Passed && aspectPassed && coveragePassed && colorPassed && notDiagramPassed;
   let gate2Reason: string | undefined;
   let gate2Action: string | undefined;
 
   if (!aspectPassed) {
     gate2Reason = `Aspect ratio ${aspectRatio.toFixed(2)} is outside the configured range (0.65 - 1.65).`;
+    gate2Action = 'Recapture or upload a technically clearer fundus photograph.';
+  } else if (!coverageEvaluated) {
+    gate2Reason = 'The browser could not analyse the image (no canvas available), so foreground coverage was not evaluated.';
+    gate2Action = 'Try another browser, or upload and let the server check the image.';
+  } else if (!coveragePassed) {
+    gate2Reason = `Foreground coverage ${(foregroundCoverage * 100).toFixed(1)}% is below the configured minimum of ${(RETINAL_MIN_COVERAGE * 100).toFixed(0)}%.`;
     gate2Action = 'Recapture or upload a technically clearer fundus photograph.';
   } else if (isDocumentOrDiagram) {
     gate2Reason = 'Bright uniform corners and a neutral colour profile: the image looks like a document or diagram, not a fundus photograph.';
@@ -195,20 +223,17 @@ export function analyzeRetinalImageOnCanvas(
     focusEstimate = count > 0 ? (sumGrad / count) * 4 : 180.0;
   }
 
-  // No browser verdict on sharpness: the estimate is shown for information and
-  // the server's Gate 3 result is the only one that counts.
-  const gate3Passed = gate2Passed;
-  const gate3Reason: string | undefined = undefined;
-  const gate3Action: string | undefined = undefined;
-
-  const allPassed = gate1Passed && gate2Passed && gate3Passed;
-  let failedGate: 1 | 2 | 3 | null = null;
+  // No browser verdict on sharpness. An earlier revision set gate3Passed =
+  // gate2Passed and folded that manufactured pass into the overall result; a
+  // check that was not performed has no passed state. The browser's result is
+  // gates 1 and 2 only.
+  const preflightPassed = gate1Passed && gate2Passed;
+  let failedGate: 1 | 2 | null = null;
   if (!gate1Passed) failedGate = 1;
   else if (!gate2Passed) failedGate = 2;
-  else if (!gate3Passed) failedGate = 3;
 
   return {
-    allPassed,
+    preflightPassed,
     failedGate,
     gate1: {
       passed: gate1Passed,
@@ -223,21 +248,21 @@ export function analyzeRetinalImageOnCanvas(
       aspectRatio,
       redToBlueRatio,
       redShare,
+      foregroundCoverage,
+      coverageEvaluated,
       isDocumentOrDiagram,
-      metric: gate2Passed
-        ? `Aperture coverage and colour profile within thresholds, R/B ratio: ${redToBlueRatio.toFixed(2)}`
-        : isDocumentOrDiagram
-        ? 'Bright uniform corners and neutral colour profile (document/diagram pattern)'
-        : `R/B spectral ratio: ${redToBlueRatio.toFixed(2)} (Min: 1.15)`,
+      // the measured values, whatever the verdict; nothing is called "within
+      // thresholds" unless gate2Passed (which includes coveragePassed) is true
+      metric: !coverageEvaluated
+        ? 'Not evaluated in the browser (no canvas)'
+        : `Foreground coverage ${(foregroundCoverage * 100).toFixed(1)}% (min ${(RETINAL_MIN_COVERAGE * 100).toFixed(0)}%), R/B ratio ${redToBlueRatio.toFixed(2)} (min ${RETINAL_RED_RATIO_MIN}), red share ${(redShare * 100).toFixed(1)}% (min ${(RETINAL_RED_SHARE_MIN * 100).toFixed(0)}%)${gate2Passed ? ' — all within thresholds' : ''}`,
       rejectionReason: gate2Reason,
       clinicalAction: gate2Action,
     },
     gate3: {
-      passed: gate3Passed,
+      status: 'notEvaluated',
       focusEstimate,
-      metric: `Browser focus estimate: ${focusEstimate.toFixed(1)} (advisory gradient energy at 256 px; the server decides on Laplacian variance at 1024 px)`,
-      rejectionReason: gate3Reason,
-      clinicalAction: gate3Action,
+      metric: `Not evaluated in the browser. Focus estimate ${focusEstimate.toFixed(1)} is an advisory gradient energy at 256 px; the server decides on Laplacian variance at 1024 px.`,
     },
   };
 }

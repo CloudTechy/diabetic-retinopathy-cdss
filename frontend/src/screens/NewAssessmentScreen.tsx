@@ -86,20 +86,15 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
       img.onload = () => {
         setFileDimensions({ width: img.width, height: img.height });
 
-        // Run off-screen canvas analysis for circular aperture, chromatic R/B ratio, and blur
+        // Browser pre-check: gates 1 and 2 with the server's thresholds. No Gate 3 verdict.
         const analysis = analyzeRetinalImageOnCanvas(img, file.size, file.type);
         setClientValidation(analysis);
 
-        if (!analysis.allPassed && analysis.failedGate) {
+        if (!analysis.preflightPassed && analysis.failedGate) {
           if (analysis.failedGate === 2) {
             setValidationWarning(
               analysis.gate2.rejectionReason ||
               'The image did not meet the configured geometry or colour-profile thresholds in the browser pre-check.'
-            );
-          } else if (analysis.failedGate === 3) {
-            setValidationWarning(
-              analysis.gate3.rejectionReason ||
-              'Image quality warning: low optical sharpness or motion blur detected.'
             );
           } else if (analysis.failedGate === 1) {
             setFileError(analysis.gate1.rejectionReason || 'Invalid file format or size.');
@@ -382,21 +377,27 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                 </div>
 
                 <div className="text-left space-y-1 text-xs">
-                  {clientValidation && !clientValidation.allPassed ? (
+                  {clientValidation && !clientValidation.preflightPassed ? (
                     <div className="font-bold text-rose-800 flex items-center gap-1.5">
                       <ShieldAlert className="w-4 h-4 text-rose-600" />
                       <span>
                         {clientValidation.failedGate === 2
-                          ? 'Geometry / colour-profile threshold not met (browser Gate 2)'
-                          : clientValidation.failedGate === 3
-                          ? 'Quality Issue Detected (Gate 3)'
+                          ? 'Geometry / coverage / colour-profile threshold not met (browser Gate 2)'
                           : 'Format / File Issue (Gate 1)'}
                       </span>
                     </div>
+                  ) : clientValidation ? (
+                    <div className="space-y-0.5">
+                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>Browser pre-checks (gates 1–2) passed — the server re-checks and decides</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-mono break-words">{clientValidation.gate2.metric}</p>
+                      <p className="text-[11px] text-slate-500">Gate 3 (sharpness, contrast, illumination): not evaluated in the browser; the server evaluates it.</p>
+                    </div>
                   ) : (
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>File selected; browser pre-checks (gates 1–2) passed — the server re-checks and decides</span>
+                    <div className="font-bold text-slate-700 flex items-center gap-1.5">
+                      <span>File selected; browser pre-check pending</span>
                     </div>
                   )}
                   <p className="text-slate-600 font-mono text-[11px]">

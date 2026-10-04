@@ -67,7 +67,8 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
       1. Image aspect ratio conforms to standard retinal camera fields (0.65 to 1.65).
       2. Foreground (aperture) coverage of at least RETINAL_MIN_COVERAGE; no upper bound is enforced.
       3. Colour profile: R/B ratio >= RETINAL_RED_RATIO_MIN and red share >= RETINAL_RED_SHARE_MIN.
-    Prevents non-retinal images (faces, chest X-rays, documents, anterior segment) from proceeding.
+    Rejects inputs that fall outside the configured geometry and colour-profile
+    heuristics; passing these checks does not establish retinal identity.
     """
     rgb_image = pil_image.convert("RGB")
     width, height = rgb_image.size

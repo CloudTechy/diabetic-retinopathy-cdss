@@ -245,7 +245,7 @@ class AssessmentService:
             assessment_id=assessment.id,
             action="Validation Pipeline Passed",
             actor="Validation Pipeline",
-            details="All 3 technical gates passed. Quality verified for inference.",
+            details="All three configured technical gates passed; the image is eligible for model inference.",
             badge_type="success",
         )
         db.add(audit_pass)
