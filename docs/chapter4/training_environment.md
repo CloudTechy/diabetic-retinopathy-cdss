@@ -49,7 +49,7 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 
 **Training and serving environments differ, deliberately.** The model is trained once on a GPU and served many times on CPU, and [`resource_benchmark.md`](resource_benchmark.md) reports both separately:
 
-- **§1 is the deployment figure.** End-to-end request latency over 30 real held-out APTOS images on an x86_64 4-thread CPU, PyTorch 2.11.0+cpu, no accelerator. The harness clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot silently measure a GPU.
+- **§1 is the CPU-target figure.** End-to-end request latency over 30 real held-out APTOS images on an x86_64 4-thread CPU, PyTorch 2.11.0+cpu, no accelerator. It was **not** measured inside the backend container described in the next section, whose versions differ; no latency figure for the container is claimed. The harness clears `CUDA_VISIBLE_DEVICES` before importing torch, so it cannot silently measure a GPU.
 - **§5 is the T4 forward pass alone**, retained for comparison and explicitly **not** a deployment figure.
 
 An earlier version of this paragraph said the committed benchmark was measured on the T4 and did not characterise the CPU target. That was true of §5 and false of §1, which is the figure the latency requirement is assessed against.
@@ -69,7 +69,6 @@ Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-sli
 | `fastapi` | 0.142.2 | RESTful API routing inference requests |
 | `sqlalchemy` | 2.1.3 | ORM over PostgreSQL |
 | `uvicorn` | 0.54.0 | ASGI server |
-
 ## 3. Determinism & Reproducibility Controls
 
 Applied in [`notebooks/colab_train_and_evaluate.py`](../../notebooks/colab_train_and_evaluate.py):

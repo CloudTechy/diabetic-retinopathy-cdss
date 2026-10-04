@@ -433,8 +433,8 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
     def _verify_checkpoint_digest(self):
         """
-        Confirm the checkpoint bytes match the expected SHA-256, when one is
-        configured. This is the runtime half of the provenance claim made in
+        Confirm the checkpoint bytes match the expected SHA-256; a missing
+        digest refuses as firmly as a wrong one. This is the runtime half of the provenance claim made in
         docs/chapter4/checkpoint_manifest.md: the graded weights on disk are
         demonstrably the weights that were evaluated.
         """

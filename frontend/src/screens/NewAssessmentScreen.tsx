@@ -392,7 +392,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                   ) : (
                     <div className="font-bold text-slate-900 flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>File Selected & Pre-flight Passed</span>
+                      <span>File selected; browser pre-checks (gates 1–2) passed — the server re-checks and decides</span>
                     </div>
                   )}
                   <p className="text-slate-600 font-mono text-[11px]">
