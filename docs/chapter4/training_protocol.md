@@ -9,7 +9,7 @@
 - **Integrity Checksum (SHA-256):** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
 - **Best Validation Epoch:** Epoch 14 of 15
 - **Peak Validation QWK:** **0.9130**
-- **Total Wall-Clock Training Time:** 2,762 seconds (52.5 minutes), ~210 s/epoch
+- **Total Wall-Clock Training Time:** 2,761.6 seconds (approximately 46.0 minutes), averaging approximately 184.1 s/epoch across 15 epochs. An earlier revision said 52.5 minutes and ~210 s/epoch, which do not follow from the recorded total.
 - **Raw Evidence:** [`training_execution.log`](training_execution.log), [`epoch_history.csv`](epoch_history.csv), [`training_summary.json`](training_summary.json)
 - **Supporting Visualization:** [`learning_curves.png`](learning_curves.png)
 

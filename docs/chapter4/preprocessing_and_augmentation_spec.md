@@ -59,7 +59,7 @@ The pipeline performs **no aperture cropping**, no circular-mask extraction, no 
 
 Two consequences follow, and both are stated deliberately:
 
-- **Training and inference use byte-identical transforms.** This is the property that actually matters for a deployed model: there is no train/serve preprocessing skew, so held-out metrics are a valid predictor of runtime behaviour. Verified by inspection of both code paths.
+- **Training and inference use byte-identical transforms.** Using the same deterministic preprocessing at evaluation and runtime prevents preprocessing mismatch. It does not establish performance on images from populations, cameras or clinical environments outside the evaluated APTOS cohort. Verified by inspection of both code paths; an earlier revision called the held-out metrics "a valid predictor of runtime behaviour", which this property does not establish.
 - **Resizing to a fixed square distorts aspect ratio,** and retaining black borders means a fraction of each input tensor carries no retinal signal. Adding a crop-and-preserve-aspect step is identified as a likely improvement in [`known_limitations.md`](known_limitations.md), but it was not implemented, so no benefit from it is claimed.
 
 ---

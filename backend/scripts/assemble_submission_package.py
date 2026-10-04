@@ -283,6 +283,9 @@ def _refresh_transcript(transcript):
         return False
     new = m.group(1) + transcript.strip("\n") + m.group(3)
     updated = text[:m.start()] + new + text[m.end():]
+    # the "Produced on" line names the day this transcript was produced
+    import datetime as _dt
+    updated = re.sub(r"Produced on \d{4}-\d{2}-\d{2}", "Produced on %s" % _dt.date.today().isoformat(), updated, count=1)
     if updated == text:
         return False
     with open(path, "w", encoding="utf-8", newline="\n") as fh:

@@ -65,8 +65,8 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
     that it is a retina, that its anatomy is correct, or that it is gradable.
     Validates:
       1. Image aspect ratio conforms to standard retinal camera fields (0.65 to 1.65).
-      2. Circular fundus mask detection (aperture coverage between 20% and 98%).
-      3. Reddish/orange retinal spectral signature (R/B ratio >= 1.15, R share >= 38%).
+      2. Foreground (aperture) coverage of at least RETINAL_MIN_COVERAGE; no upper bound is enforced.
+      3. Colour profile: R/B ratio >= RETINAL_RED_RATIO_MIN and red share >= RETINAL_RED_SHARE_MIN.
     Prevents non-retinal images (faces, chest X-rays, documents, anterior segment) from proceeding.
     """
     rgb_image = pil_image.convert("RGB")
@@ -81,7 +81,7 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
             error_code="ERR_INVALID_ASPECT_RATIO",
             metric=f"Aspect ratio: {aspect_ratio:.2f} (Standard: 0.65 - 1.65)",
             rejection_reason=f"Non-standard image aspect ratio ({aspect_ratio:.2f}). Retinal fundus photographs require standard camera proportions.",
-            clinical_action="Please provide uncropped, standard fundus photographs from an ophthalmic fundus camera.",
+            clinical_action="Recapture or upload a technically clearer fundus photograph.",
         )
 
     # Every check below this point is a ratio or a mean over the whole image,
@@ -114,8 +114,8 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
             aspect_ratio=aspect_ratio,
             error_code="ERR_RETINAL_MASK_ABSENT",
             metric=f"Aperture coverage: {mask_coverage * 100:.1f}% (Threshold >= {settings.RETINAL_MIN_COVERAGE * 100:.0f}%)",
-            rejection_reason="Circular fundus aperture not detected. Image is predominantly blank, dark, or lacks retinal structure.",
-            clinical_action="Ensure the camera lens cap is removed and alignment is centered on the posterior pole.",
+            rejection_reason="The image did not meet the configured foreground-coverage threshold.",
+            clinical_action="Recapture or upload a technically clearer fundus photograph.",
         )
 
     # If image is almost entirely solid or has no mask at all, compute pixels in the foreground
@@ -138,7 +138,7 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
 
     # 3. Retinal Color Profile (Reddish/Orange vascular background)
     # Real fundus photographs have high red channel dominance over blue channel
-    if red_to_blue < settings.RETINAL_RED_RATIO_MIN or red_share < 0.36:
+    if red_to_blue < settings.RETINAL_RED_RATIO_MIN or red_share < settings.RETINAL_RED_SHARE_MIN:
         return Gate2Result(
             passed=False,
             mask_coverage=mask_coverage,
@@ -148,9 +148,9 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
             mask_coverage_exact=mask_coverage_exact,
             red_to_blue_ratio_exact=red_to_blue,
             error_code="ERR_NON_RETINAL_SPECTRAL_PROFILE",
-            metric=f"Red/Blue ratio: {red_to_blue:.2f} (Threshold >= {settings.RETINAL_RED_RATIO_MIN})",
-            rejection_reason="Spectral profile does not exhibit retinal vascular characteristics. Image appears to be non-retinal (e.g., face, text, scenery, or anterior segment).",
-            clinical_action="Ensure you are uploading posterior pole retinal fundus photography rather than external ocular or non-retinal images.",
+            metric=f"R/B ratio: {red_to_blue:.2f} (threshold >= {settings.RETINAL_RED_RATIO_MIN}), red share: {red_share * 100:.1f}% (threshold >= {settings.RETINAL_RED_SHARE_MIN * 100:.0f}%)",
+            rejection_reason="The image did not meet the configured colour-profile thresholds (red/blue ratio and red share).",
+            clinical_action="Recapture or upload a technically clearer fundus photograph.",
         )
 
     metric = f"Aperture coverage: {mask_coverage * 100:.1f}%, R/B ratio: {red_to_blue:.2f}"

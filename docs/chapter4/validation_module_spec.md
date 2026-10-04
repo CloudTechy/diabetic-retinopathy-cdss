@@ -21,8 +21,8 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 
 > Three heuristics, none of which identifies anatomy. Passing them means the input meets the configured geometry and colour-profile thresholds; it does not confirm retinal identity, anatomical correctness or clinical gradability. An earlier revision of this heading called the gate "Retinal Anatomical Relevance".
 - **Calibrated Aspect Ratio Threshold:** Accepts $0.65 \leq \text{aspect ratio} \leq 1.65$. This range accommodates standard ophthalmic fundus cameras (4:3 = 1.333, 3:2 = 1.500, and square 1:1 apertures) while rejecting extreme panoramic strips (> 1.65) or elongated documents (< 0.65).
-- **Circular Aperture Mask Coverage:** Analyzes foreground luminance (threshold > 15 intensity). Requires valid fundus circular aperture covering between 20.0% and 98.0% of total image area. Rejects non-retinal images (e.g. chest X-rays, faces).
-- **Retinal Chromatic Signature:** Evaluates reddish/orange retinal reflection. Requires Red/Blue channel ratio $\ge 1.15$ and Red channel luminance share $\ge 38.0\%$.
+- **Foreground (aperture) coverage:** foreground is luminance > 15; coverage must be at least 20.0% of the frame (`RETINAL_MIN_COVERAGE`). No upper bound is enforced: an earlier revision stated an upper bound of 98.0% from a setting (`RETINAL_MAX_COVERAGE`) that was declared but never used by the gate; the setting has been removed.
+- **Colour profile:** Red/Blue channel ratio $\ge 1.15$ (`RETINAL_RED_RATIO_MIN`) and red channel share $\ge 36.0\%$ (`RETINAL_RED_SHARE_MIN`). An earlier revision stated 38.0% while the code tested 36%.
 
 ### Gate 3: Technical Quality & Sharpness
 - **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 4.3$ (`LAPLACIAN_BLUR_THRESHOLD`), the 1st percentile of the development corpus - see the derivation recorded below.

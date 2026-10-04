@@ -109,7 +109,7 @@ grep -n "Resize\|ToTensor\|Normalize" notebooks/colab_train_and_evaluate.py
 grep -n "Resize\|ToTensor\|Normalize" backend/app/services/ai_service.py
 ```
 
-Both must show `Resize((224, 224))` → `ToTensor()` → `Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])`. Divergence here would invalidate the held-out metrics as a predictor of runtime behaviour.
+Both must show `Resize((224, 224))` → `ToTensor()` → `Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])`. Divergence here would mean the served model is not the evaluated model.
 
 ---
 
@@ -216,4 +216,4 @@ python -m venv .venv
 # Linux/macOS: .venv/bin/python in place of .venv/Scripts/python.exe
 ```
 
-Expected: **247 collected — 246 passed, 1 skipped** (wall-clock between 60 and 130 s across this package's recorded runs with PyTorch installed; the last line of the committed log records its own duration, and a rule checks it falls inside that range). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.
+Expected: **254 collected — 253 passed, 1 skipped** (wall-clock between 60 and 180 s across this package's recorded runs with PyTorch installed — 61 s to 165 s were observed, the upper end under machine load; the last line of the committed log records its own duration, and a rule checks it falls inside that range). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.

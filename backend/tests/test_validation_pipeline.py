@@ -77,7 +77,7 @@ class TestGate2RetinalRelevance:
         res = evaluate_gate2(non_retinal_img)
         assert res.passed is False
         assert res.error_code == "ERR_NON_RETINAL_SPECTRAL_PROFILE"
-        assert "non-retinal" in res.rejection_reason.lower()
+        assert "colour-profile" in res.rejection_reason.lower() and res.error_code == "ERR_NON_RETINAL_SPECTRAL_PROFILE"
 
     def test_blank_dark_image_fails_gate2(self):
         blank_img = Image.new("RGB", (512, 512), (0, 0, 0))

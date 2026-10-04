@@ -154,8 +154,8 @@ class ReportService:
         sha_hash = img.sha256_hash if img else "N/A"
 
         gate_data = [
-            ["Gate 1: File Integrity", g1_stat, f"MIME {img.mime_type if img else 'JPEG'}, SHA-256: {sha_hash[:16]}..."],
-            ["Gate 2: Retinal Relevance", g2_stat, "Retinal aperture geometry and spectral balance confirmed."],
+            ["Gate 1: File Integrity", g1_stat, f"MIME {img.mime_type if img else 'n/a'}, SHA-256: {sha_hash[:16]}..."],
+            ["Gate 2: Technical retinal-image relevance", g2_stat, "Configured geometry and colour-profile thresholds; no anatomical confirmation."],
             ["Gate 3: Technical Quality", g3_stat, f"Laplacian variance: {lap_metric} (Threshold >= {settings.LAPLACIAN_BLUR_THRESHOLD}), Illum: {illum_metric}"],
         ]
 

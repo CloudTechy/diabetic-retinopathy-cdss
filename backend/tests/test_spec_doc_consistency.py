@@ -100,7 +100,7 @@ def test_laplacian_threshold_is_quoted_consistently():
 @pytest.mark.parametrize(
     "setting_name,expected",
     [("RETINAL_RED_RATIO_MIN", 1.15), ("RETINAL_MIN_COVERAGE", 0.20),
-     ("RETINAL_MAX_COVERAGE", 0.98), ("CONTRAST_THRESHOLD", 8.8),
+     ("RETINAL_RED_SHARE_MIN", 0.36), ("CONTRAST_THRESHOLD", 8.8),
      ("ILLUMINATION_EXTREME_RATIO_MAX", 0.35), ("LAPLACIAN_BLUR_THRESHOLD", 4.3),
      ("MIN_IMAGE_DIMENSION", 480)],
 )

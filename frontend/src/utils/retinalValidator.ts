@@ -157,14 +157,14 @@ export function analyzeRetinalImageOnCanvas(
   let gate2Action: string | undefined;
 
   if (!aspectPassed) {
-    gate2Reason = `Non-standard image aspect ratio (${aspectRatio.toFixed(2)}). Retinal fundus requires standard camera field (0.65 - 1.65).`;
-    gate2Action = 'Upload standard uncropped 45-degree or 30-degree fundus photograph.';
+    gate2Reason = `Aspect ratio ${aspectRatio.toFixed(2)} is outside the configured range (0.65 - 1.65).`;
+    gate2Action = 'Recapture or upload a technically clearer fundus photograph.';
   } else if (isDocumentOrDiagram) {
-    gate2Reason = 'Non-retinal document or architectural schematic detected. The uploaded image lacks circular fundus aperture and ophthalmic vascular pigmentation.';
-    gate2Action = 'Strictly upload clinical retinal fundus photography. Do not submit diagrams, text, or non-retinal imagery.';
+    gate2Reason = 'Bright uniform corners and a neutral colour profile: the image looks like a document or diagram, not a fundus photograph.';
+    gate2Action = 'Upload a fundus photograph.';
   } else if (!colorPassed) {
-    gate2Reason = `Spectral profile does not exhibit retinal vascular characteristics (R/B ratio: ${redToBlueRatio.toFixed(2)} < 1.15, Red share: ${(redShare * 100).toFixed(1)}%). Detected non-retinal subject (e.g. grayscale, diagram, anterior segment).`;
-    gate2Action = 'Ensure you are uploading posterior pole color retinal fundus photography rather than external ocular or non-retinal images.';
+    gate2Reason = `Colour profile outside the configured thresholds (R/B ratio ${redToBlueRatio.toFixed(2)}, red share ${(redShare * 100).toFixed(1)}%).`;
+    gate2Action = 'Recapture or upload a technically clearer fundus photograph.';
   }
 
   // --- GATE 3: focus, ADVISORY ONLY ---

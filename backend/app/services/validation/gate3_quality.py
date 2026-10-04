@@ -77,9 +77,12 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
     """
     Gate 3: Technical Image Quality & Sharpness.
     Validates:
-      1. Edge sharpness via Laplacian blur variance threshold (>= 60.0).
-      2. Dynamic range and contrast adequacy (std >= 18.0).
-      3. Illumination uniformity avoiding severe shadows, flash washout, or extreme underexposure.
+      1. Sharpness: Laplacian variance >= LAPLACIAN_BLUR_THRESHOLD (calibrated; see
+         docs/chapter4/blur_threshold_calibration.json).
+      2. Contrast: luminance standard deviation >= CONTRAST_THRESHOLD.
+      3. Illumination: extreme-pixel ratio <= ILLUMINATION_EXTREME_RATIO_MAX.
+    Passing says the configured thresholds were met; it does not confirm retinal
+    identity, anatomical correctness or clinical gradability.
     """
     rgb_image = pil_image.convert("RGB")
     width, height = rgb_image.size
@@ -105,12 +108,11 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
     # full-resolution branch, and must not be folded into the analysis subsample
     # above.
     #
-    # WARNING: the configured threshold is NOT calibrated against this path. An
-    # earlier version of this comment claimed it was; that claim was false.
-    # Measured over held-out APTOS images, genuine fundus photographs score
-    # 5.7-22.0 here, against LAPLACIAN_BLUR_THRESHOLD = 60.0 - so every real
-    # image is rejected. See known_limitations.md section 1, and run
-    # backend/scripts/calibrate_blur_threshold.py to derive a defensible value.
+    # LAPLACIAN_BLUR_THRESHOLD is calibrated against THIS path (the 1024 px
+    # resample below) by backend/scripts/calibrate_blur_threshold.py, which
+    # wrote docs/chapter4/blur_threshold_calibration.json; known_limitations.md
+    # section 1 records the earlier uncalibrated value and its effect. The
+    # comment that stood here before said the opposite and was stale.
     if max(height, width) > 1024:
         scale = 1024.0 / max(height, width)
         scaled_img = pil_image.convert("L").resize(
@@ -156,8 +158,8 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
             extreme_pixel_ratio_exact=extreme_ratio,
             error_code="ERR_MOTION_OR_DEFOCUS_BLUR",
             metric=f"Laplacian variance: {laplacian_var:.1f} (Threshold >= {settings.LAPLACIAN_BLUR_THRESHOLD:.1f})",
-            rejection_reason="Laplacian variance below acceptable sharpness threshold. Motion blur or optical defocus detected.",
-            clinical_action="Please recapture the fundus photograph ensuring the patient maintains steady fixation and the camera focus is optimized.",
+            rejection_reason="The image did not meet the configured sharpness threshold.",
+            clinical_action="Recapture or upload a technically clearer fundus photograph.",
         )
 
     # 2. Contrast check
@@ -173,8 +175,8 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
             extreme_pixel_ratio_exact=extreme_ratio,
             error_code="ERR_LOW_CONTRAST",
             metric=f"Dynamic range std: {contrast_dynamic_range:.1f} (Threshold >= {settings.CONTRAST_THRESHOLD:.1f})",
-            rejection_reason="Retinal contrast dynamic range is too narrow. Image is flat, washed out, or obscured by media haze.",
-            clinical_action="Check camera sensor exposure settings and evaluate for potential ocular media opacities (e.g. cataract).",
+            rejection_reason="The image did not meet the configured contrast threshold.",
+            clinical_action="Recapture or upload a technically clearer fundus photograph.",
         )
 
     # 3. Illumination check
@@ -190,12 +192,14 @@ def evaluate_gate3(pil_image: Image.Image) -> Gate3Result:
             extreme_pixel_ratio_exact=extreme_ratio,
             error_code="ERR_POOR_ILLUMINATION",
             metric=f"Extreme pixel ratio: {extreme_ratio * 100:.1f}% (Threshold <= {settings.ILLUMINATION_EXTREME_RATIO_MAX * 100:.0f}%)",
-            rejection_reason="Severe illumination non-uniformity detected (excessive shadowing, flash washout, or extreme underexposure).",
-            clinical_action="Re-align the camera flash unit and ensure adequate pupil dilation for uniform fundus illumination.",
+            rejection_reason="The image did not meet the configured illumination threshold (too many extreme-luminance pixels).",
+            clinical_action="Recapture or upload a technically clearer fundus photograph.",
         )
 
     metric = f"Laplacian: {laplacian_var:.1f} (>= {settings.LAPLACIAN_BLUR_THRESHOLD:.1f}), Illumination index: {illumination_index:.2f}"
-    details = f"Vascular edge sharpness confirmed. Illumination homogeneity: {illumination_index * 100:.0f}%. Dynamic range: {contrast_dynamic_range:.1f}."
+    details = (f"The image met the configured technical thresholds (illumination index {illumination_index:.2f}, "
+               f"dynamic range {contrast_dynamic_range:.1f}). "
+               "This does not confirm retinal identity, anatomical correctness or clinical gradability.")
 
     return Gate3Result(
         passed=True,

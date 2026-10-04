@@ -100,7 +100,8 @@ def main():
     NEAR = {
         "rb": (settings.RETINAL_RED_RATIO_MIN, 0.5),
         "coverage_lo": (settings.RETINAL_MIN_COVERAGE, 0.05),
-        "coverage_hi": (settings.RETINAL_MAX_COVERAGE, 0.05),
+        # no upper coverage bound exists (RETINAL_MAX_COVERAGE was declared and never enforced; removed)
+        "red_share": (settings.RETINAL_RED_SHARE_MIN, 0.05),
         "contrast": (settings.CONTRAST_THRESHOLD, 5.0),
         "extreme": (settings.ILLUMINATION_EXTREME_RATIO_MAX, 0.1),
     }
@@ -150,8 +151,8 @@ def main():
             info = classify("gate2", fname, [
                 ("coverage_lo", settings.RETINAL_MIN_COVERAGE,
                  f2.mask_coverage_exact, r2.mask_coverage_exact),
-                ("coverage_hi", settings.RETINAL_MAX_COVERAGE,
-                 f2.mask_coverage_exact, r2.mask_coverage_exact),
+                ("red_share", settings.RETINAL_RED_SHARE_MIN,
+                 f2.red_channel_ratio, r2.red_channel_ratio),
                 ("rb", settings.RETINAL_RED_RATIO_MIN,
                  f2.red_to_blue_ratio_exact, r2.red_to_blue_ratio_exact),
             ])
@@ -288,7 +289,7 @@ def main():
             "flips_unexplained_by_boundary_proximity": len(unexplained),
             "thresholds_in_force": {
                 "RETINAL_MIN_COVERAGE": settings.RETINAL_MIN_COVERAGE,
-                "RETINAL_MAX_COVERAGE": settings.RETINAL_MAX_COVERAGE,
+                "RETINAL_RED_SHARE_MIN": settings.RETINAL_RED_SHARE_MIN,
                 "RETINAL_RED_RATIO_MIN": settings.RETINAL_RED_RATIO_MIN,
                 "CONTRAST_THRESHOLD": settings.CONTRAST_THRESHOLD,
                 "ILLUMINATION_EXTREME_RATIO_MAX": settings.ILLUMINATION_EXTREME_RATIO_MAX,

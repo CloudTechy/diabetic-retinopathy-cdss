@@ -6,23 +6,23 @@
 - **Related Research Objective:** Objective i (Functional testing and end-to-end evaluation)
 - **Date Test Run:** 2026-10-04
 - **Test Framework:** Pytest 8.4.2 on Python 3.13.5 (as recorded in the header of [`test_execution.log`](test_execution.log)), Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **247 collected — 246 passed, 0 failed, 1 skipped**
+- **Overall Result:** **254 collected — 253 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 247 test cases was executed against the complete CDSS platform. 246 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and the application-level append-only event log.
+A multi-layer automated test suite comprising 254 test cases was executed against the complete CDSS platform. 253 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and the application-level append-only event log.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      247
-Passed:               246 (99.6%)
+Tests Collected:      254
+Passed:               253 (99.6%)
 Failed:                 0  (0.0%)
 Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: recorded on the last line of test_execution.log
-Functional test result: 246 passed, 1 conditionally skipped
+Functional test result: 253 passed, 1 conditionally skipped
 ====================================================================================
 ```
 

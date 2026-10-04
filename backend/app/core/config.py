@@ -60,8 +60,12 @@ class Settings(BaseSettings):
     CONTRAST_THRESHOLD: float = 8.8
     ILLUMINATION_EXTREME_RATIO_MAX: float = 0.35
     RETINAL_MIN_COVERAGE: float = 0.20
-    RETINAL_MAX_COVERAGE: float = 0.98
+    # No upper coverage bound is enforced. An earlier revision declared
+    # RETINAL_MAX_COVERAGE = 0.98, documented it as a rejection, and never used it.
     RETINAL_RED_RATIO_MIN: float = 1.15
+    # The red share floor was a literal 0.36 in gate2 while the specification
+    # said 38%; it is a setting now, and the document quotes the setting.
+    RETINAL_RED_SHARE_MIN: float = 0.36
     # Longest side used when computing Gate 2/3 DISTRIBUTION statistics
     # (coverage ratios, channel means, contrast std, extreme-pixel proportions).
     # Nearest-neighbour subsampling leaves these unbiased while removing ~59%

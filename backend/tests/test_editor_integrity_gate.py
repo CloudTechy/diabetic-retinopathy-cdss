@@ -521,7 +521,12 @@ OVERCLAIM_PHRASES = [
     # fallbacks, and a camera model preset on every record.
     "anatomical field-of-view", "Retinal field-of-view", "Total Today", "Acquisition Date",
     "Acquired:", "3400000", "Standard Fundus Camera", "Offline Edge AI", "Edge AI Enabled",
-    "Quality Ambiguity",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
+    "Quality Ambiguity",
+    # Editor round on rev25: clinical inferences in technical-validation
+    # messages, and a claim that single-cohort metrics predict runtime.
+    "vascular characteristics", "Vascular edge sharpness", "ocular media opacities",
+    "pupil dilation", "spectral balance confirmed", "media haze",
+    "ophthalmic vascular pigmentation", "predictor of runtime behaviour", "valid predictor",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
     "Authorized for credentialed healthcare practitioners",
 ]
 
@@ -1282,7 +1287,7 @@ def test_the_ci_job_that_enforces_these_rules_can_collect_them():
 
 THRESHOLD_SETTINGS = (
     "RETINAL_MIN_COVERAGE",
-    "RETINAL_MAX_COVERAGE",
+    "RETINAL_RED_SHARE_MIN",
     "RETINAL_RED_RATIO_MIN",
     "CONTRAST_THRESHOLD",
     "ILLUMINATION_EXTREME_RATIO_MAX",
@@ -3467,7 +3472,7 @@ def test_env_example_cannot_restore_the_rejected_thresholds():
     cfg, env = _config_defaults(), _env_example()
     offenders = []
     for key in ("MIN_IMAGE_DIMENSION", "LAPLACIAN_BLUR_THRESHOLD", "CONTRAST_THRESHOLD",
-                "ILLUMINATION_EXTREME_RATIO_MAX", "RETINAL_MIN_COVERAGE", "RETINAL_MAX_COVERAGE",
+                "ILLUMINATION_EXTREME_RATIO_MAX", "RETINAL_MIN_COVERAGE", "RETINAL_RED_SHARE_MIN",
                 "RETINAL_RED_RATIO_MIN", "VALIDATION_ANALYSIS_MAX_DIM", "MODEL_CHECKPOINT_SHA256"):
         if key not in env:
             offenders.append("%s missing from .env.example" % key); continue
@@ -4419,3 +4424,128 @@ def test_no_invented_review_reason_role_or_filename():
         "the API accepts an inconclusive review without a reason")
     dss = read(os.path.join(REPO_ROOT, "frontend", "src", "screens", "DecisionSupportScreen.tsx"))
     assert "technical image quality violation." not in dss, "the workspace invents a rejection reason"
+
+
+# ======================================================================
+# RULE GROUP AN - the editor's review of rev25: code and documents agree
+# ======================================================================
+
+VALIDATION_DIR = os.path.join(REPO_ROOT, "backend", "app", "services", "validation")
+GATE2_PY = os.path.join(VALIDATION_DIR, "gate2_relevance.py")
+GATE3_PY = os.path.join(VALIDATION_DIR, "gate3_quality.py")
+VALIDATION_SPEC = os.path.join(CHAPTER4, "validation_module_spec.md")
+TRAINING_SUMMARY = os.path.join(CHAPTER4, "training_summary.json")
+RETINAL_VALIDATOR_TS = os.path.join(REPO_ROOT, "frontend", "src", "utils", "retinalValidator.ts")
+
+
+def test_every_declared_validation_threshold_is_used_by_a_gate():
+    """
+    RETINAL_MAX_COVERAGE = 0.98 was declared in config.py, shipped in
+    .env.example, and documented as a rejection - and no gate read it. A
+    threshold the code does not execute is documentation of nothing.
+    """
+    names = re.findall(r"^\s+((?:RETINAL_|LAPLACIAN_|CONTRAST_|ILLUMINATION_|MIN_IMAGE_|VALIDATION_ANALYSIS_)[A-Z_]+):", read(CONFIG_PY), re.M)
+    assert len(names) >= 7, names
+    used = "\n".join(read(path) for path in python_sources(VALIDATION_DIR))
+    unused = [n for n in names if "settings.%s" % n not in used]
+    assert not unused, "declared in config.py but read by no gate: %s" % unused
+
+
+def test_documented_gate2_thresholds_are_the_executed_ones():
+    """
+    The specification said red share >= 38% and coverage between 20% and
+    98%; the code tested red share < 0.36 and only the 20% floor. Every
+    Gate 2 number in the specification and in the browser pre-check is read
+    back from config.py, and the code must use the settings, not literals.
+    """
+    cfg = _config_defaults()
+    spec = read(VALIDATION_SPEC)
+    sec = spec[spec.index("### Gate 2"):spec.index("### Gate 3")]
+    m = re.search(r"red channel share \$\\ge ([\d.]+)\\%\$", sec)
+    assert m and abs(float(m.group(1)) / 100 - cfg["RETINAL_RED_SHARE_MIN"]) < 1e-9, "the spec's red-share floor is not RETINAL_RED_SHARE_MIN"
+    m = re.search(r"at least ([\d.]+)% of the frame", sec)
+    assert m and abs(float(m.group(1)) / 100 - cfg["RETINAL_MIN_COVERAGE"]) < 1e-9, "the spec's coverage floor is not RETINAL_MIN_COVERAGE"
+    assert "between 20.0% and 98.0%" not in sec and "No upper bound is enforced" in sec, "the spec still claims an upper coverage bound"
+    m = re.search(r"ratio \$\\ge ([\d.]+)\$", sec)
+    assert m and abs(float(m.group(1)) - cfg["RETINAL_RED_RATIO_MIN"]) < 1e-9
+    gate2 = read(GATE2_PY)
+    assert "settings.RETINAL_RED_SHARE_MIN" in gate2 and not re.search(r"red_share < 0\.\d+", gate2), "gate2 tests a literal red-share floor"
+    assert "RETINAL_MAX_COVERAGE" not in gate2 and not re.search(r"^\s+RETINAL_MAX_COVERAGE:", read(CONFIG_PY), re.M), (
+        "the unused upper-coverage setting is declared again")
+    browser = read(RETINAL_VALIDATOR_TS)
+    m = re.search(r"redShare >= ([\d.]+)", browser)
+    assert m and abs(float(m.group(1)) - cfg["RETINAL_RED_SHARE_MIN"]) < 1e-9, "the browser's red-share floor differs from config.py"
+
+
+def test_gate3_source_describes_its_calibrated_thresholds():
+    """
+    gate3_quality.py's docstring said >= 60.0 and >= 18.0 and a comment said
+    the threshold was NOT calibrated and rejected every real image - the
+    pre-calibration state, contradicting config.py (4.3 / 8.8) and the
+    calibration evidence shipped beside it.
+    """
+    src = read(GATE3_PY)
+    for stale in ("60.0", "18.0", "NOT calibrated", "every real", "not calibrated"):
+        assert stale not in src, "gate3_quality.py still says %r" % stale
+    for name in ("LAPLACIAN_BLUR_THRESHOLD", "CONTRAST_THRESHOLD", "ILLUMINATION_EXTREME_RATIO_MAX"):
+        assert name in src.split("def evaluate_gate3")[1].split('"""')[1], "the docstring does not name %s" % name
+    assert "does not confirm retinal identity, anatomical correctness or clinical gradability" in src
+
+
+def test_validation_messages_make_no_clinical_inference():
+    """
+    Colour, contrast and Laplacian heuristics cannot find vascular
+    characteristics, media opacities or inadequate dilation. Every
+    rejection_reason / clinical_action / details string in the gates, the
+    browser pre-check and the PDF is technical.
+    """
+    banned = ("vascular", "opacit", "cataract", "dilation", "haze", "pigmentation", "anatom")
+    for path in (GATE2_PY, GATE3_PY):
+        for m in re.finditer(r'(rejection_reason|clinical_action)="([^"]*)"', read(path)):
+            low = m.group(2).lower()
+            for b in banned:
+                assert b not in low, "%s: %s=%r" % (os.path.basename(path), m.group(1), m.group(2))
+    for m in re.finditer(r"gate2(?:Reason|Action) = [`'](.*?)[`'];", read(RETINAL_VALIDATOR_TS)):
+        low = m.group(1).lower()
+        for b in banned:
+            assert b not in low, "retinalValidator.ts: %r" % m.group(1)
+    report = read(REPORT_PY)
+    assert "spectral balance confirmed" not in report and "no anatomical confirmation" in report
+
+
+def test_training_time_arithmetic_follows_from_training_summary():
+    """training_protocol.md said 52.5 min and ~210 s/epoch for 2,761.6 s over 15 epochs (46.0 min, 184.1 s/epoch)."""
+    summary = json.loads(read(TRAINING_SUMMARY))
+    total, epochs = float(summary["total_time_seconds"]), int(summary["epochs"])
+    minutes, per_epoch = total / 60.0, total / epochs
+    offenders = []
+    for rel, text in iter_markdown(include_correction_records=True):
+        if "/archive/" in rel.replace("\\", "/"):
+            continue
+        # per SENTENCE: a line that records the old arithmetic may also carry
+        # the current figure, and only the recording sentence is exempt
+        for lineno, unit, kind in _units(text):
+            if kind != "heading" and any(m in unit for m in RECORD_MARKERS):
+                continue
+            for q in re.findall(r"~?([\d.]+) s/epoch", unit):
+                if abs(float(q) - per_epoch) > 0.1:
+                    offenders.append("%s:%d says %s s/epoch; the summary gives %.1f" % (rel, lineno, q, per_epoch))
+            for q in re.findall(r"\(~?(?:approximately )?([\d.]+) min", unit):
+                if abs(float(q) - minutes) > 0.5:
+                    offenders.append("%s:%d says %s min; the summary gives %.1f" % (rel, lineno, q, minutes))
+    assert not offenders, "\n  ".join(["Training-time arithmetic:"] + offenders)
+
+
+def test_preprocessing_parity_claims_consistency_not_generalisation():
+    spec = read(os.path.join(CHAPTER4, "preprocessing_and_augmentation_spec.md"))
+    assert "does not establish performance on images from populations, cameras or clinical environments outside the evaluated APTOS cohort" in spec
+
+
+def test_transcript_date_is_not_older_than_the_build_check():
+    """VERIFICATION.md said "Produced on 2026-10-03" in an archive built on the 4th."""
+    # lifted to the archive root by the assembler; in the repository it lives under docs/chapter4
+    m = re.search(r"Produced on (\d{4}-\d{2}-\d{2})", read(_resolve(
+        os.path.join(CHAPTER4, "VERIFICATION.md"), os.path.join(REPO_ROOT, "VERIFICATION.md"))))
+    b = re.search(r"date \(UTC\): (\d{4}-\d{2}-\d{2})", read(os.path.join(CHAPTER4, "build_verification.log")))
+    assert m and b, "dates not found"
+    assert m.group(1) >= b.group(1), "the transcript (%s) predates the build check (%s)" % (m.group(1), b.group(1))
