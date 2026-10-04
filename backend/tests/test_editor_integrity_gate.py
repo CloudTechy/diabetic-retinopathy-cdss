@@ -4822,3 +4822,65 @@ def test_gate_descriptions_claim_no_retinal_identity():
     assert "All three configured technical gates passed; the image is eligible for model inference." in svc
     head = read(RETINAL_VALIDATOR_TS).split("export function")[0]
     assert "does not establish retinal identity" in head and "issues\n * no Gate 3 verdict" in head
+
+
+# ======================================================================
+# RULE GROUP AR - the reviewer's audit of rev29: nothing uncomputed is
+# returned, and the pre-check is EXECUTED, not only read
+# ======================================================================
+
+PREFLIGHT_CHECK = os.path.join(REPO_ROOT, "frontend", "scripts", "check_preflight.cjs")
+BUILD_LOG = os.path.join(CHAPTER4, "build_verification.log")
+
+
+def _preflight_source_hash():
+    import hashlib
+    v = read(RETINAL_VALIDATOR_TS).replace("\r\n", "\n")
+    t = read(THRESHOLDS_TS).replace("\r\n", "\n")
+    return hashlib.sha256((v + "\n--\n" + t).encode("utf-8")).hexdigest()
+
+
+def test_browser_precheck_returns_no_placeholder_values():
+    """
+    Executed by the reviewer, the validator returned "Signature Valid" for a
+    signature it never read, a focus estimate of 180.0 it never calculated,
+    and R/B 1.00 / red share 33% it never measured. A value that may not have
+    been computed is null, and no default stands in for a measurement.
+    """
+    code = _validator_code()
+    assert "Signature Valid" not in code, "the browser claims a signature check it does not perform"
+    assert "the file signature is checked by the server" in code
+    assert re.search(r"let redToBlueRatio: number \| null = null;", code) and re.search(r"let redShare: number \| null = null;", code), (
+        "colour figures start from a placeholder instead of null")
+    assert re.search(r"let focusEstimate: number \| null = null;", code), "the focus estimate starts from a placeholder"
+    assert "180.0" not in code and "= 0.33" not in code and "= 1.0;" not in code, "a placeholder measurement is back"
+    iface = read(RETINAL_VALIDATOR_TS)
+    assert "focusEstimate: number | null;" in iface and "redToBlueRatio: number | null;" in iface and "redShare: number | null;" in iface
+    assert "mimeType || 'image/jpeg'" not in code, "an undeclared MIME type is reported as image/jpeg"
+
+
+def test_browser_precheck_was_executed_against_this_source():
+    """
+    Rules that read TypeScript could not see a default value being returned
+    as a measurement. frontend/scripts/check_preflight.cjs bundles the real
+    validator, runs it in Node on eight synthetic inputs and asserts every
+    field. The build check runs it in the clean extraction; its output is in
+    build_verification.log together with the SHA-256 of the two source files
+    it ran. That hash must be the hash of the validator shipped here, so the
+    recorded run cannot be of an older validator.
+    """
+    assert os.path.exists(PREFLIGHT_CHECK), "frontend/scripts/check_preflight.cjs is missing"
+    script = read(PREFLIGHT_CHECK)
+    for case in ("reddish disc", "small reddish disc", "all-dark frame", "bright neutral frame", "300x200 image", "2400x800 panorama",
+                 "grey disc", "no canvas available"):
+        assert case in script, "the executed check no longer covers: %s" % case
+    assert '"check:preflight": "node scripts/check_preflight.cjs"' in read(os.path.join(REPO_ROOT, "frontend", "package.json"))
+    shipped = {dst for _src, dst in _assembler().manifest()}
+    assert "frontend/scripts/check_preflight.cjs" in shipped, "the executed check is not in the archive"
+    log = read(BUILD_LOG)
+    m = re.search(r"PREFLIGHT CHECK source sha256 ([0-9a-f]{64})", log)
+    assert m, "build_verification.log does not record an executed pre-check"
+    assert m.group(1) == _preflight_source_hash(), (
+        "the recorded pre-check ran a different retinalValidator.ts / validationThresholds.ts than the one shipped")
+    assert re.search(r"PREFLIGHT CHECK: 8/8 cases as expected", log), "the recorded pre-check did not pass all eight cases"
+    assert "  FAIL " not in log.split("PREFLIGHT CHECK source")[1].split("PREFLIGHT CHECK: ")[0]

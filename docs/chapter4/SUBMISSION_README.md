@@ -44,7 +44,7 @@ All model-performance artefacts derive from the documented leakage-free training
 | **Any DR** (grade ≥ 1) | Sensitivity 97.6%, specificity 98.5% |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 264 passed, 1 skipped |
+| **Test suite** | 266 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.
@@ -181,7 +181,7 @@ This is exactly how [`docs/chapter4/test_execution.log`](docs/chapter4/test_exec
 The archive is also a runnable copy of the application. From the archive root:
 
 ```bash
-cd frontend && npm ci && npm run build && cd ..     # type-check + production bundle
+cd frontend && npm ci && npm run build && npm run check:preflight && cd ..     # type-check + production bundle
 docker compose config                               # validates the compose file
 docker compose up --build                           # db + backend + frontend
 # backend health: http://127.0.0.1:8000/api/v1/health   frontend: http://127.0.0.1:3000

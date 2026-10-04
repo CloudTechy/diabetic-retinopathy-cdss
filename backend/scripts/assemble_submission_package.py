@@ -77,6 +77,7 @@ SINGLE_FILES = [
     ".github/workflows/evidence-integrity-gate.yml",
     "frontend/scripts/capture_live_screenshots.js",
     "frontend/scripts/capture_rejection.js",
+    "frontend/scripts/check_preflight.cjs",
     "docs/model_integration_guide.md",
     # training_environment.md sources its frontend and database versions from these.
     "frontend/package-lock.json",

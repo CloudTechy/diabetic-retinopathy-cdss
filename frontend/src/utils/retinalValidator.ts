@@ -21,8 +21,9 @@ export interface ClientValidationResult {
   gate2: {
     passed: boolean;
     aspectRatio: number;
-    redToBlueRatio: number;
-    redShare: number;
+    /** null when no canvas was available; otherwise computed as the server computes it */
+    redToBlueRatio: number | null;
+    redShare: number | null;
     /** foreground pixels / all pixels of the analysis canvas */
     foregroundCoverage: number;
     /** false when no canvas was available, in which case Gate 2 cannot pass */
@@ -35,7 +36,8 @@ export interface ClientValidationResult {
   gate3: {
     /** The browser issues no Gate 3 verdict; only the server's result can be passed or failed. */
     status: 'notEvaluated';
-    focusEstimate: number;
+    /** null unless Gate 2 passed and the estimate was actually computed */
+    focusEstimate: number | null;
     metric: string;
   };
 }
@@ -88,8 +90,10 @@ export function analyzeRetinalImageOnCanvas(
   canvas.height = sampleSize;
   const ctx = canvas.getContext('2d');
 
-  let redToBlueRatio = 1.0;
-  let redShare = 0.33;
+  // No placeholders: an earlier revision started these at 1.0 and 0.33 and
+  // reported them as measured when nothing had been computed.
+  let redToBlueRatio: number | null = null;
+  let redShare: number | null = null;
   let foregroundCoverage = 0;
   let coverageEvaluated = false;
   let isDocumentOrDiagram = false;
@@ -104,6 +108,9 @@ export function analyzeRetinalImageOnCanvas(
     let totalG = 0;
     let totalB = 0;
     let foregroundCount = 0;
+    let allR = 0;
+    let allG = 0;
+    let allB = 0;
 
     // Check corner pixels (0,0), (sampleSize-1, 0), (0, sampleSize-1), (sampleSize-1, sampleSize-1)
     // Fundus photographs usually have dark corners outside the aperture (< 40 intensity).
@@ -130,6 +137,9 @@ export function analyzeRetinalImageOnCanvas(
       const g = data[i + 1];
       const b = data[i + 2];
       const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      allR += r;
+      allG += g;
+      allB += b;
 
       // foreground = luminance > 15, the server's definition (gate2_relevance.py)
       if (lum > 15) {
@@ -146,18 +156,17 @@ export function analyzeRetinalImageOnCanvas(
     foregroundCoverage = foregroundCount / (sampleSize * sampleSize);
     coverageEvaluated = true;
 
-    if (foregroundCount > 0) {
-      const meanR = totalR / foregroundCount;
-      const meanG = totalG / foregroundCount;
-      const meanB = totalB / foregroundCount;
-      const totalRGB = meanR + meanG + meanB + 1e-6;
-
-      redToBlueRatio = meanR / (meanB + 1e-6);
-      redShare = meanR / totalRGB;
-    }
+    // Channel means over the foreground, or over the whole frame when there is
+    // no foreground - exactly what gate2_relevance.py does.
+    const denom = foregroundCount > 0 ? foregroundCount : sampleSize * sampleSize;
+    const meanR = (foregroundCount > 0 ? totalR : allR) / denom;
+    const meanG = (foregroundCount > 0 ? totalG : allG) / denom;
+    const meanB = (foregroundCount > 0 ? totalB : allB) / denom;
+    redToBlueRatio = meanR / (meanB + 1e-6);
+    redShare = meanR / (meanR + meanG + meanB + 1e-6);
 
     // Flag document/diagram if corners are bright white/gray (mean > 160) and the R/B ratio is below the minimum
-    if (cornerAvgIntensity > 160 && redToBlueRatio < RETINAL_RED_RATIO_MIN) {
+    if (cornerAvgIntensity > 160 && redToBlueRatio < RETINAL_RED_RATIO_MIN && foregroundCount > 0) {
       isDocumentOrDiagram = true;
     }
   }
@@ -171,7 +180,11 @@ export function analyzeRetinalImageOnCanvas(
   // a rule in the suite keeps these two numbers equal to it.
   const aspectPassed = aspectRatio >= 0.65 && aspectRatio <= 1.65;
   const coveragePassed = coverageEvaluated && foregroundCoverage >= RETINAL_MIN_COVERAGE;
-  const colorPassed = redToBlueRatio >= RETINAL_RED_RATIO_MIN && redShare >= RETINAL_RED_SHARE_MIN;
+  const colorPassed =
+    redToBlueRatio !== null && redShare !== null &&
+    redToBlueRatio >= RETINAL_RED_RATIO_MIN && redShare >= RETINAL_RED_SHARE_MIN;
+  const fmtRatio = redToBlueRatio === null ? 'not computed' : redToBlueRatio.toFixed(2);
+  const fmtShare = redShare === null ? 'not computed' : `${(redShare * 100).toFixed(1)}%`;
   const notDiagramPassed = !isDocumentOrDiagram;
 
   const gate2Passed = gate1Passed && aspectPassed && coveragePassed && colorPassed && notDiagramPassed;
@@ -191,7 +204,7 @@ export function analyzeRetinalImageOnCanvas(
     gate2Reason = 'Bright uniform corners and a neutral colour profile: the image looks like a document or diagram, not a fundus photograph.';
     gate2Action = 'Upload a fundus photograph.';
   } else if (!colorPassed) {
-    gate2Reason = `Colour profile outside the configured thresholds (R/B ratio ${redToBlueRatio.toFixed(2)}, red share ${(redShare * 100).toFixed(1)}%).`;
+    gate2Reason = `Colour profile outside the configured thresholds (R/B ratio ${fmtRatio}, red share ${fmtShare}).`;
     gate2Action = 'Recapture or upload a technically clearer fundus photograph.';
   }
 
@@ -201,7 +214,9 @@ export function analyzeRetinalImageOnCanvas(
   // compared with the server's threshold; an earlier version called it
   // "Laplacian variance" and compared it with the server's 4.3, which was a
   // different statistic wearing the same name. The server decides.
-  let focusEstimate = 180.0;
+  // null until computed. An earlier revision started at 180.0 and returned that
+  // number for every image whose estimate was never calculated.
+  let focusEstimate: number | null = null;
   if (ctx && gate1Passed && gate2Passed) {
     const imgData = ctx.getImageData(0, 0, sampleSize, sampleSize);
     const d = imgData.data;
@@ -220,7 +235,7 @@ export function analyzeRetinalImageOnCanvas(
         count++;
       }
     }
-    focusEstimate = count > 0 ? (sumGrad / count) * 4 : 180.0;
+    focusEstimate = count > 0 ? (sumGrad / count) * 4 : null;
   }
 
   // No browser verdict on sharpness. An earlier revision set gate3Passed =
@@ -237,9 +252,13 @@ export function analyzeRetinalImageOnCanvas(
     failedGate,
     gate1: {
       passed: gate1Passed,
-      mime: mimeType || 'image/jpeg',
+      mime: mimeType || 'not declared',
       fileSizeBytes,
-      metric: gate1Passed ? 'MIME JPEG/PNG, Signature Valid' : 'Format/Size Check Failed',
+      // The browser reads the DECLARED type, not the file's bytes; an earlier
+      // revision said "Signature Valid" for a signature it never read.
+      metric: gate1Passed
+        ? 'Declared type, size and dimensions within limits; the file signature is checked by the server'
+        : 'Declared type, size or dimensions outside limits',
       rejectionReason: gate1Reason,
       clinicalAction: gate1Action,
     },
@@ -255,14 +274,16 @@ export function analyzeRetinalImageOnCanvas(
       // thresholds" unless gate2Passed (which includes coveragePassed) is true
       metric: !coverageEvaluated
         ? 'Not evaluated in the browser (no canvas)'
-        : `Foreground coverage ${(foregroundCoverage * 100).toFixed(1)}% (min ${(RETINAL_MIN_COVERAGE * 100).toFixed(0)}%), R/B ratio ${redToBlueRatio.toFixed(2)} (min ${RETINAL_RED_RATIO_MIN}), red share ${(redShare * 100).toFixed(1)}% (min ${(RETINAL_RED_SHARE_MIN * 100).toFixed(0)}%)${gate2Passed ? ' — all within thresholds' : ''}`,
+        : `Foreground coverage ${(foregroundCoverage * 100).toFixed(1)}% (min ${(RETINAL_MIN_COVERAGE * 100).toFixed(0)}%), R/B ratio ${fmtRatio} (min ${RETINAL_RED_RATIO_MIN}), red share ${fmtShare} (min ${(RETINAL_RED_SHARE_MIN * 100).toFixed(0)}%)${gate2Passed ? ' — all within thresholds' : ''}`,
       rejectionReason: gate2Reason,
       clinicalAction: gate2Action,
     },
     gate3: {
       status: 'notEvaluated',
       focusEstimate,
-      metric: `Not evaluated in the browser. Focus estimate ${focusEstimate.toFixed(1)} is an advisory gradient energy at 256 px; the server decides on Laplacian variance at 1024 px.`,
+      metric: focusEstimate === null
+        ? 'Not evaluated in the browser; no focus estimate was computed. The server decides on Laplacian variance at 1024 px.'
+        : `Not evaluated in the browser. Focus estimate ${focusEstimate.toFixed(1)} is an advisory gradient energy at 256 px; the server decides on Laplacian variance at 1024 px.`,
     },
   };
 }

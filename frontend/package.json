@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "check:preflight": "node scripts/check_preflight.cjs",
     "cap:build": "npm run build && cap sync android",
     "cap:open": "cap open android",
     "cap:run": "cap run android",
