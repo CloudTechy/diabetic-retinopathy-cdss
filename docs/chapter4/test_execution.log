@@ -234,4 +234,4 @@ tests/test_validation_pipeline.py::TestSequentialValidationPipelineFailClosed::t
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ===========================
 SKIPPED [1] tests\test_editor_integrity_gate.py:891: manifest is already de-duplicated - clean rerun has happened
-============ 217 passed, 1 skipped, 1 warning in 79.23s (0:01:19) =============
+============ 217 passed, 1 skipped, 1 warning in 75.59s (0:01:15) =============

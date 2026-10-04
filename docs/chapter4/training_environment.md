@@ -58,7 +58,7 @@ An earlier version of this paragraph said the committed benchmark was measured o
 
 ### Backend container
 
-Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-slim`, Python 3.11.15) during the clean-extraction check recorded in [`build_verification.log`](build_verification.log); versions are the container's own `pip freeze`, shipped as [`container_environment_freeze.txt`](container_environment_freeze.txt). A rule in the suite keeps this table equal to that file.
+Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-slim`, Python 3.11.15) during the clean-extraction check recorded in [`build_verification.log`](build_verification.log); versions are the container's own `pip freeze`, shipped as [`container_environment_freeze.txt`](container_environment_freeze.txt). A rule in the suite keeps this table equal to that file. The automated test suite was run **only** in the Python 3.13 test environment above, **not** inside this container; the container's evidence is the build, the `/health` response and this freeze.
 
 | Package | Version | Functional Role |
 | :--- | :---: | :--- |
@@ -69,6 +69,7 @@ Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-sli
 | `fastapi` | 0.142.2 | RESTful API routing inference requests |
 | `sqlalchemy` | 2.1.3 | ORM over PostgreSQL |
 | `uvicorn` | 0.54.0 | ASGI server |
+
 ## 3. Determinism & Reproducibility Controls
 
 Applied in [`notebooks/colab_train_and_evaluate.py`](../../notebooks/colab_train_and_evaluate.py):
