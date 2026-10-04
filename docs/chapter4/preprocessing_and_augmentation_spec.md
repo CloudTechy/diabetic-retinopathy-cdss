@@ -3,7 +3,7 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective c (Preprocess and partition the retinal dataset) & Objective d
+- **Related Research Objective:** Objective c (Dataset acquisition, preprocessing & partitioning) & Objective d
 - **Date Generated:** 2026-09-29
 - **Authoritative Sources:** [`notebooks/colab_train_and_evaluate.py`](../../notebooks/colab_train_and_evaluate.py) (training & evaluation transforms), [`backend/app/services/ai_service.py`](../../backend/app/services/ai_service.py) (runtime inference transform)
 

@@ -3,11 +3,11 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective g (Design CDSS software architecture) & Objective i (System verification)
+- **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Git Commit:** `22cda2c` (Baseline)
 - **Date Approved:** 2026-09-28
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
-- **Overall Verification Status:** **100% PASSED (195 collected / 194 passed / 1 skipped Automated Tests)**
+- **Overall Verification Status:** **204 of 205 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
 
@@ -43,7 +43,7 @@
 >
 > | Run | Mean | Verdict | P95 | Verdict |
 > | :--- | ---: | :--- | ---: | :--- |
-> | A (2026-09-29) | 212.54 ms | PASS | 373.39 ms | **breach** |
+> | A (2026-09-30) | 212.54 ms | PASS | 373.39 ms | **breach** |
 > | B (2026-10-01) | 254.31 ms | PASS | 447.95 ms | **breach** |
 > | C (2026-10-01, cited) | 180.41 ms | PASS | 342.49 ms | pass |
 >

@@ -13,7 +13,7 @@ cheaper than arguing about it.
 ## The run that produced the evidence
 
 **`notebooks/colab_train_and_evaluate.py`**, executed on Google Colab with a
-Tesla T4, 2026-09-29. One invocation produced the manifest, the trained
+Tesla T4, 2026-09-30 (the leakage-free rerun). One invocation produced the manifest, the trained
 checkpoint, the training transcript, the held-out predictions, the T4 benchmark
 and both plots.
 
@@ -47,8 +47,12 @@ which only this script emits.
 | `docs/chapter4/clinical_metrics.json` | `backend/scripts/analyze_clinical_metrics.py` | `held_out_predictions.csv`, `dataset_split_manifest.csv` |
 | `docs/chapter4/cpu_end_to_end_benchmark.json` | `backend/scripts/benchmark_cpu_end_to_end.py` | the checkpoint + held-out images |
 | `docs/chapter4/cpu_end_to_end_benchmark.csv` | `backend/scripts/benchmark_cpu_end_to_end.py` | same run, flat form |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-29_baseline_pre_optimisation.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `d05ef60b4033` (2026-09-29) | the checkpoint + the same 30 held-out images |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-30_post_optimisation.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `bba9ce43948e` (2026-09-30) | the checkpoint + the same 30 held-out images |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-09-30_run_A_a_priori_thresholds.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `422dcb72c96f` (2026-09-30) | the checkpoint + the same 30 held-out images |
+| `docs/chapter4/benchmark_history/cpu_end_to_end_benchmark_2026-10-01_run_B_calibrated.json` | `backend/scripts/benchmark_cpu_end_to_end.py`, as committed at git `1a7b5d251e6b` (2026-10-01) | the checkpoint + the same 30 held-out images |
 | `docs/chapter4/gate_downsampling_verification.json` | `backend/scripts/verify_gate_downsampling.py` | all 3,662 APTOS images |
-| `docs/chapter4/validation_test_results.csv` | `backend/scripts/generate_validation_evidence.py` | held-out images + stated derivations |
+| `docs/chapter4/validation_test_results.csv` | `backend/scripts/generate_validation_evidence.py` | held-out images + stated derivations. VAL-14's derivation label reads "2.2:1 panorama": the operation reduces the height to 45% of the original, so the measured `gate2_aspect_ratio` (2.938 for that source) is the authoritative value and the label describes the intent |
 | `docs/chapter4/blur_threshold_calibration.json` | `backend/scripts/calibrate_blur_threshold.py` | the 2,979 train+val images named in `dataset_split_manifest.csv` |
 | `docs/chapter4/dataset_split_audit.json` | `backend/scripts/build_clean_split.py` | the APTOS image bytes + `train.csv` labels |
 | `VERIFY.py` | hand-written; produces no evidence | reads the artefacts above and recomputes their headline figures. Stdlib only, so a reviewer needs no environment. Its recorded transcript is `VERIFICATION.md`. |
@@ -85,7 +89,7 @@ The distinction here is **provenance**, not authenticity.
 | `backend/tests/test_editor_integrity_gate.py` | The evidence integrity gate: one executable rule per QA finding, rule groups A–Z and beyond |
 | `backend/tests/test_spec_doc_consistency.py` | Fails if a document quotes a threshold the code does not enforce |
 | `backend/scripts/benchmark_resources.py` | Forward-pass-only benchmark; selects CUDA when present |
-| `dataset_sample_and_manifest/verify_manifest_hashes.py` | Checks manifest hashes against your own APTOS copy |
+| `docs/chapter4/verify_manifest_hashes.py` | Checks manifest hashes against your own APTOS copy |
 
 ---
 

@@ -43,12 +43,12 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Sight-threatening DR** (grade ≥ 3) | Sensitivity **68.2%**, NPV **95.4%** |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 194 passed, 1 skipped |
+| **Test suite** | 204 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.
 
-> **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the cohort is 49.2% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in [`docs/chapter4/model_evaluation_report.md`](docs/chapter4/model_evaluation_report.md) §1.
+> **On the headline metric.** Exact 5-class accuracy is the weakest available summary here, because the held-out cohort is 51.4% Grade 0 and the ICDR scale is ordinal. $\kappa$ and the referable-DR operating point are the meaningful figures. This is discussed in [`docs/chapter4/model_evaluation_report.md`](docs/chapter4/model_evaluation_report.md) §1.
 
 ### Disclosed limitations
 
@@ -127,7 +127,7 @@ DR-CDSS_Chapter4_Evidence/
 5. [`docs/chapter4/evidence_provenance.md`](docs/chapter4/evidence_provenance.md) — which script produced each file, and which scripts produced nothing.
 6. [`docs/chapter4/archive/`](docs/chapter4/archive/) — earlier QA responses and runbooks, superseded and labelled as such. They record what was wrong; they are not current evidence.
 
-The evidence integrity gate — `backend/tests/test_editor_integrity_gate.py` and `backend/tests/test_spec_doc_consistency.py` — encodes every finding from the QA rounds as an executable rule, runs on every commit and in CI, and runs unchanged from inside this archive.
+The evidence integrity gate — `backend/tests/test_editor_integrity_gate.py` and `backend/tests/test_spec_doc_consistency.py` — encodes every finding from the QA rounds as an executable rule. It is wired to run on every commit (pre-commit hook) and on every push (`.github/workflows/evidence-integrity-gate.yml`); the archive carries that configuration, not a CI run record. The rules run unchanged from inside this archive.
 
 ---
 

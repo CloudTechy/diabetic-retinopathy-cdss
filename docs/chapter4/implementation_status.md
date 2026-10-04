@@ -7,17 +7,17 @@
 - **Current Git Commit:** `22cda2c` (Baseline) $\to$ Active Chapter 4 Evidence Generation
 - **Date Generated:** 2026-09-28
 - **Evaluation Status:** Fixed Evaluated EfficientNet-B0 Model Pipeline
-- **Hardware/Software Environment:** Windows 11 Enterprise x64, Python 3.13 / PyTorch 2.6 CPU/CUDA, Node 24.9, Vite 5.4, PostgreSQL 16
+- **Hardware/Software Environment:** Windows 11 x64; the test environment is recorded in `test_environment_freeze.txt` (Python 3.13, torch 2.14.1+cpu, numpy 2.5.2, pillow 11.3.0); Node 24.9, Vite 5.4.21, PostgreSQL 16 (`postgres:16-alpine`)
 
 ---
 
 ## 1. Research Objectives vs. Chapter Four Implementation Status
 
 > [!CAUTION]
-> **Objective b has a blocking defect.** The clean retrain is complete and
-> objectives c, f and h are evidenced on a leakage-free partition.
+> **Objective b once had a blocking defect, closed 2026-10-01.** The clean retrain
+> is complete and objectives c, f and h are evidenced on a leakage-free partition.
 >
-> **Closed 2026-10-01.** The first genuine run of the image-validation pipeline
+> **What the defect was.** The first genuine run of the image-validation pipeline
 > showed Gate 3 rejecting **10 of 10 unmodified held-out APTOS images** with
 > `ERR_MOTION_OR_DEFOCUS_BLUR`: the sharpness threshold was 60.0 against real
 > images scoring 5.7–22.0, so the system would have refused to grade every

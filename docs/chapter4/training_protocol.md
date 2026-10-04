@@ -3,8 +3,8 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Primary Research Objective:** Objective e (Train and optimize the EfficientNet-B0 model)
-- **Execution Date:** 2026-09-29
+- **Primary Research Objective:** Objective f (CNN Classifier Training)
+- **Execution Date:** 2026-09-30 (the leakage-free rerun)
 - **Trained Checkpoint Path:** `backend/models/weights/efficientnet_b0_dr.pth`
 - **Integrity Checksum (SHA-256):** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
 - **Best Validation Epoch:** Epoch 14 of 15

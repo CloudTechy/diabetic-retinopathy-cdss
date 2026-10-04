@@ -3,11 +3,11 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective g (Design CDSS software architecture)
-- **Database Engine:** PostgreSQL 16 (Relational Engine with JSONB support)
-- **ORM Mapping:** SQLAlchemy 2.0 / Pydantic v2
+- **Related Research Objective:** Objective a (System architecture, workflow & database design)
+- **Database Engine:** PostgreSQL 16 (`postgres:16-alpine`); columns typed `JSON` in the model map to PostgreSQL `json`
+- **ORM Mapping:** SQLAlchemy 2.1.3 / Pydantic 2.13.5
 - **Git Commit:** `22cda2c` (Baseline)
-- **Date Approved:** 2026-09-28
+- **Last Revised:** 2026-10-04 (transcribed from `backend/app/models/models.py`; checked by rule group X)
 
 ---
 
@@ -17,20 +17,22 @@ The database design adheres strictly to third normal form (3NF) while maintainin
 
 ```mermaid
 erDiagram
-    USERS ||--o{ ASSESSMENTS : creates
-    USERS ||--o{ PROFESSIONAL_REVIEWS : signs
-    USERS ||--o{ AUDIT_EVENTS : triggers
+    USERS |o--o{ ASSESSMENTS : creates
+    USERS |o--o{ PROFESSIONAL_REVIEWS : signs
+    USERS |o--o{ AUDIT_EVENTS : triggers
 
-    ASSESSMENTS ||--|| IMAGE_ASSETS : contains
-    ASSESSMENTS ||--|| VALIDATION_RESULTS : validates
+    ASSESSMENTS ||--o| IMAGE_ASSETS : contains
+    ASSESSMENTS ||--o| VALIDATION_RESULTS : validates
     ASSESSMENTS ||--o| MODEL_EXECUTIONS : runs
     ASSESSMENTS ||--o| AI_RESULTS : predicts
     ASSESSMENTS ||--o| PROFESSIONAL_REVIEWS : reviewed-by
-    ASSESSMENTS ||--o{ AUDIT_EVENTS : logs
+    ASSESSMENTS |o--o{ AUDIT_EVENTS : logs
 
     MODEL_EXECUTIONS ||--o| AI_RESULTS : produces
     AI_RESULTS ||--o{ EXPLANATION_ARTIFACTS : explained-by
 ```
+
+Cardinalities are read from the model: a nullable foreign key draws the parent as optional (`|o`), a `NOT NULL` one as mandatory (`||`); a `UNIQUE` foreign key draws the child as at most one (`o|`), otherwise many (`o{`). An assessment is created as `draft` before it has an image, a validation result or a run, so those children are optional. A rule in the suite checks every edge against the declared `ForeignKey` columns.
 
 ---
 
@@ -95,11 +97,11 @@ erDiagram
 | `assessment_id` | VARCHAR(64) | NO | Foreign Key (`assessments.id`, Unique, `ON DELETE CASCADE`). |
 | `status` | VARCHAR(50) | NO | `passed` or `rejected`. |
 | `gate1_passed` | BOOLEAN | NO | File integrity and MIME verification flag. |
-| `gate1_details` | JSONB | NO | Per-check measurements from Gate 1. |
+| `gate1_details` | JSON | NO | Per-check measurements from Gate 1. |
 | `gate2_passed` | BOOLEAN | YES | Retinal geometry and spectral balance flag. Null if Gate 1 rejected first. |
-| `gate2_details` | JSONB | YES | Per-check measurements from Gate 2. |
+| `gate2_details` | JSON | YES | Per-check measurements from Gate 2. |
 | `gate3_passed` | BOOLEAN | YES | Laplacian blur and illumination flag. Null if an earlier gate rejected first. |
-| `gate3_details` | JSONB | YES | Per-check measurements from Gate 3. |
+| `gate3_details` | JSON | YES | Per-check measurements from Gate 3. |
 | `failed_gate` | INTEGER | YES | Gate index triggering failure ($1, 2, 3$). Null when accepted. |
 | `failure_code` | VARCHAR(100) | YES | Stable machine-readable rejection code. |
 | `failure_reason` | TEXT | YES | Non-diagnostic technical explanation. |
@@ -127,7 +129,7 @@ erDiagram
 | `primary_class_grade` | INTEGER | NO | Predicted ICDR stage index ($0-4$). |
 | `primary_class_label` | VARCHAR(100) | NO | String label (e.g. `Moderate NPDR`). |
 | `primary_score` | FLOAT | NO | Model-generated class score ($0.0-1.0$). |
-| `class_scores` | JSONB | NO | Full 5-class breakdown: `{grade, label, score}` per class. |
+| `class_scores` | JSON | NO | Full 5-class breakdown: `{grade, label, score}` per class. |
 | `target_layer` | VARCHAR(100) | NO | Convolutional layer hooked for Grad-CAM (`features.8`). |
 | `top_activation_region` | VARCHAR(255) | YES | Coarse descriptor of the highest-activation area. |
 | `disclaimer` | TEXT | NO | Mandated non-diagnostic boundary notice. |
@@ -187,7 +189,7 @@ erDiagram
 | `actor` | VARCHAR(150) | NO | Human-readable actor label, retained if `user_id` is later nulled. |
 | `details` | TEXT | NO | Human-readable description of the event. |
 | `badge_type` | VARCHAR(30) | NO | Display severity: `info`, `success`, `warning`, `error`. Defaults to `info`. |
-| `event_metadata` | JSONB | YES | Structured telemetry payload. |
+| `event_metadata` | JSON | YES | Structured telemetry payload. |
 | `ip_address` | VARCHAR(60) | YES | Originating address, where available. |
 | `timestamp` | TIMESTAMPTZ | NO | Timestamp of occurrence, indexed. |
 
@@ -196,7 +198,11 @@ erDiagram
 > `details` is TEXT and the structured payload lives in `event_metadata`. An
 > earlier revision of this document had all four wrong. `ON DELETE SET NULL` on
 > both foreign keys is what makes the log append-only in practice: removing a
-> user or an assessment blanks the reference but never deletes the event.
+> user or an assessment blanks the reference but never deletes the event. The ORM
+> relationship is declared `passive_deletes=True` with no delete cascade, so the
+> database rule is the one that applies; an earlier revision of the model cascaded
+> deletes at the ORM level, which contradicted this paragraph. No API route deletes
+> assessments or users.
 
 ### 8. `model_executions`
 *One row per inference run: which model, in which mode, on which device, and how long. `ai_results` points here, so every observation is tied to the run that produced it.*
@@ -225,7 +231,7 @@ erDiagram
 | `relative_url` | VARCHAR(500) | YES | URL the API serves it at, when exposed. |
 | `target_layer` | VARCHAR(100) | NO | Layer hooked for Grad-CAM. Defaults to `features.8`. |
 | `colormap` | VARCHAR(50) | NO | Defaults to `viridis`. |
-| `metadata_json` | JSONB | YES | Rendering parameters and activation statistics. |
+| `metadata_json` | JSON | YES | Rendering parameters and activation statistics. |
 | `created_at` | TIMESTAMPTZ | NO | Timestamp of rendering. |
 
 > [!NOTE]

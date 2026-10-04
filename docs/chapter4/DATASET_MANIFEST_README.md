@@ -62,4 +62,4 @@ This is disclosed rather than hidden. Reproduce the audit with:
 python backend/scripts/analyze_clinical_metrics.py   # see the LEAKAGE AUDIT section
 ```
 
-Full discussion: `documentation/dataset_audit.md` §4.
+Full discussion: [`dataset_audit.md`](dataset_audit.md) §4.

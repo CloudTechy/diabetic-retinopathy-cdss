@@ -56,8 +56,10 @@ Three runs of this harness exist over the same 30 held-out images:
 
 | Run | Date | Thresholds | Mean | Median | P95 | Gates 2+3 share |
 | :--- | :--- | :--- | ---: | ---: | ---: | ---: |
-| A | 2026-09-29 | a priori (rejected the corpus) | 212.54 ms | 179.68 ms | 373.39 ms | 43.9% |
+| A | 2026-09-30 | a priori (rejected the corpus) | 212.54 ms | 179.68 ms | 373.39 ms | 44.5% |
 | B | 2026-10-01 | calibrated | 254.31 ms | 213.30 ms | 447.95 ms | 41.9% |
+
+Every run of this harness that is cited anywhere in this package ships as a JSON file: run C is [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json); runs A and B, the 2026-09-29 baseline and the 2026-09-30 post-optimisation run are under [`benchmark_history/`](benchmark_history/), each recorded with the git commit it was committed at in [`evidence_provenance.md`](evidence_provenance.md). An earlier revision of this table dated run A 2026-09-29 and gave its gate share as 43.9%; the file says 2026-09-30 and 44.5% — 43.9% belongs to the post-optimisation run.
 | **C — CANONICAL (§1)** | 2026-10-01 | calibrated | **180.41 ms** | **147.45 ms** | **342.49 ms** | **41.4%** |
 
 **B and C are identical in everything under our control** — same commit, same
@@ -77,24 +79,24 @@ who takes "validation is ~41% of the request and the model ~16%" will not.
 > Which side of the budget the tail falls on depends on the machine. Quoting
 > only run C — the one that passes — would be choosing the flattering number.
 
-Every value here is reproduced verbatim from [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json), rounded to two decimals.
+Every value in §1 and §2 is reproduced verbatim from [`cpu_end_to_end_benchmark.json`](cpu_end_to_end_benchmark.json); figures for other runs come from the files under `benchmark_history/`, rounded to two decimals.
 
 ---
 
 ## 1a. Comparison With the Pre-Optimisation Baseline — read the caveat
 
 > [!IMPORTANT]
-> Every figure in this section comes from the **2026-09-29 pair of runs**, before
-> and after the gate optimisation. The "Post-optimisation" column is *not* §1's
+> Every figure in this section comes from the **2026-09-29 baseline** and the
+> **2026-09-30 post-optimisation run** (`benchmark_history/`), before and after the gate optimisation. The "Post-optimisation" column is *not* §1's
 > run: §1 was measured later, on a different session, at calibrated thresholds.
 > These numbers are kept verbatim because the argument below depends on the two
 > columns having been measured against each other.
 
-An earlier run of this harness, before the validation gates were optimised, measured **315.25 ms** mean against the post-optimisation **212.54 ms**. Comparing the two naively gives 1.91×, and that number would be misleading.
+An earlier run of this harness, before the validation gates were optimised, measured **315.25 ms** mean against the post-optimisation **164.79 ms**. Comparing the two naively gives 1.91×, and that number would be misleading.
 
 **The two runs were not on the same machine.** Colab allocates different CPUs between sessions. The seven stages whose code did not change between the runs were themselves faster the second time:
 
-| Reference set | Baseline (pre-optimisation) | Post-optimisation (2026-09-29) | Apparent factor |
+| Reference set | Baseline (pre-optimisation, 2026-09-29) | Post-optimisation (2026-09-30) | Apparent factor |
 | :--- | ---: | ---: | ---: |
 | `forward` alone (fixed 224² tensor, no I/O — most stable) | 33.48 ms | 29.24 ms | **1.14×** |
 | Fixed-size pure compute (`forward`, `gradcam`, `compose`) | 62.92 ms | 47.74 ms | 1.32× |
@@ -107,7 +109,7 @@ The spread — 1.14× to 3.14× — shows the difference is not a single scalar,
 
 For gates 2 and 3 specifically:
 
-| | Baseline | Post-optimisation (2026-09-29) | Raw | Machine-normalised |
+| | Baseline (2026-09-29) | Post-optimisation (2026-09-30) | Raw | Machine-normalised |
 | :--- | ---: | ---: | ---: | ---: |
 | `gate2` + `gate3` | 186.42 ms | **72.42 ms** | 2.57× | **~1.8×–2.3×** |
 | Share of the request | 59.1% | **43.9%** | | |
@@ -116,7 +118,7 @@ For gates 2 and 3 specifically:
 
 ### Gate 2 is still the largest stage, and the reason is instructive
 
-At **59.03 ms it remains 32.7%** of the request in §1 (56.06 ms, 34.0% in the 2026-09-29 run), far more than the 5.2× local speedup predicted. The residual is not the statistics — those now run on a 512px subsample — it is **the downsampling itself**. Reducing a 3216×2136 image requires reading every source pixel once, and `rgb_image = pil_image.convert("RGB")` runs at full resolution before that.
+At **59.03 ms it remains 32.7%** of the request in §1 (56.06 ms, 34.0% in the 2026-09-30 post-optimisation run), far more than the 5.2× local speedup predicted. The residual is not the statistics — those now run on a 512px subsample — it is **the downsampling itself**. Reducing a 3216×2136 image requires reading every source pixel once, and `rgb_image = pil_image.convert("RGB")` runs at full resolution before that.
 
 Gates 1, 2 and 3 each decode or convert the full-resolution image independently. Decoding once and sharing a single reduced copy across all three is the next available gain, and it is **not** implemented. `gate2` also retains the widest spread in the run (32.33 ms median against a 142.99 ms P95), consistent with cost tracking source resolution.
 
@@ -151,27 +153,21 @@ Two defects were found while producing this figure. Both are recorded because ea
 
 | | Before | After |
 | :--- | ---: | ---: |
-| `compose` (512×512 overlay) | 307.87 ms | **28.86 ms** (10.7× faster) |
+| `compose` (512×512 overlay) | not retained as an artefact | **28.86 ms** in the 2026-09-29 baseline run |
 
-Before that fix, this same harness measured a **592.02 ms** end-to-end total with composition alone at 52% of the request.
+Before that fix, this same harness measured a markedly higher end-to-end total (that run predates the first committed artefact, is not retained, and no figure for it is claimed) with composition alone at 52% of the request.
 
 **The harness initially measured a stale copy of that loop.** It held its own inline copy of the composition code, written before the vectorisation and not updated alongside it, so its first run reported timings for code the application no longer executed. It now imports `viridis_rgba_array`, the same function the inference service calls. The 592.02 ms figure is withdrawn; §1 comes from the corrected harness.
 
 ### 3.3 Validation gates now analyse a subsample
 
-The §1 breakdown showed gates 2 and 3 costing 186.42 ms, 59.1% of the request, because both computed their pixel statistics over the full-resolution array.
+The 2026-09-29 baseline run ([`benchmark_history/`](benchmark_history/)) showed gates 2 and 3 costing 186.42 ms, 59.1% of the request, because both computed their pixel statistics over the full-resolution array.
 
 Those statistics — aperture coverage, channel means, contrast standard deviation, the proportion of extreme pixels — describe the pixel *distribution*, not any individual pixel, so a large uniform sample estimates them just as well. Both gates now compute them on a copy whose longest side is `VALIDATION_ANALYSIS_MAX_DIM` (default 512), sampled with **nearest-neighbour**.
 
 Nearest is a correctness choice, not a speed one. It samples pixels where bilinear and area resampling average them, and averaging would (a) smooth the aperture boundary into intermediate luminances that cross the foreground threshold, and (b) pull extreme values toward the mean — biasing exactly the statistics Gate 3 uses to detect washout and underexposure, in the unsafe direction. Measured across a threshold-spanning corpus, bilinear moved aperture coverage by up to 0.011 where nearest moved it by 0.0007.
 
-Measured on a 2048×1536 image:
-
-| | Full resolution | Subsampled | |
-| :--- | ---: | ---: | :--- |
-| `gate2` | 309.7 ms | **59.5 ms** | 5.2× |
-| `gate3` | 393.8 ms | **205.6 ms** | 1.9× |
-| combined | 703.4 ms | **265.0 ms** | **2.7×** |
+A single-image micro-benchmark accompanied this change; it is not retained as an artefact and its figures are not reproduced. The effect is evidenced by the per-run JSON files: gates 2+3 fell from **186.42 ms (59.1%)** in the baseline to **72.42 ms (43.9%)** in the post-optimisation run over the same 30 images.
 
 Gate 3 improves less because its Laplacian variance is deliberately excluded. Sharpness is a spatial derivative, so its value depends on resolution by definition, and it keeps its own existing 1024px path. That path is untouched, and a test asserts the variance does not move when the analysis resolution changes.
 

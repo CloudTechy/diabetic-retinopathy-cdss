@@ -3,7 +3,7 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective h (Evaluation) & Objective i (Clinical governance)
+- **Related Research Objective:** Objective h (Classification-performance evaluation)
 - **Date:** 2026-09-29
 - **Basis:** Every figure cited below is recomputed from [`held_out_predictions.csv`](held_out_predictions.csv).
 
@@ -158,8 +158,7 @@ training. EfficientNet-B0 was then retrained from ImageNet initialisation on the
 result. The current held-out cohort has **0 / 525** images byte-identical to any
 training image.
 
-What remains a limitation is the cost of the correction: **30 distinct images
-(0.85%) were excluded** because their duplicate groups disagreed about the
+What remains a limitation is the cost of the correction: **30 duplicate groups — 62 images (1.7% of the 3,662 published records) — were excluded** because their duplicate groups disagreed about the
 severity label and the disagreement cannot be adjudicated from the image data.
 Nine of those groups disagreed by two or more grade levels; one was labelled
 both Mild NPDR and Proliferative DR. Their identifiers and conflicting grades

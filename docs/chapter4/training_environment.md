@@ -3,7 +3,7 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective e (Implement the CNN) & Objective f (Train the CNN)
+- **Related Research Objective:** Objective e (Baseline / Model Implementation) & Objective f (CNN Classifier Training)
 - **Date Generated:** 2026-09-29
 - **Raw Evidence:** [`training_summary.json`](training_summary.json), [`training_execution.log`](training_execution.log)
 
@@ -22,7 +22,7 @@ Training was executed on a hosted Google Colab GPU runtime. The environment valu
 | **Training Duration** | 2,762 s total (~210 s/epoch × 15) | — |
 | **DataLoader Workers** | 2 | Colab's standard allocation |
 
-**Why a hosted runtime.** APTOS 2019 is a 9.51 GB download and the run required ~52 minutes of sustained GPU time. Colab was used for the training and evaluation stages only. The CDSS application itself is developed and deployed separately, as below.
+**Why a hosted runtime.** APTOS 2019 is a 9.51 GB download and the run required 2,762 s (~46 minutes) of GPU time, as recorded in `training_summary.json`. Colab was used for the training and evaluation stages only. The CDSS application itself is developed and deployed separately, as below.
 
 ---
 

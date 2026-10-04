@@ -5,7 +5,7 @@
 - **Trained Weights Checkpoint:** `backend/models/weights/efficientnet_b0_dr.pth`
 - **File Size:** 15.60 MB (16,358,249 bytes)
 - **Cryptographic SHA-256 Digest:** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
-- **Training Run:** 15 epochs on APTOS 2019, Google Colab Tesla T4, 2026-09-29
+- **Training Run:** 15 epochs on APTOS 2019, Google Colab Tesla T4, 2026-09-30 (the leakage-free rerun)
 - **Selected Epoch:** **14** of 15 (peak validation $\kappa = 0.913045$, recorded in [`epoch_history.csv`](epoch_history.csv))
 - **Degree Programme:** PGD Computer Science, Faculty of Physical Sciences
 
@@ -22,7 +22,7 @@
   - Grad-CAM hooks `features.8` (the 1,280-channel final convolutional feature layer) to extract high-level visual saliency patterns before global average pooling.
 - **Classification Head:**
   - `nn.AdaptiveAvgPool2d(1)` $\to$ `nn.Dropout(p=0.2)` $\to$ `nn.Linear(in_features=1280, out_features=5)`.
-- **Total Parameter Count:** 4,013,953 parameters (confirmed by the training log).
+- **Total Parameter Count:** 4,013,953 parameters (computed from the architecture definition; the training log does not record a parameter count).
 - **Trainable Parameters at Inference:** 0 — the served graph is `eval()` with `requires_grad = False` on every parameter.
 
 ---
