@@ -57,7 +57,7 @@ class Assessment(Base):
     patient_id = Column(String(100), nullable=False, index=True)
     eye_laterality = Column(String(10), nullable=False)  # 'OD' (Right) or 'OS' (Left)
     camera_model = Column(String(255), nullable=True)   # no default: an earlier revision invented one
-    is_mydriatic = Column(Boolean, default=False, nullable=False)
+    is_mydriatic = Column(Boolean, nullable=True)   # None = not recorded; no default
     clinical_notes = Column(Text, nullable=True)
     
     # State Machine Status:

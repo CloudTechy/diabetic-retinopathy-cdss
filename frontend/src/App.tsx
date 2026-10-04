@@ -209,7 +209,7 @@ export const App: React.FC = () => {
     patientId: string;
     laterality: EyeLaterality;
     cameraModel: string;
-    isMydriatic: boolean;
+    isMydriatic: boolean | null;
     clinicalNotes: string;
     imageDataUrl: string;
     fileSizeBytes: number;

@@ -520,7 +520,8 @@ OVERCLAIM_PHRASES = [
     # "acquisition" date that is the row's creation time, invented file
     # fallbacks, and a camera model preset on every record.
     "anatomical field-of-view", "Retinal field-of-view", "Total Today", "Acquisition Date",
-    "Acquired:", "3400000", "Standard Fundus Camera",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
+    "Acquired:", "3400000", "Standard Fundus Camera", "Offline Edge AI", "Edge AI Enabled",
+    "Quality Ambiguity",   # synthetic_retinal_fundus is a labelled TEST fixture generator; the screen rule bans it in the UI
     "Authorized for credentialed healthcare practitioners",
 ]
 
@@ -4359,3 +4360,53 @@ def test_nothing_about_acquisition_is_invented():
     report = read(REPORT_PY)
     assert 'or "SIM-' not in report and "Standard Fundus Camera" not in report, "the PDF invents a licence number or camera"
     assert "Record created" in report, "the PDF still labels the row's creation time as an acquisition date"
+
+
+# ======================================================================
+# RULE GROUP AM - the reviewer's audit of rev23: the fallbacks that survived
+# ======================================================================
+
+SCHEMAS_PY = os.path.join(REPO_ROOT, "backend", "app", "schemas", "assessment.py")
+API_TS = os.path.join(REPO_ROOT, "frontend", "src", "services", "api.ts")
+REVIEW_MODAL_TSX = os.path.join(REPO_ROOT, "frontend", "src", "screens", "ProfessionalReviewModal.tsx")
+
+
+def test_request_schema_and_screens_invent_no_camera_or_dilation():
+    """
+    The camera rule covered the screen state, the service, the ORM and the
+    PDF - and the request schema still defaulted cameraModel to a Topcon and
+    isMydriatic to False, so a draft created without either came back with
+    both; the stepper then fell back to 'Topcon TRC-NW400' on screen. Every
+    layer must default to "not recorded".
+    """
+    schema = read(SCHEMAS_PY)
+    block = schema[schema.index("class AssessmentCreateRequest"):]
+    block = block[:block.index("\nclass ", 1)]
+    assert re.search(r"cameraModel: Optional\[str\] = None", block), "AssessmentCreateRequest still defaults the camera"
+    assert re.search(r"isMydriatic: Optional\[bool\] = None", block), "AssessmentCreateRequest still defaults dilation to False"
+    models = read(MODELS_PY)
+    m = re.search(r"is_mydriatic = Column\(([^\n]*)\)", models)
+    assert m and "default=" not in m.group(1) and "nullable=True" in m.group(1), "the ORM still defaults dilation"
+    svc = read(os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py"))
+    assert "payload.isMydriatic or False" not in svc
+    report = read(REPORT_PY)
+    assert '"Not recorded" if assessment.is_mydriatic is None' in report, "the PDF prints a dilation protocol for an unrecorded one"
+    for rel in _walk_repo((".ts", ".tsx")):
+        src = read(os.path.join(REPO_ROOT, rel))
+        for m in re.finditer(r"cameraModel\s*(\|\||\?\?)\s*'([^']*)'", src):
+            assert m.group(2) == "Not recorded", "%s falls back to an invented camera: %r" % (rel, m.group(2))
+    nas = read(NEW_ASSESSMENT_TSX)
+    assert "useState<boolean | null>(null)" in nas, "the dilation control cannot say 'not recorded'"
+
+
+def test_no_invented_review_reason_role_or_filename():
+    modal = read(REVIEW_MODAL_TSX)
+    assert re.search(r"const \[inconclusiveReason, setInconclusiveReason\] = useState<string>\(''\)", modal), (
+        "the review modal pre-selects an inconclusive reason")
+    assert "agreement !== 'inconclusive' || inconclusiveReason !== ''" in modal, "an inconclusive review can be submitted without a reason"
+    api = read(API_TS)
+    assert "|| 'Clinician'" not in api, "api.ts invents a role"
+    router = read(ASSESSMENTS_ROUTER)
+    assert 'or "fundus.jpg"' not in router, "the upload route invents a filename"
+    stepper = read(STEPPER_TSX)
+    assert "server.length === 0" in stepper, "an empty gate list would be announced as passed"

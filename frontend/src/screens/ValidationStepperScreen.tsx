@@ -72,6 +72,14 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
         return { ...g, status: 'pending' as const, metric: `Pending Gate ${i} completion...` };
       });
 
+    if (server.length === 0) {
+      // no gate list at all: nothing can be announced as passed
+      setFailedGate(null);
+      setFinalStatus('incomplete');
+      setHasCompleted(true);
+      return () => timers.forEach(clearTimeout);
+    }
+
     const finish = (revealed: number) => {
       setStepperGates(frame(revealed, null));
       const stopped = server.slice(0, revealed).find((g) => g.status !== 'passed');
@@ -145,7 +153,7 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
                 {assessment.laterality === 'OD' ? 'OD (Right Eye)' : 'OS (Left Eye)'}
               </span>
             </div>
-            <p className="text-slate-500">Camera: {assessment.cameraModel || 'Topcon TRC-NW400'}</p>
+            <p className="text-slate-500">Camera: {assessment.cameraModel || 'Not recorded'}</p>
             <p className="text-slate-500 font-mono text-[11px]">
               SHA-256: {assessment.qualityMetrics.sha256Hash.substring(0, 24)}...
             </p>

@@ -73,7 +73,7 @@ class ClinicalApiService {
       id: res.data.id || 'Unknown',
       name: res.data.name || credentials.username,
       email: res.data.email || credentials.username,
-      role: res.data.role || 'Clinician',
+      role: res.data.role ?? '',   // nothing is invented for a missing role
       licenseNumber: res.data.licenseNumber || '',
       facility: res.data.facility || '',
       sessionTimeoutMinutes: 15,
@@ -106,7 +106,7 @@ class ClinicalApiService {
     patientId: string;
     laterality: EyeLaterality;
     cameraModel?: string;
-    isMydriatic?: boolean;
+    isMydriatic?: boolean | null;
     clinicalNotes?: string;
     imageDataUrl: string;
     fileSizeBytes: number;

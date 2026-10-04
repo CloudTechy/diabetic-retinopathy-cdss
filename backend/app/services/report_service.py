@@ -124,7 +124,7 @@ class ReportService:
                 Paragraph("<strong>Camera Model:</strong>", body_style),
                 Paragraph(assessment.camera_model or "Not recorded", body_style),
                 Paragraph("<strong>Dilation Protocol:</strong>", body_style),
-                Paragraph("Mydriatic" if assessment.is_mydriatic else "Non-Mydriatic", body_style),
+                Paragraph("Not recorded" if assessment.is_mydriatic is None else ("Mydriatic" if assessment.is_mydriatic else "Non-mydriatic"), body_style),
             ],
         ]
 

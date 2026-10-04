@@ -124,7 +124,7 @@ export interface AssessmentRecord {
   acquisitionDate: string;   // the record's creation time, not an image-acquisition time (name is historical)
   status: ReviewStatus;
   cameraModel?: string;
-  isMydriatic?: boolean;
+  isMydriatic?: boolean | null;   // null = not recorded
   clinicalNotes?: string;
   imageUrl: string;
   gradcamUrl?: string;

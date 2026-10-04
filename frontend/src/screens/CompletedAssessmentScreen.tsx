@@ -207,7 +207,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                   <div className="font-bold text-slate-900 text-sm">
                     {review.agreement === 'agree' && 'Concurred with Model Observation'}
                     {review.agreement === 'disagree' && 'Clinician Disagreed with Automated Finding'}
-                    {review.agreement === 'inconclusive' && `Indeterminate (${review.inconclusiveReason || 'Quality Ambiguity'})`}
+                    {review.agreement === 'inconclusive' && `Indeterminate (${review.inconclusiveReason || 'no reason given'})`}
                   </div>
                   <p className="text-[11px] text-slate-500">
                     {reviewerGradeInfo.label}

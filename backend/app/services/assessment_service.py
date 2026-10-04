@@ -94,7 +94,7 @@ class AssessmentService:
             patient_id=payload.patientId.strip().upper(),
             eye_laterality=payload.laterality,
             camera_model=(payload.cameraModel or "").strip() or None,   # nothing is invented
-            is_mydriatic=payload.isMydriatic or False,
+            is_mydriatic=payload.isMydriatic,   # None stays None
             clinical_notes=payload.clinicalNotes,
             status="draft",
             created_by_id=creator.id if creator else None,

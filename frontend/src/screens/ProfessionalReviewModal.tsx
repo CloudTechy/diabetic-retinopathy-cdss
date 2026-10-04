@@ -33,14 +33,16 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
   const [agreement, setAgreement] = useState<AgreementType | null>(null);
   const [reviewerAssessedGrade, setReviewerAssessedGrade] = useState<number | null>(null);
   const [justificationNotes, setJustificationNotes] = useState<string>('');
-  const [inconclusiveReason, setInconclusiveReason] = useState<string>('Media Opacity / Cataract');
+  // No pre-selected reason: the reviewer chooses one. An earlier revision
+  // pre-selected "Media Opacity / Cataract", a clinical choice nobody made.
+  const [inconclusiveReason, setInconclusiveReason] = useState<string>('');
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const modelGrade = assessment.modelObservation?.primaryClassGrade ?? 2;
 
   // Validation: Clinician must select Agree/Disagree/Unable to determine and check confirmation
-  const canProceed = agreement !== null && isConfirmed;
+  const canProceed = agreement !== null && isConfirmed && (agreement !== 'inconclusive' || inconclusiveReason !== '');
 
   const handleSelectAgreement = (type: AgreementType) => {
     setAgreement(type);
@@ -236,6 +238,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
                 onChange={(e) => setInconclusiveReason(e.target.value)}
                 className="w-full text-xs p-2 border border-blue-300 rounded-lg bg-white text-slate-800"
               >
+                <option value="">Select a reason…</option>
                 <option value="Media Opacity / Cataract">Media Opacity / Advanced Cataract</option>
                 <option value="Non-DR Retinal Pathology (e.g. RVO, AMD)">Non-DR Retinal Pathology (e.g. Vein Occlusion, AMD)</option>
                 <option value="Uncertain Peripheral Lesion">Uncertain Peripheral Lesion Bordering Field Edge</option>

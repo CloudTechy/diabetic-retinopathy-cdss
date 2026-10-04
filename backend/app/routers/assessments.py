@@ -101,7 +101,7 @@ async def upload_assessment_image(
             db=db,
             assessment_id=assessment_id,
             image_bytes=image_bytes,
-            original_filename=file.filename or "fundus.jpg",
+            original_filename=file.filename or "",   # the stored name is a UUID; nothing is invented
             actor=current_user,
         )
         return AssessmentService.to_record_response(assessment)

@@ -63,7 +63,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `patient_id` | VARCHAR(100) | NO | Pseudonymized patient study identifier. |
 | `eye_laterality` | VARCHAR(10) | NO | `OD` (Right Eye) or `OS` (Left Eye). |
 | `camera_model` | VARCHAR(255) | YES | Make and model of fundus camera. |
-| `is_mydriatic` | BOOLEAN | NO | Pupillary dilation indicator. |
+| `is_mydriatic` | BOOLEAN | YES | Dilation protocol: true = mydriatic, false = non-mydriatic, NULL = not recorded. No default; an earlier revision defaulted to false, which the report printed as a protocol nobody had chosen. |
 | `clinical_notes` | TEXT | YES | Indication or clinical history notes. |
 | `status` | VARCHAR(50) | NO | Stored state-machine status: `accepted`, `completed`, `draft`, `inference`, `preprocessing`, `rejected`, `result_ready`, `uploaded`, `validating`. (`needs_review` is a display status derived for the worklist; it is never stored.) |
 | `created_by_id` | VARCHAR(36) | YES | Foreign Key (`users.id`). |

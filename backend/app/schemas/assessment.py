@@ -81,8 +81,11 @@ class AuditEventSchema(BaseModel):
 class AssessmentCreateRequest(BaseModel):
     patientId: str
     laterality: EyeLaterality
-    cameraModel: Optional[str] = "Topcon TRC-NW400 Non-Mydriatic"
-    isMydriatic: Optional[bool] = False
+    # Both default to None: "not recorded". An earlier revision defaulted the
+    # camera to a named model and dilation to False, so every record created
+    # without them acquired a camera nobody entered and a protocol nobody chose.
+    cameraModel: Optional[str] = None
+    isMydriatic: Optional[bool] = None
     clinicalNotes: Optional[str] = None
     imageDataUrl: Optional[str] = None
     fileSizeBytes: Optional[int] = None

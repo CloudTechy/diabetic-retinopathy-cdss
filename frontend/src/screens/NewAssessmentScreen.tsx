@@ -7,7 +7,6 @@ import {
   ArrowRight,
   ShieldAlert,
   Camera as CameraIcon,
-  Cpu
 } from 'lucide-react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { EyeLaterality } from '../types/clinical';
@@ -18,7 +17,7 @@ interface NewAssessmentScreenProps {
     patientId: string;
     laterality: EyeLaterality;
     cameraModel: string;
-    isMydriatic: boolean;
+    isMydriatic: boolean | null;
     clinicalNotes: string;
     imageDataUrl: string;
     fileSizeBytes: number;
@@ -38,7 +37,9 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   // No camera is preset: an earlier revision defaulted every record to a
   // named model nobody had entered, and it was printed in figures and PDFs.
   const [cameraModel, setCameraModel] = useState<string>('');
-  const [isMydriatic, setIsMydriatic] = useState<boolean>(false);
+  // null = not recorded. An earlier checkbox could only say false, which the
+  // PDF then printed as "Non-Mydriatic" for images whose dilation nobody knew.
+  const [isMydriatic, setIsMydriatic] = useState<boolean | null>(null);
   const [clinicalNotes, setClinicalNotes] = useState<string>('');
 
   // File Upload State
@@ -276,18 +277,21 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
               </select>
             </div>
 
-            {/* Mydriasis checkbox */}
-            <div className="flex items-center space-x-2 pt-6">
-              <input
-                id="mydriatic-toggle"
-                type="checkbox"
-                checked={isMydriatic}
-                onChange={(e) => setIsMydriatic(e.target.checked)}
-                className="w-4 h-4 text-clinical-primary rounded border-slate-300 focus:ring-clinical-primary"
-              />
-              <label htmlFor="mydriatic-toggle" className="text-xs font-medium text-slate-700 cursor-pointer">
-                Mydriatic Examination (Pharmacologically dilated pupil)
+            {/* Dilation protocol: not recorded unless the operator says */}
+            <div className="pt-2">
+              <label htmlFor="mydriatic-select" className="block text-xs font-semibold text-slate-700">
+                Dilation protocol
               </label>
+              <select
+                id="mydriatic-select"
+                value={isMydriatic === null ? '' : isMydriatic ? 'yes' : 'no'}
+                onChange={(e) => setIsMydriatic(e.target.value === '' ? null : e.target.value === 'yes')}
+                className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white shadow-xs focus:ring-2 focus:ring-clinical-primary"
+              >
+                <option value="">Not recorded</option>
+                <option value="yes">Mydriatic (pharmacologically dilated pupil)</option>
+                <option value="no">Non-mydriatic</option>
+              </select>
             </div>
           </div>
 
@@ -314,9 +318,6 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
               <h3 id="upload-heading" className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 2. Digital Fundus Photograph
               </h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <Cpu className="w-3 h-3 text-emerald-600" /> Offline Edge AI Enabled
-              </span>
             </div>
             <div className="flex items-center gap-2">
               <button
