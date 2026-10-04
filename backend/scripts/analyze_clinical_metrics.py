@@ -264,7 +264,7 @@ def main():
         "leakage_adjusted": clean,
     }
 
-    with open(OUT_JSON, "w", encoding="utf-8") as fh:
+    with open(OUT_JSON, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(result, fh, indent=2)
 
     # Console summary

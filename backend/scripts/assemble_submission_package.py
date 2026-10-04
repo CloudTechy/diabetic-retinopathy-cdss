@@ -184,6 +184,18 @@ def manifest():
     return sorted(((src, dst) for dst, src in entries.items()), key=lambda e: e[1])
 
 
+def crlf_files(entries):
+    """Text files of the manifest that contain a CR LF. The repository holds LF
+    only, so a CR LF on disk is a file that differs from its own commit."""
+    bad = []
+    for src, _dst in entries:
+        with open(os.path.join(REPO_ROOT, src), "rb") as fh:
+            data = fh.read()
+        if b"\0" not in data and b"\r\n" in data:
+            bad.append(src)
+    return bad
+
+
 def problems():
     """Every reason the archive must not be built, as a list of strings."""
     found = []
@@ -234,6 +246,12 @@ def problems():
                      "retired: the archive is built from the repository tree, and a "
                      "second copy is how a corrected file was silently reverted.")
 
+    if not any("map to" in p for p in found):
+        try:
+            for src in crlf_files(manifest()):
+                found.append("CR LF line endings (the commit holds LF): %s" % src)
+        except OSError as exc:
+            found.append(str(exc))
     return found
 
 

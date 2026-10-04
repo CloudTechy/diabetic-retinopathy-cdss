@@ -1,0 +1,11 @@
+# Text is LF in the repository AND in the working tree, on every platform.
+# The evidence archive is assembled from working-tree files; six of them once
+# sat on disk with CRLF while their commits held LF, so the archive could not
+# be rebuilt from its own commit.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pth binary
+*.rgba binary
+*.zip binary
+*.pdf binary

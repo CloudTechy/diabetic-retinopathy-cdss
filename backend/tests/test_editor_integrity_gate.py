@@ -4596,6 +4596,27 @@ def test_the_build_reads_no_clock():
     assert "a rebuild of identical content is byte-identical" in readme
 
 
+def test_archive_text_files_are_lf_only():
+    """
+    rev33 could not be rebuilt from its own commit: six text files sat in the
+    working tree with CR LF while the commit held LF, and the assembler copies
+    working-tree bytes. Every text file of the manifest is LF-only, the
+    assembler refuses to build otherwise, and .gitattributes keeps checkouts LF.
+    """
+    asm = _assembler()
+    bad = asm.crlf_files(asm.manifest())
+    assert not bad, "CR LF line endings in: %s" % ", ".join(bad)
+    source = read(os.path.join(REPO_ROOT, "backend", "scripts", "assemble_submission_package.py"))
+    tree = ast.parse(source)
+    problems_fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "problems")
+    assert any(isinstance(n, ast.Call) and getattr(n.func, "id", "") == "crlf_files" for n in ast.walk(problems_fn)), (
+        "the assembler does not refuse CR LF files")
+    attributes = os.path.join(REPO_ROOT, ".gitattributes")
+    if os.path.exists(os.path.join(REPO_ROOT, ".git")):   # not shipped; checked where the repository is
+        lines = [l.strip() for l in read(attributes).splitlines()]
+        assert "* text=auto eol=lf" in lines and "*.rgba binary" in lines and "*.pth binary" in lines
+
+
 # ======================================================================
 # RULE GROUP AO - the reviewer's audit of rev26
 # ======================================================================

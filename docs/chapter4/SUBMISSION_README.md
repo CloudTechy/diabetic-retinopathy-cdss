@@ -44,7 +44,7 @@ All model-performance artefacts derive from the documented leakage-free training
 | **Any DR** (grade ≥ 1) | Sensitivity 97.6%, specificity 98.5% |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 268 passed, 1 skipped |
+| **Test suite** | 269 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.
@@ -207,7 +207,7 @@ Row sums: 270 / 50 / 139 / 26 / 40 = 525. Trace = 441 = 84.00%.
 
 ## 5. How this archive was built
 
-`python backend/scripts/assemble_submission_package.py --build <zip>` copies every listed file byte-for-byte from the repository, extracts the result to a temporary directory, runs `VERIFY.py` there, and keeps the archive only if every check passes. One file is written by the build: if `VERIFY.py`'s output differs from the transcript recorded in `VERIFICATION.md`, the transcript is replaced, the date beside it is set to the date of the build check recorded in `docs/chapter4/build_verification.log`, and the archive is assembled once more from the result. Nothing in the archive is taken from the clock (entry timestamps are fixed), so the archive's SHA-256 is content-deterministic: a rebuild of identical content is byte-identical, on any day.
+`python backend/scripts/assemble_submission_package.py --build <zip>` copies every listed file byte-for-byte from the repository's working tree (and refuses to build if a text file there has CR LF line endings, which the commit never holds, so the files copied are the commit's), extracts the result to a temporary directory, runs `VERIFY.py` there, and keeps the archive only if every check passes. One file is written by the build: if `VERIFY.py`'s output differs from the transcript recorded in `VERIFICATION.md`, the transcript is replaced, the date beside it is set to the date of the build check recorded in `docs/chapter4/build_verification.log`, and the archive is assembled once more from the result. Nothing in the archive is taken from the clock (entry timestamps are fixed), so the archive's SHA-256 is content-deterministic: a rebuild of identical content is byte-identical, on any day, given the same Python version (the transcript in `VERIFICATION.md` records the interpreter's version, and the compression is the interpreter's zlib).
 
 ---
 

@@ -71,7 +71,7 @@ def render():
     else:
         mean_r, mean_g, mean_b = (float(c.sum()) / (SIZE * SIZE) for c in (r, g, b))
 
-    production = evaluate_gate2(Image.fromarray(rgb, "RGB"))
+    production = evaluate_gate2(Image.fromarray(rgb))
 
     sidecar = {
         "source": FIXTURE_REL,
