@@ -3879,6 +3879,13 @@ def test_quoted_suite_durations_match_the_committed_log():
                 if abs(float(quoted) - actual) > 0.005:
                     offenders.append("%s:%d quotes %s s; the log records %.2f s" % (rel, lineno, quoted, actual))
     assert not offenders, "\n  ".join(["Quoted suite durations disagree with the log:"] + offenders)
+    # The runbook's expected range must bracket the duration the shipped log
+    # actually records; a 125 s run once shipped under "roughly 60-90 s".
+    runbook = read(os.path.join(CHAPTER4, "reproducibility_runbook.md"))
+    m = re.search(r"wall-clock between (\d+) and (\d+) s", runbook)
+    assert m, "the runbook no longer states the expected wall-clock range"
+    lo, hi = int(m.group(1)), int(m.group(2))
+    assert lo <= actual <= hi, "the committed log records %.2f s; the runbook says between %d and %d s" % (actual, lo, hi)
 
 
 # ======================================================================
