@@ -3202,3 +3202,57 @@ def test_rejected_records_are_not_shown_as_pending_review():
     guard = src.rfind("rec.status === 'rejected'", 0, pending)
     assert guard != -1 and pending - guard < 800, (
         "the pending badge is not guarded by a rejected-status branch")
+
+EVALUATION_REPORT = os.path.join(CHAPTER4, "model_evaluation_report.md")
+
+
+def _per_class_from_predictions():
+    import csv as _csv
+    with open(PREDICTIONS_CSV, newline="", encoding="utf-8") as fh:
+        pairs = [(int(r["true_grade"]), int(r["predicted_grade"])) for r in _csv.DictReader(fh)]
+    out = {}
+    for g in range(5):
+        tp = sum(1 for t, p in pairs if t == g and p == g)
+        fn = sum(1 for t, p in pairs if t == g and p != g)
+        fp = sum(1 for t, p in pairs if t != g and p == g)
+        tn = sum(1 for t, p in pairs if t != g and p != g)
+        out[g] = {"support": tp + fn, "sens": 100.0 * tp / (tp + fn), "spec": 100.0 * tn / (tn + fp),
+                  "prec": 100.0 * tp / (tp + fp), "f1": 2.0 * tp / (2 * tp + fp + fn)}
+    return out
+
+
+PER_CLASS_ROW = re.compile(
+    r"^\|\s*\*\*(\d)\*\*\s*\|[^|]*\|\s*(\d+)\s*\|\s*\**([\d.]+)%\**\s*\|[^|]*\|"
+    r"\s*([\d.]+)%\s*\|\s*([\d.]+)%\s*\|\s*([\d.]+)\s*\|", re.M)
+
+
+def test_evaluation_report_per_class_table_recomputes_from_the_predictions():
+    """
+    The per-class table carried Grade 0 specificity as 97.7%: the JSON stores
+    97.65 and the table re-rounded it; 249/255 is 97.647%, i.e. 97.6%. Every
+    one-decimal value in the table is now recomputed from the predictions,
+    which is the only rounding there should be.
+    """
+    raw = _per_class_from_predictions()
+    rows = {int(m.group(1)): m for m in PER_CLASS_ROW.finditer(read(EVALUATION_REPORT))}
+    offenders = []
+    for g in range(5):
+        m = rows.get(g)
+        if m is None:
+            offenders.append("row for grade %d not found" % g)
+            continue
+        support, sens, spec, prec, f1 = (int(m.group(2)), float(m.group(3)), float(m.group(4)),
+                                         float(m.group(5)), float(m.group(6)))
+        want = raw[g]
+        checks = (("support", support, want["support"], 0),
+                  ("sensitivity", sens, round(want["sens"], 1), 1),
+                  ("specificity", spec, round(want["spec"], 1), 1),
+                  ("precision", prec, round(want["prec"], 1), 1),
+                  ("F1", f1, round(want["f1"], 3), 3))
+        for name, got, exp, _places in checks:
+            if abs(got - exp) > 1e-9:
+                offenders.append("grade %d %s: table says %s, the predictions give %s" % (g, name, got, exp))
+    assert not offenders, (
+        "model_evaluation_report.md per-class table disagrees with held_out_predictions.csv:\n  "
+        + "\n  ".join(offenders))
+

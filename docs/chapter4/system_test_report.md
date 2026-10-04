@@ -6,19 +6,19 @@
 - **Related Research Objective:** Objective i (Functional testing and end-to-end evaluation)
 - **Date Test Run:** 2026-10-03
 - **Test Framework:** Pytest 8.4.2 on Python 3.13.5 (as recorded in the header of [`test_execution.log`](test_execution.log)), Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **207 collected — 206 passed, 0 failed, 1 skipped**
+- **Overall Result:** **208 collected — 207 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 207 test cases was executed against the complete CDSS platform. 206 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 208 test cases was executed against the complete CDSS platform. 207 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      207
-Passed:               206 (99.5%)
+Tests Collected:      208
+Passed:               207 (99.5%)
 Failed:                 0  (0.0%)
 Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: ~77 seconds

@@ -62,7 +62,7 @@ VALID_TRANSITIONS: Dict[str, List[str]] = {
     "inference": ["result_ready", "failed"],
     "result_ready": ["under_review", "completed", "failed"],
     "under_review": ["completed", "failed"],
-    "completed": [],  # Terminal finalized! Record is immutable.
+    "completed": [],  # Terminal: the API accepts no further transition or review.
     "failed": [],
 }
 
@@ -433,7 +433,7 @@ class AssessmentService:
         cls.validate_transition(assessment.status, "completed")
         assessment.status = "completed"
 
-        # Immutable Audit Event
+        # Append-only audit event
         badge = "success" if review_input.agreement == "agree" else "warning"
         audit = AuditEvent(
             assessment_id=assessment.id,

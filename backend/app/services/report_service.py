@@ -268,8 +268,8 @@ class ReportService:
                     Paragraph(rev.justification_notes or "No additional observations recorded.", body_style),
                     Paragraph("<strong>Scope Note:</strong>", body_style),
                     Paragraph("This report records a preliminary model observation and the "
-                              "reviewing professional's response. It determines no diagnosis, "
-                              "action plan.", body_style),
+                              "reviewing professional's response. It records no diagnosis and no "
+                              "action plan; those are outside this system's scope.", body_style),
                 ],
                 [
                     Paragraph("<strong>Signature Timestamp:</strong>", body_style),
