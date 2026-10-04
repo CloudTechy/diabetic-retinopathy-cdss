@@ -186,4 +186,27 @@ class TestAssessmentEndpoints:
         assert valid_res.status_code == 200
         assert valid_res.json()["status"] == "completed"
 
+class TestRecordHistorySearch:
+    """
+    The record-history screen sends `grade=all` (and `status=all`, ...) for
+    filters it is not narrowing on. The endpoint typed grade as an integer, so
+    every history search returned 422 before the handler ran, and the screen -
+    which treats any error as "no records" - showed an empty ledger. A figure
+    captioned "live record history" was nearly shipped showing exactly that.
+    """
 
+    def test_search_accepts_the_screens_sentinel_filters(self, authed_client):
+        res = authed_client.get(
+            "/api/v1/assessments/search",
+            params={"searchQuery": "", "status": "all", "laterality": "all",
+                    "grade": "all", "agreement": "all"})
+        assert res.status_code == 200, res.text
+        assert isinstance(res.json(), list)
+
+    def test_search_still_filters_by_an_integer_grade(self, authed_client):
+        res = authed_client.get("/api/v1/assessments/search", params={"grade": "2"})
+        assert res.status_code == 200, res.text
+
+    def test_search_rejects_a_non_integer_grade_that_is_not_the_sentinel(self, authed_client):
+        res = authed_client.get("/api/v1/assessments/search", params={"grade": "severe"})
+        assert res.status_code == 422

@@ -137,18 +137,31 @@ async def search_assessments(
     searchQuery: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     laterality: Optional[str] = Query(None),
-    grade: Optional[int] = Query(None),
+    grade: Optional[str] = Query(None),
     agreement: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Search and filter assessments by clinical parameters."""
+    """Search and filter assessments by clinical parameters.
+
+    The record-history screen sends the sentinel "all" for every filter it is
+    not narrowing on. `grade` was typed Optional[int], so "all" failed query
+    validation with 422 before this handler ran, and the screen - which treats
+    any error as an empty result - showed "Found 0 matching assessment records"
+    for every search. An integer or the sentinel are both accepted now.
+    """
+    grade_value: Optional[int] = None
+    if grade not in (None, "", "all"):
+        try:
+            grade_value = int(grade)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="grade must be an integer 0-4 or 'all'")
     matches = await AssessmentService.search_assessments(
         db=db,
         search_query=searchQuery,
         status=status,
         laterality=laterality,
-        grade=grade,
+        grade=grade_value,
         agreement=agreement,
     )
     return [AssessmentService.to_record_response(a) for a in matches]
@@ -260,7 +273,7 @@ async def download_report_pdf(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Generate and return a tamper-evident server-rendered clinical consultation report PDF."""
+    """Generate and return the server-rendered assessment report PDF (hash-anchored to the image)."""
     assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")
