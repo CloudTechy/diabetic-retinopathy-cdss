@@ -109,7 +109,25 @@ def _checkpoint(out):
     out("declared SHA-256 %s" % DECLARED_CHECKPOINT_SHA256)
     out("file     SHA-256 %s" % actual)
     out("size %s bytes" % format(os.path.getsize(CHECKPOINT), ","))
-    return None, actual == DECLARED_CHECKPOINT_SHA256
+    ok = actual == DECLARED_CHECKPOINT_SHA256
+
+    # The constant above is one claim. The system's own config and the training
+    # run's summary are two more; all three must name the same bytes, so this
+    # check cannot be satisfied by editing one file.
+    config = os.path.join(HERE, "backend", "app", "core", "config.py")
+    summary = os.path.join(DOCS, "training_summary.json")
+    for label, path, pattern in (
+            ("config.py", config, r"MODEL_CHECKPOINT_SHA256.{0,80}?([0-9a-f]{64})"),
+            ("training_summary.json", summary, r"\"checkpoint_sha256\"\s*:\s*\"([0-9a-f]{64})\"")):
+        if not os.path.exists(path):
+            out("%s is missing" % label); ok = False; continue
+        m = re.search(pattern, read_text(path), re.S)
+        if not m:
+            out("%s does not state a checkpoint digest" % label); ok = False; continue
+        agree = m.group(1) == actual
+        out("%-22s %s %s" % (label, m.group(1)[:16] + "...", "agrees" if agree else "DISAGREES"))
+        ok = ok and agree
+    return None, ok
 
 
 # ---------------------------------------------------------------------------
@@ -166,12 +184,45 @@ def _metrics(out):
     out("  correct   %d / %d" % (correct, n))
 
     ok = True
+    if rep_n is None or rep_acc is None or rep_qwk is None:
+        out("  clinical_metrics.json lacks n_test / exact_accuracy_pct / quadratic_weighted_kappa"); ok = False
     if rep_n is not None and int(rep_n) != n:
         out("  COHORT SIZE DISAGREES"); ok = False
     if rep_acc is not None and abs(float(rep_acc) - accuracy) > 0.011:
         out("  ACCURACY DISAGREES"); ok = False
     if rep_qwk is not None and abs(float(rep_qwk) - kappa) > 0.0001:
         out("  QWK DISAGREES"); ok = False
+
+    # The predictions must be the manifest's held-out split - every id, and
+    # only those ids - with the manifest's own grade as the truth column.
+    manifest = {r["image_id"]: r for r in load_manifest()}
+    test_ids = {i for i, r in manifest.items() if r["split"] == "test"}
+    pred_ids = {r["image_id"] for r in rows}
+    out("prediction ids == manifest test split: %s (%d vs %d)"
+        % ("yes" if pred_ids == test_ids else "NO", len(pred_ids), len(test_ids)))
+    if pred_ids != test_ids:
+        ok = False
+    mislabelled = sum(1 for r in rows if r["image_id"] in manifest
+                      and str(manifest[r["image_id"]]["true_grade"]) != str(r["true_grade"]))
+    if mislabelled:
+        out("  %d predictions carry a truth grade different from the manifest" % mislabelled); ok = False
+
+    # The headline table every reader opens first must quote these numbers.
+    readme = os.path.join(HERE, "README.md")
+    if os.path.exists(readme):
+        text = read_text(readme)
+        within = 100.0 * sum(1 for t, p in zip(y_true, y_pred) if abs(t - p) <= 1) / n
+        wanted = {
+            "Quadratic Weighted Kappa": "%.4f" % kappa,
+            "Exact accuracy": "%.2f%%" % accuracy,
+            "Within-one-grade agreement": "%.2f%%" % within,
+            "Held-out cohort": "N = %d" % n,
+        }
+        for label, token in wanted.items():
+            m = re.search(r"^\|\s*\*\*%s\*\*[^|]*\|(.*)\|\s*$" % re.escape(label), text, re.M)
+            if not m or token not in m.group(1):
+                out("  README row **%s** does not state %s" % (label, token)); ok = False
+        out("README headline table quotes the recomputed values: %s" % ("yes" if ok else "NO"))
     return None, ok
 
 
@@ -225,12 +276,26 @@ def _leakage(out):
     out("held-out images byte-identical to a training image: %d" % leaked_test)
     out("validation images byte-identical to a training image: %d" % leaked_val)
 
+    leaked_val_test = len(val & test)
+    out("held-out images byte-identical to a validation image: %d" % leaked_val_test)
+
     groups = Counter(r.get("duplicate_group_id", "") for r in rows)
     multi = sum(1 for c in groups.values() if c > 1)
     out("duplicate groups %d, of which %d hold more than one row"
         % (len(groups), multi))
 
-    return None, leaked_test == 0 and leaked_val == 0
+    splits_per_hash = {}
+    for r in rows:
+        splits_per_hash.setdefault(r["sha256_hash"], set()).add(r["split"])
+    spanning = sum(1 for v in splits_per_hash.values() if len(v) > 1)
+    out("hashes appearing in more than one split: %d" % spanning)
+
+    # Each of these was printed and ignored before; each is now a failure.
+    ok = (leaked_test == 0 and leaked_val == 0 and leaked_val_test == 0
+          and multi == 0 and spanning == 0)
+    if not ok:
+        out("  THE SPLIT IS NOT LEAKAGE-FREE")
+    return None, ok
 
 
 # ---------------------------------------------------------------------------
@@ -241,15 +306,23 @@ def _testlog(out):
     text = read_text(TEST_LOG)
 
     collected = re.findall(r"collected (\d+) item", text)
-    summary = re.findall(
-        r"(\d+) passed(?:, (\d+) failed)?(?:, (\d+) skipped)?", text)
-    if not summary:
+    # pytest prints "N failed, M passed, K skipped" in ITS order; parse each
+    # kind independently from the final summary line rather than assuming one.
+    final = [ln for ln in text.strip().split("\n") if re.search(r"\d+ passed|\d+ failed", ln)]
+    if not final:
         out("no pytest summary in the log"); return None, False
+    last = final[-1]
 
-    passed = int(summary[-1][0])
-    failed = int(summary[-1][1] or 0)
-    skipped = int(summary[-1][2] or 0)
-    total = int(collected[-1]) if collected else passed + skipped
+    def count(kind):
+        m = re.search(r"(\d+) %s" % kind, last)
+        return int(m.group(1)) if m else 0
+
+    passed, failed, skipped = count("passed"), count("failed"), count("skipped")
+    errors = count("error")
+    total = int(collected[-1]) if collected else passed + skipped + failed
+    if errors:
+        out("  THE LOG RECORDS %d ERROR(S)" % errors)
+        failed += errors
 
     out("log records: %d collected, %d passed, %d failed, %d skipped"
         % (total, passed, failed, skipped))
@@ -272,10 +345,17 @@ def _testlog(out):
     # The negative lookbehinds keep "Gate 1 Passed" and "All 3 Passed" out:
     # those are gate verdicts, not suite counts.
     patterns = [
-        re.compile(r"(?<!Gate )(?<!All )\*{0,2}(\d+)\*{0,2}\s*"
+        re.compile(r"(?<!Gate )\*{0,2}(\d+)\*{0,2}\s*"
                    r"(?:tests?\s+(?:cases?\s+)?)?"
                    r"(collected|passed|skipped|failed)", re.I),
         re.compile(r"(collected|passed|skipped|failed)\s*:\s*\*{0,2}(\d+)", re.I),
+    ]
+    # "194/195" and "194 of 195" state passed and collected at once; "195 tests"
+    # states collected. "All 3 Passed" in a gate table is excluded by requiring
+    # the number to be at least the suite's size order (a gate table says 3).
+    extra = [
+        (re.compile(r"\b(\d+)\s*(?:/|of)\s*(\d+)\s*(?:tests?\s+)?passed", re.I), ("passed", "collected")),
+        (re.compile(r"\b(\d+)\s+automated tests\b", re.I), ("collected",)),
     ]
 
     # Every Markdown file in the package. archive/ is excluded by name: a
@@ -293,8 +373,12 @@ def _testlog(out):
     for path in sorted(targets):
         rel = os.path.relpath(path, HERE)
         for lineno, line in enumerate(read_text(path).split("\n"), 1):
-            found = [(k.lower(), int(v)) for v, k in patterns[0].findall(line)]
+            found = [(k.lower(), int(v)) for v, k in patterns[0].findall(line)
+                     if not (int(v) < 20 and re.search(r"\bAll\s+%s\b" % v, line))]
             found += [(k.lower(), int(v)) for k, v in patterns[1].findall(line)]
+            for pattern, kinds in extra:
+                for m in pattern.finditer(line):
+                    found += list(zip(kinds, (int(g) for g in m.groups())))
             for kind, value in found:
                 if kind in allowed and value != allowed[kind]:
                     disagreements.append("%s:%d says %s %s"
@@ -325,17 +409,49 @@ def _provenance(out):
     EVIDENCE = (".csv", ".json", ".log", ".png", ".txt", ".pth")
     undeclared = []
     candidates = []
-    if os.path.isdir(DOCS):
-        candidates += [os.path.join(DOCS, n) for n in sorted(os.listdir(DOCS))]
+    # Every subfolder too. The superseded N=549 confusion-matrix screenshot sat
+    # under screenshots/, which the earlier top-level listing never reached.
+    for base, dirs, files in os.walk(DOCS):
+        dirs[:] = sorted(d for d in dirs if d != "archive")
+        candidates += [os.path.join(base, n) for n in sorted(files)]
     candidates.append(CHECKPOINT)
+
+    # A producer cell of "none" or "produced none" declares nothing.
+    declared_rows = {}
+    for line in text.split("\n"):
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 2 and cells[0].startswith("`"):
+            declared_rows[cells[0].strip("`")] = cells[1]
+
+    def is_declared(name):
+        for key, producer in declared_rows.items():
+            if name in key and producer and "none" not in producer.lower():
+                return True
+        return False
+
     for path in candidates:
         name = os.path.basename(path)
         if not os.path.isfile(path) or name.startswith("."):
             continue
         if not name.endswith(EVIDENCE):
             continue
-        if name not in text:
-            undeclared.append(os.path.relpath(path, HERE).replace("\\", "/"))
+        rel = os.path.relpath(path, HERE).replace("\\", "/")
+        # screenshots are declared as a range, "01`-`08"
+        if "/screenshots/" in rel and re.match(r"0[1-8]", name) and is_declared("screenshots/01"):
+            continue
+        if not is_declared(name):
+            undeclared.append(rel)
+
+    # "copy of X" is a checkable claim: the bytes must be X's.
+    copies_wrong = []
+    for m in re.finditer(r"^\|\s*`([^`]+)`\s*\|\s*copy of\s*`([^`]+)`", text, re.M):
+        a, b = os.path.join(HERE, m.group(1)), os.path.join(HERE, m.group(2))
+        if not (os.path.exists(a) and os.path.exists(b)) or sha256(a) != sha256(b):
+            copies_wrong.append("%s is not a byte copy of %s" % (m.group(1), m.group(2)))
+    for w in copies_wrong:
+        out("  " + w)
+    if copies_wrong:
+        return None, False
 
     if undeclared:
         out("files with no entry in PROVENANCE.md:")

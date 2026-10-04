@@ -48,6 +48,14 @@ NOTEBOOKS = os.path.join(REPO_ROOT, "notebooks")
 EXPECTED_CHECKPOINT_SHA256 = "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
 
 
+def sha256_of(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for block in iter(lambda: fh.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
 def read(path):
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         return fh.read()
@@ -454,6 +462,14 @@ OVERCLAIM_PHRASES = [
     "authoritative clinical artefact", "Certified Clinician",
     "meets diagnostic quality", "CLINICAL CONSULTATION RECORD",
     "legal and medical responsibility",
+    # Seventh round: the word survived in a UI header visible in figure 07,
+    # the PDF subtitle, a route docstring and three documents; "cryptographically
+    # bound" and "signed & immutable" dress a SHA-256 over fields as a signature;
+    # a fabricated-identity variant lived in the API contract; the integration
+    # guide cited medical-device standards as its "implementation standard".
+    "Consultation", "consultation", "cryptographically bound", "Cryptographically Bound",
+    "SIGNED & IMMUTABLE", "Finalized & Signed", "Ada Okonjo", "adjunct diagnostic",
+    "21 CFR", "ISO 13485", "IEC 62304", "Non-Repudiation", "Top Saliency Zone",
 ]
 
 
@@ -1353,6 +1369,10 @@ def test_gates_publish_the_exact_value_behind_every_rounded_one():
 CI_PATTERN = re.compile(
     r"(\d+\.\d+)\s*%?\s*(?:,|\s)?\s*95%\s*CI\s*[\(\[]?\s*"
     r"(\d+\.\d+)\s*[-,]\s*(\d+\.\d+)")
+# The tracker wrote intervals as "**91.2%** (81.5–90.5)" - no "95% CI" label -
+# and the pattern above never saw them. Four of them excluded their own estimate.
+CI_PATTERN_PAREN = re.compile(
+    r"(\d+\.\d+)%\**\s*\(\s*(\d+\.\d+)\s*[–-]\s*(\d+\.\d+)\s*\)")
 
 
 def _documentation_files():
@@ -1378,7 +1398,7 @@ def test_every_confidence_interval_contains_its_point_estimate():
     for path in _documentation_files():
         rel = os.path.relpath(path, REPO_ROOT)
         for lineno, line in enumerate(read(path).split("\n"), 1):
-            for match in CI_PATTERN.finditer(line):
+            for match in list(CI_PATTERN.finditer(line)) + list(CI_PATTERN_PAREN.finditer(line)):
                 estimate, low, high = (float(g) for g in match.groups())
                 if low > high:
                     offenders.append(f"{rel}:{lineno} CI ({low}, {high}) is inverted")
@@ -2498,7 +2518,7 @@ MANY_MARKERS = {"o{", "|{", "}o", "}|"}
 
 
 def _model_foreign_keys():
-    """{(child_table, parent_table): fk_column_is_unique}"""
+    """{(child_table, parent_table): (fk_column_is_unique, fk_column_is_nullable)}"""
     tree = ast.parse(read(MODELS), filename=MODELS)
     tables = {}
     for node in ast.walk(tree):
@@ -2516,18 +2536,22 @@ def _model_foreign_keys():
                 continue
             unique = any(kw.arg == "unique" and getattr(kw.value, "value", False)
                          for kw in stmt.value.keywords)
+            nullable = True
+            for kw in stmt.value.keywords:
+                if kw.arg == "nullable":
+                    nullable = bool(getattr(kw.value, "value", True))
             for arg in stmt.value.args:
                 if (isinstance(arg, ast.Call)
                         and getattr(arg.func, "id", None) == "ForeignKey"
                         and arg.args and isinstance(arg.args[0], ast.Constant)):
                     parent = str(arg.args[0].value).split(".")[0]
-                    fks.append((parent, unique))
+                    fks.append((parent, (unique, nullable)))
         if table:
             tables[table] = fks
     out = {}
     for child, fks in tables.items():
-        for parent, unique in fks:
-            out[(child, parent)] = unique
+        for parent, flags in fks:
+            out[(child, parent)] = flags
     return out
 
 
@@ -2540,12 +2564,21 @@ def test_er_diagram_edges_are_the_declared_foreign_keys():
     for left, lm, rm, right in edges:
         a, b = left.lower(), right.lower()
         if (b, a) in fks:
-            child, child_marker, unique = b, rm, fks[(b, a)]
+            child, child_marker, parent_marker, (unique, nullable) = b, rm, lm, fks[(b, a)]
         elif (a, b) in fks:
-            child, child_marker, unique = a, lm, fks[(a, b)]
+            child, child_marker, parent_marker, (unique, nullable) = a, lm, rm, fks[(a, b)]
         else:
             offenders.append("%s -- %s: no ForeignKey between these tables" % (left, right))
             continue
+        # The parent side: a nullable foreign key means the parent is optional.
+        # The reviewer found four edges drawing a mandatory parent over a
+        # nullable key.
+        if nullable and parent_marker != "|o":
+            offenders.append("%s -- %s: %s's foreign key is nullable, so the parent is optional "
+                             "(|o), but the diagram draws %r" % (left, right, child, parent_marker))
+        if not nullable and parent_marker != "||":
+            offenders.append("%s -- %s: %s's foreign key is NOT NULL, so the parent is mandatory "
+                             "(||), but the diagram draws %r" % (left, right, child, parent_marker))
         if unique and child_marker not in ONE_MARKERS:
             offenders.append("%s -- %s: %s's foreign key is UNIQUE, so the edge is "
                              "one-to-one, but the diagram draws %r" % (left, right, child, child_marker))
@@ -2764,7 +2797,9 @@ MEAN_MS_CLAIMS = [
     # "350 ms budget passes on the mean" names a budget, not a measurement.
     re.compile(r"(\d+(?:\.\d+)?)\s*ms\**\s*\(?\s*mean\b", re.I),
 ]
-LATENCY_DISCUSSION_DOCS = {"resource_benchmark.md", "requirements_test_matrix.md"}
+LATENCY_DISCUSSION_DOCS = set()   # every run cited anywhere now ships as JSON
+BENCHMARK_HISTORY = os.path.join(CHAPTER4, "benchmark_history")
+T4_SUMMARY = os.path.join(CHAPTER4, "benchmark_summary.json")
 
 
 def _benchmark_numbers():
@@ -2772,6 +2807,12 @@ def _benchmark_numbers():
 
     def walk(obj):
         if isinstance(obj, dict):
+            # The sum of a run's stage means is a derived figure a document may
+            # legitimately state ("the stages sum to 178.98 ms").
+            stages = obj.get("stages")
+            if isinstance(stages, list) and stages and isinstance(stages[0], dict):
+                total = sum(float(st.get("mean_ms", 0)) for st in stages)
+                values.add(round(total, 2)); values.add(round(total, 1))
             for v in obj.values():
                 walk(v)
         elif isinstance(obj, list):
@@ -2781,6 +2822,15 @@ def _benchmark_numbers():
             values.add(round(float(obj), 2))
             values.add(round(float(obj), 1))
     walk(json.loads(read(BENCHMARK_JSON)))
+    # Every earlier run of the harness that any document cites ships under
+    # benchmark_history/, recovered from the commits they were recorded at.
+    # A figure that is in none of these files was produced by no retained run.
+    if os.path.isdir(BENCHMARK_HISTORY):
+        for name in sorted(os.listdir(BENCHMARK_HISTORY)):
+            if name.endswith(".json"):
+                walk(json.loads(read(os.path.join(BENCHMARK_HISTORY, name))))
+    if os.path.exists(T4_SUMMARY):
+        walk(json.loads(read(T4_SUMMARY)))
     return values
 
 
@@ -2896,3 +2946,163 @@ def test_no_clinical_authority_overclaims_in_documents():
                     offenders.append("%s:%d: %r" % (rel, lineno, phrase))
     assert not offenders, (
         "Authority or certification language in documents:\n  " + "\n  ".join(offenders))
+
+
+# ======================================================================
+# RULE GROUP AD - what the independent reviewer found in round seven
+# ======================================================================
+
+PROGRESS_TRACKER = os.path.join(REPO_ROOT, "PROGRESS_TRACKER.md")
+AI_SERVICE = os.path.join(REPO_ROOT, "backend", "app", "services", "ai_service.py")
+ASSESSMENT_SERVICE = os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py")
+
+
+def test_a_file_declared_a_copy_of_another_is_byte_identical_to_it():
+    """
+    evidence_provenance.md said screenshots/09_confusion_matrix_empirical.png
+    was "copy of docs/chapter4/confusion_matrix.png". It was the superseded
+    N=549 run's matrix: same dimensions, different bytes, titled N=549. A
+    provenance claim of "copy of" is now checked by hashing both files.
+    """
+    text = read(PROVENANCE_DOC)
+    pairs = re.findall(r"^\|\s*`([^`]+)`\s*\|\s*copy of\s*`([^`]+)`", text, re.M)
+    assert pairs, "no 'copy of' rows found; if the row was removed, remove this rule's reason too"
+    offenders = []
+    for target, source in pairs:
+        t, src = os.path.join(REPO_ROOT, target), os.path.join(REPO_ROOT, source)
+        if not (os.path.exists(t) and os.path.exists(src)):
+            offenders.append("%s or %s is missing" % (target, source))
+            continue
+        if sha256_of(t) != sha256_of(src):
+            offenders.append("%s is declared a copy of %s but the bytes differ" % (target, source))
+    assert not offenders, "Provenance 'copy of' claims that are false:\n  " + "\n  ".join(offenders)
+
+
+def test_progress_tracker_operating_points_and_precision_match_the_metrics():
+    """
+    PROGRESS_TRACKER.md ships at the archive root. Its operating-point table
+    carried CIs that excluded their estimates, an NPV from the superseded run
+    and per-class precisions matching nothing in clinical_metrics.json.
+    """
+    metrics = json.loads(read(CLINICAL_METRICS))
+    text = read(PROGRESS_TRACKER)
+    ops = {o["name"]: o for o in metrics["operating_points"]}
+    offenders = []
+    for name, label in (("Referable DR", "Referable DR"), ("Sight-threatening DR", "Sight-threatening DR"),
+                        ("Any DR", "Any DR")):
+        o = ops[name]
+        m = re.search(r"^\|\s*\**%s\**[^|]*\|(.*)$" % re.escape(label), text, re.M)
+        if not m:
+            offenders.append("row for %s not found" % name)
+            continue
+        row = m.group(1)
+        for token in ("%.1f%%" % o["sensitivity_pct"], "(%.1f–%.1f)" % tuple(o["sensitivity_ci95"]),
+                      "%.1f%%" % o["specificity_pct"], "(%.1f–%.1f)" % tuple(o["specificity_ci95"]),
+                      "%.1f%%" % o["ppv_pct"], "%.1f%%" % o["npv_pct"]):
+            if token not in row:
+                offenders.append("%s row lacks %r" % (name, token))
+    for c in metrics["per_class"]:
+        m = re.search(r"^\|\s*%d\s*\|[^|]*\|\s*(\d+)\s*\|\s*\**([\d.]+)%%\**\s*\|\s*([\d.]+)%%\s*\|" % c["grade"], text, re.M)
+        if not m:
+            offenders.append("per-class row for grade %d not found" % c["grade"])
+            continue
+        support, sens, prec = int(m.group(1)), float(m.group(2)), float(m.group(3))
+        if support != c["support"] or abs(sens - round(c["sensitivity_pct"], 1)) > 0.05 \
+                or abs(prec - round(c["precision_pct"], 1)) > 0.05:
+            offenders.append("grade %d row says %d / %.1f%% / %.1f%%; the metrics say %d / %.1f%% / %.1f%%"
+                             % (c["grade"], support, sens, prec, c["support"], c["sensitivity_pct"], c["precision_pct"]))
+    assert not offenders, "PROGRESS_TRACKER.md disagrees with clinical_metrics.json:\n  " + "\n  ".join(offenders)
+
+
+MATRIX = os.path.join(CHAPTER4, "objective_traceability_matrix.md")
+
+
+def test_objective_letters_are_labelled_as_the_traceability_matrix_defines_them():
+    """
+    Five documents called the architecture "Objective g"; the matrix defines g
+    as model integration and a as architecture. A reader following the letters
+    was sent to the wrong objective.
+    """
+    titles = {k: t.strip() for k, t in re.findall(
+        r"^\| \*\*([a-i])\*\* \| \*\*([^|]+?)\*\* \|", read(MATRIX), re.M)}
+    assert len(titles) == 9, "the matrix should define objectives a-i"
+    offenders = []
+    for rel, text in iter_markdown():
+        if "/archive/" in rel.replace("\\", "/"):
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if "Research Objective" not in line:
+                continue
+            for letter, stated in re.findall(r"Objective ([a-i]) \(([^)]*)\)", line):
+                if stated.strip().lower() != titles[letter].lower():
+                    offenders.append("%s:%d calls objective %s %r; the matrix defines it as %r"
+                                     % (rel, lineno, letter, stated.strip(), titles[letter]))
+    for rel in ("PROGRESS_TRACKER.md",):
+        path = os.path.join(REPO_ROOT, rel)
+        if os.path.exists(path):
+            for letter, stated in re.findall(r"^\| \*\*([a-i])\*\* \| ([^|]+?) \|", read(path), re.M):
+                if stated.strip().lower() != titles[letter].lower():
+                    offenders.append("%s: objective %s is %r; the matrix defines it as %r"
+                                     % (rel, letter, stated.strip(), titles[letter]))
+    assert not offenders, "Objective labels drift from the traceability matrix:\n  " + "\n  ".join(offenders)
+
+
+def test_peak_activation_region_is_derived_from_the_cam_not_a_constant():
+    """
+    ICDR_CLASS_METADATA carried a fixed "top_activation" sentence per grade -
+    "Isolated parafoveal microaneurysm cluster" and so on - stored as
+    top_activation_region and shown as "Top Saliency Zone". Nothing in it came
+    from the image. The real engine must derive it from the CAM it computed.
+    """
+    src = read(AI_SERVICE)
+    assert '"top_activation"' not in src, "a per-grade constant attribution string is back"
+    assert "_peak_activation_region(cam)" in src, "the real engine must derive the region from its CAM"
+    assert "top_activation_region=peak_region" in src
+
+
+def test_review_signatory_is_the_authenticated_reviewer_only():
+    """
+    submit_professional_review took clinicianName / licenseNumber from the
+    request body in preference to the signed-in reviewer, so a client could
+    record a review under any name. Only the authenticated account may sign.
+    """
+    tree = ast.parse(read(ASSESSMENT_SERVICE), filename=ASSESSMENT_SERVICE)
+    offenders = []
+    seen_from_reviewer = False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        if not any(t in ("clinician_name", "license_num", "facility") for t in targets):
+            continue
+        for sub in ast.walk(node.value):
+            if isinstance(sub, ast.Attribute) and sub.attr in ("clinicianName", "licenseNumber"):
+                offenders.append("%s is assigned from the request body (%s) at line %d"
+                                 % (targets[0], sub.attr, node.lineno))
+            if isinstance(sub, ast.Attribute) and sub.attr == "full_name" and "clinician_name" in targets:
+                seen_from_reviewer = True
+    assert seen_from_reviewer, "clinician_name must come from the reviewer account"
+    assert not offenders, "\n  ".join(offenders)
+
+
+def test_audit_events_do_not_cascade_delete_with_their_assessment():
+    """
+    database_schema.md calls audit_events append-only and says removing an
+    assessment blanks the reference but never deletes the event. The ORM
+    relationship cascaded "all, delete-orphan". The mapping must not delete.
+    """
+    tree = ast.parse(read(MODELS), filename=MODELS)
+    found = False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(t, ast.Name) and t.id == "audit_events" for t in node.targets):
+            continue
+        if not (isinstance(node.value, ast.Call) and getattr(node.value.func, "id", None) == "relationship"):
+            continue
+        found = True
+        for kw in node.value.keywords:
+            if kw.arg == "cascade" and "delete" in str(getattr(kw.value, "value", "")):
+                raise AssertionError("audit_events cascade=%r deletes events with the assessment"
+                                     % kw.value.value)
+    assert found, "audit_events relationship not found on the model"

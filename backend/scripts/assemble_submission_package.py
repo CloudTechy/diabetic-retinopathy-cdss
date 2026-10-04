@@ -78,6 +78,9 @@ SINGLE_FILES = [
     "frontend/scripts/capture_live_screenshots.js",
     "frontend/scripts/capture_rejection.js",
     "docs/model_integration_guide.md",
+    # training_environment.md sources its frontend and database versions from these.
+    "frontend/package-lock.json",
+    "docker-compose.yml",
 ]
 
 # Whole trees, shipped at their repository paths. A suffix tuple limits what
