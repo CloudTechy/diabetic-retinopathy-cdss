@@ -3,7 +3,7 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective g (Design CDSS software architecture) & Objective i (Verification)
+- **Related Research Objective:** Objective g (Model integration & decision-support workflow) & Objective i (Functional testing and end-to-end evaluation)
 - **Git Commit:** `22cda2c` (Baseline)
 - **Date Generated:** 2026-09-28
 - **Total Evidence Screenshots:** 10 Figure Panels
@@ -17,12 +17,12 @@
 | **Figure 4.1** | **Sign-In & Practitioner Auth** | Demonstrates research prototype clinical login, practitioner role badge, session security notices, and academic scope boundary notice. | [`docs/chapter4/screenshots/01_signin_screen.png`](/docs/chapter4/screenshots/01_signin_screen.png) |
 | **Figure 4.2** | **Assessment Dashboard / Worklist** | Shows active clinical triage queue with summary metric cards, eye laterality (OD/OS), technical quality status, and non-diagnostic model score indicators. | [`docs/chapter4/screenshots/02_clinical_dashboard.png`](/docs/chapter4/screenshots/02_clinical_dashboard.png) |
 | **Figure 4.3** | **New Assessment Fundus Upload** | Displays authentic drag-and-drop ophthalmic upload interface, client pre-flight checks, camera specifications, and de-identified study ID metadata form without synthetic presets. | [`docs/chapter4/screenshots/03_new_assessment_upload.png`](/docs/chapter4/screenshots/03_new_assessment_upload.png) |
-| **Figure 4.4** | **3-Stage Validation (Passed)** | Demonstrates sequential real-time validation progression with all 3 gates clearing: Gate 1 File Integrity, Gate 2 Retinal Relevance, Gate 3 Quality (Laplacian $\sigma_L^2 = 142.4$). | [`docs/chapter4/screenshots/04_validation_stepper_passed.png`](/docs/chapter4/screenshots/04_validation_stepper_passed.png) |
-| **Figure 4.5** | **3-Stage Validation (Rejected)** | Demonstrates the fail-closed safety lock: image rejected at Gate 3 with specific non-diagnostic feedback; automated model inference strictly blocked. | [`docs/chapter4/screenshots/04b_fail_closed_rejection_worklist.png`](/docs/chapter4/screenshots/04b_fail_closed_rejection_worklist.png) |
+| **Figure 4.4** | **3-Stage Validation (Passed)** | Demonstrates sequential real-time validation progression with all 3 gates clearing: Gate 1 File Integrity, Gate 2 Retinal Relevance, Gate 3 Quality (Laplacian $\sigma_L^2 = 12.2$ against the calibrated 4.3 threshold, for the genuine held-out fixture image). | [`docs/chapter4/screenshots/04_validation_stepper_passed.png`](/docs/chapter4/screenshots/04_validation_stepper_passed.png) |
+| **Figure 4.5** | **3-Stage Validation (Rejected)** | The worklist filtered to rejected studies: two studies refused at Gate 3 (Laplacian 1.5 and 0.0, below the 4.3 threshold) with "Inference aborted" — the fail-closed path. Those two rejections were recorded in the 2026-10-02 capture session and remain in the database; the frame was captured on 2026-10-04 by `capture_rejection.js`, which fires only once the rejected state is on screen. | [`docs/chapter4/screenshots/04b_fail_closed_rejection_worklist.png`](/docs/chapter4/screenshots/04b_fail_closed_rejection_worklist.png) |
 | **Figure 4.6** | **Decision-Support Workspace** | Displays dual-layer fundus viewer with zoom/pan, smooth Grad-CAM opacity slider (0–100%), colormap selector (Viridis/Inferno), and 5-class score distribution card. | [`docs/chapter4/screenshots/05_decision_support_workspace.png`](/docs/chapter4/screenshots/05_decision_support_workspace.png) |
 | **Figure 4.7** | **Professional Review Modal** | Demonstrates human-in-the-loop tri-state selector (Agree / Disagree / Unable to determine), optional clinical observations, mandatory confirmation checkbox, and scope attribution notice. | [`docs/chapter4/screenshots/06_professional_review_modal.png`](/docs/chapter4/screenshots/06_professional_review_modal.png) |
-| **Figure 4.8** | **Completed Assessment Record** | Displays finalized consultation report with "Preliminary Model Observation", "Professional Review Response", clinical scope boundary notice, and tamper-evident SHA-256 hash. | [`docs/chapter4/screenshots/07_completed_assessment_record.png`](/docs/chapter4/screenshots/07_completed_assessment_record.png) |
-| **Figure 4.9** | **Record History & Audit Drawer** | Shows search and filter controls across historical assessments with chronological slide-out audit trail demonstrating append-only integrity logs. | [`docs/chapter4/screenshots/08_record_history_audit.png`](/docs/chapter4/screenshots/08_record_history_audit.png) |
+| **Figure 4.8** | **Completed Assessment Record** | Displays the completed assessment record with "Preliminary Model Observation", "Professional Review Response", clinical scope boundary notice, and tamper-evident SHA-256 hash. | [`docs/chapter4/screenshots/07_completed_assessment_record.png`](/docs/chapter4/screenshots/07_completed_assessment_record.png) |
+| **Figure 4.9** | **Record History & Audit Drawer** | Shows the search and filter controls and the ledger of historical assessments — model candidate score, the recorded professional review response and agreement per record, and the per-record Audit action. Captured only after the ledger had populated: an earlier frame showed "Found 0 matching assessment records" because the history search returned HTTP 422 on the screen's `grade=all` filter, a live defect fixed in this round. | [`docs/chapter4/screenshots/08_record_history_audit.png`](/docs/chapter4/screenshots/08_record_history_audit.png) |
 | **Figure 4.10**| **Empirical Confusion Matrix** | High-resolution empirical 5x5 confusion matrix heatmap from the leakage-free held-out cohort ($N = 525$). Regenerated by the clean retrain of 2026-09-30 and **cleared for Chapter Four** - it plots the same matrix that `evaluation_summary.json` carries and that `analyze_clinical_metrics.py` recomputes from `held_out_predictions.csv`. | [`confusion_matrix.png`](/docs/chapter4/confusion_matrix.png) |
 
 ---
@@ -30,18 +30,23 @@
 > [!NOTE]
 > **What these figures evidence.**
 >
-> Figures 4.1–4.9 were captured on 2026-10-02 **against the running system**, by
+> Figures 4.1–4.9 were captured on 2026-10-04 **against the running system**, by
 > [`frontend/scripts/capture_live_screenshots.js`](../../frontend/scripts/capture_live_screenshots.js):
 > a real authenticated session, the three admission gates at their calibrated
 > thresholds, and the real digest-verified EfficientNet-B0 checkpoint
 > (`67d0b896…`). Every API call made during capture returned 2xx, and the
 > Grad-CAM overlay was fetched from the server as PNG bytes rather than drawn by
-> the browser.
+> the browser. The uploaded image is the genuine held-out APTOS fixture
+> `d1f1ea894da1` (manifest split `test`, ground-truth grade 2); the model graded
+> it Grade 2 with a class score of 0.78. Figure 4.8 was captured only after a
+> real review submission was confirmed on screen, and figure 4.9 only after the
+> ledger had populated — the capture script refuses to write a frame whose
+> captioned state it cannot observe.
 >
 > **The grades and class scores shown are the model's own output**, not
 > fixtures. An earlier set of these figures ran the frontend against its
 > built-in demo data with no backend attached, and had to be disclaimed as
-> demonstration values; that set is preserved under `screenshots_fixtures/` and
+> demonstration values; that set is retained in the repository (not in this archive) and
 > is superseded.
 >
 > **What they still do not evidence is accuracy.** The photograph used is a

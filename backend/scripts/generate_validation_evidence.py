@@ -97,7 +97,7 @@ def derive(kind, image_bytes):
         w, h = img.size
         canvas = Image.new("RGB", (w, int(h * 0.45)), (0, 0, 0))
         canvas.paste(img.resize((w, int(h * 0.45))), (0, 0))
-        img, note = canvas, "resized to a 2.2:1 panorama (outside camera proportions)"
+        img, note = canvas, "height reduced to 45% of the original (letterboxed panorama; the resulting ratio depends on the source and is recorded in gate2_aspect_ratio)"
     else:
         raise ValueError(kind)
 

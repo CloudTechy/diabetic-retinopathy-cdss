@@ -231,28 +231,44 @@ async function main() {
     await wait(2500);
     await snap('06_professional_review_modal.png', 'human-in-the-loop modal');
 
-    // 7 — complete the review so the finalised record is real, not a mock-up.
+    // 7 — complete the review so the completed record is real, not a mock-up.
+    //
+    // The response options are BUTTONS, not radio inputs. An earlier version
+    // clicked every radio/checkbox it could find, selected nothing, pressed a
+    // disabled Submit, swallowed the timeout, and photographed the modal under
+    // the name of the completed record. The state is now verified before the
+    // shutter, and a missing state is an error, not a figure.
+    if (!await clickText(page, 'CONCUR')) throw new Error('Agree option not found');
+    await wait(400);
     await page.evaluate(() => {
-      document.querySelectorAll('input[type="radio"], input[type="checkbox"]')
+      document.querySelectorAll('input[type="checkbox"]')
         .forEach((el) => { if (!el.checked) el.click(); });
     });
-    await wait(900);
-    const submitted = await clickText(page, 'Sign')
-      || await clickText(page, 'Submit')
-      || await clickText(page, 'Confirm');
-    if (submitted) {
-      await page.waitForFunction(
-        () => /Professional Review Response|SIGNED|Integrity ID/i
-          .test(document.body.innerText), { timeout: 30000 }).catch(() => {});
-      await wait(2500);
-      await snap('07_completed_assessment_record.png',
-        'finalised record, signed by the reviewer');
-    }
+    await wait(600);
+    const enabled = await page.evaluate(() => {
+      const b = [...document.querySelectorAll('button')]
+        .find((e) => /submit professional review/i.test(e.textContent));
+      return !!b && !b.disabled;
+    });
+    if (!enabled) throw new Error('Submit Professional Review is still disabled');
+    await clickText(page, 'Submit Professional Review');
+    const landed = await page.waitForFunction(
+      () => /review recorded and write-locked/i.test(document.body.innerText),
+      { timeout: 30000 }).then(() => true).catch(() => false);
+    if (!landed) throw new Error('completed record did not appear after submitting - 07 not captured');
+    await wait(2500);
+    await snap('07_completed_assessment_record.png',
+      'completed record after a real review submission');
   }
 
-  // 8 — record history
+  // 8 — record history. The list is fetched after navigation; an earlier
+  // version photographed "Found 0 matching assessment records" 2.5 s in.
   if (await clickText(page, 'Record History')) {
-    await wait(2500);
+    const populated = await page.waitForFunction(
+      () => /Found [1-9]\d* matching assessment record/i.test(document.body.innerText),
+      { timeout: 30000 }).then(() => true).catch(() => false);
+    if (!populated) throw new Error('record history did not populate - 08 not captured');
+    await wait(1500);
     await snap('08_record_history_audit.png', 'live record history');
   }
 
