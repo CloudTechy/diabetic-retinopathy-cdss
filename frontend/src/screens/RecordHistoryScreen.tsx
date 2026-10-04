@@ -138,7 +138,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
             Record History, Search & Clinical Audit Ledger
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Search patient records, review reviewer-assessed grades, and inspect immutable audit logs for research and clinical governance.
+            Search patient records, review reviewer-assessed grades, and inspect the append-only audit log for research governance.
           </p>
         </div>
 
@@ -353,6 +353,10 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                             {rec.clinicianReview.clinicianName.split(',')[0]}
                           </span>
                         </div>
+                      ) : rec.status === 'rejected' ? (
+                        <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px] font-medium">
+                          Rejected at validation — no review possible
+                        </span>
                       ) : (
                         <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[11px] font-medium">
                           Pending Human Review
@@ -385,7 +389,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                         type="button"
                         onClick={() => setSelectedAuditRecord(rec)}
                         className="px-2.5 py-1 text-[11px] font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition"
-                        title="View Immutable Audit Ledger"
+                        title="View Audit Ledger"
                       >
                         <Clock className="w-3 h-3 inline mr-1 text-slate-500" />
                         Audit

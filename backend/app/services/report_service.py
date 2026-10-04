@@ -26,7 +26,7 @@ class ReportService:
 
     @staticmethod
     def generate_pdf_report(assessment: Assessment) -> bytes:
-        """Generate a complete tamper-evident clinical PDF report."""
+        """Generate the assessment report PDF, hash-anchored to the original image."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
             buffer,

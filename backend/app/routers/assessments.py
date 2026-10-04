@@ -259,7 +259,7 @@ async def get_assessment_audit_trail(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Retrieve immutable audit ledger for a given assessment."""
+    """Retrieve the append-only audit ledger for a given assessment."""
     assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")

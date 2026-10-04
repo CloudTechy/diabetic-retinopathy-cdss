@@ -39,7 +39,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ assessment, onClose })
             </div>
             <div>
               <h2 id="audit-drawer-title" className="text-base font-bold text-slate-900 leading-tight">
-                Immutable Clinical Audit Trail
+                Audit Trail (append-only)
               </h2>
               <p className="text-xs text-slate-500 font-mono">
                 {assessment.id} • Patient {assessment.patientId}

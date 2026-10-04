@@ -234,7 +234,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                     instead. */}
                 <div className="text-[11px] text-slate-500 p-2.5 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed">
                   <strong className="text-slate-700 block text-[11px]">Attribution:</strong>
-                  <span>Independent professional response, recorded under the signed-in reviewer and hash-sealed (SHA-256 over the review fields).</span>
+                  <span>Independent professional response, recorded under the signed-in reviewer and hash-anchored (SHA-256 over the review fields).</span>
                 </div>
               </div>
             ) : (
@@ -285,7 +285,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           className="px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl transition shadow-xs flex items-center gap-1.5"
         >
           <Clock className="w-4 h-4 text-slate-500" />
-          <span>Inspect Immutable Audit Trail</span>
+          <span>Inspect Audit Trail</span>
         </button>
 
         <div className="flex items-center space-x-3">
@@ -305,7 +305,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
             className="px-6 py-2.5 text-xs font-bold text-white bg-clinical-primary hover:bg-clinical-primary-hover rounded-xl transition shadow-sm flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-clinical-primary"
           >
             <Download className="w-4 h-4" />
-            <span>Download Tamper-Evident Report</span>
+            <span>Download Report (hash-anchored PDF)</span>
           </button>
         </div>
       </div>

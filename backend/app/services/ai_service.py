@@ -174,7 +174,7 @@ def _peak_activation_region(cam) -> str:
     cell = "central" if (row, col) == ("middle", "centre") else f"{row}-{col}"
     above_half = float((arr >= 0.5 * arr.max()).mean())
     spread = "focal" if above_half < 0.15 else ("broad" if above_half < 0.5 else "diffuse")
-    return (f"Peak Grad-CAM activation in the {cell} third of the frame "
+    return (f"Peak Grad-CAM activation in the {cell} cell of a 3x3 grid over the frame "
             f"({spread}: {above_half:.0%} of the map is above half the peak).")
 
 

@@ -202,7 +202,7 @@ async function main() {
   await wait(2000);
 
   const patient = await page.$('input[placeholder*="PT-"]');
-  if (patient) await patient.type(`PT-${Date.now().toString().slice(-5)}`);
+  if (patient) await patient.type(`${Date.now().toString().slice(-5)}`);  // the field prefixes PT-
 
   const fileInput = await page.$('input[type="file"]');
   if (!fileInput) throw new Error('No file input on the assessment screen');
@@ -280,7 +280,7 @@ async function main() {
     }
     await wait(2000);
     const pid = await page.$('input[placeholder*="PT-"]');
-    if (pid) await pid.type(`PT-REJ-${Date.now().toString().slice(-4)}`);
+    if (pid) await pid.type(`REJ-${Date.now().toString().slice(-4)}`);  // the field prefixes PT-
     const neg = await page.$('input[type="file"]');
     if (neg) {
       await neg.uploadFile(NEGATIVE);

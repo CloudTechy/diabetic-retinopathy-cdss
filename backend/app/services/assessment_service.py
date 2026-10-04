@@ -396,11 +396,17 @@ class AssessmentService:
 
         # Generate cryptographic SHA-256 digital signature
         now = datetime.datetime.now(timezone.utc)
+        # Every field the review records is in the payload. An earlier version
+        # omitted the justification and the inconclusive reason, so the hash
+        # described as "over the review fields" did not cover two of them.
+        # This is an unkeyed SHA-256: it anchors the recorded values, it does
+        # not prove who recorded them.
         sig_payload = (
             f"{assessment.id}|{assessment.patient_id}|"
             f"{assessment.image_asset.sha256_hash if assessment.image_asset else ''}|"
             f"{review_input.agreement}|{review_input.reviewerAssessedGrade}|"
-            f"{clinician_name}|{license_num}|{now.isoformat()}"
+            f"{review_input.justificationNotes or ''}|{review_input.inconclusiveReason or ''}|"
+            f"{clinician_name}|{license_num}|{facility}|{now.isoformat()}"
         )
         sig_hash = f"SIG-SHA256-{hashlib.sha256(sig_payload.encode('utf-8')).hexdigest()[:24]}"
 
