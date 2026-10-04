@@ -241,7 +241,7 @@ export const App: React.FC = () => {
     setShowReviewModal(false);
     navigateTo('completed_assessment', updatedRecord);
     const grade = updatedRecord.clinicianReview?.reviewerAssessedGrade ?? updatedRecord.modelObservation?.primaryClassGrade ?? 0;
-    showToast(`ICDR Grade ${grade} signed & locked.`);
+    showToast(`ICDR Grade ${grade} review recorded and write-locked.`);
   };
 
   return (

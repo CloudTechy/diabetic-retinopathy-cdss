@@ -108,7 +108,7 @@ flowchart TD
     S4 -->|All Passed| S5["Screen 5: Decision-Support Workspace"]
     S4 -->|Gate Failed| S4b["Screen 4b: Fail-Closed Rejection Lock"]
     S5 --> S6["Screen 6: Professional Review Modal"]
-    S6 --> S7["Screen 7: Completed Assessment Consultation Record"]
+    S6 --> S7["Screen 7: Completed Assessment Record"]
     S7 --> S8["Screen 8: Record History & Audit Trail"]
 ```
 
@@ -116,9 +116,9 @@ flowchart TD
 1. **Navigate to:** `http://localhost:4173/`
 2. **Observe UI Elements:**
    - Top safety ribbon: *AI Clinical Decision Support Aid (Research & Decision Support) — TLS 1.3 Secured*.
-   - Practitioner credential card displaying default authorized clinician (`Dr. Ada Okonjo, Consultant Medical Ophthalmologist`).
+   - Practitioner card displaying the seeded simulated identity (`Dr. Demo Clinician (Simulated)`, `Simulated Reviewer — Research Prototype`).
    - 15-minute clinical workstation auto-lock inactivity countdown timer.
-3. **Action:** Click **"Sign In to Clinical Workstation"** with default credentials (`clinician` / `ClinicalPassword2026!`).
+3. **Action:** Click **"Sign In to Clinical Workstation"** with the seeded credentials (`demo.clinician` / `dr_secure_password_2026`).
 
 ### Screen 2: Assessment Dashboard / Worklist
 1. **Observe Summary Ribbon:**
@@ -177,9 +177,9 @@ flowchart TD
    - **Management Protocol:** Clinician chooses clinical recall or referral recommendation (e.g., *Routine 12-month recall*, *3–6 month repeat*, *Medical retina referral*).
 3. **Action:** Click **"Review and Confirm Sign-off"**. In the explicit confirmation dialog, confirm clinical sign-off.
 
-### Screen 7: Completed Assessment Consultation Record
-1. **Verify Consultation Summary:**
-   - Top banner confirms: `Assessment Finalized & Signed — Record Immutable`.
+### Screen 7: Completed Assessment Record
+1. **Verify the record summary:**
+   - Top banner confirms: `Assessment completed — review recorded and write-locked`.
    - **Assessment Integrity Hash:** Displays SHA-256 cryptographic digest of the retinal image.
    - **Demarcation of Domains:**
      - Left Container (Neutral Gray): Preliminary Model Observation (`EfficientNet-B0`, `features.8`).

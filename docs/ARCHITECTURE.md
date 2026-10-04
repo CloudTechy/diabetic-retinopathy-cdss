@@ -38,7 +38,7 @@ The **Diabetic Retinopathy Clinical Decision Support System (CDSS)** is an ophth
 - **Medical Images (`/storage/images`)**: Private local disk volume storing original uploaded images with SHA-256 integrity hashes.
 - **Audit Logs & Metadata**: PostgreSQL relational database tracking validation pipeline status, model scores, clinician overrides, and timestamps.
 - **Attributions (`/storage/attributions`)**: Grad-CAM visual saliency heatmaps generated upon inference.
-- **Reports (`/storage/reports`)**: Immutable PDF clinical consultation summaries.
+- **Reports (`/storage/reports`)**: Generated PDF assessment reports, hash-anchored to the image.
 
 ## 4. Environment Execution
 - **Containerization**: Managed via `docker-compose.yml` supporting hot reload development and isolated testing.

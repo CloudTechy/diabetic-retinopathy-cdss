@@ -208,7 +208,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-5 h-5 text-teal-600" />
                     <div>
-                      <span className="font-bold block">Review Finalized & Signed</span>
+                      <span className="font-bold block">Review recorded</span>
                       <span className="text-[11px] text-teal-700">Record is finalised and locked.</span>
                     </div>
                   </div>

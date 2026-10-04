@@ -90,7 +90,7 @@ class ReportService:
 
         # --- Header ---
         elements.append(Paragraph("Assessment Report", title_style))
-        elements.append(Paragraph("Ophthalmic Retinal Screening & Decision-Support Consultation Summary", subtitle_style))
+        elements.append(Paragraph("Retinal Screening Decision-Support Assessment Record", subtitle_style))
         elements.append(Spacer(1, 4))
         elements.append(
             Paragraph(
@@ -292,7 +292,7 @@ class ReportService:
         else:
             elements.append(
                 Paragraph(
-                    "<em>Awaiting clinician professional review. This preliminary consultation record has not yet been signed.</em>",
+                    "<em>Awaiting professional review. No review response has been recorded for this assessment yet.</em>",
                     body_style,
                 )
             )

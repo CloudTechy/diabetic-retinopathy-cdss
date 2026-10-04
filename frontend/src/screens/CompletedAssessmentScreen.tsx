@@ -59,7 +59,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
         {/* Lock Status Indicator */}
         <div className="flex items-center space-x-2 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg text-xs text-teal-900 font-semibold shadow-xs">
           <ShieldCheck className="w-4 h-4 text-teal-600 flex-shrink-0" />
-          <span>Assessment Finalized & Signed — Record Immutable</span>
+          <span>Assessment completed — review recorded and write-locked</span>
           <Lock className="w-3.5 h-3.5 text-teal-700 ml-1" />
         </div>
       </div>
@@ -69,7 +69,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-100 pb-4">
           <div>
             <span className="text-[10px] font-mono uppercase text-slate-400 font-bold">
-              Finalized Clinical Consultation Report
+              Completed Assessment Record
             </span>
             <h2 className="text-xl font-black text-slate-900 leading-tight">
               {assessment.id} • Patient {assessment.patientId}
@@ -152,7 +152,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                 </span>
               </div>
               <div>
-                <strong>Top Saliency Zone:</strong>{' '}
+                <strong>Peak activation region (Grad-CAM):</strong>{' '}
                 <span>{assessment.modelObservation?.topActivationRegion}</span>
               </div>
             </div>
@@ -176,7 +176,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                 [Professional Review Response]
               </span>
               <span className="text-[10px] text-teal-800 font-mono font-bold">
-                SIGNED & IMMUTABLE
+                RECORDED · WRITE-LOCKED
               </span>
             </div>
 
@@ -234,7 +234,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                     instead. */}
                 <div className="text-[11px] text-slate-500 p-2.5 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed">
                   <strong className="text-slate-700 block text-[11px]">Attribution:</strong>
-                  <span>Independent professional assessment recorded and cryptographically bound to the reviewing clinician.</span>
+                  <span>Independent professional response, recorded under the signed-in reviewer and hash-sealed (SHA-256 over the review fields).</span>
                 </div>
               </div>
             ) : (

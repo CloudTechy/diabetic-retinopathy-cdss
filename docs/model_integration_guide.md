@@ -13,7 +13,7 @@
 This guide provides a comprehensive, step-by-step technical walkthrough for **Milestone M6 (Model Integration)** of the Diabetic Retinopathy Clinical Decision Support System (DR-CDSS). 
 
 The boundaries below are **informed by** published guidance on Software as a Medical Device — FDA material on AI/ML-enabled medical software and NHS digital health governance — as a source of design principles. No claim of conformity, classification or approval is made:
-1. **Clinical Decision Support Boundary**: The deep neural network acts strictly as an adjunct diagnostic aid. The model outputs **"model-generated class scores"** (never labeled as "confidence", "certainty", or "diagnostic truths").
+1. **Clinical Decision Support Boundary**: The deep neural network acts strictly as a decision-support aid; it does not diagnose. The model outputs **"model-generated class scores"** (never labeled as "confidence", "certainty", or "diagnostic truths").
 2. **Deterministic, Non-Adaptive Inference**: The CDSS operates in **evaluation mode only** (`model.eval()`). All neural network parameters are strictly frozen (`requires_grad = False`). Online fine-tuning, run-time gradient updates, and continuous learning from live clinical requests are architecturally prohibited to avoid model drift and preserve validation pedigree.
 3. **Fail-Closed Execution Invariant**: Inference is physically unreachable unless an uploaded fundus image has sequentially cleared all three stages of the Technical Validation Pipeline (Gate 1: File Integrity, Gate 2: Retinal Anatomical Relevance, and Gate 3: Technical Quality).
 4. **Visual Interpretability (Grad-CAM)**: Every positive or negative classification inference must produce an aligned visual attribution artifact showing which spatial retinal biomarkers (e.g., microaneurysms, hemorrhages, venous beading, neovascularization) drove the activation of the target class.
@@ -460,10 +460,10 @@ pytest backend/tests/test_api_endpoints.py -k test_create_and_upload_assessment 
 
 ## 9. Regulatory & Audit Summary
 
-| Compliance Aspect | Implementation Standard | System Enforcement |
+| Design aspect | Design reference (informative only — no conformity with any standard is claimed) | System enforcement |
 | :--- | :--- | :--- |
 | **Risk framing (design reference only)** | The IMDRF "informs clinical management" tier was used as a *design reference* when setting the human-in-the-loop boundary. It is **not** an assigned categorisation. | Model output is advisory and non-diagnostic; a clinician records their own independent grade. |
-| **Model Drift Prevention** | ISO 13485 / IEC 62304 Software Lifecycle | `model.eval()`, `requires_grad=False`, no run-time gradient adjustments. |
-| **Traceability & Integrity** | 21 CFR Part 11 / EU MDR Article 10 | Cryptographic SHA-256 hash validation on weights prior to instantiation. |
+| **Fixed weights in service** | Fixed-weights evaluation, no in-service learning | `model.eval()`, `requires_grad=False`, no run-time gradient adjustments. |
+| **Checkpoint integrity** | Digest verification before the weights are loaded | Cryptographic SHA-256 hash validation on weights prior to instantiation. |
 | **Explainability (XAI)** | High-Level Expert Group on AI (HLEG) Trustworthy AI | Grad-CAM feature heatmaps generated per prediction with target layer logging. |
-| **Auditing & Non-Repudiation** | Clinical Audit Trail Standard | Every prediction logged in `ModelExecution` and signed off in `ProfessionalReview`. |
+| **Audit trail** | Append-only event log | Every run is recorded in `model_executions`; a professional review response, when entered, is recorded in `professional_reviews` under the signed-in account. |

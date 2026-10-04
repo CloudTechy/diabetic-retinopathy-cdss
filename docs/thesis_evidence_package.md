@@ -88,7 +88,7 @@ xychart-beta
 - **Container Idle Memory**: $148\,\text{MB}$ (FastAPI uvicorn workers + connection pool).
 - **Peak Operational Memory (Single Inference)**: $385\,\text{MB}$ (including Pillow image buffer, NumPy array, and PyTorch activation tensors).
 - **Concurrency Scalability**: At 10 concurrent requests on a 4-core, 8GB host, total memory consumption remained below $1.8\,\text{GB}$, well within the system budget of $4.0\,\text{GB}$.
-- **Storage Consumption**: Each completed assessment consumes $\approx 1.2\,\text{MB}$ of persistent disk volume ($850\,\text{KB}$ original compressed JPEG, $220\,\text{KB}$ Grad-CAM heatmap PNG, $180\,\text{KB}$ generated clinical PDF consultation report).
+- **Storage Consumption**: Each completed assessment consumes $\approx 1.2\,\text{MB}$ of persistent disk volume ($850\,\text{KB}$ original compressed JPEG, $220\,\text{KB}$ Grad-CAM heatmap PNG, $180\,\text{KB}$ generated PDF assessment report).
 
 ---
 
@@ -98,7 +98,7 @@ The clinical decision boundaries, intended use and technical limitations of this
 
 ### 1. Decision Boundaries & Non-Autonomous Operation
 - **Strictly Decision-Support (Non-Autonomous)**: The DR-CDSS is engineered and validated exclusively as an assistive second-reader and clinical triage aid. Under no circumstances is the system licensed, calibrated, or authorized to operate autonomously or issue independent medical diagnoses.
-- **Clinician Sole Authority**: Final diagnosis, ICDR clinical staging, medical interventions, follow-up intervals, laser photocoagulation referrals, anti-VEGF intraocular injections, or vitreoretinal surgical consultations remain the sole professional responsibility of the qualified medical practitioner.
+- **Outside the system's scope**: diagnosis, clinical staging decisions, interventions, follow-up intervals and referrals are neither performed nor recorded by this system. It records a model observation and, where a reviewing professional enters one, their own grade and response.
 - **No Direct Treatment Orders**: The system does not write prescriptions, schedule medical procedures, or communicate diagnostic findings directly to patients without prior clinical review and digital sign-off.
 
 ### 2. Technical Quality Gates vs. Clinical Gradability

@@ -61,7 +61,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ assessment, onClose })
             <span className="font-semibold text-teal-300 uppercase tracking-wider text-[10px]">
               SHA-256 Retinal Image Hash
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">Cryptographically Bound</span>
+            <span className="text-[10px] text-slate-400 font-mono">Hash-anchored</span>
           </div>
           <p className="font-mono text-[11px] break-all bg-slate-800 p-2 rounded border border-slate-700 text-teal-200">
             {assessment.qualityMetrics.sha256Hash}

@@ -67,7 +67,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
             <div className="space-y-1">
               <span className="font-bold block">Restricted Clinical Decision Support System</span>
               <p className="text-[11px] text-amber-800 leading-relaxed">
-                Authorized for credentialed healthcare practitioners only. All activity is logged and cryptographically bound to staff identity.
+                Authorized for credentialed healthcare practitioners only. All activity is logged against the signed-in account.
               </p>
             </div>
           </div>
@@ -149,7 +149,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
               >
                 <div className="flex items-center gap-1 font-semibold text-slate-800">
                   <UserCheck className="w-3.5 h-3.5 text-clinical-primary" />
-                  Dr. Demo (Ophth)
+                  Dr. Demo Clinician (Simulated)
                 </div>
                 <div className="text-[10px] text-slate-400">Consultant</div>
               </button>

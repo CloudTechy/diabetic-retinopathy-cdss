@@ -3,7 +3,7 @@
 ## Metadata & Traceability
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
-- **Related Research Objective:** Objective g (Design CDSS software architecture)
+- **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective g (Model integration & decision-support workflow)
 - **API Standard:** OpenAPI 3.1.0 / RESTful JSON / RFC 7807 Problem Details
 - **Base Endpoint:** `/api/v1`
 - **Git Commit:** `22cda2c` (Baseline)
@@ -31,8 +31,8 @@
       "expires_in": 900,
       "user": {
         "id": "usr-01",
-        "name": "Dr. Ada Okonjo",
-        "role": "Consultant Medical Ophthalmologist",
+        "name": "Dr. Demo Clinician (Simulated)",
+        "role": "Simulated Reviewer — Research Prototype",
         "licenseNumber": "SIM-000001"
       }
     }
@@ -125,7 +125,7 @@
   ```
 
 ### `POST /api/v1/assessments/{id}/review`
-- **Description:** Records the reviewing clinician's own independent assessment and locks the consultation record.
+- **Description:** Records the reviewing professional's own independent response under the signed-in account and write-locks the assessment record. `clinicianName`, `licenseNumber` and `facility` in the body are ignored; the signatory is always the authenticated user.
 - **Request Body:**
   ```json
   {

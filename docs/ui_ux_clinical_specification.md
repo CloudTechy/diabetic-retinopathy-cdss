@@ -146,7 +146,7 @@ stateDiagram-v2
 ### Screen 7: Completed Assessment & Audit View
 * **Clinical Purpose**: Immutable record of the completed screening encounter, presenting the clinical review and the preliminary AI output as distinct, linked records.
 * **Key Components**:
-  * **Lock Status Indicator**: Shield icon with "Assessment Finalized & Signed — Record Immutable".
+  * **Lock Status Indicator**: Shield icon with "Assessment completed — review recorded and write-locked".
   * **Side-by-Side Verification Summary**:
     * Box A (AI Preliminary Output): Generated timestamp, model version (`EfficientNet-B0-DR-v1`), candidate class score.
     * Box B (Certified Clinical Diagnosis): Reviewing Clinician Name, Confirmed ICDR Stage, Justification Notes, Referral Recommendation, Signature Timestamp.
