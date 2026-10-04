@@ -141,7 +141,7 @@ stateDiagram-v2
     * Repeat photograph in 3–6 months
     * Referral to secondary care / medical retina clinic
     * Urgent referral (vitrectomy / anti-VEGF clinic)
-  * **Clinician Digital Signature**: Reviewer Name, Professional License / GMC / Registration Number, Timestamp.
+  * **Review hash anchor**: reviewer name (from the signed-in account), registration code, timestamp.
 
 ### Screen 7: Completed Assessment & Audit View
 * **Clinical Purpose**: Immutable record of the completed screening encounter, presenting the clinical review and the preliminary AI output as distinct, linked records.

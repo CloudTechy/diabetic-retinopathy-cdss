@@ -43,7 +43,7 @@ Letters, titles and status are those of [`objective_traceability_matrix.md`](doc
 | :--- | :---: | :---: | :---: | :---: |
 | **Referable DR** (grade $\ge$ 2) | **91.2%** (86.5–94.4) | **95.6%** (92.8–97.4) | 93.0% | 94.4% |
 | **Sight-threatening DR** (grade $\ge$ 3) | **68.2%** (56.2–78.2) | 94.8% (92.3–96.5) | 65.2% | **95.4%** |
-| Any DR (grade $\ge$ 1) | 97.7% (95.0–98.9) | 98.5% (96.3–99.4) | 98.4% | 97.8% |
+| Any DR (grade $\ge$ 1) | 97.6% (95.0–98.9) | 98.5% (96.3–99.4) | 98.4% | 97.8% |
 
 Of 205 referable cases, **18 were missed** (predicted below grade 2): 11 of Grade 2, 7 of Grade 4. **7** sight-threatening cases were released as non-referable: 1 Grade 4 predicted as Grade 0, 6 Grade 4 predicted as Grade 1. Counted from [`held_out_predictions.csv`](docs/chapter4/held_out_predictions.csv).
 

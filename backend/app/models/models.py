@@ -205,7 +205,7 @@ class ExplanationArtifact(Base):
 
 
 class ProfessionalReview(Base):
-    """Clinician-in-the-loop review record. Once signed, this record is strictly immutable."""
+    """Professional review record. Once recorded, the API refuses a second review for the assessment."""
     __tablename__ = "professional_reviews"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
@@ -226,7 +226,7 @@ class ProfessionalReview(Base):
     license_number = Column(String(100), nullable=True)
     facility = Column(String(255), nullable=True)
     
-    # Cryptographic SHA-256 digital signature of review content and image hash
+    # SHA-256 hash anchor over the review fields and the image hash (unkeyed)
     signature_hash = Column(String(128), nullable=False)
     is_immutable = Column(Boolean, default=True, nullable=False)
     signed_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
@@ -237,7 +237,7 @@ class ProfessionalReview(Base):
 
 
 class AuditEvent(Base):
-    """Immutable audit trail log tracking clinical events, security actions, and state changes."""
+    """Append-only audit log of clinical events, security actions and state changes."""
     __tablename__ = "audit_events"
 
     id = Column(String(64), primary_key=True, default=lambda: f"AUD-{uuid.uuid4().hex[:6].upper()}")

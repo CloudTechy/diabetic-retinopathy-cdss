@@ -34,10 +34,9 @@ def _locate(filename, subdirs):
     Find an artefact whether this script runs from the repository or from a
     standalone submission package.
 
-    In the repository the artefacts live in docs/chapter4/. In the package they
-    are split across logs_and_metrics/ and dataset_sample_and_manifest/, and
-    this script sits in scripts/ beside them. The README tells a reviewer to
-    run it from the package, so it has to work there.
+    The archive is repository-relative, so docs/chapter4/ is the one location
+    in both. The remaining candidates serve a superseded archive layout that
+    split the artefacts across logs_and_metrics/ and dataset_sample_and_manifest/.
     """
     candidates = [os.path.join(REPO_ROOT, "docs", "chapter4", filename)]
     package_root = os.path.dirname(_HERE)

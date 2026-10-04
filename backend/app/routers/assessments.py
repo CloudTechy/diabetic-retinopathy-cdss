@@ -233,9 +233,11 @@ async def submit_review(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Formal clinical governance checkpoint.
-    Clinician signs off on ICDR classification, action plan, and justification.
-    Once submitted, the record transitions to 'completed' and becomes strictly immutable.
+    Record the reviewing professional's response: agreement, their own ICDR
+    grade and, where required, a justification. The signatory is the signed-in
+    account. Once recorded, the assessment transitions to 'completed' and the
+    API refuses a second review; no action plan or management decision is
+    recorded.
     """
     try:
         assessment = await AssessmentService.submit_professional_review(

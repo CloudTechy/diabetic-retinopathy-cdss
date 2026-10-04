@@ -343,7 +343,7 @@ class AssessmentService:
     ) -> Assessment:
         """
         Commits clinician review and finalizes assessment into 'completed' status.
-        Enforces review-confirmation controls and cryptographic digital signature.
+        Enforces review-confirmation controls and anchors the recorded fields with a SHA-256 hash.
         """
         stmt = select(Assessment).where(Assessment.id == assessment_id).options(
             selectinload(Assessment.image_asset),
@@ -360,7 +360,7 @@ class AssessmentService:
 
         # Check existing review
         if assessment.professional_review:
-            raise ReviewValidationError("This assessment already has a confirmed review and is immutable.")
+            raise ReviewValidationError("This assessment already has a recorded review; the API does not accept a second one.")
 
         # Check status allows review: result_ready or under_review
         if assessment.status not in ("result_ready", "under_review"):
@@ -394,7 +394,7 @@ class AssessmentService:
         grade_meta = ICDR_CLASS_METADATA[review_input.reviewerAssessedGrade]
         confirmed_label = f"Grade {review_input.reviewerAssessedGrade}: {grade_meta['label']}"
 
-        # Generate cryptographic SHA-256 digital signature
+        # SHA-256 hash anchor over the recorded fields
         now = datetime.datetime.now(timezone.utc)
         # Every field the review records is in the payload. An earlier version
         # omitted the justification and the inconclusive reason, so the hash

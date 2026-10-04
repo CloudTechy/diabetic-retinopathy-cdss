@@ -4,7 +4,6 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy Using Retinal Image Classification
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Supervising Department:** Department of Computer Science / Engineering
-- **Current Git Commit:** `22cda2c` (Baseline) $\to$ Active Chapter 4 Evidence Generation
 - **Date Generated:** 2026-09-28
 - **Evaluation Status:** Fixed Evaluated EfficientNet-B0 Model Pipeline
 - **Hardware/Software Environment:** Windows 11 x64; the test environment is recorded in `test_environment_freeze.txt` (Python 3.13, torch 2.14.1+cpu, numpy 2.5.2, pillow 11.3.0); Node 24.9, Vite 5.4.21, PostgreSQL 16 (`postgres:16-alpine`)

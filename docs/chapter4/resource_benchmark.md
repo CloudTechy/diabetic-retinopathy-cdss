@@ -27,7 +27,7 @@ The complete request path, on the CPU the system deploys to, over 30 real held-o
 Comfortably interactive for an assisted-review workflow on a commodity 4-thread CPU with no accelerator.
 
 > [!IMPORTANT]
-> **Cite the combined gate share and the ordering of stages, not the
+> **Cite the combined gate share and the ordering of the 5 largest stages (`gate2` > `encode` > `forward` > `compose` > `gate3`), not the
 > milliseconds.** See §1b — two runs of the same harness and checkpoint over the
 > same 30 images differed by **1.41×** in absolute time; their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`).
 
@@ -52,7 +52,7 @@ Stage means sum to 178.98 ms against a measured total of 180.41 ms. The 1.44 ms 
 
 ## 1b. How much of this figure is the machine? Measured, not assumed.
 
-Three runs of this harness exist on the clean checkpoint. Runs B and C share the same 30 clean-split images; run A's image set is that of the earlier runs (the superseded split):
+Three runs of this harness are cited. Runs B and C were measured on the clean checkpoint over the same 30 clean-split images; run A's checkpoint cannot be established from the artefacts and its image set is that of the earlier runs (the superseded split):
 
 | Run | Date | Checkpoint pinned at its commit | Images (mean size) | Mean | Median | P95 | Gates 2+3 share |
 | :--- | :--- | :--- | :--- | ---: | ---: | ---: | ---: |
@@ -64,11 +64,11 @@ Every run of this harness that is cited anywhere in this package ships as a JSON
 
 **B and C were measured with the same harness, the same checkpoint, the same 30 images and the same 30 requests after 3 warm-ups.** They are *not* the same commit: run B was committed while `config.py` still held the a-priori threshold values and run C after calibration — a difference the harness does not act on, because it times gates 2 and 3 and continues regardless of their verdict. Otherwise they differ in which machine Colab allocated. The absolute times differ by **1.41×**.
 
-Their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`). The combined share and the ordering of the stages are the durable finding; per-stage decimals are not.
+Their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`). The combined share and the ordering of the 5 largest stages (`gate2` > `encode` > `forward` > `compose` > `gate3`) are the durable finding; the two smallest stages swap places between the runs, and per-stage decimals are not durable.
 
 That is the whole argument for quoting shares. A reader who takes 180.41 ms as a
 property of the system will be wrong by up to 40% on different hardware; a reader
-who takes "validation is ~41% of the request and the model ~16%" will not.
+who takes "validation is ~41% of the request and the model 14–16%" will not.
 
 > [!CAUTION]
 > **NFR-01 is not robustly met at the tail, and this is the evidence.** The

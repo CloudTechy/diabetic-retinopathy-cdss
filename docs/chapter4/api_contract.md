@@ -6,7 +6,6 @@
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective g (Model integration & decision-support workflow)
 - **API Standard:** OpenAPI 3.1.0 / RESTful JSON / RFC 7807 Problem Details
 - **Base Endpoint:** `/api/v1`
-- **Git Commit:** `22cda2c` (Baseline)
 - **Last Revised:** 2026-10-04
 
 ---

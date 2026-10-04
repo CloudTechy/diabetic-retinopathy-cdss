@@ -37,7 +37,7 @@ The Diabetic Retinopathy Clinical Decision Support System (DR-CDSS) was subjecte
 4. **Relational Separation of AI vs Review Data**:
    - Model execution artifacts (`AIResult`, `ExplanationArtifact`) and clinician certifications (`ProfessionalReview`) are stored in distinct database entities. AI scores are never altered by clinical reviews.
 5. **Review Immutability & Cryptographic Sign-Off**:
-   - Certified clinical reviews are sealed with a cryptographic SHA-256 digital signature hash. The encounter enters an unalterable `completed` state.
+   - Recorded reviews are anchored with a SHA-256 hash over the review fields. The encounter enters a `completed` state in which the API refuses a second review.
 
 ---
 

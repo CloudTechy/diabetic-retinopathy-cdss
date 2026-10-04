@@ -4,7 +4,6 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
-- **Git Commit:** `22cda2c` (Baseline)
 - **Last Revised:** 2026-10-04
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
 - **Overall Verification Status:** **206 of 207 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)

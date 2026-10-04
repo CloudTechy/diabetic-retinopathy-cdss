@@ -183,7 +183,7 @@ Two runs of the same harness and checkpoint over the same 30 images, differing i
 which machine Colab allocated, came out **1.41× apart** (254.31 ms and 180.41 ms);
 their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`)
 ([`resource_benchmark.md`](resource_benchmark.md) §1b). The combined gate share and
-the ordering of stages are the durable finding; the milliseconds are an order of
+the ordering of the 5 largest stages (`gate2` > `encode` > `forward` > `compose` > `gate3`) are the durable finding; the milliseconds are an order of
 magnitude.
 
 **The tail is the part worth stating.** NFR-01 sets a 350 ms budget and is

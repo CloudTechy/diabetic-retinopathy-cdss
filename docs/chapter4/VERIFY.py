@@ -227,9 +227,11 @@ def _metrics(out):
             return (100.0 * tp / (tp + fn), 100.0 * tn / (tn + fp), 100.0 * tn / (tn + fn))
         r_sens, r_spec, _ = op(2)
         s_sens, _, s_npv = op(3)
+        a_sens, a_spec, _ = op(1)
         wanted_many = {
             "Referable DR": ["%.1f%%" % r_sens, "%.1f%%" % r_spec],
             "Sight-threatening DR": ["%.1f%%" % s_sens, "%.1f%%" % s_npv],
+            "Any DR": ["%.1f%%" % a_sens, "%.1f%%" % a_spec],
         }
         for label, token in wanted.items():
             m = re.search(r"^\|\s*\*\*%s\*\*[^|]*\|(.*)\|\s*$" % re.escape(label), text, re.M)

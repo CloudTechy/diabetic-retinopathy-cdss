@@ -476,6 +476,8 @@ OVERCLAIM_PHRASES = [
     "tamper-evident", "Tamper-Evident", "Tamper Evidence", "Immutable Clinical Audit",
     "immutable audit", "Immutable Audit", "immutable review", "legal compliance",
     "Legal Traceability", "Official Review", "biomarkers", "hash-sealed",
+    # Ninth round: served route descriptions and code comments.
+    "digital signature", "strictly immutable", "Immutable Locked", "signs off on",
 ]
 
 
@@ -2871,6 +2873,30 @@ def test_mean_latency_claims_are_the_canonical_run():
 # Lifted to the archive root as README.md by the assembler, so the rule must
 # read it there when run from an extracted archive - it failed to on the first
 # extraction run, which is exactly the kind of layout blindness it polices.
+
+PREDICTIONS_CSV = os.path.join(CHAPTER4, "held_out_predictions.csv")
+
+
+def _operating_points_from_predictions():
+    """
+    {name: {sensitivity_pct, specificity_pct, ppv_pct, npv_pct}} computed from
+    the raw predictions. clinical_metrics.json stores these at two decimals;
+    rounding THAT to one decimal is a second rounding, and 97.647 -> 97.65 ->
+    97.7 disagreed with VERIFY.py, which computes from the predictions.
+    """
+    import csv as _csv
+    with open(PREDICTIONS_CSV, newline="", encoding="utf-8") as fh:
+        pairs = [(int(r["true_grade"]), int(r["predicted_grade"])) for r in _csv.DictReader(fh)]
+    out = {}
+    for name, th in (("Referable DR", 2), ("Sight-threatening DR", 3), ("Any DR", 1)):
+        tp = sum(1 for t, p in pairs if t >= th and p >= th)
+        fn = sum(1 for t, p in pairs if t >= th and p < th)
+        fp = sum(1 for t, p in pairs if t < th and p >= th)
+        tn = sum(1 for t, p in pairs if t < th and p < th)
+        out[name] = {"sensitivity_pct": 100.0 * tp / (tp + fn), "specificity_pct": 100.0 * tn / (tn + fp),
+                     "ppv_pct": 100.0 * tp / (tp + fp), "npv_pct": 100.0 * tn / (tn + fn)}
+    return out
+
 SUBMISSION_README = _resolve(
     os.path.join(CHAPTER4, "SUBMISSION_README.md"),
     os.path.join(REPO_ROOT, "README.md"),
@@ -2887,7 +2913,7 @@ def test_submission_readme_headline_table_matches_the_metrics_files():
     metrics = json.loads(read(CLINICAL_METRICS))
     bench = json.loads(read(BENCHMARK_JSON))
     text = read(SUBMISSION_README)
-    ops = {o["name"]: o for o in metrics["operating_points"]}
+    ops = _operating_points_from_predictions()
     cm = metrics["confusion_matrix"]
     correct = sum(cm[i][i] for i in range(len(cm)))
 
@@ -2901,6 +2927,8 @@ def test_submission_readme_headline_table_matches_the_metrics_files():
                          "%.1f%%" % ops["Referable DR"]["specificity_pct"]],
         "Sight-threatening DR": ["%.1f%%" % ops["Sight-threatening DR"]["sensitivity_pct"],
                                  "%.1f%%" % ops["Sight-threatening DR"]["npv_pct"]],
+        "Any DR": ["%.1f%%" % ops["Any DR"]["sensitivity_pct"],
+                   "%.1f%%" % ops["Any DR"]["specificity_pct"]],
         "End-to-end CPU latency": ["%.2f ms" % bench["total_mean_ms"],
                                    "%.2f ms" % bench["total_median_ms"],
                                    "%.2f ms" % bench["total_p95_ms"]],
@@ -2992,7 +3020,8 @@ def test_progress_tracker_operating_points_and_precision_match_the_metrics():
     """
     metrics = json.loads(read(CLINICAL_METRICS))
     text = read(PROGRESS_TRACKER)
-    ops = {o["name"]: o for o in metrics["operating_points"]}
+    raw = _operating_points_from_predictions()
+    ops = {o["name"]: dict(o, **raw[o["name"]]) for o in metrics["operating_points"]}
     offenders = []
     for name, label in (("Referable DR", "Referable DR"), ("Sight-threatening DR", "Sight-threatening DR"),
                         ("Any DR", "Any DR")):

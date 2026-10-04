@@ -183,7 +183,7 @@ flowchart TD
    - **Assessment Integrity Hash:** Displays SHA-256 cryptographic digest of the retinal image.
    - **Demarcation of Domains:**
      - Left Container (Neutral Gray): Preliminary Model Observation (`EfficientNet-B0`, `features.8`).
-     - Right Container (Clinical Teal): Authoritative **"Professional Review Response"** with clinician name, registration code, and timestamped digital signature hash.
+     - Right Container (Clinical Teal): Authoritative **"Professional Review Response"** with clinician name, registration code, and timestamped SHA-256 hash anchor hash.
 2. **Actions:**
    - Click **"Inspect Audit Trail"** to open the Screen 8 drawer.
    - Click **"Download Report (hash-anchored PDF)"** to generate the assessment report PDF.
