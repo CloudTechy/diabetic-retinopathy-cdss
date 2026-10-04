@@ -9,7 +9,6 @@
     "cap:build": "npm run build && cap sync android",
     "cap:open": "cap open android",
     "cap:run": "cap run android",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {

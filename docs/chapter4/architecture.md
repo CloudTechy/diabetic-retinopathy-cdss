@@ -10,7 +10,7 @@
 
 ## 1. High-Level Architectural Tiers
 
-The Diabetic Retinopathy Clinical Decision Support System (DR-CDSS) is designed as a secure, decoupled three-tier clinical application tailored for low-resource ophthalmic workstations and hospital local area networks:
+The Diabetic Retinopathy Clinical Decision Support System (DR-CDSS) is designed as a decoupled three-tier clinical decision-support prototype for low-resource ophthalmic workstations and hospital local area networks. The packaged development configuration is not a secure deployment: `docker-compose.yml` defaults `SECRET_KEY` and the database password to published strings, runs with `DEBUG=true` and `--reload`, and serves plain HTTP; a production deployment must supply its own secrets through those same variables and terminate TLS in front of the API.
 
 ```mermaid
 graph TD

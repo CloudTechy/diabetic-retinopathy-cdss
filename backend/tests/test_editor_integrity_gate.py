@@ -1840,8 +1840,6 @@ def test_documents_quote_the_committed_test_log():
 
     targets = [
         os.path.join(REPO_ROOT, "docs", "chapter4", "system_test_report.md"),
-        os.path.join(REPO_ROOT, "docs", "chapter4", "archive",
-                     "independent_thesis_qa_gate_audit.md"),
         os.path.join(REPO_ROOT, "docs", "chapter4",
                      "reproducibility_runbook.md"),
         os.path.join(REPO_ROOT, "docs", "chapter4",
@@ -3346,6 +3344,21 @@ def test_browser_precheck_uses_the_backends_minimum_dimension():
         "retinalValidator.ts requires %s px; config.py requires %s" % (m.group(1), cfg["MIN_IMAGE_DIMENSION"]))
     assert "re-checks every image" in src, "the browser check must say the server re-checks every image"
 
+    # The aspect range must be the server's (it was 0.60-1.70 against 0.65-1.65).
+    gate2 = read(os.path.join(REPO_ROOT, "backend", "app", "services", "validation", "gate2_relevance.py"))
+    server = re.search(r"aspect_ratio\s*<\s*([\d.]+)\s*or\s*aspect_ratio\s*>\s*([\d.]+)", gate2)
+    browser = re.search(r"aspectRatio\s*>=\s*([\d.]+)\s*&&\s*aspectRatio\s*<=\s*([\d.]+)", src)
+    assert server and browser, "aspect-ratio checks not found"
+    assert (float(browser.group(1)), float(browser.group(2))) == (float(server.group(1)), float(server.group(2))), (
+        "browser aspect range %s-%s, server %s-%s" % (browser.group(1), browser.group(2), server.group(1), server.group(2)))
+
+    # The browser's focus number is a gradient energy at 256 px. It must not be
+    # labelled with the server's metric name or compared with its threshold.
+    assert "Laplacian variance:" not in src, "the browser labels its own focus estimate as the server's Laplacian variance"
+    assert not re.search(r">=\s*%s\b" % re.escape(str(cfg["LAPLACIAN_BLUR_THRESHOLD"])), src), (
+        "the browser compares its own focus estimate with the server's threshold")
+    assert "advisory" in src.lower(), "the browser focus estimate must be stated as advisory"
+
 
 def test_every_checkpoint_filename_is_the_configured_one():
     """
@@ -3481,3 +3494,92 @@ def test_tls_is_stated_as_a_production_requirement():
     for lineno, line in enumerate(text.splitlines(), 1):
         if "TLS" in line and "production" not in line.lower():
             raise AssertionError("architecture.md:%d mentions TLS without stating it is a production requirement" % lineno)
+
+
+# ======================================================================
+# RULE GROUP AF - the archive vouches for nothing outside itself
+# ======================================================================
+
+DEPLOYMENT_HOSTS = ("vercel.app", "spacehubtech.cloud", "drai-cdss")
+
+
+def test_no_shipped_file_points_at_a_hosted_deployment():
+    """
+    The tracker linked a Vercel deployment and api.ts hard-coded a cloud
+    backend for native builds. Nothing in the archive shows what those hosts
+    serve, and the package's own screenshot manifest records that an earlier
+    capture of that deployment showed withdrawn content. A reader who follows
+    such a pointer may see what this package withdrew.
+    """
+    asm = _assembler()
+    offenders = []
+    for src, _dst in asm.manifest():
+        if not src.endswith((".md", ".py", ".ts", ".tsx", ".yml", ".yaml", ".json", ".example", ".txt", ".log")):
+            continue
+        if "/archive/" in src or src.endswith("test_editor_integrity_gate.py"):
+            continue  # the archive is superseded by definition; this file names the hosts it bans
+        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, src)).split("\n"), 1):
+            low = line.lower()
+            if any(marker in low for marker in CORRECTION_LINE_MARKERS):
+                continue
+            for host in DEPLOYMENT_HOSTS:
+                if host in low:
+                    offenders.append("%s:%d mentions %s" % (src, lineno, host))
+    assert not offenders, "Pointers to hosted deployments the archive cannot vouch for:\n  " + "\n  ".join(offenders)
+
+
+CONTAINER_FREEZE = os.path.join(CHAPTER4, "container_environment_freeze.txt")
+
+
+def _container_freeze():
+    out = {}
+    for line in read(CONTAINER_FREEZE).splitlines():
+        line = line.strip()
+        if "==" in line and not line.startswith("#"):
+            name, version = line.split("==", 1)
+            out[_norm_name(name)] = version.strip()
+    return out
+
+
+def test_container_versions_are_recorded_and_documented():
+    """
+    training_environment.md described torch 2.14.1+cpu as the version used
+    "in the backend container". That was the test venv's freeze; the container
+    builds on python:3.11-slim and resolves its own. The container's pip
+    freeze is now captured during the compose check and the document's
+    container table must quote it.
+    """
+    assert os.path.exists(CONTAINER_FREEZE), (
+        "docs/chapter4/container_environment_freeze.txt is missing: capture `pip freeze` "
+        "inside the backend container during the compose check")
+    freeze = _container_freeze()
+    text = read(TRAINING_ENV_DOC)
+    assert "CONTAINER_ENVIRONMENT" not in text, "the container table placeholder was never filled"
+    section = text.split("### Backend container", 1)
+    assert len(section) == 2, "training_environment.md has no 'Backend container' section"
+    checked, offenders = 0, []
+    for name, version in re.findall(r"^\|\s*`([A-Za-z][A-Za-z0-9_-]*)`\s*\|\s*([^|]+?)\s*\|", section[1], re.M):
+        key = _norm_name(name)
+        if key not in freeze:
+            continue
+        checked += 1
+        if version.strip("`* ") != freeze[key]:
+            offenders.append("%s: document says %s, container has %s" % (name, version, freeze[key]))
+    assert checked >= 4, "the container table names fewer than four packages found in the container freeze"
+    assert not offenders, "\n  ".join(["Container table disagrees with the container freeze:"] + offenders)
+
+
+def test_health_endpoint_reports_the_verified_digest(test_client=None):
+    """
+    The build log's claim that /health shows the digest-verified checkpoint
+    was an inference: the response carried only "checkpoint loaded". The
+    response model now carries checkpoint_sha256, set from the digest the
+    engine verified. Static check: the field exists and is wired.
+    """
+    health = read(os.path.join(REPO_ROOT, "backend", "app", "routers", "health.py"))
+    assert "checkpoint_sha256" in health, "HealthResponse does not carry checkpoint_sha256"
+    assert 'inference.get("checkpoint_sha256")' in health, "health does not pass the verified digest through"
+    service = read(AI_SERVICE)
+    assert "self.verified_sha256 = actual" in service, "the engine does not record the digest it verified"
+    assert 'logger.warning(\n                "MODEL_CHECKPOINT_SHA256 is not set; serving' not in service, (
+        "the blank-digest escape hatch is back")

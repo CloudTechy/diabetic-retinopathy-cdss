@@ -62,14 +62,39 @@ def test_corrupt_checkpoint_raises(tmp_path):
     service = EfficientNetB0InferenceService(checkpoint_path=str(bogus))
 
     from app.core.config import settings
+    import hashlib
     original = settings.MODEL_CHECKPOINT_SHA256
-    settings.MODEL_CHECKPOINT_SHA256 = ""
+    # The digest MATCHES the bogus bytes, so the failure below is the corrupt
+    # file itself, not the digest check.
+    settings.MODEL_CHECKPOINT_SHA256 = hashlib.sha256(b"this is not a torch checkpoint").hexdigest()
     try:
         with pytest.raises(ModelCheckpointError):
             service.load_model()
     finally:
         settings.MODEL_CHECKPOINT_SHA256 = original
 
+    assert service._initialized is False
+
+
+@requires_torch
+def test_blank_digest_refuses_to_serve(tmp_path):
+    """
+    A blank MODEL_CHECKPOINT_SHA256 once meant "serve with a warning". The
+    documentation says the engine refuses to serve unverified weights, so a
+    blank digest must refuse before the file is even read.
+    """
+    bogus = tmp_path / "weights.pth"
+    bogus.write_bytes(b"irrelevant")
+    service = EfficientNetB0InferenceService(checkpoint_path=str(bogus))
+
+    from app.core.config import settings
+    original = settings.MODEL_CHECKPOINT_SHA256
+    settings.MODEL_CHECKPOINT_SHA256 = ""
+    try:
+        with pytest.raises(ModelCheckpointError, match="not set"):
+            service.load_model()
+    finally:
+        settings.MODEL_CHECKPOINT_SHA256 = original
     assert service._initialized is False
 
 

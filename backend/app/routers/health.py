@@ -1,6 +1,8 @@
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter
+from typing import Optional
+
 from pydantic import BaseModel
 
 from app.core.config import settings
@@ -18,6 +20,9 @@ class HealthResponse(BaseModel):
     inference_ready: bool
     inference_engine: str
     inference_detail: str
+    # The SHA-256 the engine verified before loading; None for the simulated
+    # engine or while not ready.
+    checkpoint_sha256: Optional[str] = None
     version: str = "1.0.0"
 
 
@@ -40,5 +45,6 @@ async def health_check():
         inference_ready=inference["ready"],
         inference_engine=inference["engine"],
         inference_detail=inference["detail"],
+        checkpoint_sha256=inference.get("checkpoint_sha256"),
         version="1.0.0",
     )

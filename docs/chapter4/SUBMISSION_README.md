@@ -44,7 +44,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Any DR** (grade ≥ 1) | Sensitivity 97.6%, specificity 98.5% |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 213 passed, 1 skipped |
+| **Test suite** | 217 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.
@@ -187,7 +187,7 @@ docker compose up --build                           # db + backend + frontend
 # backend health: http://127.0.0.1:8000/api/v1/health   frontend: http://127.0.0.1:3000
 ```
 
-On Windows, extract the archive to a short path (for example `C:/tmp`): paths longer than 260 characters break the extraction of nested `node_modules` binaries during `npm ci`. All compose variables have defaults, so no `.env` is required; `.env.example` carries the calibrated thresholds and a rule keeps it equal to `config.py`. [`docs/chapter4/build_verification.log`](docs/chapter4/build_verification.log) records these commands run from a clean extraction of this archive, with the backend's `/health` reporting the digest-verified checkpoint loaded.
+On Windows, extract the archive to a short path (for example `C:/tmp`): paths longer than 260 characters break the extraction of nested `node_modules` binaries during `npm ci`. All compose variables have defaults, so no `.env` is required; `.env.example` carries the calibrated thresholds and a rule keeps it equal to `config.py`. [`docs/chapter4/build_verification.log`](docs/chapter4/build_verification.log) records these commands run from a clean extraction of this archive, ending with the backend's `/health` response — `inference_ready: true` and the SHA-256 the engine verified before loading — and the frontend answering HTTP 200. The `cap:*` scripts in `package.json` target a Capacitor Android project that is outside this evidence archive.
 
 ### 4.6 Cross-check the confusion matrix
 

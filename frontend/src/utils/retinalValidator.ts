@@ -21,7 +21,7 @@ export interface ClientValidationResult {
   };
   gate3: {
     passed: boolean;
-    laplacianVariance: number;
+    focusEstimate: number;
     metric: string;
     rejectionReason?: string;
     clinicalAction?: string;
@@ -146,7 +146,9 @@ export function analyzeRetinalImageOnCanvas(
   // 2. Red to Blue ratio >= 1.15 (Fundus vascular orange/red dominance)
   // 3. Red share >= 0.36
   // 4. Must not be a white-background diagram/document
-  const aspectPassed = aspectRatio >= 0.60 && aspectRatio <= 1.70;
+  // The server's range (backend/app/services/validation/gate2_relevance.py);
+  // a rule in the suite keeps these two numbers equal to it.
+  const aspectPassed = aspectRatio >= 0.65 && aspectRatio <= 1.65;
   const colorPassed = redToBlueRatio >= 1.15 && redShare >= 0.36;
   const notDiagramPassed = !isDocumentOrDiagram;
 
@@ -165,9 +167,13 @@ export function analyzeRetinalImageOnCanvas(
     gate2Action = 'Ensure you are uploading posterior pole color retinal fundus photography rather than external ocular or non-retinal images.';
   }
 
-  // --- GATE 3: Technical Quality & Laplacian Blur ---
-  // Approximate Laplacian variance on canvas
-  let laplacianVariance = 180.0;
+  // --- GATE 3: focus, ADVISORY ONLY ---
+  // This is a squared first-difference gradient energy on a 256 px canvas. It is
+  // NOT the server's Laplacian variance (computed at 1024 px) and is not
+  // compared with the server's threshold; an earlier version called it
+  // "Laplacian variance" and compared it with the server's 4.3, which was a
+  // different statistic wearing the same name. The server decides.
+  let focusEstimate = 180.0;
   if (ctx && gate1Passed && gate2Passed) {
     const imgData = ctx.getImageData(0, 0, sampleSize, sampleSize);
     const d = imgData.data;
@@ -186,17 +192,14 @@ export function analyzeRetinalImageOnCanvas(
         count++;
       }
     }
-    laplacianVariance = count > 0 ? (sumGrad / count) * 4 : 180.0;
+    focusEstimate = count > 0 ? (sumGrad / count) * 4 : 180.0;
   }
 
-  const gate3Passed = gate2Passed && laplacianVariance >= 4.3;
-  let gate3Reason: string | undefined;
-  let gate3Action: string | undefined;
-
-  if (!gate3Passed && gate2Passed) {
-    gate3Reason = `Insufficient optical sharpness or motion blur (Laplacian variance: ${laplacianVariance.toFixed(1)} < 4.3 threshold).`;
-    gate3Action = 'Recapture retinal photograph ensuring steady patient fixation and camera objective cleanliness.';
-  }
+  // No browser verdict on sharpness: the estimate is shown for information and
+  // the server's Gate 3 result is the only one that counts.
+  const gate3Passed = gate2Passed;
+  const gate3Reason: string | undefined = undefined;
+  const gate3Action: string | undefined = undefined;
 
   const allPassed = gate1Passed && gate2Passed && gate3Passed;
   let failedGate: 1 | 2 | 3 | null = null;
@@ -231,8 +234,8 @@ export function analyzeRetinalImageOnCanvas(
     },
     gate3: {
       passed: gate3Passed,
-      laplacianVariance,
-      metric: `Laplacian variance: ${laplacianVariance.toFixed(1)} (Threshold >= 4.3)`,
+      focusEstimate,
+      metric: `Browser focus estimate: ${focusEstimate.toFixed(1)} (advisory gradient energy at 256 px; the server decides on Laplacian variance at 1024 px)`,
       rejectionReason: gate3Reason,
       clinicalAction: gate3Action,
     },

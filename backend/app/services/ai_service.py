@@ -440,11 +440,14 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         """
         expected = (settings.MODEL_CHECKPOINT_SHA256 or "").strip().lower()
         if not expected:
-            logger.warning(
-                "MODEL_CHECKPOINT_SHA256 is not set; serving %s without "
-                "provenance verification.", self.checkpoint_path,
+            # An earlier version logged a warning and served anyway, while the
+            # documentation said the engine refuses to serve unverified weights.
+            # It now does what the documentation says.
+            raise ModelCheckpointError(
+                "MODEL_CHECKPOINT_SHA256 is not set. The engine refuses to serve "
+                "weights whose provenance it cannot verify; set the expected "
+                "digest in the environment (see .env.example)."
             )
-            return
 
         digest = hashlib.sha256()
         with open(self.checkpoint_path, "rb") as fh:
@@ -458,6 +461,9 @@ class EfficientNetB0InferenceService(BaseInferenceService):
                 f"Expected {expected}, found {actual}. Refusing to serve "
                 "inference from unverified weights."
             )
+        # Surfaced by /health so a deployment can be checked for WHICH weights
+        # it serves, not only that some weights loaded.
+        self.verified_sha256 = actual
 
     def predict(
         self,
@@ -659,4 +665,5 @@ def get_inference_health() -> Dict[str, Any]:
         "ready": True,
         "engine": "pytorch",
         "detail": f"EfficientNet-B0 checkpoint loaded from {service.checkpoint_path}",
+        "checkpoint_sha256": getattr(service, "verified_sha256", None),
     }

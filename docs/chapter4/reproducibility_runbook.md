@@ -201,7 +201,7 @@ docker compose config
 docker compose up --build
 ```
 
-On Windows, extract to a short path first (paths beyond 260 characters break `npm ci`'s nested binaries). The frontend build is `tsc && vite build`; the compose stack builds `backend/Dockerfile` and `frontend/Dockerfile` and needs no `.env` (every variable has a default). [`build_verification.log`](build_verification.log) is the transcript of exactly these commands from a clean extraction, ending with the backend's health response.
+On Windows, extract to a short path first (paths beyond 260 characters break `npm ci`'s nested binaries). The frontend build is `tsc && vite build`; the compose stack builds `backend/Dockerfile` and `frontend/Dockerfile` and needs no `.env` (every variable has a default). [`build_verification.log`](build_verification.log) is the transcript of exactly these commands from a clean extraction, ending with the backend's health response (`inference_ready: true` and the verified checkpoint SHA-256) and the container's own `pip freeze` ([`container_environment_freeze.txt`](container_environment_freeze.txt)).
 
 ## 5. Run the test suite
 
@@ -216,4 +216,4 @@ python -m venv .venv
 # Linux/macOS: .venv/bin/python in place of .venv/Scripts/python.exe
 ```
 
-Expected: **214 collected — 213 passed, 1 skipped** (wall-clock ≈ 60–75 s with PyTorch installed; the committed log records 61 s). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.
+Expected: **218 collected — 217 passed, 1 skipped** (wall-clock ≈ 60–75 s with PyTorch installed; the committed log records 61 s). The skip is `test_contaminated_results_are_labelled_superseded`, conditional on an artefact of the superseded run being present. `test_real_model_end_to_end_pipeline` is **not** skipped: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.

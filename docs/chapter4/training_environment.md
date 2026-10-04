@@ -32,7 +32,7 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 
 | Category | Package / Tool | Version | Functional Role |
 | :--- | :--- | :---: | :--- |
-| **Deep Learning Framework** | `torch` | 2.14.1+cpu | Inference execution in the backend container |
+| **Deep Learning Framework** | `torch` | 2.14.1+cpu | Inference execution in the recorded test environment |
 | **Vision Library** | `torchvision` | 0.29.1+cpu | EfficientNet-B0 topology, ImageNet transforms |
 | **Image Processing** | `pillow` (PIL) | 11.3.0 | Decoding, format conversion, resampling |
 | **Scientific Computing** | `numpy` | 2.5.2 | Grad-CAM activation arrays, metric computation |
@@ -43,6 +43,8 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 | **Container Runtime** | Docker Compose | — | Service orchestration |
 | **Development OS** | Microsoft Windows 11 (64-bit) | — | Local development workstation |
 
+> The table above is the **recorded test environment**: a Python 3.13 virtual environment built from `requirements.txt` on the development machine. The backend **container** (`backend/Dockerfile`, `python:3.11-slim`) installs the same ranges and resolves its own versions; those are recorded separately below.
+>
 > Python package versions above are those recorded in [`test_environment_freeze.txt`](test_environment_freeze.txt), the `pip freeze` of the fresh virtual environment that produced [`test_execution.log`](test_execution.log); a rule in the suite checks they satisfy `backend/requirements.txt`. Frontend versions are the resolved ones in `frontend/package-lock.json`; the database version is the image tag in `docker-compose.yml`. An earlier revision of this table listed `pillow` 11.1.0 and `numpy` 2.1.3, which the requirements bounds of the time could not have installed.
 
 **Training and serving environments differ, deliberately.** The model is trained once on a GPU and served many times on CPU, and [`resource_benchmark.md`](resource_benchmark.md) reports both separately:
@@ -53,6 +55,20 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 An earlier version of this paragraph said the committed benchmark was measured on the T4 and did not characterise the CPU target. That was true of §5 and false of §1, which is the figure the latency requirement is assessed against.
 
 ---
+
+### Backend container
+
+Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-slim`, Python 3.11.15) during the clean-extraction check recorded in [`build_verification.log`](build_verification.log); versions are the container's own `pip freeze`, shipped as [`container_environment_freeze.txt`](container_environment_freeze.txt). A rule in the suite keeps this table equal to that file.
+
+| Package | Version | Functional Role |
+| :--- | :---: | :--- |
+| `torch` | 2.14.1+cpu | Inference execution in the backend container |
+| `torchvision` | 0.29.1+cpu | EfficientNet-B0 topology, ImageNet transforms |
+| `pillow` | 11.3.0 | Decoding, format conversion, resampling |
+| `numpy` | 2.4.6 | Grad-CAM activation arrays, metric computation |
+| `fastapi` | 0.142.2 | RESTful API routing inference requests |
+| `sqlalchemy` | 2.1.3 | ORM over PostgreSQL |
+| `uvicorn` | 0.54.0 | ASGI server |
 
 ## 3. Determinism & Reproducibility Controls
 
