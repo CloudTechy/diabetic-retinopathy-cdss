@@ -117,10 +117,9 @@
       { "grade": 4, "label": "Grade 4: Proliferative DR", "score": 0.01 }
     ],
     "targetLayer": "features.8 (Conv2d Bottleneck Residual)",
-    "topActivationRegion": "Inferotemporal quadrant parafoveal hemorrhages and exudates",
-    "modelVersion": "EfficientNet-B0-DR-v1 (Weights frozen)",
-    "executionTimeMs": 190.0,
-    "disclaimer": "NOTICE: CLINICAL DECISION SUPPORT ONLY — NOT FOR INDEPENDENT DIAGNOSIS..."
+    "topActivationRegion": "Peak Grad-CAM activation in the centre cell of a 3x3 grid over the frame (focal: 9% of the map is above half the peak).",
+    "modelVersion": "EfficientNet-B0-DR-v1 (fixed weights)",
+    "inferenceTimestamp": "2026-10-04T06:55:12.418Z"
   }
   ```
 
@@ -142,7 +141,7 @@
 - **Description:** Streams the server-rendered PDF assessment report, hash-anchored to the original image.
 - **Response `200 OK`:** `Content-Type: application/pdf`.
 
-### `GET /storage/images/{filename}` and `GET /storage/attributions/{filename}`
+### `GET /api/v1/storage/images/{filename}` and `GET /api/v1/storage/attributions/{filename}`
 - **Description:** Stream the stored fundus photograph and the Grad-CAM heatmap for the `<img>` tags in the viewer.
 - **Authentication: none.** These two routes take no credential; anyone holding a filename can fetch the file. Stored names are `REC-YYYY-XXXXXX_<8 hex>.jpg`, hard to guess but not secret. This is a disclosed limitation of the prototype ([`known_limitations.md`](known_limitations.md) §12), not a security property.
 

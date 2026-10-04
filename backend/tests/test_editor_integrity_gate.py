@@ -500,6 +500,12 @@ OVERCLAIM_PHRASES = [
     "Integrity ID", "Sub-100ms", "sub-100ms", "sub-100 ms", "RFC 7807",
     "assigned UUID", "unique UUID", "Serve uploaded retinal images securely",
     "attribution heatmaps securely", "private storage",
+    # Reviewer round on rev15: two documents still called the three benchmark
+    # runs "the same 30 images" on "identical code" (run A used the superseded
+    # split; run B held the a-priori thresholds); the API example carried a
+    # fixed lesion sentence removed in round seven; three signing phrases.
+    "over the same 30 images exist", "identical code", "Inferotemporal quadrant",
+    "Clinician Signs Review", "a signed review", "Proportion of extreme-luminance pixels",
 ]
 
 
@@ -2976,8 +2982,11 @@ def test_submission_readme_headline_table_matches_the_metrics_files():
 # The overclaim phrases are banned in prose too, not only in code
 # ======================================================================
 
-CORRECTION_LINE_MARKERS = ("superseded", "never existed", "earlier revision",
-                           "earlier version", "withdrawn", "replaced", "removed")
+# "superseded" on its own no longer exempts a line: a current claim that
+# merely mentions the superseded split was slipping through on that word.
+CORRECTION_LINE_MARKERS = ("superseded run", "superseded contaminated", "superseded result",
+                           "superseded set", "superseded sharpness", "never existed",
+                           "earlier revision", "earlier version", "withdrawn", "replaced", "removed")
 
 
 def test_no_clinical_authority_overclaims_in_documents():
@@ -3003,8 +3012,12 @@ def test_no_clinical_authority_overclaims_in_documents():
             if any(marker in low or marker in previous
                    for marker in CORRECTION_LINE_MARKERS):
                 continue
+            # A blockquote is exempt only when it is a correction RECORD: it
+            # must say so with one of the explicit markers. "superseded" alone
+            # does not qualify - a note that mentions the superseded split while
+            # overstating something else was slipping through on that word.
             if line.startswith(">") and any(
-                    marker in para for marker in CORRECTION_LINE_MARKERS
+                    marker in para for marker in BLOCKQUOTE_RECORD_MARKERS
                     for para in [_blockquote_paragraph(lines, lineno - 1)]):
                 continue
             for phrase in OVERCLAIM_PHRASES:
@@ -3014,10 +3027,14 @@ def test_no_clinical_authority_overclaims_in_documents():
         "Authority or certification language in documents:\n  " + "\n  ".join(offenders))
 
 
+BLOCKQUOTE_RECORD_MARKERS = ("earlier revision", "earlier version", "removed, not regenerated",
+                             "never existed", "withdrawn", "deleted rather than")
+
+
 def _blockquote_paragraph(lines, idx):
-    """The contiguous '>' lines around idx (a bare '>' ends it), lower-cased."""
+    """The whole contiguous '>' block around idx (bare '>' lines included), lower-cased."""
     def live(i):
-        return 0 <= i < len(lines) and lines[i].startswith(">") and lines[i].strip() != ">"
+        return 0 <= i < len(lines) and lines[i].startswith(">")
     lo = idx
     while live(lo - 1):
         lo -= 1
@@ -3936,3 +3953,94 @@ def test_no_paragraph_has_an_odd_number_of_bold_markers():
             if para.count("**") % 2:
                 offenders.append("%s: paragraph %d has an odd number of '**': %s" % (src, n + 1, para.strip()[:70]))
     assert not offenders, "Unbalanced bold markers:\n  " + "\n  ".join(offenders)
+
+
+# ======================================================================
+# RULE GROUP AI - the reviewer's audit of rev15
+# ======================================================================
+
+CAPTURE_LIVE = os.path.join(REPO_ROOT, "frontend", "scripts", "capture_live_screenshots.js")
+PROVENANCE = os.path.join(CHAPTER4, "evidence_provenance.md")
+DATABASE_SCHEMA = os.path.join(CHAPTER4, "database_schema.md")
+
+
+def _json_example_after(text, heading):
+    start = text.index(heading)
+    m = re.search(r"```json\n(.*?)```", text[start:], re.S)
+    assert m, "no JSON example under %s" % heading
+    return json.loads(m.group(1))
+
+
+def test_result_example_has_the_schema_fields_and_the_cam_derived_region():
+    """
+    The /result example listed executionTimeMs and disclaimer (not in the
+    schema), omitted inferenceTimestamp (in it), and gave a fixed lesion
+    sentence as topActivationRegion - the kind removed in round seven. The
+    code returns a CAM-derived "cell of a 3x3 grid" string. The example's
+    shape is compared with ModelObservationSchema itself.
+    """
+    from app.schemas.assessment import ModelObservationSchema
+    example = _json_example_after(read(API_CONTRACT), "### `GET /api/v1/assessments/{id}/result`")
+    expected = set(ModelObservationSchema.model_fields)
+    assert set(example) == expected, "example keys %s != schema %s" % (sorted(example), sorted(expected))
+    assert len(example["classScores"]) == 5
+    assert "3x3 grid" in example["topActivationRegion"], "topActivationRegion is not the CAM-derived text the code returns"
+    assert abs(sum(c["score"] for c in example["classScores"]) - 1.0) < 0.02, "class scores should sum to about 1"
+    assert example["primaryScore"] == max(c["score"] for c in example["classScores"])
+    source = read(AI_SERVICE)
+    assert "3x3 grid" in source, "the code no longer describes the region on a 3x3 grid; update the rule and the example together"
+
+
+def test_benchmark_run_notes_state_what_differs_between_the_runs():
+    """
+    requirements_test_matrix.md and PROGRESS_TRACKER.md described the three
+    benchmark runs as the same images on identical code. resource_benchmark.md
+    section 1b records that run A used the superseded split's images, run B
+    was committed with the a-priori thresholds, and only the combined gates
+    2+3 share (not per-stage shares) is durable. The two summaries must carry
+    those three facts, not a cleaner story.
+    """
+    matrix = read(REQUIREMENTS_MATRIX)
+    note = matrix[matrix.index("NFR-01 is specified on the mean"):]
+    note = note[:note.index("\n\n|") if "\n\n|" in note else len(note)]
+    for fact in ("superseded split", "a-priori", "2.4 pp", "1.41"):
+        assert fact in note, "the NFR-01 note does not mention %r" % fact
+    tracker = read(PROGRESS_TRACKER)
+    line = next(l for l in tracker.splitlines() if "1.41" in l)
+    assert "B and C" in line and "superseded split" in line and "2.4 pp" in line, (
+        "the tracker's latency line does not say which runs are comparable, why run A is not, or that per-stage shares vary")
+
+
+def test_storage_routes_are_documented_under_their_mount_prefix():
+    """main.py mounts the assessments router under /api/v1; the contract said /storage/..."""
+    text = read(API_CONTRACT)
+    assert "`GET /api/v1/storage/images/{filename}`" in text and "`GET /api/v1/storage/attributions/{filename}`" in text, (
+        "the storage routes are documented without the /api/v1 prefix they are mounted under")
+    assert "`GET /storage/images" not in text
+
+
+def test_capture_script_photographs_only_what_it_can_verify():
+    """
+    capture_live_screenshots.js's 04b step throws on the server-side
+    rejection path (no ERR_ code is printed on that screen), so every run
+    ended in "Capture failed" after figures 01-08 were written, the non-2xx
+    guard never ran, and the manifest's "every API call returned 2xx" was
+    unsupported. The step is gone; 04b has one producer, capture_rejection.js,
+    and the provenance row says so.
+    """
+    script = read(CAPTURE_LIVE)
+    assert "snap('04b" not in script and "_derived_blurred_negative" not in script, "the live capture script still carries the rejection step"
+    assert "apiCalls.filter" in script, "the non-2xx guard is gone"
+    prov = read(PROVENANCE)
+    row = next(l for l in prov.splitlines() if l.startswith("| `docs/chapter4/screenshots/01`"))
+    assert "capture_rejection.js" in row and "by that script and by" not in row, "the provenance row still names two producers for 04b"
+    manifest = read(os.path.join(CHAPTER4, "screenshot_evidence_manifest.md"))
+    assert "node scripts/capture_rejection.js" in manifest, "the regeneration instructions do not run the rejection capture"
+
+
+def test_illumination_index_is_described_as_the_code_computes_it():
+    """gate3 stores 1 - extreme_ratio; the schema said 'proportion of extreme pixels', the inverse."""
+    row = next(l for l in read(DATABASE_SCHEMA).splitlines() if l.startswith("| `illumination_index`"))
+    assert ("1 −" in row or "1 -" in row) and "0.35" in row, "illumination_index is not described as 1 - extreme ratio with the 0.35 limit"
+    edge = next(l for l in read(DATABASE_SCHEMA).splitlines() if "PROFESSIONAL_REVIEWS :" in l and "USERS" in l)
+    assert "signs" not in edge, "the ER edge still says a user 'signs' a review"

@@ -130,7 +130,7 @@ stateDiagram-v2
     Inference --> ResultReady : Softmax Scores + Grad-CAM Artifacts Generated
     
     ResultReady --> UnderReview : Clinician Opens Review Modal
-    UnderReview --> Completed : Clinician Signs Review
+    UnderReview --> Completed : Clinician records review
     
     Rejected --> [*] : Terminal (Inference Prohibited)
     Completed --> [*] : Write-Locked Record

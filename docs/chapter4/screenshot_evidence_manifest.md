@@ -74,7 +74,8 @@
 > Regenerate with the stack running:
 > ```bash
 > docker compose up -d
-> cd frontend && node scripts/capture_live_screenshots.js
+> cd frontend && node scripts/capture_live_screenshots.js   # figures 01-08; exits non-zero on any non-2xx API call
+> node scripts/capture_rejection.js                           # figure 04b, fires only on the observed rejected state
 > ```
 
 ---

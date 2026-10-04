@@ -272,37 +272,11 @@ async function main() {
     await snap('08_record_history_audit.png', 'live record history');
   }
 
-  // 4b — the fail-closed path, on a real image degraded by a stated transform.
-  const NEGATIVE = path.resolve('scripts/_derived_blurred_negative.jpg');
-  if (fs.existsSync(NEGATIVE)) {
-    if (!await clickText(page, 'New Assessment')) {
-      await page.goto(`${BASE}/#new_assessment`, { waitUntil: 'networkidle2' });
-    }
-    await wait(2000);
-    const pid = await page.$('input[placeholder*="PT-"]');
-    if (pid) await pid.type(`REJ-${Date.now().toString().slice(-4)}`);  // the field prefixes PT-
-    const neg = await page.$('input[type="file"]');
-    if (neg) {
-      await neg.uploadFile(NEGATIVE);
-      await wait(2500);
-      await clickText(page, 'Proceed to 3-Gate Validation');
-      await waitForGateOutcome(page, { expect: 'reject' });
-      await wait(1200);
-
-      // Prove the figure shows what it claims before it is written.
-      const verdict = await page.evaluate(() => {
-        const m = document.body.innerText.match(/ERR_[A-Z_]+/);
-        return m ? m[0] : null;
-      });
-      if (!verdict) {
-        throw new Error('The blurred image did not produce a gate error code. '
-          + 'Refusing to write 04b: a figure captioned as a rejection must '
-          + 'show one.');
-      }
-      await snap('04b_validation_stepper_rejected.png',
-        `fail-closed path, ${verdict}`);
-    }
-  }
+  // The rejection figure (04b) is NOT taken here. The server-side rejection
+  // path prints no ERR_ code on the new-assessment screen, so this script's
+  // earlier 04b step threw on every run after 01-08 were written, which left
+  // the non-2xx guard below unexecuted. capture_rejection.js photographs the
+  // rejected worklist state and fires only on the tick it observes it.
 
   await browser.close();
 

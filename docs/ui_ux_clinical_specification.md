@@ -119,7 +119,7 @@ stateDiagram-v2
         3. Class 2: Moderate NPDR ($0.78$)
         4. Class 3: Severe NPDR ($0.05$)
         5. Class 4: Proliferative DR ($0.01$)
-    * **Explainability Insights**: Grad-CAM target layer notification (`features.8` of EfficientNet-B0), top anatomical activation region (e.g., *Inferotemporal quadrant microaneurysms / retinal hemorrhage zone*).
+    * **Explainability Insights**: Grad-CAM target layer notification (`features.8` of EfficientNet-B0), top anatomical activation region (e.g., *Peak Grad-CAM activation in the centre cell of a 3x3 grid over the frame; an earlier revision gave anatomical lesion sentences here, e.g. retinal hemorrhage zone*).
     * **Action Bar**: "Initiate Clinician Review" (Primary button, calls Screen 6), "Download Preliminary Technical Sheet" (Secondary).
 
 ### Screen 6: Professional Review Modal / Drawer

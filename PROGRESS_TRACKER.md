@@ -86,7 +86,7 @@ Of 205 referable cases, **18 were missed** (predicted below grade 2): 11 of Grad
 - **Grad-CAM target layer:** `features.8` (1,280-channel final conv).
 - **Preprocessing:** `Resize((224,224))` → `ToTensor()` → ImageNet normalise. Identical in training and inference — **no train/serve skew**.
 - **Fail-closed loading:** a missing, corrupt or digest-mismatched checkpoint raises `ModelCheckpointError`. The engine never serves untrained weights, and the simulated engine is opt-in by name only (`AI_INFERENCE_ENGINE=mock`).
-- **End-to-end CPU latency:** mean **180.41 ms**, median 147.45 ms, P95 **342.49 ms** over 30 held-out images (4-thread x86_64, no GPU), at the calibrated admission thresholds. ⚠ **Three runs exist and they are 1.41× apart on identical code** — NFR-01's 350 ms budget passes on the mean in all three, but the P95 breaches in two of three (373.39 / 447.95 / 342.49). Cite the stage shares, not the milliseconds.
+- **End-to-end CPU latency:** mean **180.41 ms**, median 147.45 ms, P95 **342.49 ms** over 30 held-out images (4-thread x86_64, no GPU), at the calibrated admission thresholds. ⚠ **Three runs are cited; the two comparable ones (B and C: same checkpoint, same 30 images) are 1.41× apart** — run A used the superseded split's images. NFR-01's 350 ms budget passes on the mean in all three, but the P95 breaches in two of three (373.39 / 447.95 / 342.49). Cite the combined gates 2+3 share and the stage ordering, not the milliseconds: per-stage shares vary by up to 2.4 pp between B and C.
 - **vs the 315.25 ms pre-optimisation baseline:** that comparison is between the 2026-09-29 baseline and the 2026-09-30 post-optimisation run (315.25 → 164.79 ms, both under `docs/chapter4/benchmark_history/`), raw 1.91×, but they were on different Colab CPUs — unchanged-code stages were themselves 1.14–1.40× faster. Attributable improvement is **~1.4–1.7×**. Immune to that caveat because it is internal to one run: validation fell from **59.1% to ~42%** of the request.
 - **Where it goes:** validation gates 2+3 = **74.69 ms (41.4%)**; PNG encode = 30.61 ms (17.0%); model forward pass = 29.22 ms (16.2%). Inference is not the bottleneck. Across the two clean-checkpoint runs 1.41× apart in absolute time, their combined gates 2+3 share agreed to within 0.5 pp (41.9% and 41.4%), while individual stage shares differed by up to 2.4 pp (`gate3`); cite the combined share, not per-stage decimals.
 - **Grad-CAM composition:** vectorised, byte-identical output. The pre-vectorisation timing is not retained as an artefact and no speed-up factor is claimed.
@@ -97,7 +97,7 @@ Of 205 referable cases, **18 were missed** (predicted below grade 2): 11 of Grad
 
 ## 5. Test Suite
 
-**227 collected — 226 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
+**232 collected — 231 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q

@@ -647,7 +647,9 @@ class AssessmentService:
                 primaryScore=ai.primary_score,
                 classScores=[ScoreBreakdownItem(**cs) for cs in ai.class_scores],
                 targetLayer=ai.target_layer,
-                topActivationRegion=ai.top_activation_region or "Inferotemporal quadrant microaneurysms",
+                # The fallback once named a lesion the model never located. A missing
+                # region is reported as missing.
+                topActivationRegion=ai.top_activation_region or "No attribution region was recorded for this run.",
                 modelVersion=assessment.model_execution.model_version if assessment.model_execution else "EfficientNet-B0-DR-v1 (fixed weights)",
                 inferenceTimestamp=ai.created_at.isoformat(),
             )

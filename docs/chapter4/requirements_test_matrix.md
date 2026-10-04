@@ -6,7 +6,7 @@
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Last Revised:** 2026-10-04
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
-- **Overall Verification Status:** **226 of 227 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
+- **Overall Verification Status:** **231 of 232 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
 
@@ -43,9 +43,11 @@
 > [!CAUTION]
 > **NFR-01 is specified on the mean, and the tail is not reproducible.**
 >
-> Three runs of the same harness over the same 30 images exist
-> ([`resource_benchmark.md`](resource_benchmark.md) §1b). Against the 350 ms
-> budget:
+> Three runs of this harness are cited ([`resource_benchmark.md`](resource_benchmark.md) §1b),
+> and they are not three runs of one thing: run A used the superseded split's
+> images (1,807 KB mean) and its checkpoint cannot be established from the
+> artefacts; runs B and C used the clean checkpoint over the same 30 clean-split
+> images (1,798 KB mean). Against the 350 ms budget:
 >
 > | Run | Mean | Verdict | P95 | Verdict |
 > | :--- | ---: | :--- | ---: | :--- |
@@ -53,9 +55,12 @@
 > | B (2026-10-01) | 254.31 ms | PASS | 447.95 ms | **breach** |
 > | C (2026-10-01, cited) | 180.41 ms | PASS | 342.49 ms | pass |
 >
-> The **mean passes in every run**. The **P95 breaches in two of three**, and
-> runs B and C differ only in which machine Colab allocated — identical code,
-> thresholds, images and run count, 1.41× apart in absolute time.
+> The **mean passes in every run**. The **P95 breaches in two of three**. B and
+> C share the harness, checkpoint, images and request count (run B was committed
+> while `config.py` still held the a-priori thresholds, which the harness does not
+> act on) and otherwise differ in which machine Colab allocated — **1.41×** apart
+> in absolute time. Their combined gates 2+3 share agreed to within 0.5 pp (41.9%
+> and 41.4%); individual stage shares differed by up to 2.4 pp.
 >
 > So the requirement passes as written, and the tail it does not examine lands
 > on either side of the budget depending on hardware. Quoting only run C would
