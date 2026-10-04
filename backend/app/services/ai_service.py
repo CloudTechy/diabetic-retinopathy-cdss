@@ -31,35 +31,30 @@ ICDR_CLASS_METADATA = [
         "label": "No Apparent DR",
         "technical_term": "No Apparent Retinopathy",
         "description": "No microaneurysms, hemorrhages, or retinal lesions detected.",
-        "top_activation": "Diffuse baseline physiological choroidal vasculature",
     },
     {
         "grade": 1,
         "label": "Mild NPDR",
         "technical_term": "Mild Non-Proliferative Retinopathy",
         "description": "Microaneurysms only. Subtle vascular focal changes.",
-        "top_activation": "Isolated parafoveal microaneurysm cluster",
     },
     {
         "grade": 2,
         "label": "Moderate NPDR",
         "technical_term": "Moderate Non-Proliferative Retinopathy",
         "description": "Dot-and-blot hemorrhages and hard exudates in posterior pole.",
-        "top_activation": "Inferotemporal quadrant parafoveal hemorrhages and exudates",
     },
     {
         "grade": 3,
         "label": "Severe NPDR",
         "technical_term": "Severe Non-Proliferative Retinopathy",
         "description": "Meets 4-2-1 rule: hemorrhages in 4 quadrants or venous beading.",
-        "top_activation": "Multi-quadrant deep blot hemorrhages and venous beading arcade",
     },
     {
         "grade": 4,
         "label": "Proliferative DR",
         "technical_term": "Proliferative Diabetic Retinopathy",
         "description": "Neovascularization of the disc/retina, preretinal hemorrhage.",
-        "top_activation": "Peripapillary neovascularization and preretinal vascular proliferation",
     },
 ]
 
@@ -157,6 +152,30 @@ def viridis_rgba_array(values: np.ndarray) -> np.ndarray:
     rgba = np.stack([r, g, b, a], axis=-1).astype(np.uint8)
     rgba[v < 0.05] = 0  # transparent below the activation floor
     return rgba
+
+
+def _peak_activation_region(cam) -> str:
+    """
+    Where the Grad-CAM map peaks, in plain image-frame terms.
+
+    An earlier version shipped a fixed sentence per grade ("Isolated parafoveal
+    microaneurysm cluster", ...) and displayed it as the "top saliency zone".
+    Nothing in it came from the image. This reads the actual map: the cell of
+    a 3x3 grid holding the maximum activation, plus the fraction of the map
+    above half its peak so a diffuse map is not described as focal.
+    """
+    import numpy as _np
+    arr = _np.asarray(cam, dtype=_np.float32)
+    if arr.ndim != 2 or arr.size == 0 or float(arr.max()) <= 0:
+        return "No attribution map was produced for this input."
+    r, c = _np.unravel_index(int(_np.argmax(arr)), arr.shape)
+    row = ("upper", "middle", "lower")[min(2, int(3 * r / arr.shape[0]))]
+    col = ("left", "centre", "right")[min(2, int(3 * c / arr.shape[1]))]
+    cell = "central" if (row, col) == ("middle", "centre") else f"{row}-{col}"
+    above_half = float((arr >= 0.5 * arr.max()).mean())
+    spread = "focal" if above_half < 0.15 else ("broad" if above_half < 0.5 else "diffuse")
+    return (f"Peak Grad-CAM activation in the {cell} third of the frame "
+            f"({spread}: {above_half:.0%} of the map is above half the peak).")
 
 
 def create_mock_gradcam_heatmap(
@@ -299,7 +318,7 @@ class MockInferenceService(BaseInferenceService):
             primary_score=primary_score,
             class_scores=class_scores,
             target_layer="features.8 (Conv2d Bottleneck Residual)",
-            top_activation_region=meta["top_activation"],
+            top_activation_region="Simulated engine: no attribution map was computed.",
             model_version="EfficientNet-B0-DR-v1 (fixed weights)",
             execution_time_ms=execution_time_ms,
             disclaimer=disclaimer,
@@ -506,6 +525,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         # ------------------------------------------------------------------
         gradcam_img = None
         gradcam_unavailable_reason = None
+        peak_region = "No attribution map was produced for this input."
         try:
             target_logit = logits[0, grade]
             grads = torch.autograd.grad(
@@ -521,6 +541,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
                 gradcam_unavailable_reason = (
                     "attribution map was uniformly zero for this input")
             else:
+                peak_region = _peak_activation_region(cam)
                 cam = cam / np.max(cam)
                 cam_pil = Image.fromarray((cam * 255).astype(np.uint8)).resize(
                     (512, 512), Image.Resampling.BILINEAR)
@@ -567,7 +588,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             primary_score=primary_score,
             class_scores=class_scores,
             target_layer="features.8 (Conv2d Bottleneck Residual)",
-            top_activation_region=meta["top_activation"],
+            top_activation_region=peak_region,
             model_version="EfficientNet-B0-DR-v1 (fixed weights)",
             execution_time_ms=execution_time_ms,
             disclaimer=disclaimer,

@@ -77,7 +77,10 @@ class Assessment(Base):
     model_execution = relationship("ModelExecution", back_populates="assessment", uselist=False, cascade="all, delete-orphan", lazy="selectin")
     ai_result = relationship("AIResult", back_populates="assessment", uselist=False, cascade="all, delete-orphan", lazy="selectin")
     professional_review = relationship("ProfessionalReview", back_populates="assessment", uselist=False, cascade="all, delete-orphan", lazy="selectin")
-    audit_events = relationship("AuditEvent", back_populates="assessment", cascade="all, delete-orphan", order_by="AuditEvent.timestamp", lazy="selectin")
+    # No delete cascade: the audit log is append-only. The foreign key is
+    # ON DELETE SET NULL, and passive_deletes lets the database apply that
+    # rather than the ORM deleting the events along with the assessment.
+    audit_events = relationship("AuditEvent", back_populates="assessment", passive_deletes=True, order_by="AuditEvent.timestamp", lazy="selectin")
 
 
 class ImageAsset(Base):

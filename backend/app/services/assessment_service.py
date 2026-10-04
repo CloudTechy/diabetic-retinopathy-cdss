@@ -377,10 +377,18 @@ class AssessmentService:
                     "a clinical rationale of at least 15 characters is required by clinical governance standards."
                 )
 
-        # Resolve Clinician metadata
-        clinician_name = review_input.clinicianName or reviewer.full_name if reviewer else "Dr. Reviewer"
-        license_num = review_input.licenseNumber or reviewer.license_number if reviewer else "N/A"
-        facility = review_input.facility or (reviewer.facility if reviewer else "Research Prototype Environment")
+        # The signatory is the authenticated reviewer, and only the authenticated
+        # reviewer. clinicianName / licenseNumber / facility in the request body
+        # are accepted for schema compatibility and ignored: a client must not
+        # be able to record a review under a name other than the account that
+        # signed in. (An earlier version let the body override the account, and
+        # an operator-precedence slip made its fallback ignore the body anyway.)
+        if reviewer is None:
+            raise ReviewValidationError(
+                "A signed-in reviewer is required to record a professional review.")
+        clinician_name = reviewer.full_name
+        license_num = reviewer.license_number or "N/A"
+        facility = reviewer.facility or "Research Prototype Environment"
 
         # Map grade label
         grade_meta = ICDR_CLASS_METADATA[review_input.reviewerAssessedGrade]

@@ -1,7 +1,7 @@
 import base64
 import pytest
 from sqlalchemy import select
-from app.models.models import Assessment, AIResult, ProfessionalReview, ModelExecution
+from app.models.models import Assessment, AIResult, ProfessionalReview, ModelExecution, User
 from app.services.assessment_service import (
     AssessmentService,
     InvalidStateTransitionError,
@@ -10,6 +10,29 @@ from app.services.assessment_service import (
 from app.schemas.assessment import AssessmentCreateRequest, ClinicianReviewSubmitRequest
 from app.core.security import verify_password, get_password_hash, create_access_token, decode_access_token
 from tests.conftest import create_synthetic_retinal_fundus, image_to_bytes
+
+async def _reviewer(async_db):
+    """
+    A signed-in reviewer. submit_professional_review refuses to record a review
+    without one: the signatory is the authenticated account, never the request
+    body. Earlier versions of these tests passed reviewer=reviewer, which the
+    service once tolerated by inventing "Dr. Reviewer".
+    """
+    import uuid
+    user = User(
+        username=f"reviewer.{uuid.uuid4().hex[:8]}",
+        email=f"reviewer.{uuid.uuid4().hex[:8]}@research-prototype.invalid",
+        full_name="Test Reviewer (Simulated)",
+        hashed_password="not-a-real-hash",
+        role="clinician",
+        license_number="SIM-TEST",
+        facility="Research Prototype Environment",
+    )
+    async_db.add(user)
+    await async_db.commit()
+    await async_db.refresh(user)
+    return user
+
 
 
 class TestClinicianInTheLoopGovernance:
@@ -51,11 +74,12 @@ class TestClinicianInTheLoopGovernance:
             justificationNotes="Isolated microaneurysms detected; lacks venous beading or IRMA required for Grade 2.",
         )
 
+        reviewer = await _reviewer(async_db)
         reviewed = await AssessmentService.submit_professional_review(
             db=async_db,
             assessment_id=assessment.id,
             review_input=review_req,
-            reviewer=None,
+            reviewer=reviewer,
         )
 
         # 3. Invariant Verification: Both entities coexist independently in separate tables
@@ -102,11 +126,12 @@ class TestClinicianInTheLoopGovernance:
             justificationNotes="Normal fundus appearance with sharp optic margins.",
         )
 
+        reviewer = await _reviewer(async_db)
         reviewed = await AssessmentService.submit_professional_review(
             db=async_db,
             assessment_id=assessment.id,
             review_input=review_req,
-            reviewer=None,
+            reviewer=reviewer,
         )
         assert reviewed.status == "completed"
 
@@ -123,7 +148,7 @@ class TestClinicianInTheLoopGovernance:
                 db=async_db,
                 assessment_id=assessment.id,
                 review_input=second_review_req,
-                reviewer=None,
+                reviewer=reviewer,
             )
 
     @pytest.mark.asyncio
@@ -301,3 +326,30 @@ class TestAuthenticationEnforcement:
                 f"{method.upper()} {path} served an anonymous caller "
                 f"({res.status_code}); it must require a bearer token")
 
+class TestReviewSignatory:
+    @pytest.mark.asyncio
+    async def test_request_body_cannot_choose_the_signatory(self, async_db):
+        """
+        clinicianName / licenseNumber in the body are ignored; the recorded
+        signatory is the authenticated reviewer. A client could once sign a
+        review under any name.
+        """
+        create_req = AssessmentCreateRequest(patientId="PT-SIGNATORY-01", laterality="OD")
+        assessment = await AssessmentService.create_assessment(async_db, create_req)
+        fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=True, blur=False)
+        assessment = await AssessmentService.process_and_validate_image(
+            db=async_db, assessment_id=assessment.id,
+            image_bytes=image_to_bytes(fundus_img, "JPEG"), original_filename="retina_od.jpg")
+        assert assessment.ai_result is not None
+        reviewer = await _reviewer(async_db)
+        review_req = ClinicianReviewSubmitRequest(
+            agreement="agree", reviewerAssessedGrade=assessment.ai_result.primary_class_grade,
+            reviewerAssessedGradeLabel=assessment.ai_result.primary_class_label,
+            clinicianName="Mallory Impostor", licenseNumber="GMC-0000000", facility="Elsewhere",
+        )
+        reviewed = await AssessmentService.submit_professional_review(
+            db=async_db, assessment_id=assessment.id, review_input=review_req, reviewer=reviewer)
+        assert reviewed.professional_review.clinician_name == reviewer.full_name
+        assert reviewed.professional_review.license_number == reviewer.license_number
+        assert reviewed.professional_review.facility == reviewer.facility
+        assert reviewed.professional_review.reviewer_id == reviewer.id
