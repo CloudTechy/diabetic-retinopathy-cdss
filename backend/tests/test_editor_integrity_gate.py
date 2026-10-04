@@ -1296,6 +1296,8 @@ THRESHOLD_SETTINGS = (
     "RETINAL_RED_RATIO_MIN",
     "CONTRAST_THRESHOLD",
     "ILLUMINATION_EXTREME_RATIO_MAX",
+    "ILLUMINATION_UNDEREXPOSED_BELOW",
+    "ILLUMINATION_OVEREXPOSED_ABOVE",
     "LAPLACIAN_BLUR_THRESHOLD",
 )
 
@@ -4658,3 +4660,54 @@ def test_api_contract_examples_match_their_schemas():
         assert review.get("inconclusiveReason"), "the example would be refused by the server"
     create = _json_example_after(text, "### `POST /api/v1/assessments`")
     assert set(create) <= _schema_fields("app.schemas.assessment", "AssessmentCreateRequest")
+
+
+# ======================================================================
+# RULE GROUP AP - the reviewer's minors on rev27
+# ======================================================================
+
+def test_validation_example_is_the_fixtures_real_gate_output():
+    """
+    The /validation example quoted the fixture's real numbers everywhere but
+    one ("dynamic range 55.3" for a real 24.0) while the page said no value
+    came from a recorded run. The page now says this example IS the fixture's
+    output; every metric and details string in it is recomputed here.
+    """
+    from app.services.validation.gate1_integrity import evaluate_gate1
+    from app.services.validation.gate2_relevance import evaluate_gate2
+    from app.services.validation.gate3_quality import evaluate_gate3
+    fixture = os.path.join(FIXTURE_DIR, "aptos_heldout_d1f1ea894da1.png")
+    with open(fixture, "rb") as fh:
+        raw = fh.read()
+    g1, pil = evaluate_gate1(raw, "aptos_heldout_d1f1ea894da1.png")
+    g2, g3 = evaluate_gate2(pil), evaluate_gate3(pil)
+    assert g1.passed and g2.passed and g3.passed, "the fixture no longer passes the gates"
+    text = read(API_CONTRACT)
+    assert "actual output for the shipped held-out fixture" in text
+    example = _json_example_after(text, "### `GET /api/v1/assessments/{id}/validation`")
+    for shown, real in zip(example, (g1, g2, g3)):
+        assert shown["metric"] == real.metric, "Gate %d metric: contract %r, fixture %r" % (shown["gateIndex"], shown["metric"], real.metric)
+        assert shown["details"] == real.details, "Gate %d details: contract %r, fixture %r" % (shown["gateIndex"], shown["details"], real.details)
+
+
+def test_every_served_route_is_named_in_the_contract():
+    """The contract omitted /assessments/search, /assessments/{id}, /status, /reports/{id}/pdf and /health."""
+    text = read(API_CONTRACT)
+    missing = []
+    for name in ("assessments.py", "auth.py", "health.py"):
+        src = read(os.path.join(REPO_ROOT, "backend", "app", "routers", name))
+        for path in re.findall(r'@router\.(?:get|post|put|delete|patch)\("([^"]+)"', src):
+            shown = path.replace("{assessment_id}", "{id}")
+            if name == "auth.py":
+                shown = "/auth" + shown
+            if shown not in text:
+                missing.append(shown)
+    assert not missing, "routes the application serves that the contract never names: %s" % sorted(set(missing))
+
+
+def test_login_example_uses_the_seeded_accounts_identity():
+    auth = read(AUTH_ROUTER)
+    seeded = re.search(r'id="(USR-\d+)"', auth).group(1)
+    token = json.loads(re.findall(r"```json\n(.*?)```", read(API_CONTRACT)[read(API_CONTRACT).index("### `POST /api/v1/auth/login`"):], re.S)[1])
+    assert token["user"]["id"] == seeded, "the login example shows id %r; the seeded account is %r" % (token["user"]["id"], seeded)
+    assert token["user"]["licenseNumber"] == "SIM-000001"

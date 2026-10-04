@@ -296,6 +296,8 @@ def main():
                 "RETINAL_RED_RATIO_MIN": settings.RETINAL_RED_RATIO_MIN,
                 "CONTRAST_THRESHOLD": settings.CONTRAST_THRESHOLD,
                 "ILLUMINATION_EXTREME_RATIO_MAX": settings.ILLUMINATION_EXTREME_RATIO_MAX,
+                "ILLUMINATION_UNDEREXPOSED_BELOW": settings.ILLUMINATION_UNDEREXPOSED_BELOW,
+                "ILLUMINATION_OVEREXPOSED_ABOVE": settings.ILLUMINATION_OVEREXPOSED_ABOVE,
                 "LAPLACIAN_BLUR_THRESHOLD": settings.LAPLACIAN_BLUR_THRESHOLD,
             },
             "max_abs_deviation": {k: round(v, 6) for k, v in worst.items()},

@@ -26,6 +26,7 @@ Pre-inference validation reduces the chance that invalid, corrupted, poor-qualit
 
 ### Gate 3: Technical Quality & Sharpness
 - **Laplacian Variance Metric:** Applies discrete Laplacian operator $\nabla^2 I$. Rejects motion-blurred or defocussed photographs with variance $< 4.3$ (`LAPLACIAN_BLUR_THRESHOLD`), the 1st percentile of the development corpus - see the derivation recorded below.
+- **Illumination Uniformity:** counts foreground pixels with luminance < 25 (`ILLUMINATION_UNDEREXPOSED_BELOW`) or > 235 (`ILLUMINATION_OVEREXPOSED_ABOVE`) and rejects when their share exceeds 0.35 (`ILLUMINATION_EXTREME_RATIO_MAX`). An earlier revision stated < 10 and > 245, which the code never used.
 
 > [!NOTE]
 > **Resolved 2026-10-01. This threshold is now derived from the corpus.**
@@ -82,8 +83,6 @@ held-out images; with it corrected, the contrast threshold still rejected 5 of 1
 
 *Applied 2026-10-01 by `apply_validation_thresholds.py`.*
 
-
-- **Illumination Uniformity:** counts foreground pixels with luminance < 25 (`ILLUMINATION_UNDEREXPOSED_BELOW`) or > 235 (`ILLUMINATION_OVEREXPOSED_ABOVE`) and rejects when their share exceeds 0.35 (`ILLUMINATION_EXTREME_RATIO_MAX`). An earlier revision stated < 10 and > 245, which the code never used.
 
 ---
 

@@ -5,7 +5,8 @@
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective g (Model integration & decision-support workflow)
 - **API Standard:** OpenAPI 3.1.0 / RESTful JSON; errors are FastAPI's `{"detail": ...}` bodies
-- **Examples:** every JSON body below is an illustrative example of the response shape. The values are not taken from a recorded run; the gate metrics shown are consistent with the calibrated thresholds in `backend/app/core/config.py`.
+- **Examples:** the JSON bodies below show the request and response shapes. The `/validation` example is the gates' actual output for the shipped held-out fixture (`backend/tests/fixtures/aptos_heldout_d1f1ea894da1.png`), and a rule in the suite recomputes it from that file; the other bodies are illustrative examples whose values are not taken from a recorded run.
+- **Scope:** this contract covers the routes the assessment workflow uses. The application also serves `GET /api/v1/assessments/search`, `GET /api/v1/assessments/{id}`, `GET /api/v1/assessments/{id}/status`, `GET /api/v1/reports/{id}/pdf` (an alias of the report route) and `GET /health` (also under `/api/v1/health`); their shapes are in the OpenAPI schema the server generates.
 - **Base Endpoint:** `/api/v1`
 - **Last Revised:** 2026-10-04
 
@@ -29,7 +30,7 @@
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
       "token_type": "bearer",
       "user": {
-        "id": "1",
+        "id": "USR-8821",
         "name": "Dr. Demo Clinician (Simulated)",
         "email": "demo.clinician@research-prototype.invalid",
         "role": "Simulated Reviewer — Research Prototype",
@@ -109,7 +110,7 @@
       "status": "passed",
       "title": "Technical Quality & Sharpness",
       "metric": "Laplacian: 12.2 (>= 4.3), Illumination index: 1.00",
-      "details": "The image met the configured technical thresholds (illumination index 1.00, dynamic range 55.3). This does not confirm retinal identity, anatomical correctness or clinical gradability.",
+      "details": "The image met the configured technical thresholds (illumination index 1.00, dynamic range 24.0). This does not confirm retinal identity, anatomical correctness or clinical gradability.",
       "rejectionReason": null,
       "clinicalAction": null
     }
