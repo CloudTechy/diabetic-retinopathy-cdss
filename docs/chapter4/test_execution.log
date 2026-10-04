@@ -1,7 +1,7 @@
 ============================= test session starts =============================
 platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\USER\AppData\Local\Temp\claude\c--Users-USER-Documents-TECH4MATION-cybervilla-backend\99ec2341-909c-48b1-8da9-9bcf0c6c0ba6\scratchpad\fresh_venv\Scripts\python.exe
 cachedir: .pytest_cache
-rootdir: C:\tmp\r34a\DR-CDSS_Chapter4_Evidence\backend
+rootdir: C:\tmp\r35a\DR-CDSS_Chapter4_Evidence\backend
 configfile: pytest.ini
 plugins: anyio-4.15.1, asyncio-0.26.0
 asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
@@ -286,4 +286,4 @@ tests/test_validation_pipeline.py::TestSequentialValidationPipelineFailClosed::t
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ===========================
 SKIPPED [1] tests\test_editor_integrity_gate.py:942: manifest is already de-duplicated - clean rerun has happened
-============ 269 passed, 1 skipped, 1 warning in 87.33s (0:01:27) =============
+============ 269 passed, 1 skipped, 1 warning in 86.73s (0:01:26) =============

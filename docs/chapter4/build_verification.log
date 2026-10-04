@@ -1,14 +1,14 @@
 BUILD VERIFICATION - run from a clean extraction of the archive
-date (UTC): 2026-10-04T23:29:12Z
-sha256 of the pre-build archive this tree produced: d674f4ac4d3030b13e0ba0aa6442fd14a2ed7dba05f34a32b1da0251d66256b3
+date (UTC): 2026-10-04T23:44:21Z
+sha256 of the pre-build archive this tree produced: c7ed78cd8ab8578e9c6529237abf900b5ed543010473b591b9b1c48aea5bbb75
   (the shipped archive differs from it only by this log, the test log, the container freeze and the regenerated transcript - no code or build input differs)
 node v24.9.0   npm 11.6.0   Docker Compose version v2.40.2-desktop.1
-extraction path: C:/tmp/r34_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
+extraction path: C:/tmp/r35_build/DR-CDSS_Chapter4_Evidence  (Windows: keep the extraction path short; nested node_modules binaries break past the 260-character limit)
 
 $ cd frontend && npm ci
 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
 
-added 347 packages in 26s
+added 347 packages in 41s
 
 $ npm run build
 transforming...
@@ -18,7 +18,7 @@ computing gzip size...
 dist/index.html                   0.53 kB │ gzip:   0.35 kB
 dist/assets/index-BhhNRUZT.css   38.20 kB │ gzip:   7.04 kB
 dist/assets/index-DwHezje9.js   349.90 kB │ gzip: 103.07 kB
-✓ built in 34.84s
+✓ built in 36.52s
 dist/index.html produced: yes
 
 $ npm run check:preflight   (node scripts/check_preflight.cjs: the browser pre-check, executed)
@@ -87,7 +87,7 @@ $ curl http://127.0.0.1:8000/api/v1/health   (polled until inference_ready)
   "status": "healthy",
   "app_name": "Diabetic Retinopathy CDSS",
   "environment": "development",
-  "timestamp": "2026-10-04T23:33:07.400655+00:00",
+  "timestamp": "2026-10-04T23:48:33.560119+00:00",
   "storage_accessible": true,
   "inference_ready": true,
   "inference_engine": "pytorch",
