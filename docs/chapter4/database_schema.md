@@ -71,7 +71,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `updated_at` | TIMESTAMPTZ | NO | Last status transition timestamp. |
 
 ### 3. `image_assets`
-*Tracks original photographic fundus binaries, dimensions, and cryptographic hashes.*
+*Tracks original photographic fundus binaries, dimensions, and SHA-256 hashes.*
 
 | Column | Type | Nullable | Description / Constraint |
 | :--- | :--- | :---: | :--- |
@@ -82,7 +82,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | `storage_path` | VARCHAR(500) | NO | Local disk or object storage filepath. |
 | `file_size_bytes` | INTEGER | NO | Binary payload byte count. |
 | `mime_type` | VARCHAR(100) | NO | `image/jpeg` or `image/png`, as sniffed from content. |
-| `sha256_hash` | VARCHAR(64) | NO | SHA-256 cryptographic digest of raw bytes. |
+| `sha256_hash` | VARCHAR(64) | NO | SHA-256 digest of raw bytes. |
 | `width` | INTEGER | YES | Native pixel width. Null if the image could not be decoded. |
 | `height` | INTEGER | YES | Native pixel height. Null if the image could not be decoded. |
 | `created_at` | TIMESTAMPTZ | NO | Timestamp of ingestion. |
@@ -177,7 +177,7 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 > signed, even if the user record changes afterwards.
 
 ### 7. `audit_events`
-*Append-only event log recording every interaction.*
+*Application-level append-only event log recording every interaction.*
 
 | Column | Type | Nullable | Description / Constraint |
 | :--- | :--- | :---: | :--- |
@@ -196,12 +196,14 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 > The column is `action`, not `event_type`, and `timestamp`, not `created_at`;
 > `details` is TEXT and the structured payload lives in `event_metadata`. An
 > earlier revision of this document had all four wrong. `ON DELETE SET NULL` on
-> both foreign keys is what makes the log append-only in practice: removing a
+> both foreign keys is what makes the log application-level append-only in practice: removing a
 > user or an assessment blanks the reference but never deletes the event. The ORM
 > relationship is declared `passive_deletes=True` with no delete cascade, so the
 > database rule is the one that applies; an earlier revision of the model cascaded
 > deletes at the ORM level, which contradicted this paragraph. No API route deletes
 > assessments or users.
+>
+> **Limitation.** The application does not expose audit-event update or deletion operations, and assessment deletion does not cascade to audit events. However, database-level immutability is not enforced through triggers or restricted database privileges.
 
 ### 8. `model_executions`
 *One row per inference run: which model, in which mode, on which device, and how long. `ai_results` points here, so every observation is tied to the run that produced it.*

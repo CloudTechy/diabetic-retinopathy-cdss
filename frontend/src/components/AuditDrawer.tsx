@@ -39,7 +39,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ assessment, onClose })
             </div>
             <div>
               <h2 id="audit-drawer-title" className="text-base font-bold text-slate-900 leading-tight">
-                Audit Trail (append-only)
+                Audit trail (application-level append-only)
               </h2>
               <p className="text-xs text-slate-500 font-mono">
                 {assessment.id} • Patient {assessment.patientId}
@@ -55,7 +55,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({ assessment, onClose })
           </button>
         </header>
 
-        {/* Cryptographic Image Verification Card */}
+        {/* Image hash card */}
         <div className="p-4 bg-slate-900 text-slate-200 text-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-teal-300 uppercase tracking-wider text-[10px]">

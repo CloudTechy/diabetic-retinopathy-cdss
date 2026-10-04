@@ -138,7 +138,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
             Record History, Search & Clinical Audit Ledger
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Search patient records, review reviewer-assessed grades, and inspect the append-only audit log for research governance.
+            Search patient records, review reviewer-assessed grades, and inspect the application-level append-only event log for research governance.
           </p>
         </div>
 

@@ -151,7 +151,7 @@ def get_dr_preprocessing_pipeline(target_size: int = 224) -> transforms.Compose:
 
 ## 5. Checkpoint Loading Protocol & Integrity Verification
 
-To ensure reproducibility, security, and traceability, model weight files (`.pth` or `.pt`) are loaded through a cryptographically verified protocol.
+To ensure reproducibility, security, and traceability, model weight files (`.pth` or `.pt`) are loaded through a digest-verified protocol.
 
 ### 5.1 Directory Placement
 Trained model weights must be stored in the dedicated backend weights directory:
@@ -195,7 +195,7 @@ def load_verified_checkpoint(
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"Model checkpoint not found at: {checkpoint_path}")
     
-    # 1. Cryptographic Hash Verification
+    # 1. SHA-256 digest verification
     if expected_sha256:
         hasher = hashlib.sha256()
         with open(checkpoint_path, "rb") as f:
@@ -464,6 +464,6 @@ pytest backend/tests/test_api_endpoints.py -k test_create_and_upload_assessment 
 | :--- | :--- | :--- |
 | **Risk framing (design reference only)** | The IMDRF "informs clinical management" tier was used as a *design reference* when setting the human-in-the-loop boundary. It is **not** an assigned categorisation. | Model output is advisory and non-diagnostic; a clinician records their own independent grade. |
 | **Fixed weights in service** | Fixed-weights evaluation, no in-service learning | `model.eval()`, `requires_grad=False`, no run-time gradient adjustments. |
-| **Checkpoint integrity** | Digest verification before the weights are loaded | Cryptographic SHA-256 hash validation on weights prior to instantiation. |
+| **Checkpoint integrity** | Digest verification before the weights are loaded | SHA-256 digest validation on weights prior to instantiation. |
 | **Explainability (XAI)** | High-Level Expert Group on AI (HLEG) Trustworthy AI | Grad-CAM feature heatmaps generated per prediction with target layer logging. |
-| **Audit trail** | Append-only event log | Every run is recorded in `model_executions`; a professional review response, when entered, is recorded in `professional_reviews` under the signed-in account. |
+| **Audit trail** | Application-level append-only event log | Every run is recorded in `model_executions`; a professional review response, when entered, is recorded in `professional_reviews` under the signed-in account. |

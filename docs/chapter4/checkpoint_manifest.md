@@ -4,7 +4,7 @@
 - **Model Backbone:** EfficientNet-B0 (torchvision implementation)
 - **Trained Weights Checkpoint:** `backend/models/weights/efficientnet_b0_dr.pth`
 - **File Size:** 15.60 MB (16,358,249 bytes)
-- **Cryptographic SHA-256 Digest:** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
+- **SHA-256 Digest:** `67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7`
 - **Training Run:** 15 epochs on APTOS 2019, Google Colab Tesla T4, 2026-09-30 (the leakage-free rerun)
 - **Selected Epoch:** **14** of 15 (peak validation $\kappa = 0.913045$, recorded in [`epoch_history.csv`](epoch_history.csv))
 - **Degree Programme:** PGD Computer Science, Faculty of Physical Sciences

@@ -485,6 +485,13 @@ OVERCLAIM_PHRASES = [
     "diagnostic resolution", "adheres strictly to third normal form",
     "absolute physical domain separation", "HTTPS / TLS 1.3 REST",
     "wired to run on every commit",
+    # Editor round on rev13: a truncated unkeyed SHA-256 and an API refusal
+    # are a hash anchor and a write-lock, not cryptography; the header has no
+    # TLS badge; screenshots, system tests and the build are not "the
+    # training run".
+    "cryptographic signature", "cryptographic immutability", "cryptographic audit",
+    "Cryptographic Audit", "cryptographically verified", "Secure Private Binary Storage",
+    "TLS badge", "Every artefact in this package derives",
 ]
 
 
@@ -2972,7 +2979,11 @@ def test_no_clinical_authority_overclaims_in_documents():
     error may name the phrase it corrects; any other occurrence fails.
     """
     offenders = []
-    for rel, text in iter_markdown(include_correction_records=False):
+    # The screenshot register was once excluded wholesale as a "correction
+    # record", and "tamper-evident" sat in an ACTIVE figure caption through
+    # two reviews. Every document is read; only a line that records a past
+    # error, or a blockquote paragraph that does, may name a banned phrase.
+    for rel, text in iter_markdown(include_correction_records=True):
         if "/archive/" in rel.replace("\\", "/"):
             continue
         lines = text.splitlines()
@@ -2984,11 +2995,28 @@ def test_no_clinical_authority_overclaims_in_documents():
             if any(marker in low or marker in previous
                    for marker in CORRECTION_LINE_MARKERS):
                 continue
+            if line.startswith(">") and any(
+                    marker in para for marker in CORRECTION_LINE_MARKERS
+                    for para in [_blockquote_paragraph(lines, lineno - 1)]):
+                continue
             for phrase in OVERCLAIM_PHRASES:
                 if phrase.lower() in low:
                     offenders.append("%s:%d: %r" % (rel, lineno, phrase))
     assert not offenders, (
         "Authority or certification language in documents:\n  " + "\n  ".join(offenders))
+
+
+def _blockquote_paragraph(lines, idx):
+    """The contiguous '>' lines around idx (a bare '>' ends it), lower-cased."""
+    def live(i):
+        return 0 <= i < len(lines) and lines[i].startswith(">") and lines[i].strip() != ">"
+    lo = idx
+    while live(lo - 1):
+        lo -= 1
+    hi = idx
+    while live(hi + 1):
+        hi += 1
+    return "\n".join(lines[lo:hi + 1]).lower()
 
 
 # ======================================================================
@@ -3583,3 +3611,145 @@ def test_health_endpoint_reports_the_verified_digest(test_client=None):
     assert "self.verified_sha256 = actual" in service, "the engine does not record the digest it verified"
     assert 'logger.warning(\n                "MODEL_CHECKPOINT_SHA256 is not set; serving' not in service, (
         "the blank-digest escape hatch is back")
+
+
+# ======================================================================
+# RULE GROUP AG - the editor's review of rev13
+# ======================================================================
+
+MODEL_EVAL_REPORT = os.path.join(CHAPTER4, "model_evaluation_report.md")
+TEST_LOG = os.path.join(CHAPTER4, "test_execution.log")
+
+
+def _table_cells(line):
+    line = re.sub(r"`[^`]*`", "code", line)          # pipes inside code spans
+    line = line.replace("\\|", "pipe")                # escaped pipes
+    inner = line.strip()
+    if inner.startswith("|"):
+        inner = inner[1:]
+    if inner.endswith("|"):
+        inner = inner[:-1]
+    return [c.strip() for c in inner.split("|")]
+
+
+def test_every_markdown_table_row_has_the_header_width():
+    """
+    The operating-point table in model_evaluation_report.md lost half its
+    Any-DR row to a note pasted into the middle of it: three cells under a
+    six-column header, with the specificity and the missed count stranded in
+    the blockquote below. A table row with fewer cells than its header renders
+    as a broken table, and no rule looked at table structure.
+    """
+    asm = _assembler()
+    offenders = []
+    for src, _dst in asm.manifest():
+        if not src.endswith(".md") or "/archive/" in src:
+            continue
+        lines = read(os.path.join(REPO_ROOT, src)).split("\n")
+        i, in_code = 0, False
+        while i < len(lines):
+            line = lines[i]
+            if line.strip().startswith("```"):
+                in_code = not in_code
+            if (not in_code and line.lstrip().startswith("|") and i + 1 < len(lines)
+                    and re.match(r"^\s*\|?\s*:?-{3,}", lines[i + 1])):
+                width = len(_table_cells(line))
+                j = i + 2
+                while j < len(lines) and lines[j].lstrip().startswith("|"):
+                    cells = len(_table_cells(lines[j]))
+                    if cells != width:
+                        offenders.append("%s:%d has %d cells under a %d-column header" % (src, j + 1, cells, width))
+                    j += 1
+                i = j
+                continue
+            i += 1
+    assert not offenders, "Markdown table rows that do not match their header:\n  " + "\n  ".join(offenders)
+
+
+def test_binary_collapse_rows_match_the_predictions():
+    """
+    Each operating-point row of the evaluation report carries six cells -
+    sensitivity, its CI, specificity, its CI, and the missed count - and every
+    one of them is recomputed from held_out_predictions.csv (counts) and
+    clinical_metrics.json (Wilson intervals).
+    """
+    import csv as _csv
+    with open(PREDICTIONS_CSV, newline="", encoding="utf-8") as fh:
+        pairs = [(int(r["true_grade"]), int(r["predicted_grade"])) for r in _csv.DictReader(fh)]
+    metrics = {o["name"]: o for o in json.loads(read(CLINICAL_METRICS))["operating_points"]}
+    raw = _operating_points_from_predictions()
+    text = read(MODEL_EVAL_REPORT)
+    offenders, seen = [], 0
+    for th, name in ((1, "Any DR"), (2, "Referable DR"), (3, "Sight-threatening DR")):
+        m = re.search(r"^\|\s*Grade \$\\ge %d\$\s*\|(.*)$" % th, text, re.M)
+        if not m:
+            offenders.append("row for grade >= %d not found" % th)
+            continue
+        cells = _table_cells("|" + m.group(1))
+        if len(cells) != 5:
+            offenders.append("grade >= %d row has %d value cells, expected 5" % (th, len(cells)))
+            continue
+        seen += 1
+        fn = sum(1 for t, p in pairs if t >= th and p < th)
+        expected = ["%.1f%%" % raw[name]["sensitivity_pct"],
+                    "%.1f – %.1f" % tuple(metrics[name]["sensitivity_ci95"]),
+                    "%.1f%%" % raw[name]["specificity_pct"],
+                    "%.1f – %.1f" % tuple(metrics[name]["specificity_ci95"]),
+                    str(fn)]
+        for got, want in zip(cells, expected):
+            if got.replace("**", "") != want:
+                offenders.append("grade >= %d: table says %r, the predictions say %r" % (th, got, want))
+    assert seen == 3 and not offenders, "Operating-point table disagrees with the predictions:\n  " + "\n  ".join(offenders)
+
+
+def test_no_unqualified_append_only_or_cryptographic_control_claims():
+    """
+    What the implementation provides: an unkeyed SHA-256 over the review
+    fields truncated to 24 hex characters, an API rule refusing a second
+    review, ON DELETE SET NULL on the audit log's foreign keys, no trigger,
+    no key, no signature. "Append-only" is therefore an application-level
+    property and must say so on the same line; "cryptographic" as the name
+    of a CONTROL (signature, immutability, audit, storage) is banned above.
+    The limitation is stated where the audit log is described.
+    """
+    asm = _assembler()
+    offenders = []
+    for src, _dst in asm.manifest():
+        if not src.endswith((".md", ".py", ".ts", ".tsx")) or "/archive/" in src:
+            continue
+        if src.endswith("test_editor_integrity_gate.py"):
+            continue
+        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, src)).split("\n"), 1):
+            low = line.lower()
+            if any(marker in low for marker in CORRECTION_LINE_MARKERS):
+                continue
+            if "append-only" in low and "application-level" not in low:
+                offenders.append("%s:%d: 'append-only' without 'application-level' on the line" % (src, lineno))
+            if "cryptograph" in low:
+                offenders.append("%s:%d: %r" % (src, lineno, line.strip()[:90]))
+    assert not offenders, "Controls described more strongly than they operate:\n  " + "\n  ".join(offenders)
+    for rel in ("docs/chapter4/database_schema.md", "docs/chapter4/api_contract.md"):
+        text = read(os.path.join(REPO_ROOT, rel))
+        assert "database-level immutability is not enforced" in text, (
+            "%s describes the audit log without stating that the database enforces nothing" % rel)
+
+
+def test_quoted_suite_durations_match_the_committed_log():
+    """
+    The runbook said "the committed log records 61 s" while the log's last
+    line said 75.59s. Any document that quotes the log's duration must quote
+    the number the log actually carries.
+    """
+    last = read(TEST_LOG).rstrip().splitlines()[-1]
+    m = re.search(r"in ([\d.]+)s", last)
+    assert m, "the committed log's last line carries no duration"
+    actual = float(m.group(1))
+    offenders = []
+    for rel, text in iter_markdown(include_correction_records=True):
+        if "/archive/" in rel.replace("\\", "/"):
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for quoted in re.findall(r"committed log records ([\d.]+)\s*s\b", line):
+                if abs(float(quoted) - actual) > 0.005:
+                    offenders.append("%s:%d quotes %s s; the log records %.2f s" % (rel, lineno, quoted, actual))
+    assert not offenders, "\n  ".join(["Quoted suite durations disagree with the log:"] + offenders)

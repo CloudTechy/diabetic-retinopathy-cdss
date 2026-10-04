@@ -6,19 +6,19 @@
 - **Related Research Objective:** Objective i (Functional testing and end-to-end evaluation)
 - **Date Test Run:** 2026-10-03
 - **Test Framework:** Pytest 8.4.2 on Python 3.13.5 (as recorded in the header of [`test_execution.log`](test_execution.log)), Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **218 collected — 217 passed, 0 failed, 1 skipped**
+- **Overall Result:** **222 collected — 221 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 218 test cases was executed against the complete CDSS platform. 217 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
+A multi-layer automated test suite comprising 222 test cases was executed against the complete CDSS platform. 221 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and cryptographic audit persistence.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      218
-Passed:               217 (99.5%)
+Tests Collected:      222
+Passed:               221 (99.5%)
 Failed:                 0  (0.0%)
 Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: ~77 seconds
@@ -66,7 +66,7 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 | `test_valid_image_transitions_to_result_ready` | Service Integration | Accepted image cleanly reaches Result Ready status | **PASS** |
 
 ### Suite 3: Governance, Security & Terminology (`test_governance_and_security.py`)
-*Verifies Prototype governance, domain separation, cryptographic immutability, and terminology boundaries.*
+*Verifies Prototype governance, domain separation, the API-level review write-lock and hash anchoring, and terminology boundaries.*
 
 | Test Identifier | Test Target | Key Verification Invariant | Result |
 | :--- | :--- | :--- | :---: |
@@ -76,7 +76,7 @@ Execution Status:      PASSED (Production & Thesis Quality Gate Satisfied)
 | `test_api_result_terminology_compliance` | Language Bounds | Returns strictly "model-generated class score" | **PASS** |
 | `test_ai_result_model_disclaimer_invariant` | Regulatory Notice | Mandated non-diagnostic disclaimer on all outputs | **PASS** |
 | `test_invalid_login_credentials_rejected` | Access Control | Rejects bad passwords with 401 Unauthorized | **PASS** |
-| `test_jwt_token_generation_and_tamper_rejection` | Cryptography | Modifying JWT payload invalidates token signature | **PASS** |
+| `test_jwt_token_generation_and_tamper_rejection` | Token signing (keyed HMAC) | Modifying JWT payload invalidates token signature | **PASS** |
 | `test_password_hashing_and_verification` | Security | Argon2/Bcrypt hash verification with zero plaintext | **PASS** |
 | `test_nonexistent_assessment_returns_404` | Error Handling | Safe 404 response on unknown assessment UUIDs | **PASS** |
 

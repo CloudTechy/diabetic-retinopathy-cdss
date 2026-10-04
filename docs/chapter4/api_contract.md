@@ -135,12 +135,12 @@
     "optionalObservation": "Clinician's free-text note. The system records it verbatim and draws no referral conclusion from it. e.g. discussed findings with patient at clinic."
   }
   ```
-- **Response `200 OK`:** Finalized assessment object with cryptographic signature and state `completed`.
+- **Response `200 OK`:** Finalized assessment object with its record hash anchor (an unkeyed SHA-256 over the review fields, truncated to 24 hexadecimal characters) and state `completed`.
 
 ### `GET /api/v1/assessments/{id}/report`
 - **Description:** Streams the server-rendered PDF assessment report, hash-anchored to the original image.
 - **Response `200 OK`:** `Content-Type: application/pdf`.
 
 ### `GET /api/v1/assessments/{id}/audit`
-- **Description:** Returns the chronological append-only audit trail for governance review.
+- **Description:** Returns the chronological application-level append-only event log for governance review. The application does not expose audit-event update or deletion operations, and assessment deletion does not cascade to audit events. However, database-level immutability is not enforced through triggers or restricted database privileges.
 - **Response `200 OK`:** Array of timestamped audit events.

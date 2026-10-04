@@ -31,7 +31,7 @@ graph TD
 
     subgraph Tier3["Data & Persistence Tier"]
         DB[(PostgreSQL 16 Relational Store)]
-        Vault[(Secure Private Binary Storage: /storage)]
+        Vault[(Local application binary storage: /storage)]
     end
 
     UI -->|HTTP REST — TLS termination is a production deployment requirement, not part of the packaged development stack| Router

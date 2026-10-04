@@ -97,7 +97,7 @@ Of 205 referable cases, **18 were missed** (predicted below grade 2): 11 of Grad
 
 ## 5. Test Suite
 
-**218 collected — 217 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
+**222 collected — 221 passed, 1 skipped** ([`test_execution.log`](docs/chapter4/test_execution.log) is the one authoritative run; no other test log ships). Includes 8 tests guarding the fail-closed inference invariant, 13 asserting Grad-CAM render equivalence, and 38 asserting the validation gates reach the same verdict when subsampled.
 
 ```bash
 cd backend && .venv/Scripts/python.exe -m pytest tests/ -q

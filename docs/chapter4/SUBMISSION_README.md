@@ -30,7 +30,7 @@
 
 ## 1. Summary
 
-Every artefact in this package derives from a single genuine training run whose console transcript, per-epoch history, per-image predictions and checkpoint digest are all included and mutually consistent.
+All model-performance artefacts derive from the documented leakage-free training and evaluation run, whose console transcript, per-epoch history, per-image predictions and checkpoint digest are all included and mutually consistent. System, interface and build evidence was produced separately and is identified by its corresponding provenance record in [`docs/chapter4/evidence_provenance.md`](docs/chapter4/evidence_provenance.md).
 
 | Item | Value |
 | :--- | :--- |
@@ -44,7 +44,7 @@ Every artefact in this package derives from a single genuine training run whose 
 | **Any DR** (grade ≥ 1) | Sensitivity 97.6%, specificity 98.5% |
 | **Argmax contradictions** | 0 / 525 |
 | **Dataset** | 3,662 published APTOS 2019 records; **3,504 retained** after collapsing image-hash duplicate groups. Each row carries the SHA-256 of its real image bytes |
-| **Test suite** | 217 passed, 1 skipped |
+| **Test suite** | 221 passed, 1 skipped |
 | **End-to-end CPU latency** | **180.41 ms** mean / 147.45 ms median / **342.49 ms** P95 — the canonical run (C) |
 
 Every number in this table is checked against `docs/chapter4/clinical_metrics.json` and `docs/chapter4/cpu_end_to_end_benchmark.json` by a rule in the test suite, so it cannot drift from the artefacts silently.

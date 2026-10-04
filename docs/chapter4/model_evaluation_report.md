@@ -145,11 +145,11 @@ Predicted grades exceed the reference grade in 8.6% of cases and fall below it i
 
 | Collapse | Sensitivity | 95% CI | Specificity | 95% CI | Cases below the cut |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| Grade $\ge 1$ | 97.6% | 95.0 – 98.9 |
-
-> Any-DR sensitivity is 249 / 255 = 97.647%, i.e. **97.6%** at one decimal. `clinical_metrics.json` stores it as 97.65, and an earlier revision re-rounded that to 97.7%; the suite and `VERIFY.py` now compute the one-decimal figures from the predictions directly. 98.5% | 96.3 – 99.4 | 6 |
+| Grade $\ge 1$ | 97.6% | 95.0 – 98.9 | 98.5% | 96.3 – 99.4 | 6 |
 | Grade $\ge 2$ | 91.2% | 86.5 – 94.4 | 95.6% | 92.8 – 97.4 | 18 |
 | Grade $\ge 3$ | 68.2% | 56.2 – 78.2 | 94.8% | 92.3 – 96.5 | 21 |
+
+> Any-DR sensitivity is 249 / 255 = 97.647%, reported as **97.6%** to one decimal place. The calculation is performed from the underlying counts before rounding; `clinical_metrics.json` stores the unrounded value, and an earlier revision of this table re-rounded a two-decimal intermediate to 97.7%. The suite and `VERIFY.py` compute the one-decimal figures from the predictions directly, and a rule checks that every row of this table has six cells that match them.
 
 ---
 

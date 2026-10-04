@@ -6,7 +6,7 @@
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Last Revised:** 2026-10-04
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
-- **Overall Verification Status:** **217 of 218 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
+- **Overall Verification Status:** **221 of 222 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
 
@@ -23,7 +23,7 @@
 | **FR-07** | Automated EfficientNet-B0 inference outputting 5-class score distribution with frozen weights. | `backend/app/services/ai_service.py` | `TestClinicianInTheLoopGovernance.test_model_execution_mode_is_strictly_evaluation` | **PASS** |
 | **FR-08** | Grad-CAM visual attribution generation hooked onto final bottleneck `features.8`. | `backend/app/services/ai_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 | **FR-09** | Clinician Review with Tri-State Agreement (Agree / Disagree / Unable to determine). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_review_friction_justification_rule` | **PASS** |
-| **FR-10** | Hash-anchored PDF assessment report generation and append-only audit trail. | `backend/app/services/report_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
+| **FR-10** | Hash-anchored PDF assessment report generation and application-level append-only event log. | `backend/app/services/report_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 
 ---
 

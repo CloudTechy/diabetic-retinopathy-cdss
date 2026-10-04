@@ -261,7 +261,12 @@ async def get_assessment_audit_trail(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Retrieve the append-only audit ledger for a given assessment."""
+    """
+    Retrieve the application-level append-only event log for an assessment.
+
+    No route updates or deletes audit events and assessment deletion does not
+    cascade to them; the database itself does not enforce immutability.
+    """
     assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")

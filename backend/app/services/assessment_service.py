@@ -433,7 +433,7 @@ class AssessmentService:
         cls.validate_transition(assessment.status, "completed")
         assessment.status = "completed"
 
-        # Append-only audit event
+        # Application-level append-only audit event
         badge = "success" if review_input.agreement == "agree" else "warning"
         audit = AuditEvent(
             assessment_id=assessment.id,

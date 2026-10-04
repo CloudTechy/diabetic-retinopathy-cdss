@@ -63,7 +63,7 @@ def evaluate_gate1(image_bytes: bytes, original_filename: str = "upload.jpg") ->
       3. Magic binary signatures for JPEG (\xFF\xD8\xFF) or PNG (\x89PNG\r\n\x1a\n).
       4. Valid decodable image structure via PIL.
       5. Minimum resolution requirements (>= 512x512).
-      6. Generates SHA-256 cryptographic hash and sanitized UUID filename.
+      6. Generates SHA-256 hash and sanitized UUID filename.
     """
     file_size = len(image_bytes)
     sha256_hash = hashlib.sha256(image_bytes).hexdigest()

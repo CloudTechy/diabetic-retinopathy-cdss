@@ -246,7 +246,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800 antialiased font-sans">
-      {/* Header with TLS badge, 15-min timeout, and navigation tabs */}
+      {/* Header with 15-minute inactivity timeout and navigation tabs */}
       <Header
         currentUser={currentUser}
         onNavigate={handleNavigate}
