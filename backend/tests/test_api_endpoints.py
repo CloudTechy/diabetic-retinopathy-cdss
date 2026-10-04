@@ -144,6 +144,36 @@ class TestAssessmentEndpoints:
         assert data["validationGates"][1]["status"] == "failed"
         assert data["validationGates"][2]["status"] == "pending"
 
+    def test_inconclusive_review_requires_a_reason(self, authed_client):
+        """
+        The review modal refuses an inconclusive review without a reason; the
+        API must too, or a client can record one and the screen then shows
+        "no reason given" for a choice nobody explained.
+        """
+        test_client = authed_client
+        fundus_img = create_synthetic_retinal_fundus(512, 512, is_retinal=True)
+        raw_bytes = image_to_bytes(fundus_img, "JPEG")
+        data_url = f"data:image/jpeg;base64,{base64.b64encode(raw_bytes).decode('utf-8')}"
+        res = test_client.post("/api/v1/assessments", json={
+            "patientId": "PT-INCONCLUSIVE-TEST", "laterality": "OS", "imageDataUrl": data_url,
+        })
+        assessment_id = res.json()["id"]
+
+        no_reason = test_client.post(f"/api/v1/assessments/{assessment_id}/review", json={
+            "agreement": "inconclusive", "reviewerAssessedGrade": 2,
+            "justificationNotes": "Media haze makes the posterior pole ungradable here.",
+        })
+        assert no_reason.status_code == 422
+        assert "inconclusiveReason" in no_reason.json()["detail"]
+
+        with_reason = test_client.post(f"/api/v1/assessments/{assessment_id}/review", json={
+            "agreement": "inconclusive", "reviewerAssessedGrade": 2,
+            "justificationNotes": "Media haze makes the posterior pole ungradable here.",
+            "inconclusiveReason": "Media Opacity / Cataract",
+        })
+        assert with_reason.status_code == 200
+        assert with_reason.json()["clinicianReview"]["inconclusiveReason"] == "Media Opacity / Cataract"
+
     def test_review_friction_justification_rule(self, authed_client):
         test_client = authed_client
         """Clinical Governance Invariant: Overriding AI requires >= 15 char justification."""

@@ -66,7 +66,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
               <span className="text-[11px] font-mono text-rose-700">Gate {failedGate.gateIndex}</span>
             </div>
             <p className="text-rose-800 leading-relaxed text-[11px]">
-              {failedGate.rejectionReason || 'Non-retinal content or technical image quality violation.'}
+              {failedGate.rejectionReason || 'No rejection reason was recorded for this gate.'}
             </p>
             {failedGate.clinicalAction && (
               <div className="pt-2 border-t border-rose-200 text-[11px] text-slate-700">

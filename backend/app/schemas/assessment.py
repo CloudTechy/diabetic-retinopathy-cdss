@@ -99,7 +99,7 @@ class AssessmentRecordResponse(BaseModel):
     acquisitionDate: str   # record creation time; the field name is historical
     status: str
     cameraModel: Optional[str] = None
-    isMydriatic: Optional[bool] = False
+    isMydriatic: Optional[bool] = None   # None = not recorded; a False default would report a protocol
     clinicalNotes: Optional[str] = None
     imageUrl: str
     gradcamUrl: Optional[str] = None

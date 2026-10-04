@@ -4384,6 +4384,10 @@ def test_request_schema_and_screens_invent_no_camera_or_dilation():
     block = block[:block.index("\nclass ", 1)]
     assert re.search(r"cameraModel: Optional\[str\] = None", block), "AssessmentCreateRequest still defaults the camera"
     assert re.search(r"isMydriatic: Optional\[bool\] = None", block), "AssessmentCreateRequest still defaults dilation to False"
+    resp = schema[schema.index("class AssessmentRecordResponse"):]
+    nxt = resp.find("\nclass ", 1)
+    resp = resp if nxt == -1 else resp[:nxt]   # it may be the last class in the file
+    assert re.search(r"isMydriatic: Optional\[bool\] = None", resp), "AssessmentRecordResponse defaults dilation to False"
     models = read(MODELS_PY)
     m = re.search(r"is_mydriatic = Column\(([^\n]*)\)", models)
     assert m and "default=" not in m.group(1) and "nullable=True" in m.group(1), "the ORM still defaults dilation"
@@ -4410,3 +4414,8 @@ def test_no_invented_review_reason_role_or_filename():
     assert 'or "fundus.jpg"' not in router, "the upload route invents a filename"
     stepper = read(STEPPER_TSX)
     assert "server.length === 0" in stepper, "an empty gate list would be announced as passed"
+    svc = read(os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py"))
+    assert 'agreement == "inconclusive" and not (review_input.inconclusiveReason' in svc, (
+        "the API accepts an inconclusive review without a reason")
+    dss = read(os.path.join(REPO_ROOT, "frontend", "src", "screens", "DecisionSupportScreen.tsx"))
+    assert "technical image quality violation." not in dss, "the workspace invents a rejection reason"

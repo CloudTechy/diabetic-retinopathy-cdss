@@ -368,6 +368,13 @@ class AssessmentService:
                 f"Cannot submit review for assessment in '{assessment.status}' status. Must be 'result_ready' or 'under_review'."
             )
 
+        # An inconclusive review names its reason. The screen refused one without
+        # a reason; the API accepted it, and the record then read "no reason given".
+        if review_input.agreement == "inconclusive" and not (review_input.inconclusiveReason or "").strip():
+            raise ReviewValidationError(
+                "An inconclusive review must state its reason (inconclusiveReason)."
+            )
+
         # Governance Rule: Mandatory Disagreement Justification (>= 15 characters)
         if review_input.agreement in ("disagree", "inconclusive"):
             justification = (review_input.justificationNotes or "").strip()

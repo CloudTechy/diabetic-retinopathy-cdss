@@ -98,7 +98,7 @@ files in this archive.
       -> PASS
 
 [5] Documents quote the committed test log
-      log records: 246 collected, 245 passed, 0 failed, 1 skipped
+      log records: 247 collected, 246 passed, 0 failed, 1 skipped
       every test count in every .md in this package matches this log
       -> PASS
 
