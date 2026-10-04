@@ -58,7 +58,11 @@ class Gate2Result:
 
 def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
     """
-    Gate 2: Retinal Anatomical Relevance & Geometric Gating.
+    Gate 2: technical retinal-image relevance (geometry and colour profile).
+
+    Three heuristics, none of which identifies anatomy: passing them means the
+    input meets the configured geometry and colour-profile thresholds, not
+    that it is a retina, that its anatomy is correct, or that it is gradable.
     Validates:
       1. Image aspect ratio conforms to standard retinal camera fields (0.65 to 1.65).
       2. Circular fundus mask detection (aperture coverage between 20% and 98%).
@@ -150,7 +154,9 @@ def evaluate_gate2(pil_image: Image.Image) -> Gate2Result:
         )
 
     metric = f"Retinal field-of-view: {mask_coverage * 100:.1f}%, R/B spectral ratio: {red_to_blue:.2f}"
-    details = f"Retinal circular aperture confirmed ({mask_coverage * 100:.1f}% frame coverage). Vascular spectral balance verified."
+    details = (f"Input meets the configured geometry and colour-profile thresholds "
+               f"(foreground coverage {mask_coverage * 100:.1f}%, R/B {red_to_blue:.2f}). "
+               "This does not confirm retinal identity, anatomical correctness or clinical gradability.")
 
     return Gate2Result(
         passed=True,

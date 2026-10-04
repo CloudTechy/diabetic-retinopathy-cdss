@@ -94,7 +94,7 @@ stateDiagram-v2
 
 * **Visual Stepper Elements**:
   * **Gate 1: File Integrity & Security**: Checks magic numbers (`\xFF\xD8\xFF` for JPEG, `\x89PNG` for PNG), virus scan, dimension sanity ($\ge 512\times 512\,\text{px}$).
-  * **Gate 2: Retinal Anatomical Relevance**: Verifies circular fundus mask, red/orange spectral balance, optic disc/macula structural presence via OpenCV.
+  * **Gate 2: Technical retinal-image relevance**: aspect ratio, foreground coverage and red/blue colour-profile thresholds. No anatomy is identified; an earlier revision of this line claimed optic-disc/macula detection via OpenCV, which was never implemented.
   * **Gate 3: Technical Image Quality**: Laplacian blur variance metric, histogram illumination homogeneity, contrast dynamic range.
 * **Gate Failure Display**:
   * Replaces generic "Error" with structured clinical guidance:
@@ -262,7 +262,7 @@ The CDSS enforces standardized terminology at both UI and documentation levels t
 ```
 
 > **Mandatory UI Microcopy Banner (Screen 5 & Screen 7)**:  
-> *"Passed technical validation confirms image sharpness, contrast, and retinal structure only; it does not constitute clinical gradability. The final diagnosis and grading decision are solely the responsibility of the reviewing medical professional."*
+> *"Passed technical validation confirms image sharpness, contrast, and the configured geometry, colour-profile, sharpness and contrast thresholds only; it does not constitute clinical gradability. The final diagnosis and grading decision are solely the responsibility of the reviewing medical professional."*
 
 ### 3.2 Visual Demarcation of System States
 

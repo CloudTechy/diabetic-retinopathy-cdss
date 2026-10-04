@@ -17,7 +17,9 @@ Pre-inference validation prevents invalid, corrupted, or non-retinal photographs
 - **Payload Size Bound:** Rejects files > 15.0 MB to prevent denial-of-service memory exhaustion.
 - **De-identification:** Strips proprietary EXIF metadata and generates a random UUID filename.
 
-### Gate 2: Retinal Anatomical Relevance & Geometric Proportions
+### Gate 2: Technical retinal-image relevance (geometry and colour profile)
+
+> Three heuristics, none of which identifies anatomy. Passing them means the input meets the configured geometry and colour-profile thresholds; it does not confirm retinal identity, anatomical correctness or clinical gradability. An earlier revision of this heading called the gate "Retinal Anatomical Relevance".
 - **Calibrated Aspect Ratio Threshold:** Accepts $0.65 \leq \text{aspect ratio} \leq 1.65$. This range accommodates standard ophthalmic fundus cameras (4:3 = 1.333, 3:2 = 1.500, and square 1:1 apertures) while rejecting extreme panoramic strips (> 1.65) or elongated documents (< 0.65).
 - **Circular Aperture Mask Coverage:** Analyzes foreground luminance (threshold > 15 intensity). Requires valid fundus circular aperture covering between 20.0% and 98.0% of total image area. Rejects non-retinal images (e.g. chest X-rays, faces).
 - **Retinal Chromatic Signature:** Evaluates reddish/orange retinal reflection. Requires Red/Blue channel ratio $\ge 1.15$ and Red channel luminance share $\ge 38.0\%$.

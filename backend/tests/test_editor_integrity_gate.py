@@ -506,6 +506,15 @@ OVERCLAIM_PHRASES = [
     # fixed lesion sentence removed in round seven; three signing phrases.
     "over the same 30 images exist", "identical code", "Inferotemporal quadrant",
     "Clinician Signs Review", "a signed review", "Proportion of extreme-luminance pixels",
+    # Editor round on rev21: "secure" sign-in over plain HTTP with published
+    # defaults; a digest "match" with nothing to match against; a heuristic
+    # gate that "confirms" anatomy; a test suite that certifies production
+    # readiness; a second demo persona that never existed.
+    "Secure PIN", "Secure Practitioner Sign In", "Secure Clinician Authentication",
+    "SHA-256 match", "SHA-256 Verified", "SHA-256 verified",
+    "Anatomical Relevance", "aperture confirmed", "spectral balance verified",
+    "retinal anatomy", "retinal structure only", "landmarks",
+    "Quality Gate Satisfied", "Production & Thesis", "Optom. Demo", "optometrist.demo",
 ]
 
 
@@ -4179,3 +4188,112 @@ def test_manifest_attributes_each_figure_to_its_producer():
     assert "Figures 4.1–4.9 were captured" not in para, "the paragraph still attributes all nine figures to the live script"
     assert "except 4.5" in para or "4.5 excepted" in para or "other than 4.5" in para, "the paragraph does not except figure 4.5"
     assert "capture_rejection.js" in para, "the paragraph does not name figure 4.5's producer"
+
+
+# ======================================================================
+# RULE GROUP AK - the editor's review of rev21
+# ======================================================================
+
+HEADER_TSX = os.path.join(REPO_ROOT, "frontend", "src", "components", "Header.tsx")
+SIGNIN_TSX = os.path.join(REPO_ROOT, "frontend", "src", "screens", "SignInScreen.tsx")
+AUTH_ROUTER = os.path.join(REPO_ROOT, "backend", "app", "routers", "auth.py")
+
+
+def test_authenticated_session_badge_renders_only_for_a_signed_in_user():
+    """
+    Header.tsx rendered "Authenticated Session" unconditionally, so the
+    sign-in screen showed it beside "Unauthenticated Clinical Workstation".
+    The badge must sit inside a `{currentUser && (` block with no block
+    close between the opener and the text.
+    """
+    src = re.sub(r"\{/\*.*?\*/\}", "", read(HEADER_TSX), flags=re.S)   # JSX comments may quote the text
+    occurrences = [m.start() for m in re.finditer(r"Authenticated Session", src)]
+    assert occurrences, "the badge text is gone; update the rule with the new wording"
+    for at in occurrences:
+        opener = src.rfind("{currentUser && (", 0, at)
+        assert opener != -1, "the badge is not inside a currentUser conditional"
+        between = src[opener:at]
+        assert ")}" not in between, "a conditional block closes before the badge; it renders unconditionally"
+
+
+def test_sign_in_offers_one_simulated_account_and_prefills_nothing():
+    """
+    Two buttons ("Consultant", "Optometrist") filled the same seeded account,
+    and the form opened pre-filled with its credentials. One demonstration
+    account exists, it is labelled simulated, and the form opens empty.
+    """
+    src = read(SIGNIN_TSX)
+    rendered = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("//"))   # comments may record the old personas
+    assert src.count("demo.clinician") >= 1
+    assert "Optometrist" not in rendered and "Consultant" not in rendered, "a second persona is offered on the sign-in screen"
+    for field in ("email", "password"):
+        assert re.search(r"const \[%s, set\w+\] = useState<string>\(''\)" % field, src), (
+            "the sign-in form pre-fills the %s field" % field)
+    assert "Simulated" in src, "the demonstration account is not labelled simulated"
+    auth = read(AUTH_ROUTER)
+    aliases = re.search(r"DEMO_LOGIN_IDENTIFIERS = \{(.*?)\}", auth, re.S).group(1)
+    assert "optometrist" not in aliases and "dr.demo" not in aliases, "the router still accepts aliases for personas that do not exist"
+    assert '"full_name": "Dr. Demo Clinician (Simulated)"' in auth
+
+
+def test_gate_titles_are_the_same_in_code_api_contract_and_screen():
+    """
+    The three gates are named in pipeline.py, assessment_service.py, the API
+    contract's example and the stepper's initial state. They drifted
+    ("Retinal Relevance", "Retinal Anatomical Relevance", "Retinal Relevance &
+    Ophthalmic Geometry"). One vocabulary, read from pipeline.py.
+    """
+    pipeline = read(os.path.join(REPO_ROOT, "backend", "app", "services", "validation", "pipeline.py"))
+    titles = re.findall(r'"title": "([^"]+)"', pipeline)
+    assert len(titles) == 3, titles
+    for rel in ("backend/app/services/assessment_service.py", "docs/chapter4/api_contract.md",
+                "frontend/src/screens/ValidationStepperScreen.tsx"):
+        text = read(os.path.join(REPO_ROOT, rel))
+        for t in titles:
+            assert t in text, "%s does not use the gate title %r from pipeline.py" % (rel, t)
+    assert "anatom" not in " ".join(titles).lower(), "a gate title claims anatomy"
+
+
+def test_gate2_details_state_the_boundary():
+    """The passing Gate 2 text must say what passing does NOT confirm."""
+    src = read(os.path.join(REPO_ROOT, "backend", "app", "services", "validation", "gate2_relevance.py"))
+    assert "does not confirm retinal identity, anatomical correctness or clinical gradability" in src
+    stepper = read(os.path.join(REPO_ROOT, "frontend", "src", "screens", "ValidationStepperScreen.tsx"))
+    assert "does not confirm retinal identity, anatomical correctness or clinical gradability" in stepper
+
+
+def test_system_test_report_states_a_result_not_a_certification():
+    text = read(os.path.join(CHAPTER4, "system_test_report.md"))
+    assert "Functional test result: 233 passed, 1 conditionally skipped" in text or re.search(
+        r"Functional test result: \d+ passed, \d+ conditionally skipped", text), (
+        "the summary block no longer states the functional result plainly")
+    assert "Execution Status:" not in text, "the summary block still carries a status line"
+
+
+def test_manifest_fixture_paragraphs_agree():
+    """
+    The manifest said the capture image is the held-out APTOS fixture
+    d1f1ea894da1 (grade 2) and, four paragraphs later, that it is not from
+    APTOS and has no ground truth. Both paragraphs must describe the same
+    image.
+    """
+    text = read(os.path.join(CHAPTER4, "screenshot_evidence_manifest.md"))
+    assert "d1f1ea894da1" in text
+    for phrase in ("is **not** from APTOS", "appears nowhere in", "carries\n> no ground-truth grade", "no ground-truth grade"):
+        assert phrase not in text, "the manifest still says the fixture is not from APTOS / has no ground truth"
+    assert "one\n> genuine held-out APTOS image with a Grade 2 reference label" in text or \
+           "one genuine held-out APTOS image with a Grade 2 reference label" in text.replace("\n> ", " ")
+
+
+def test_no_gate_result_is_synthesised_as_passed():
+    """
+    assessment_service.py returned three PASSED gates with invented metrics
+    ("Laplacian: 248.5", "Retinal FOV 92%") for any assessment that had no
+    validation record. A gate that was not evaluated is "pending", and no
+    GateResultSchema may be constructed with a literal "passed" status.
+    """
+    src = read(os.path.join(REPO_ROOT, "backend", "app", "services", "assessment_service.py"))
+    assert not re.search(r'GateResultSchema\([^)]*status="passed"', src, re.S), "a gate result is constructed as passed with no evaluation behind it"
+    assert not re.search(r'metric="(Laplacian: [\d.]+|Retinal FOV [\d.]+%|Valid JPEG)"', src), "invented gate metrics are back"
+    for fallback in ("Sharpness confirmed", "Retinal aperture confirmed", "thresholds met\""):
+        assert fallback not in src, "a fallback metric claims an outcome: %r" % fallback

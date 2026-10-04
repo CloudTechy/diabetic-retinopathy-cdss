@@ -6,7 +6,7 @@
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Last Revised:** 2026-10-04
 - **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
-- **Overall Verification Status:** **233 of 234 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
+- **Overall Verification Status:** **240 of 241 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
 
@@ -14,7 +14,7 @@
 
 | Req ID | Requirement Description | Implementation Module | Automated Test Case | Test Result |
 | :--- | :--- | :--- | :--- | :---: |
-| **FR-01** | Secure Clinician Authentication with JWT session tokens and auto-timeout. | `backend/app/routers/auth.py` | `TestAuthEndpoints.test_login_and_me` | **PASS** |
+| **FR-01** | Authenticated practitioner access using JWT session tokens and inactivity timeout. | `backend/app/routers/auth.py` | `TestAuthEndpoints.test_login_and_me` | **PASS** |
 | **FR-02** | Ophthalmic Assessment Ingest with a unique record identifier (`REC-YYYY-XXXXXX`), patient ID, and eye laterality (OD/OS). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 | **FR-03** | Gate 1 File Integrity: Magic bytes validation for JPEG/PNG, file size limit <= 15MB. | `backend/app/services/validation/gate1_integrity.py` | `TestGate1FileIntegrity.test_valid_jpeg_passes_gate1` | **PASS** |
 | **FR-04** | Gate 2 Retinal Field Relevance: Circular mask, aspect ratio ($0.65-1.65$), chromatic $R/B > 1.15$. | `backend/app/services/validation/gate2_relevance.py` | `TestGate2RetinalRelevance.test_authentic_fundus_passes_gate2` | **PASS** |

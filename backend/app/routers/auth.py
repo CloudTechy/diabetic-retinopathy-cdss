@@ -30,9 +30,10 @@ DEMO_LOGIN_IDENTIFIERS = {
     "demo.clinician",
     "demo.clinician@research-prototype.invalid",
     "clinician",
-    "dr.demo@research-prototype.local",
-    "optometrist.demo@research-prototype.local",
 }
+# An earlier revision also accepted "dr.demo@..." and "optometrist.demo@..."
+# as aliases of this one account, which let the sign-in screen present an
+# optometrist persona that never existed.
 
 
 async def get_or_create_seed_user(db: AsyncSession) -> User:

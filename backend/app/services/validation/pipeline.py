@@ -42,7 +42,7 @@ class ValidationPipelineResult:
         g1_dict = {
             "gateIndex": 1,
             "name": "Gate 1",
-            "title": "File Integrity & Security",
+            "title": "File Integrity & Safe Decode",
             "status": g1_status,
             "metric": self.gate1_result.metric if self.gate1_result else "Pending",
             "details": self.gate1_result.details if (self.gate1_result and self.gate1_result.passed) else None,
@@ -67,7 +67,7 @@ class ValidationPipelineResult:
         g2_dict = {
             "gateIndex": 2,
             "name": "Gate 2",
-            "title": "Retinal Anatomical Relevance",
+            "title": "Technical retinal-image relevance",
             "status": g2_status,
             "metric": g2_metric,
             "details": g2_details,
@@ -127,7 +127,7 @@ class ValidationPipeline:
                 pil_image=None,
             )
 
-        # --- Stage 2: Retinal Anatomical Relevance ---
+        # --- Stage 2: technical retinal-image relevance (geometry + colour profile) ---
         assert pil_img is not None
         gate2_res = evaluate_gate2(pil_img)
         if not gate2_res.passed:

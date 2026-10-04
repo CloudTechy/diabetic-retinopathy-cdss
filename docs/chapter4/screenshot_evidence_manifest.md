@@ -13,7 +13,7 @@
 
 | Figure ID | Screen / Component Name | Key UI Elements & Visual Invariants Demonstrated | High-Resolution Evidence File |
 | :---: | :--- | :--- | :--- |
-| **Figure 4.1** | **Sign-In & Practitioner Auth** | Demonstrates research prototype clinical login, practitioner role badge, session security notices, and academic scope boundary notice. | [`docs/chapter4/screenshots/01_signin_screen.png`](screenshots/01_signin_screen.png) |
+| **Figure 4.1** | **Sign-In & Practitioner Auth** | Demonstrates the research-prototype sign-in: the single seeded demonstration account (labelled simulated), the inactivity-timeout notice, and the academic scope boundary notice. | [`docs/chapter4/screenshots/01_signin_screen.png`](screenshots/01_signin_screen.png) |
 | **Figure 4.2** | **Assessment Dashboard / Worklist** | Shows active clinical triage queue with summary metric cards, eye laterality (OD/OS), technical quality status, and non-diagnostic model score indicators. | [`docs/chapter4/screenshots/02_clinical_dashboard.png`](screenshots/02_clinical_dashboard.png) |
 | **Figure 4.3** | **New Assessment Fundus Upload** | Displays authentic drag-and-drop ophthalmic upload interface, client pre-flight checks, camera specifications, and de-identified study ID metadata form without synthetic presets. | [`docs/chapter4/screenshots/03_new_assessment_upload.png`](screenshots/03_new_assessment_upload.png) |
 | **Figure 4.4** | **3-Stage Validation (Passed)** | Demonstrates sequential real-time validation progression with all 3 gates clearing: Gate 1 File Integrity, Gate 2 Retinal Relevance, Gate 3 Quality (Laplacian $\sigma_L^2 = 12.2$ against the calibrated 4.3 threshold, for the genuine held-out fixture image). | [`docs/chapter4/screenshots/04_validation_stepper_passed.png`](screenshots/04_validation_stepper_passed.png) |
@@ -50,13 +50,14 @@
 > demonstration values; that set is retained in the repository (not in this archive) and
 > is superseded.
 >
-> **What they still do not evidence is accuracy.** The photograph used is a
-> genuine fundus image but is **not** from APTOS — its SHA-256 appears nowhere
-> in [`dataset_split_manifest.csv`](dataset_split_manifest.csv) — so it carries
-> no ground-truth grade. These figures evidence that the pipeline runs end to
-> end and that the displayed grade is the model's own; the accuracy evidence is
-> the held-out cohort in
-> [`model_evaluation_report.md`](model_evaluation_report.md) (N = 525).
+> **What they still do not evidence is accuracy.** The screenshots use one
+> genuine held-out APTOS image with a Grade 2 reference label, and the model
+> assigned Grade 2 in this instance. This single case demonstrates successful
+> end-to-end execution but does not establish classification accuracy.
+> Accuracy is evaluated across the complete held-out cohort of 525 images in
+> [`model_evaluation_report.md`](model_evaluation_report.md). An earlier revision
+> of this paragraph said the photograph was not from APTOS and carried no
+> ground truth, contradicting the paragraph above it.
 >
 > **Figure 4.5 is the fail-closed path**, and it is the worklist rather than the
 > stepper. Reopening a stored assessment replays the gate animation, and the

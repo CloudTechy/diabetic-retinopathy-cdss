@@ -76,14 +76,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Session Indicator */}
-            <span
-              className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 text-teal-300 text-[10px] font-mono border border-slate-700"
-              title="Authenticated Workstation Session"
-            >
-              <Lock className="w-2.5 h-2.5 mr-1 text-teal-400" />
-              Authenticated Session
-            </span>
+            {/* Session indicator: shown only for a signed-in user. An earlier
+                revision rendered it unconditionally, so the sign-in screen said
+                "Authenticated Session" beside "Unauthenticated Clinical Workstation". */}
+            {currentUser && (
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 text-teal-300 text-[10px] font-mono border border-slate-700"
+                title="Signed-in workstation session (bearer token)"
+              >
+                <Lock className="w-2.5 h-2.5 mr-1 text-teal-400" />
+                Authenticated Session
+              </span>
+            )}
 
             {/* Inactivity Countdown */}
             {currentUser && (

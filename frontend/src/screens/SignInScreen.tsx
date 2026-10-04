@@ -8,8 +8,8 @@ interface SignInScreenProps {
 }
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) => {
-  const [email, setEmail] = useState<string>('demo.clinician');
-  const [password, setPassword] = useState<string>('dr_secure_password_2026');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -31,14 +31,13 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
     }
   };
 
-  const handleQuickDemoFill = (role: 'consultant' | 'optometrist') => {
-    if (role === 'consultant') {
-      setEmail('demo.clinician');
-      setPassword('dr_secure_password_2026');
-    } else {
-      setEmail('demo.clinician');
-      setPassword('dr_secure_password_2026');
-    }
+  // The prototype seeds ONE demonstration account, explicitly simulated
+  // (SIM-000001, "Research Prototype Environment"). An earlier revision offered
+  // two personas ("Consultant" and "Optometrist") that both filled this same
+  // account - a second identity that never existed.
+  const handleDemoFill = () => {
+    setEmail('demo.clinician');
+    setPassword('dr_secure_password_2026');
   };
 
   return (
@@ -93,14 +92,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-clinical-primary focus:border-clinical-primary text-xs"
-                  placeholder="e.g. dr.demo@research-prototype.local"
+                  placeholder="demo.clinician"
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-xs font-semibold text-slate-700">
-                Password / Secure PIN
+                Password
               </label>
               <div className="mt-1">
                 <input
@@ -129,43 +128,29 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                 ) : (
                   <span className="inline-flex items-center gap-2">
                     <Lock className="w-3.5 h-3.5" />
-                    Secure Practitioner Sign In
+                    Practitioner Sign In
                   </span>
                 )}
               </button>
             </div>
           </form>
 
-          {/* Quick Demo Credentials */}
+          {/* The single seeded demonstration account, labelled as simulated */}
           <div className="pt-2 border-t border-slate-100">
             <span className="text-[11px] font-semibold text-slate-500 block mb-2">
-              Research Prototype Demo Credentials:
+              Research prototype: one seeded demonstration account (simulated identity, no real practitioner)
             </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoFill('consultant')}
-                className="p-2 border border-slate-200 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
-              >
-                <div className="flex items-center gap-1 font-semibold text-slate-800">
-                  <UserCheck className="w-3.5 h-3.5 text-clinical-primary" />
-                  Dr. Demo Clinician (Simulated)
-                </div>
-                <div className="text-[10px] text-slate-400">Consultant</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemoFill('optometrist')}
-                className="p-2 border border-slate-200 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
-              >
-                <div className="flex items-center gap-1 font-semibold text-slate-800">
-                  <UserCheck className="w-3.5 h-3.5 text-teal-600" />
-                  Optom. Demo
-                </div>
-                <div className="text-[10px] text-slate-400">Optometrist</div>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleDemoFill}
+              className="w-full p-2 border border-slate-200 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
+            >
+              <div className="flex items-center gap-1 font-semibold text-slate-800">
+                <UserCheck className="w-3.5 h-3.5 text-clinical-primary" />
+                Fill demonstration credentials — Dr. Demo Clinician (Simulated), SIM-000001
+              </div>
+              <div className="text-[10px] text-slate-400">Role: Simulated Reviewer — Research Prototype Environment</div>
+            </button>
           </div>
         </div>
 

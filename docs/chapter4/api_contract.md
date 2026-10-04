@@ -88,13 +88,13 @@
     },
     {
       "gateIndex": 2,
-      "title": "Retinal Relevance & Ophthalmic Geometry",
+      "title": "Technical retinal-image relevance",
       "status": "passed",
       "metrics": { "aspectRatio": 1.0, "chromaticRatioRB": 1.48 }
     },
     {
       "gateIndex": 3,
-      "title": "Technical Image Quality",
+      "title": "Technical Quality & Sharpness",
       "status": "passed",
       "metrics": { "laplacianVariance": 12.2, "illuminationIndex": 0.97 }
     }

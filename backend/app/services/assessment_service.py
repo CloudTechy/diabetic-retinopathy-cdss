@@ -596,9 +596,9 @@ class AssessmentService:
                 GateResultSchema(
                     gateIndex=1,
                     name="Gate 1",
-                    title="File Integrity & Security",
+                    title="File Integrity & Safe Decode",
                     status=g1_stat,
-                    metric=val.gate1_details.get("metric", "Valid binary signature") if val.gate1_details else "Valid binary signature",
+                    metric=val.gate1_details.get("metric", "Metric not recorded") if val.gate1_details else "Metric not recorded",
                     details=val.gate1_details.get("details") if val.gate1_passed else None,
                     rejectionReason=val.failure_reason if val.failed_gate == 1 else None,
                     clinicalAction=val.actionable_guidance if val.failed_gate == 1 else None,
@@ -609,9 +609,9 @@ class AssessmentService:
                 GateResultSchema(
                     gateIndex=2,
                     name="Gate 2",
-                    title="Retinal Anatomical Relevance",
+                    title="Technical retinal-image relevance",
                     status=g2_stat,
-                    metric=val.gate2_details.get("metric", "Retinal aperture confirmed") if val.gate2_details else "Retinal aperture confirmed",
+                    metric=val.gate2_details.get("metric", "Metric not recorded") if val.gate2_details else "Metric not recorded",
                     details=val.gate2_details.get("details") if val.gate2_passed else None,
                     rejectionReason=val.failure_reason if val.failed_gate == 2 else None,
                     clinicalAction=val.actionable_guidance if val.failed_gate == 2 else None,
@@ -624,17 +624,23 @@ class AssessmentService:
                     name="Gate 3",
                     title="Technical Quality & Sharpness",
                     status=g3_stat,
-                    metric=val.gate3_details.get("metric", "Sharpness confirmed") if val.gate3_details else "Sharpness confirmed",
+                    metric=val.gate3_details.get("metric", "Metric not recorded") if val.gate3_details else "Metric not recorded",
                     details=val.gate3_details.get("details") if val.gate3_passed else None,
                     rejectionReason=val.failure_reason if val.failed_gate == 3 else None,
                     clinicalAction=val.actionable_guidance if val.failed_gate == 3 else None,
                 )
             )
         else:
+            # No validation record exists (a draft before upload, or a legacy
+            # row). An earlier revision fabricated three PASSED gates here with
+            # invented metrics ("Laplacian: 248.5", "Retinal FOV 92%"). Nothing
+            # was evaluated, so nothing is reported as passed.
             gates = [
-                GateResultSchema(gateIndex=1, name="Gate 1", title="File Integrity", status="passed", metric="Valid JPEG"),
-                GateResultSchema(gateIndex=2, name="Gate 2", title="Retinal Relevance", status="passed", metric="Retinal FOV 92%"),
-                GateResultSchema(gateIndex=3, name="Gate 3", title="Technical Quality", status="passed", metric="Laplacian: 248.5"),
+                GateResultSchema(gateIndex=i, name=f"Gate {i}", title=title, status="pending",
+                                 metric="Not evaluated: no image has been validated for this assessment")
+                for i, title in ((1, "File Integrity & Safe Decode"),
+                                 (2, "Technical retinal-image relevance"),
+                                 (3, "Technical Quality & Sharpness"))
             ]
 
         # Model observation

@@ -26,21 +26,21 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
     {
       gateIndex: 1,
       name: 'Gate 1',
-      title: 'File Integrity & Security',
+      title: 'File Integrity & Safe Decode',
       status: 'in_progress',
-      metric: 'Verifying binary signature and payload integrity...',
+      metric: 'Checking file signature, size and decodability...',
     },
     {
       gateIndex: 2,
       name: 'Gate 2',
-      title: 'Retinal Relevance',
+      title: 'Technical retinal-image relevance',
       status: 'pending',
       metric: 'Pending Gate 1 completion...',
     },
     {
       gateIndex: 3,
       name: 'Gate 3',
-      title: 'Technical Image Quality',
+      title: 'Technical Quality & Sharpness',
       status: 'pending',
       metric: 'Pending Gate 2 completion...',
     },
@@ -54,7 +54,9 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
     const targetGates = assessment.validationGates;
     const failsAt = targetGates.find((g) => g.status === 'failed')?.gateIndex || null;
 
-    // Simulate real-time pipeline execution
+    // Replay the SERVER'S stored gate results one step at a time. This is
+    // presentation pacing only: every status, metric and reason below comes
+    // from assessment.validationGates, nothing is generated here.
     const timer1 = setTimeout(() => {
       // Step 1 Finish
       if (failsAt === 1) {
@@ -69,7 +71,7 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
       } else {
         setStepperGates([
           { ...targetGates[0], status: 'passed' },
-          { ...targetGates[1], status: 'in_progress', metric: 'Scanning circular retinal mask and landmarks...' },
+          { ...targetGates[1], status: 'in_progress', metric: 'Checking geometry and colour-profile thresholds...' },
           { ...targetGates[2], status: 'pending' },
         ]);
         setCurrentStepIndex(2);
@@ -242,15 +244,15 @@ export const ValidationStepperScreen: React.FC<ValidationStepperScreenProps> = (
                   All 3 Validation Gates Successfully Passed
                 </h4>
                 <p className="text-emerald-800 leading-relaxed">
-                  File integrity, retinal anatomy, and sharpness metrics (Laplacian variance:{' '}
-                  {assessment.qualityMetrics.laplacianVariance.toFixed(1)}) satisfy technical inference thresholds.
+                  The file decoded, and its geometry, colour profile, sharpness (Laplacian variance:{' '}
+                  {assessment.qualityMetrics.laplacianVariance.toFixed(1)}) and contrast met the configured thresholds.
                 </p>
               </div>
             </div>
 
             {/* Non-Diagnostic Microcopy Mandatory Notice */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 leading-relaxed">
-              <strong>Mandatory Quality Boundary Notice:</strong> Passed technical validation confirms image sharpness, contrast, and retinal structure only; it does not constitute clinical gradability. The final diagnosis and grading decision are solely the responsibility of the reviewing medical professional.
+              <strong>Boundary notice:</strong> passing these heuristics confirms only that the input met the configured geometry, colour-profile, sharpness and contrast thresholds. It does not confirm retinal identity, anatomical correctness or clinical gradability. The grading decision is solely the responsibility of the reviewing medical professional.
             </div>
 
             <div className="flex justify-end pt-2">

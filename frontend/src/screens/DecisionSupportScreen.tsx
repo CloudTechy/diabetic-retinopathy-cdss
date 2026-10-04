@@ -142,7 +142,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
 
             <div className="flex items-center space-x-4 text-slate-500 font-mono text-[11px]">
               <span>Illumination: {assessment.qualityMetrics.illuminationIndex.toFixed(2)}</span>
-              <span>SHA-256 Verified</span>
+              <span>SHA-256 recorded</span>
             </div>
           </div>
         </div>

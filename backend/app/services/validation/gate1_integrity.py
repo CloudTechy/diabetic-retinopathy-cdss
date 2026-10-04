@@ -56,7 +56,7 @@ class Gate1Result:
 
 def evaluate_gate1(image_bytes: bytes, original_filename: str = "upload.jpg") -> Tuple[Gate1Result, Optional[Image.Image]]:
     """
-    Gate 1: File Integrity & Security.
+    Gate 1: File Integrity & Safe Decode.
     Validates:
       1. Non-empty payload.
       2. File size <= 15MB limit.
@@ -163,7 +163,9 @@ def evaluate_gate1(image_bytes: bytes, original_filename: str = "upload.jpg") ->
         )
 
     size_mb = file_size / (1024 * 1024)
-    metric = f"MIME {mime_type}, SHA-256 match, {size_mb:.2f} MB"
+    # The digest is COMPUTED and recorded; there is no reference digest to
+    # match an upload against. An earlier revision said "SHA-256 match".
+    metric = f"MIME {mime_type}, SHA-256 computed, {size_mb:.2f} MB"
     details = f"Valid binary signature ({'0xFFD8FF' if is_jpeg else '0x89504E47'}), dimension {width}x{height} px."
 
     return (
