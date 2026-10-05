@@ -15,6 +15,7 @@ import {
   ICDR_GRADES
 } from '../types/clinical';
 import { clinicalApi } from '../services/api';
+import { describeApiError } from '../utils/apiError';
 import { AuditDrawer } from '../components/AuditDrawer';
 
 interface RecordHistoryScreenProps {
@@ -26,6 +27,9 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
 }) => {
   const [records, setRecords] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  // A failed request is shown as a failure. An earlier revision emptied the
+  // list instead, so a server error read as "no records".
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedAuditRecord, setSelectedAuditRecord] = useState<AssessmentRecord | null>(null);
 
   // Filters State
@@ -45,11 +49,13 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
 
   const fetchRecords = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await clinicalApi.searchRecords(filters);
       setRecords(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err) {
       setRecords([]);
+      setLoadError(describeApiError(err, 'The records could not be loaded'));
     } finally {
       setLoading(false);
     }
@@ -284,6 +290,12 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                   <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-clinical-primary"></div>
                     <p className="mt-2 text-xs font-medium">Filtering records...</p>
+                  </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={7} role="alert" className="px-4 py-12 text-center text-rose-700 text-xs font-semibold">
+                    {loadError}
                   </td>
                 </tr>
               ) : paginatedRecords.length === 0 ? (

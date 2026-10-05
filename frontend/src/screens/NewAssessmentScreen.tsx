@@ -140,8 +140,12 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
         const file = new File([blob], `retinal_camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
         processImageFile(file);
       }
-    } catch (err) {
-      console.log('[Camera] Cancelled or camera unavailable:', err);
+    } catch (err: any) {
+      const reason = String(err?.message || err || '');
+      // closing the picker is not an error
+      if (!/cancel/i.test(reason)) {
+        setFileError(`The device camera could not be used (${reason || 'no reason given'}). Choose an exported image file instead.`);
+      }
     }
   };
 
@@ -319,7 +323,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                 type="button"
                 onClick={handleCameraCapture}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 shadow-xs transition"
-                title="Capture fundus photo using mobile camera or ophthalmoscope adapter"
+                title="Opens this device's camera or photo library and uses the picture as the upload. The app does not control a fundus camera or lens adapter; a phone needs one fitted to photograph the retina."
               >
                 <CameraIcon className="w-3.5 h-3.5" />
                 <span>Use Mobile Camera / Lens</span>

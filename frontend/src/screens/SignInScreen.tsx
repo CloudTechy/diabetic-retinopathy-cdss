@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Eye, AlertTriangle, UserCheck } from 'lucide-react';
 import { ClinicianUser } from '../types/clinical';
 import { clinicalApi } from '../services/api';
+import { describeApiError } from '../utils/apiError';
 
 interface SignInScreenProps {
   onSignInSuccess: (user: ClinicianUser) => void;
@@ -24,8 +25,13 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
         password: password,
       });
       onSignInSuccess(user);
-    } catch {
-      setErrorMessage('Authentication failed. Please verify clinical staff ID and credentials.');
+    } catch (err: any) {
+      // only a 401 is a credentials problem; anything else says what it was
+      setErrorMessage(
+        err?.response?.status === 401
+          ? 'Authentication failed. Please verify clinical staff ID and credentials.'
+          : describeApiError(err, 'Sign-in did not complete')
+      );
     } finally {
       setIsLoading(false);
     }

@@ -15,6 +15,7 @@ import {
   ClinicianUser
 } from '../types/clinical';
 import { clinicalApi } from '../services/api';
+import { describeApiError } from '../utils/apiError';
 
 interface ProfessionalReviewModalProps {
   assessment: AssessmentRecord;
@@ -38,6 +39,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
   const [inconclusiveReason, setInconclusiveReason] = useState<string>('');
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const modelGrade = assessment.modelObservation?.primaryClassGrade ?? 2;
 
@@ -61,6 +63,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
     e.preventDefault();
     if (!canProceed) return;
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const finalGrade = reviewerAssessedGrade ?? modelGrade;
@@ -73,6 +76,8 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
       });
 
       onReviewSubmitted(updated);
+    } catch (err) {
+      setSubmitError(describeApiError(err, 'The review was not recorded'));
     } finally {
       setIsSubmitting(false);
     }
@@ -294,6 +299,12 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
               Independent Professional Review
             </div>
           </div>
+
+          {submitError && (
+            <p role="alert" className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+              {submitError}
+            </p>
+          )}
 
           {/* Modal Footer Actions */}
           <div className="flex items-center justify-between pt-3 border-t border-slate-200">

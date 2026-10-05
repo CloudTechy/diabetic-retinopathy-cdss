@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClinicianUser, AssessmentRecord, EyeLaterality } from './types/clinical';
 import { clinicalApi } from './services/api';
+import { describeApiError } from './utils/apiError';
 import { browserStorage } from './services/storage';
 import { Header } from './components/Header';
 import { SignInScreen } from './screens/SignInScreen';
@@ -43,9 +44,9 @@ export const App: React.FC = () => {
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, durationMs = 4000) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
+    setTimeout(() => setToastMessage(null), durationMs);
   };
 
   // Helper for synchronized persistent navigation
@@ -159,6 +160,8 @@ export const App: React.FC = () => {
           setCurrentUser(null);
           browserStorage.saveStoredUser(null);
           setActiveScreen('signin');
+        } else {
+          showToast(describeApiError(err, 'The page could not be loaded'), 12000);
         }
       }
     };
@@ -220,12 +223,12 @@ export const App: React.FC = () => {
       const created = await clinicalApi.createAssessment(payload);
       navigateTo('validation', created);
     } catch (err: any) {
-      const detail = err?.response?.data?.detail;
       if (err?.response?.status === 401) {
         showToast('Authentication required. Please sign in.');
         handleLogout();
       } else {
-        showToast(detail ? `Upload error: ${detail}` : 'Error uploading assessment image.');
+        // the server's own reason, field by field for a rejected payload
+        showToast(describeApiError(err, 'The assessment was not created'), 12000);
       }
     }
   };

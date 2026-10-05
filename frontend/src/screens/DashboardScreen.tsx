@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AssessmentRecord, ReviewStatus, EyeLaterality } from '../types/clinical';
 import { clinicalApi } from '../services/api';
+import { describeApiError } from '../utils/apiError';
 
 interface DashboardScreenProps {
   onSelectAssessment: (assessment: AssessmentRecord) => void;
@@ -27,6 +28,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 }) => {
   const [records, setRecords] = useState<AssessmentRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  // A failed request is shown as a failure. An earlier revision emptied the
+  // list instead, so a server error read as "no records".
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | ReviewStatus>('all');
   const [lateralityFilter, setLateralityFilter] = useState<'all' | EyeLaterality>('all');
@@ -35,11 +39,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const fetchRecords = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await clinicalApi.getWorklist();
       setRecords(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err) {
       setRecords([]);
+      setLoadError(describeApiError(err, 'The records could not be loaded'));
     } finally {
       setLoading(false);
     }
@@ -272,6 +278,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-clinical-primary"></div>
                     <p className="mt-2 text-xs font-medium">Loading clinical worklist queue...</p>
+                  </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={7} role="alert" className="px-4 py-12 text-center text-rose-700 text-xs font-semibold">
+                    {loadError}
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (

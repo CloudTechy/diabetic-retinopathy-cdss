@@ -14,6 +14,7 @@ import { FundusViewer } from '../components/FundusViewer';
 import { ScoreDistributionCard } from '../components/ScoreDistributionCard';
 import { AuditDrawer } from '../components/AuditDrawer';
 import { clinicalApi } from '../services/api';
+import { describeApiError } from '../utils/apiError';
 
 interface DecisionSupportScreenProps {
   assessment: AssessmentRecord;
@@ -33,6 +34,8 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
     setIsDownloading(true);
     try {
       await clinicalApi.downloadReportPdf(assessment);
+    } catch (err) {
+      window.alert(describeApiError(err, 'The report could not be downloaded'));
     } finally {
       setIsDownloading(false);
     }

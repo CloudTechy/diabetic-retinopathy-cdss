@@ -15,6 +15,7 @@ import { AssessmentRecord, ICDR_GRADES } from '../types/clinical';
 import { FundusViewer } from '../components/FundusViewer';
 import { AuditDrawer } from '../components/AuditDrawer';
 import { clinicalApi } from '../services/api';
+import { describeApiError } from '../utils/apiError';
 
 interface CompletedAssessmentScreenProps {
   assessment: AssessmentRecord;
@@ -35,6 +36,8 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
     setIsDownloading(true);
     try {
       await clinicalApi.downloadReportPdf(assessment);
+    } catch (err) {
+      window.alert(describeApiError(err, 'The report could not be downloaded'));
     } finally {
       setIsDownloading(false);
     }
