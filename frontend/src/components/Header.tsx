@@ -43,13 +43,14 @@ export const Header: React.FC<HeaderProps> = ({
       if (showTimeoutWarning) setShowTimeoutWarning(false);
     };
 
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
+    // touch and scroll count as activity: on a phone there is no mouse, so the
+    // session used to run out under a user who was actively using it
+    const activityEvents = ['mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
+    activityEvents.forEach((name) => window.addEventListener(name, handleActivity, { passive: true }));
 
     return () => {
       clearInterval(timer);
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
+      activityEvents.forEach((name) => window.removeEventListener(name, handleActivity));
     };
   }, [currentUser, showTimeoutWarning, onLogout]);
 
@@ -63,11 +64,12 @@ export const Header: React.FC<HeaderProps> = ({
     <>
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm" role="banner">
         {/* Top Regulatory Safety Ribbon */}
-        <div className="bg-slate-900 text-slate-300 text-[11px] px-4 py-1 flex items-center justify-between font-mono">
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-            <span className="font-semibold text-slate-100 uppercase tracking-wider">
-              AI Clinical Decision Support Aid (Research & Decision Support)
+        <div className="bg-slate-900 text-slate-300 text-[11px] px-4 py-1 flex items-center justify-between gap-3 font-mono">
+          <div className="flex items-center space-x-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0"></span>
+            <span className="font-semibold text-slate-100 uppercase tracking-wider truncate">
+              <span className="sm:hidden">Research decision-support aid</span>
+              <span className="hidden sm:inline">AI Clinical Decision Support Aid (Research & Decision Support)</span>
             </span>
             <span className="text-slate-400 hidden sm:inline">|</span>
             <span className="text-slate-400 hidden sm:inline">
@@ -75,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-shrink-0 whitespace-nowrap">
             {/* Session indicator: shown only for a signed-in user. An earlier
                 revision rendered it unconditionally, so the sign-in screen said
                 "Authenticated Session" beside "Unauthenticated Clinical Workstation". */}
@@ -84,8 +86,8 @@ export const Header: React.FC<HeaderProps> = ({
                 className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 text-teal-300 text-[10px] font-mono border border-slate-700"
                 title="Signed-in workstation session (bearer token)"
               >
-                <Lock className="w-2.5 h-2.5 mr-1 text-teal-400" />
-                Authenticated Session
+                <Lock className="w-2.5 h-2.5 sm:mr-1 text-teal-400" />
+                <span className="hidden sm:inline">Authenticated Session</span>
               </span>
             )}
 
@@ -119,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-base font-bold text-slate-900 leading-tight">
                   DR-CDSS <span className="text-xs font-normal text-slate-500 uppercase tracking-wider">Clinical Suite</span>
                 </h1>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 hidden sm:block">
                   Diabetic Retinopathy Decision Support • EfficientNet-B0
                 </p>
               </div>
@@ -208,6 +210,35 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </header>
+
+      {/* Navigation on a phone. The tabs in the header are hidden below the md
+          breakpoint, which left a signed-in phone user with no way to move
+          between the worklist, a new assessment and the record history. */}
+      {currentUser && (
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_8px_rgba(15,23,42,0.06)] grid grid-cols-3"
+          aria-label="Clinical Navigation (mobile)"
+        >
+          {([
+            ['dashboard', 'Worklist', Activity, activeScreen === 'dashboard'],
+            ['new_assessment', 'New', PlusCircle, activeScreen === 'new_assessment' || activeScreen === 'validation'],
+            ['history', 'History', Search, activeScreen === 'history'],
+          ] as const).map(([screen, label, Icon, active]) => (
+            <button
+              key={screen}
+              type="button"
+              onClick={() => onNavigate(screen)}
+              aria-current={active ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold ${
+                active ? 'text-clinical-primary' : 'text-slate-500'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* Inactivity Warning Modal */}
       {showTimeoutWarning && (

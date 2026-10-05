@@ -23,7 +23,7 @@ export const ValidationStepper: React.FC<ValidationStepperProps> = ({ gates }) =
 
   return (
     <nav aria-label="Image Validation Pipeline Progress" className="w-full py-4">
-      <ol className="flex items-center justify-between w-full" role="list">
+      <ol className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 w-full" role="list">
         {gates.map((gate, idx) => {
           const isLast = idx === gates.length - 1;
           const isPassed = gate.status === 'passed';
@@ -75,12 +75,12 @@ export const ValidationStepper: React.FC<ValidationStepperProps> = ({ gates }) =
                   >
                     Gate {gate.gateIndex}
                   </p>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900 sm:truncate">
                     {gate.title}
                   </p>
                   <span className="sr-only">Status: {gate.status}</span>
                   {gate.metric && (
-                    <p className="text-[11px] text-slate-500 font-mono break-words hidden sm:block">
+                    <p className="text-[11px] text-slate-500 font-mono break-words">
                       {gate.metric}
                     </p>
                   )}
@@ -90,7 +90,7 @@ export const ValidationStepper: React.FC<ValidationStepperProps> = ({ gates }) =
               {/* Connecting Divider */}
               {!isLast && (
                 <div
-                  className={`flex-1 h-0.5 mx-2 sm:mx-4 transition-colors duration-300 ${
+                  className={`hidden sm:block flex-1 h-0.5 mx-2 sm:mx-4 transition-colors duration-300 ${
                     isPassed ? 'bg-status-pass' : isFailed ? 'bg-status-fail' : 'bg-slate-200'
                   }`}
                   aria-hidden="true"

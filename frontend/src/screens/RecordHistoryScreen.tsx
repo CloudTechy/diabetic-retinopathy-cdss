@@ -271,7 +271,74 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
 
       {/* Historical Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Phone: one card per record; the table below is for wide screens. */}
+        <ul className="md:hidden divide-y divide-slate-200" aria-label="Historical assessments">
+          {loading ? (
+            <li className="px-4 py-10 text-center text-slate-500 text-xs font-medium">Filtering records...</li>
+          ) : loadError ? (
+            <li role="alert" className="px-4 py-10 text-center text-rose-700 text-xs font-semibold">{loadError}</li>
+          ) : paginatedRecords.length === 0 ? (
+            <li className="px-4 py-10 text-center text-slate-500 text-xs">No historical assessments matching selected criteria.</li>
+          ) : (
+            paginatedRecords.map((rec) => (
+              <li key={rec.id} className="p-4 space-y-2 text-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 break-all">{rec.patientId}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{rec.id}</p>
+                  </div>
+                  <span className="flex-shrink-0 font-mono text-[11px] text-slate-600 text-right">
+                    {rec.laterality} · {new Date(rec.acquisitionDate).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-slate-800">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 block">Model candidate</span>
+                  {rec.modelObservation ? (
+                    <>
+                      <span className="font-semibold">{rec.modelObservation.primaryClassLabel}</span>{' '}
+                      <span className="font-mono text-slate-500">Score: {rec.modelObservation.primaryScore.toFixed(2)}</span>
+                    </>
+                  ) : (
+                    <span className="text-slate-400 italic">Aborted</span>
+                  )}
+                </p>
+                <p className="text-slate-800">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 block">Professional review</span>
+                  {rec.clinicianReview ? (
+                    <>
+                      <span className="font-bold text-teal-900">{rec.clinicianReview.reviewerAssessedGradeLabel}</span>{' '}
+                      <span className="font-mono uppercase text-[10px] text-slate-600">({rec.clinicianReview.agreement})</span>
+                    </>
+                  ) : rec.status === 'rejected' ? (
+                    <span className="text-slate-600">Rejected at validation — no review possible</span>
+                  ) : (
+                    <span className="text-amber-700">Pending Human Review</span>
+                  )}
+                </p>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAuditRecord(rec)}
+                    className="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-lg"
+                  >
+                    <Clock className="w-3 h-3 inline mr-1 text-slate-500" />
+                    Audit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelectAssessment(rec)}
+                    className="px-3 py-2 text-xs font-bold text-white bg-clinical-primary rounded-lg"
+                  >
+                    Open
+                    <ArrowRight className="w-3 h-3 inline ml-1" />
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-xs text-left">
             <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>

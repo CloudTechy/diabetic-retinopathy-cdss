@@ -1,7 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
 import os
-from fastapi import FastAPI
+import uuid
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
@@ -37,8 +39,10 @@ async def lifespan(app: FastAPI):
     
     # Initialize database tables
     try:
-        await init_db()
+        relaxed = await init_db()
         logger.info("Database tables initialized successfully.")
+        if relaxed:
+            logger.warning("Columns widened to accept NULL to match the models: %s", ", ".join(relaxed))
     except Exception as e:
         logger.error("Database initialization error: %s", str(e))
 
@@ -67,6 +71,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """
+    An unhandled error is answered with a reason, never a bare 500.
+
+    The default handler returns the text "Internal Server Error", so the client
+    could only say "HTTP 500 with no explanation". The response names the kind
+    of failure and carries a reference that is also written to the log beside
+    the traceback. Database errors are summarised by their first line only: the
+    full statement and its parameters stay in the log.
+    """
+    reference = uuid.uuid4().hex[:12]
+    logger.exception("Unhandled error %s on %s %s", reference, request.method, request.url.path)
+    kind = type(exc).__name__
+    original = getattr(exc, "orig", None)
+    summary = str(original if original is not None else exc).strip().splitlines()[0][:300] if str(exc).strip() else ""
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "The server failed while handling %s %s: %s%s. Reference %s."
+                      % (request.method, request.url.path, kind, (" - " + summary) if summary else "", reference),
+            "errorType": kind,
+            "reference": reference,
+        },
+    )
+
 
 # Mount Health router at root and under API v1 prefix
 app.include_router(health_router)

@@ -8,6 +8,7 @@ import {
   ShieldAlert,
   Camera as CameraIcon,
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { EyeLaterality } from '../types/clinical';
 import { analyzeRetinalImageOnCanvas, ClientValidationResult } from '../utils/retinalValidator';
@@ -52,6 +53,7 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Pre-flight validation logic
   const processImageFile = (file: File) => {
@@ -127,6 +129,14 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
 
   const handleCameraCapture = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    // In a browser the Capacitor camera plugin needs a web component this
+    // build does not ship, so the button did nothing on a phone's browser. A
+    // file input with `capture` opens the rear camera there (and a file
+    // picker on a desktop); the plugin is used only inside the native app.
+    if (!Capacitor.isNativePlatform()) {
+      cameraInputRef.current?.click();
+      return;
+    }
     try {
       const photo = await Camera.getPhoto({
         quality: 95,
@@ -328,6 +338,19 @@ export const NewAssessmentScreen: React.FC<NewAssessmentScreenProps> = ({
                 <CameraIcon className="w-3.5 h-3.5" />
                 <span>Use Mobile Camera / Lens</span>
               </button>
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    processImageFile(e.target.files[0]);
+                  }
+                  e.target.value = '';
+                }}
+              />
               <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
                 JPEG/PNG • Max: 15MB
               </span>

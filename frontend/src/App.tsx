@@ -267,7 +267,7 @@ export const App: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-5 right-5 z-50 bg-slate-900 text-teal-300 text-xs px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="fixed bottom-20 left-3 right-3 md:bottom-5 md:left-auto md:right-5 md:max-w-md z-50 bg-slate-900 text-teal-300 text-xs px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
           <span className="font-medium text-slate-100">{toastMessage}</span>
@@ -275,7 +275,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Main Screen Router */}
-      <main className="flex-1 w-full" role="main">
+      <main className="flex-1 w-full pb-16 md:pb-0" role="main">
         {/* If unauthenticated, always render Screen 1: Sign-In */}
         {!currentUser || activeScreen === 'signin' ? (
           <SignInScreen onSignInSuccess={handleSignInSuccess} />

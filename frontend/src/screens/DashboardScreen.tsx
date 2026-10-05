@@ -93,6 +93,18 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     return (grade === 3 || grade === 4) && r.status === 'needs_review';
   }).length;
 
+  // The gate that actually failed, read from the record. The table used to
+  // print "Gate 3 Failed (Blur)" for every rejected record, whichever gate
+  // had rejected it.
+  const describeGates = (rec: AssessmentRecord): { failed: boolean; text: string } => {
+    const gates = rec.validationGates || [];
+    const failedGate = gates.find((g) => g.status === 'failed');
+    if (failedGate) return { failed: true, text: `Gate ${failedGate.gateIndex} failed` };
+    if (rec.status === 'rejected') return { failed: true, text: 'Rejected at validation' };
+    if (gates.length > 0 && gates.every((g) => g.status === 'passed')) return { failed: false, text: `All ${gates.length} passed` };
+    return { failed: false, text: 'Validation not complete' };
+  };
+
   const renderStatusBadge = (status: ReviewStatus) => {
     switch (status) {
       case 'validating':
@@ -259,7 +271,64 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
       {/* Interactive Worklist Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Phone: one card per record. The seven-column table below needs a
+            wide screen and only scrolled sideways on a phone. */}
+        <ul className="md:hidden divide-y divide-slate-200" aria-label="Assessment worklist">
+          {loading ? (
+            <li className="px-4 py-10 text-center text-slate-500 text-xs font-medium">Loading clinical worklist queue...</li>
+          ) : loadError ? (
+            <li role="alert" className="px-4 py-10 text-center text-rose-700 text-xs font-semibold">{loadError}</li>
+          ) : filteredRecords.length === 0 ? (
+            <li className="px-4 py-10 text-center text-slate-500 text-xs">No assessment records found matching current query.</li>
+          ) : (
+            filteredRecords.map((rec) => {
+              const gates = describeGates(rec);
+              return (
+                <li key={rec.id} className="p-4 space-y-2 text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 break-all">{rec.patientId}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">{rec.id}</p>
+                    </div>
+                    <div className="flex-shrink-0">{renderStatusBadge(rec.status)}</div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-600">
+                    <span className="font-mono font-bold">{rec.laterality}</span>
+                    <span className="font-mono">
+                      {new Date(rec.acquisitionDate).toLocaleDateString()}{' '}
+                      {new Date(rec.acquisitionDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className={gates.failed ? 'text-rose-700 font-semibold' : ''}>{gates.text}</span>
+                  </div>
+                  <p className="text-slate-800">
+                    {rec.modelObservation ? (
+                      <>
+                        <span className="font-semibold">{rec.modelObservation.primaryClassLabel}</span>{' '}
+                        <span className="font-mono text-slate-600">({rec.modelObservation.primaryScore.toFixed(2)})</span>{' '}
+                        <span className="text-[10px] text-slate-400">model-generated class score</span>
+                      </>
+                    ) : (
+                      <span className="text-slate-400 italic">Inference aborted</span>
+                    )}
+                  </p>
+                  <button
+                    onClick={() => onSelectAssessment(rec)}
+                    className={`w-full inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold ${
+                      rec.status === 'needs_review'
+                        ? 'bg-clinical-primary text-white'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {rec.status === 'needs_review' ? 'Review & Grade' : 'View Record'}
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-xs text-left" role="table">
             <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
@@ -342,15 +411,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
                       {/* Quality Gates */}
                       <td className="px-4 py-3 whitespace-nowrap">
-                        {rec.status === 'rejected' ? (
+                        {describeGates(rec).failed ? (
                           <span className="text-rose-700 font-semibold text-[11px] flex items-center gap-1">
                             <XCircle className="w-3.5 h-3.5" />
-                            Gate 3 Failed (Blur)
+                            {describeGates(rec).text}
                           </span>
                         ) : (
                           <div className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span className="text-slate-700 text-[11px]">All 3 Passed</span>
+                            <span className={`w-2 h-2 rounded-full ${describeGates(rec).text.startsWith('All') ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                            <span className="text-slate-700 text-[11px]">{describeGates(rec).text}</span>
                           </div>
                         )}
                         <span className="text-[10px] text-slate-400 font-mono block">
