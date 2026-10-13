@@ -17,6 +17,7 @@
  *   (optional: BASE_URL, API_ORIGIN, CHROME_PATH, OUT_DIR, RUN_ID)
  */
 import puppeteer from 'puppeteer-core';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -37,8 +38,12 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (m) => console.log(`[accounts] ${m}`);
 const esc = (s) => s.replace(/\./g, '\\.');
 
-const REGISTRANT = { username: `applicant.${RUN}`, fullName: 'Registration Applicant (demonstration)', password: 'Applicant-Pass-2026' };
-const PHYSICIAN = { username: `physician.${RUN}`, fullName: 'Demonstration Physician', newPassword: 'Physician-Own-Pass-2026' };
+// Passwords are drawn fresh for every run and never written anywhere: the
+// accounts this script creates must not share a credential that sits in the
+// repository. The prefix guarantees the policy's letter and digit.
+const runPassword = () => `Pw7-${crypto.randomBytes(12).toString('hex')}`;
+const REGISTRANT = { username: `applicant.${RUN}`, fullName: 'Registration Applicant (demonstration)', password: runPassword() };
+const PHYSICIAN = { username: `physician.${RUN}`, fullName: 'Demonstration Physician', newPassword: runPassword() };
 
 async function api(method, route, body, token) {
   const res = await fetch(`${API}/api/v1${route}`, {
