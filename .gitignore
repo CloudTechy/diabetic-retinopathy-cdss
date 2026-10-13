@@ -32,15 +32,12 @@ env/
 
 # IDE and editors
 .idea/
-.vscode/
 *.swp
 *.swo
 *~
 .DS_Store
 
 # Environment variables & secrets
-.env
-.env.local
 .env.*.local
 *.pem
 *.key
@@ -110,3 +107,5 @@ calibration_evidence.zip
 .pytest_tmp/
 *.zip
 *.tar.gz
+config.bat
+node_modules

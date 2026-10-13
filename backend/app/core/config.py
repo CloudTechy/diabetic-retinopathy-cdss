@@ -36,11 +36,15 @@ class Settings(BaseSettings):
 
     # Database
     POSTGRES_USER: str = "dr_user"
-    POSTGRES_PASSWORD: str = "dr_db_pass_2026"
+    # No credential in source: the deployment supplies DATABASE_URL (both compose
+    # files do, and .env.example shows the form). The default names the host and
+    # database only, so a missing setting fails to authenticate instead of
+    # falling back to a password that sits in the repository.
+    POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = "dr_cdss_db"
     POSTGRES_HOST: str = "db"
     POSTGRES_PORT: int = 5432
-    DATABASE_URL: str = "postgresql+asyncpg://dr_user:dr_db_pass_2026@db:5432/dr_cdss_db"
+    DATABASE_URL: str = "postgresql+asyncpg://dr_user@db:5432/dr_cdss_db"
 
     # Authentication & JWT
     JWT_ALGORITHM: str = "HS256"
