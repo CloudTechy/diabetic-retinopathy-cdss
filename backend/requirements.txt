@@ -47,3 +47,7 @@ pytest>=8.1.0,<9.0.0
 pytest-asyncio>=0.23.5,<1.0.0
 httpx>=0.27.0,<1.0.0
 aiosqlite>=0.20.0,<1.0.0
+# test_probability_calibration.py refits the temperature from the committed
+# validation predictions (scripts/calibrate_probabilities.py); the served
+# application never imports it.
+scipy>=1.11.0,<2.0.0
