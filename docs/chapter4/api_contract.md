@@ -118,24 +118,25 @@
   ```
 
 ### `GET /api/v1/assessments/{id}/result`
-- **Description:** Retrieves the model-generated class score distribution and explainability metadata.
+- **Description:** Retrieves the model-generated class score distribution and explainability metadata. `classScores[].score` and `primaryScore` are the temperature-scaled probabilities, softmax(logits / T), with T fitted on the validation split only (`docs/chapter4/probability_calibration/`); `uncalibratedScore` is the raw softmax of the same logits, kept for audit. `calibrationTemperature` is the T applied, or `null` when none was (the simulated engine, or a result stored before calibration was introduced).
 - **Response `200 OK`:**
   ```json
   {
     "primaryClassGrade": 2,
     "primaryClassLabel": "Moderate NPDR",
-    "primaryScore": 0.78,
+    "primaryScore": 0.7426,
     "classScores": [
-      { "grade": 0, "label": "Grade 0: No Apparent DR", "score": 0.04 },
-      { "grade": 1, "label": "Grade 1: Mild NPDR", "score": 0.12 },
-      { "grade": 2, "label": "Grade 2: Moderate NPDR", "score": 0.78 },
-      { "grade": 3, "label": "Grade 3: Severe NPDR", "score": 0.05 },
-      { "grade": 4, "label": "Grade 4: Proliferative DR", "score": 0.01 }
+      { "grade": 0, "label": "Grade 0: No Apparent DR", "score": 0.0491, "uncalibratedScore": 0.04 },
+      { "grade": 1, "label": "Grade 1: Mild NPDR", "score": 0.1342, "uncalibratedScore": 0.12 },
+      { "grade": 2, "label": "Grade 2: Moderate NPDR", "score": 0.7426, "uncalibratedScore": 0.78 },
+      { "grade": 3, "label": "Grade 3: Severe NPDR", "score": 0.0603, "uncalibratedScore": 0.05 },
+      { "grade": 4, "label": "Grade 4: Proliferative DR", "score": 0.0138, "uncalibratedScore": 0.01 }
     ],
     "targetLayer": "features.8 (Conv2d Bottleneck Residual)",
     "topActivationRegion": "Peak Grad-CAM activation in the central cell of a 3x3 grid over the frame (focal: 9% of the map is above half the peak).",
-    "modelVersion": "EfficientNet-B0-DR-v1 (fixed weights)",
-    "inferenceTimestamp": "2026-10-04T06:55:12.418Z"
+    "modelVersion": "EfficientNet-B0-DR-v1 (fixed weights; temperature-scaled T=1.093921, ts-v2)",
+    "inferenceTimestamp": "2026-10-04T06:55:12.418Z",
+    "calibrationTemperature": 1.093921
   }
   ```
 

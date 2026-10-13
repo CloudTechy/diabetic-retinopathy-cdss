@@ -1,0 +1,56 @@
+
+==============================================================================
+PROBABILITY CALIBRATION (TEMPERATURE SCALING) - EfficientNet-B0 DR classifier
+==============================================================================
+script   : calibrate_probabilities.py  sha256 e09c52fc20f733344e09de073b1cc4683779a5f6de634cadd7e0e04131e7b2e6
+torch    : 2.14.0+cpu (cuda available: False)  numpy 2.1.3
+manifest : docs/chapter4/dataset_split_manifest.csv  sha256 43c5a84c99830a91662194affc8791c8c170ebe75c3c9522675549d3d4006d33
+images   : C:/tmp/aptos2019/train_images
+split sizes (ids only): {'test': 525, 'train': 2453, 'val': 526}; val/test overlap 0
+checkpoint: backend/models/weights/efficientnet_b0_dr.pth  sha256 67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7  device cpu
+
+==============================================================================
+PHASE 1 - FIT on the validation partition only
+==============================================================================
+validation rows: 526  per grade {'0': 269, '1': 51, '2': 138, '3': 27, '4': 41}
+  [corpus] authentic: all 526 manifest images match their recorded SHA-256
+    128/526 images
+    256/526 images
+    384/526 images
+    512/526 images
+    526/526 images
+fitted temperature T = 1.0939212255
+validation NLL: T=1 0.468739 -> fitted 0.466587
+artifact frozen: docs/chapter4/probability_calibration/temperature_scaling_artifact.json  sha256 2e65e7d61b426a87c613ce1d2590e46057fe4ada5de3a01aef00d8961f27a789
+
+==============================================================================
+PHASE 2 - EVALUATE: frozen T applied once to the untouched test partition
+==============================================================================
+  [corpus] authentic: all 525 manifest images match their recorded SHA-256
+test rows: 525  per grade {'0': 270, '1': 50, '2': 139, '3': 26, '4': 40}
+    128/525 images
+    256/525 images
+    384/525 images
+    512/525 images
+    525/525 images
+{
+  "top_one_predictions_changed": 0,
+  "accuracy_identical": true,
+  "confusion_matrix_identical": true,
+  "qwk_identical": true,
+  "committed_evaluation_summary": "docs/chapter4/evaluation_summary.json",
+  "confusion_matrix_matches_committed": true,
+  "accuracy_matches_committed": true,
+  "qwk_matches_committed": true
+}
+test uncalibrated: NLL 0.472677  ECE15 0.031762  MCE15 0.141179  ECE10 0.025362  MCE10 0.096702  Brier 0.242081  acc 0.840000  QWK 0.865832
+test calibrated  : NLL 0.469878  ECE15 0.035459  MCE15 0.142307  ECE10 0.020655  MCE10 0.129649  Brier 0.242193  acc 0.840000  QWK 0.865832
+cross-check vs held_out_predictions.csv: {'present': True, 'rows_compared': 525, 'predicted_grade_agreements': 525, 'max_abs_probability_difference': np.float64(4.235853313883098e-06), 'note': 'committed file is from the Colab T4 (CUDA) run, rounded to 6 dp; this run is CPU'}
+
+==============================================================================
+PHASE 3 - RUNTIME: EfficientNetB0InferenceService.predict() on 25 test images
+==============================================================================
+served vs softmax(logits/T): max abs diff 3.76e-07 over 25 images
+report written: calibration_evaluation_report.md
+
+done in 217.7s

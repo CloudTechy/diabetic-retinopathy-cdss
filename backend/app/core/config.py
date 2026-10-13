@@ -98,6 +98,20 @@ class Settings(BaseSettings):
     MODEL_CHECKPOINT_SHA256: str = (
         "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
     )
+    # Post-hoc probability calibration (temperature scaling). The artifact is
+    # fitted on the VALIDATION split only, carries the checkpoint digest it was
+    # fitted against, and ships beside the weights. Styled like
+    # MODEL_CHECKPOINT_PATH: the container path under compose, the repository
+    # path otherwise. The engine refuses to serve if it is missing, corrupt,
+    # fitted for another checkpoint, or carries a non-positive temperature.
+    # Evidence copy (byte-identical): docs/chapter4/probability_calibration/.
+    CALIBRATION_ARTIFACT_PATH: str = (
+        "/app/models/calibration/temperature_scaling_artifact.json" if os.path.exists("/app")
+        else os.path.abspath(
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))), "models", "calibration",
+                "temperature_scaling_artifact.json"))
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

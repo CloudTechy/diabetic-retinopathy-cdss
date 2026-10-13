@@ -85,6 +85,11 @@ export const ScoreDistributionCard: React.FC<ScoreDistributionCardProps> = ({ ob
           <span>Full 5-Class Score Breakdown</span>
           <span className="font-mono text-[11px] text-slate-400">[0.00 – 1.00]</span>
         </div>
+        <p className="text-[11px] text-slate-500" data-testid="calibration-caption">
+          {observation.calibrationTemperature != null
+            ? `Temperature-scaled scores (T = ${observation.calibrationTemperature.toFixed(4)}, fitted on the validation split only).`
+            : 'Scores are not temperature-scaled.'}
+        </p>
 
         {observation.classScores.map((item) => {
           const isPrimary = item.grade === observation.primaryClassGrade;

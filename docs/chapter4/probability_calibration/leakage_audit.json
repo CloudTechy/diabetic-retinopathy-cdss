@@ -1,0 +1,100 @@
+{
+  "val_test_id_overlap": 0,
+  "validation_ids_sha256": "24e6a15f506465f5bbdcb4990233d79b80d98fd03b1c115e44d07083b94a4db9",
+  "test_ids_sha256": "4a7d42a079f947fed6635497f5e693848c2feda1567f2f12f5dab00f3a9c25a3",
+  "artifact_sha256_at_freeze": "2e65e7d61b426a87c613ce1d2590e46057fe4ada5de3a01aef00d8961f27a789",
+  "artifact_sha256_after_evaluation": "2e65e7d61b426a87c613ce1d2590e46057fe4ada5de3a01aef00d8961f27a789",
+  "artifact_unchanged_after_evaluation": true,
+  "freeze_step": 7,
+  "first_test_partition_access_step": 9,
+  "temperature_frozen_before_test_partition_was_read": true,
+  "test_metric_gate_on_temperature": false,
+  "events": [
+    {
+      "step": 1,
+      "phase": "setup",
+      "event": "read image ids per split (no grades) for the overlap check",
+      "val_test_overlap": 0
+    },
+    {
+      "step": 2,
+      "phase": "setup",
+      "event": "loaded checkpoint through the runtime loader",
+      "sha256": "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
+    },
+    {
+      "step": 3,
+      "phase": "fit",
+      "event": "read manifest rows with split == 'val' only",
+      "n": 526
+    },
+    {
+      "step": 4,
+      "phase": "fit",
+      "event": "verified validation image bytes against manifest SHA-256",
+      "n": 526
+    },
+    {
+      "step": 5,
+      "phase": "fit",
+      "event": "wrote validation_predictions.csv",
+      "sha256": "3a15111c13948932996ea36d6bbe4bda5ef40a180edc72a2cca2c1a2dc076c37"
+    },
+    {
+      "step": 6,
+      "phase": "fit",
+      "event": "fitted T by minimising validation NLL",
+      "temperature": 1.0939212255341908
+    },
+    {
+      "step": 7,
+      "phase": "fit",
+      "event": "froze T: wrote temperature_scaling_artifact.json and runtime copy",
+      "sha256": "2e65e7d61b426a87c613ce1d2590e46057fe4ada5de3a01aef00d8961f27a789",
+      "runtime_copy": "backend/models/calibration/temperature_scaling_artifact.json"
+    },
+    {
+      "step": 8,
+      "phase": "evaluate",
+      "event": "re-read frozen artifact through the runtime loader",
+      "temperature": 1.0939212255341908,
+      "sha256": "2e65e7d61b426a87c613ce1d2590e46057fe4ada5de3a01aef00d8961f27a789"
+    },
+    {
+      "step": 9,
+      "phase": "evaluate",
+      "event": "read manifest rows with split == 'test' (first access to the test partition)",
+      "n": 525
+    },
+    {
+      "step": 10,
+      "phase": "evaluate",
+      "event": "verified test image bytes against manifest SHA-256",
+      "n": 525
+    },
+    {
+      "step": 11,
+      "phase": "evaluate",
+      "event": "applied frozen T once to the test logits",
+      "temperature": 1.0939212255341908
+    },
+    {
+      "step": 12,
+      "phase": "evaluate",
+      "event": "wrote test_predictions.csv",
+      "sha256": "75c50feceb0b5c4e1ecd50ab078a5ea1e55ded5d267d79f68fe10ca350743a15"
+    },
+    {
+      "step": 13,
+      "phase": "evaluate",
+      "event": "wrote test_metrics.json and reliability_diagram_test.png"
+    },
+    {
+      "step": 14,
+      "phase": "runtime",
+      "event": "graded test images through the runtime engine",
+      "images": 25,
+      "max_abs_difference": 3.757513710178628e-07
+    }
+  ]
+}

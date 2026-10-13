@@ -24,6 +24,113 @@ class ModelCheckpointError(RuntimeError):
     """
 
 
+class CalibrationArtifactError(ModelCheckpointError):
+    """
+    Raised when the probability-calibration artifact is missing, unreadable,
+    carries a non-positive or non-finite temperature, or was fitted for a
+    checkpoint other than the one loaded.
+
+    It is a ModelCheckpointError so that every existing fail-closed handler
+    (the 503 on the assessment route, /health) treats it the same way: the
+    engine does not serve a probability vector whose calibration it cannot
+    verify, and it never silently falls back to the uncalibrated softmax.
+    """
+
+
+# Preprocessing the trained engine applies at inference: 224x224 bilinear
+# resize, then ImageNet normalisation. The calibration script
+# (backend/scripts/calibrate_probabilities.py) imports build_preprocess() so the
+# logits it calibrates on are produced by exactly this code path.
+INPUT_SIZE = (224, 224)
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+
+
+def build_preprocess():
+    """The torchvision transform predict() applies to a PIL image."""
+    import torchvision.transforms as transforms
+    return transforms.Compose([
+        transforms.Resize(INPUT_SIZE),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+    ])
+
+
+def calibrated_probabilities(logits, temperature: float) -> List[float]:
+    """
+    softmax(z / T) over one logit vector, in plain Python floats.
+
+    Shared by the runtime engine and the calibration script so that the
+    probabilities the interface receives are computed by the same function
+    the evidence was produced with. Numerically stable (max-subtracted);
+    the result sums to 1 within floating-point error. T=1 is the raw softmax.
+    """
+    if (isinstance(temperature, bool) or not isinstance(temperature, (int, float))
+            or not math.isfinite(temperature) or temperature <= 0):
+        raise CalibrationArtifactError(
+            f"Temperature must be a positive finite number; got {temperature!r}.")
+    scaled = [float(z) / float(temperature) for z in logits]
+    peak = max(scaled)
+    exps = [math.exp(v - peak) for v in scaled]
+    total = sum(exps)
+    return [e / total for e in exps]
+
+
+def load_calibration_artifact(path: str, expected_checkpoint_sha256: str) -> Dict[str, Any]:
+    """
+    Read and verify the temperature-scaling artifact, or fail closed.
+
+    The artifact is only valid for the checkpoint it was fitted against, so a
+    checkpoint digest that differs from the loaded weights is refused exactly
+    as a wrong checkpoint digest is. A missing, unreadable or malformed file,
+    or a temperature that is not a positive finite number, is refused too.
+    """
+    if not path:
+        raise CalibrationArtifactError(
+            "CALIBRATION_ARTIFACT_PATH is not set. The engine refuses to serve "
+            "probabilities whose calibration it cannot verify; point it at "
+            "backend/models/calibration/temperature_scaling_artifact.json.")
+    if not os.path.exists(path):
+        raise CalibrationArtifactError(
+            f"Calibration artifact not found at '{path}'. Refusing to serve "
+            "uncalibrated probabilities in its place. Set "
+            "CALIBRATION_ARTIFACT_PATH to the fitted artifact, or set "
+            "AI_INFERENCE_ENGINE=mock to run the simulated engine explicitly.")
+    try:
+        import json
+        with open(path, "r", encoding="utf-8") as fh:
+            artifact = json.load(fh)
+    except Exception as exc:
+        raise CalibrationArtifactError(
+            f"Calibration artifact at '{path}' could not be parsed: {exc}") from exc
+    if not isinstance(artifact, dict):
+        raise CalibrationArtifactError(
+            f"Calibration artifact at '{path}' is not a JSON object.")
+    if artifact.get("method") != "temperature_scaling":
+        raise CalibrationArtifactError(
+            f"Calibration artifact at '{path}' declares method "
+            f"{artifact.get('method')!r}; only 'temperature_scaling' is served.")
+    temperature = artifact.get("temperature")
+    if (isinstance(temperature, bool) or not isinstance(temperature, (int, float))
+            or not math.isfinite(temperature) or temperature <= 0):
+        raise CalibrationArtifactError(
+            f"Calibration artifact at '{path}' carries an invalid temperature "
+            f"{temperature!r}; it must be a positive finite number.")
+    recorded = str(((artifact.get("checkpoint") or {}).get("sha256")) or "").strip().lower()
+    expected = (expected_checkpoint_sha256 or "").strip().lower()
+    if not recorded or recorded != expected:
+        raise CalibrationArtifactError(
+            f"Calibration artifact at '{path}' was fitted for checkpoint "
+            f"{recorded or '<none>'} but the loaded checkpoint is {expected}. "
+            "A temperature fitted on another model's logits is not valid here; "
+            "refusing to serve.")
+    if artifact.get("fit_split") != "val":
+        raise CalibrationArtifactError(
+            f"Calibration artifact at '{path}' was not fitted on the validation "
+            f"split (fit_split={artifact.get('fit_split')!r}); refusing to serve.")
+    return artifact
+
+
 # The 5 ICDR-standard Diabetic Retinopathy stages
 ICDR_CLASS_METADATA = [
     {
@@ -77,6 +184,9 @@ class InferenceOutput:
         gradcam_filename: Optional[str] = None,
         gradcam_path: Optional[str] = None,
         gradcam_url: Optional[str] = None,
+        logits: Optional[List[float]] = None,
+        calibration_temperature: Optional[float] = None,
+        calibration_artifact_version: Optional[str] = None,
     ):
         self.primary_grade = primary_grade
         self.primary_label = primary_label
@@ -91,6 +201,12 @@ class InferenceOutput:
         self.gradcam_filename = gradcam_filename
         self.gradcam_path = gradcam_path
         self.gradcam_url = gradcam_url
+        # The raw logits and the frozen temperature that turned them into
+        # class_scores (see docs/chapter4/probability_calibration/). None for
+        # the simulated engine, which has neither.
+        self.logits = logits
+        self.calibration_temperature = calibration_temperature
+        self.calibration_artifact_version = calibration_artifact_version
 
 
 class BaseInferenceService(abc.ABC):
@@ -341,14 +457,51 @@ class EfficientNetB0InferenceService(BaseInferenceService):
     Frozen checkpoint loaded in eval mode with Grad-CAM activation hooks.
     """
 
-    def __init__(self, checkpoint_path: str = settings.MODEL_CHECKPOINT_PATH):
+    def __init__(self, checkpoint_path: str = settings.MODEL_CHECKPOINT_PATH,
+                 calibration_artifact_path: Optional[str] = None):
         self.checkpoint_path = checkpoint_path
+        # Resolved at construction so a test or deployment that re-points the
+        # setting after import is honoured.
+        self.calibration_artifact_path = (
+            calibration_artifact_path if calibration_artifact_path is not None
+            else settings.CALIBRATION_ARTIFACT_PATH)
         self._model = None
         self._initialized = False
+        self.calibration: Optional[Dict[str, Any]] = None
+        self.temperature: Optional[float] = None
 
     def load_model(self):
         """
-        Load the trained checkpoint, or fail closed.
+        Load the verified checkpoint AND the calibration artifact, or fail closed.
+
+        Both halves must succeed before the service is marked initialised, so
+        an invalid artifact leaves the engine unable to serve rather than
+        serving the raw softmax silently.
+        """
+        model, device = self.load_weights()
+
+        # The temperature-scaling artifact is loaded beside the checkpoint and
+        # verified against the digest just confirmed in load_weights().
+        self.calibration = load_calibration_artifact(
+            self.calibration_artifact_path, self.verified_sha256)
+        self.temperature = float(self.calibration["temperature"])
+
+        self._model = model
+        self._device = device
+        self._initialized = True
+        logger.info(
+            "Loaded EfficientNet-B0 weights from %s (device=%s); weights are fixed; "
+            "calibration temperature T=%.6f from %s",
+            self.checkpoint_path, device, self.temperature, self.calibration_artifact_path,
+        )
+
+    def load_weights(self):
+        """
+        Load the trained checkpoint, or fail closed. Returns (model, device)
+        without marking the service initialised; load_model() does that once
+        the calibration artifact has also been verified. The calibration
+        script uses this half alone, because the artifact it is about to fit
+        does not exist yet.
 
         The weights are fixed: nothing here updates them, so the model
         that serves a request is the one Chapter 4 evaluated.
@@ -422,14 +575,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         for p in model.parameters():
             p.requires_grad = False
         model.to(device)
-
-        self._model = model
-        self._device = device
-        self._initialized = True
-        logger.info(
-            "Loaded EfficientNet-B0 weights from %s (device=%s); weights are fixed",
-            self.checkpoint_path, device,
-        )
+        return model, device
 
     def _verify_checkpoint_digest(self):
         """
@@ -477,7 +623,6 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             )
 
         import torch
-        import torchvision.transforms as transforms
 
         start_time = time.time()
 
@@ -491,12 +636,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         # There is no fallback: a fabricated grade is indistinguishable from a
         # real one downstream, which is precisely what must not happen.
         # ------------------------------------------------------------------
-        preprocess = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225]),
-        ])
+        preprocess = build_preprocess()
         rgb_image = pil_image.convert("RGB")
         input_tensor = preprocess(rgb_image).unsqueeze(0).to(self._device)
         input_tensor.requires_grad = True
@@ -512,15 +652,23 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         finally:
             hook_handle.remove()
 
-        probs_tensor = torch.softmax(logits, dim=1)[0].detach()
-        probs = [round(float(x), 4) for x in probs_tensor]
-
         grade = int(torch.argmax(logits, dim=1).item())
         meta = ICDR_CLASS_METADATA[grade]
-        primary_score = probs[grade]
+
+        # Post-hoc temperature scaling: the SAME logits divided by the frozen,
+        # validation-fitted T, then softmax. This calibrated vector is what the
+        # interface receives as class_scores / primary_score. T > 0 is
+        # monotone, so the argmax above is unchanged; only the probability mass
+        # moves. Full precision is kept (no rounding) so the vector sums to 1.
+        # The uncalibrated softmax (T = 1) is carried beside each class score
+        # for audit, never in its place.
+        raw_logits = [float(v) for v in logits[0].detach().cpu().tolist()]
+        calibrated = calibrated_probabilities(raw_logits, self.temperature)
+        uncalibrated = calibrated_probabilities(raw_logits, 1.0)
+        primary_score = calibrated[grade]
         class_scores = [
             {"grade": i, "label": f"Grade {i}: {ICDR_CLASS_METADATA[i]['label']}",
-             "score": probs[i]}
+             "score": calibrated[i], "uncalibrated_score": uncalibrated[i]}
             for i in range(5)
         ]
 
@@ -595,13 +743,19 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             class_scores=class_scores,
             target_layer="features.8 (Conv2d Bottleneck Residual)",
             top_activation_region=peak_region,
-            model_version="EfficientNet-B0-DR-v1 (fixed weights)",
+            # Persisted on ModelExecution, so every stored result names the
+            # temperature its probabilities were scaled with.
+            model_version=(f"EfficientNet-B0-DR-v1 (fixed weights; temperature-scaled "
+                           f"T={self.temperature:.6f}, {self.calibration.get('version')})"),
             execution_time_ms=execution_time_ms,
             disclaimer=disclaimer,
             gradcam_bytes=gradcam_bytes,
             gradcam_filename=gradcam_filename,
             gradcam_path=gradcam_path,
             gradcam_url=f"/api/v1/storage/attributions/{gradcam_filename}",
+            logits=raw_logits,
+            calibration_temperature=self.temperature,
+            calibration_artifact_version=str(self.calibration.get("version")),
         )
 
 
@@ -666,4 +820,5 @@ def get_inference_health() -> Dict[str, Any]:
         "engine": "pytorch",
         "detail": f"EfficientNet-B0 checkpoint loaded from {service.checkpoint_path}",
         "checkpoint_sha256": getattr(service, "verified_sha256", None),
+        "calibration_temperature": getattr(service, "temperature", None),
     }
