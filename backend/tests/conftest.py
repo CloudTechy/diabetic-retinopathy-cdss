@@ -111,6 +111,18 @@ TestingSessionLocal = async_sessionmaker(
 )
 
 
+def pytest_sessionfinish(session, exitstatus):
+    """
+    Close the pooled in-memory connection so the run can exit.
+
+    aiosqlite serves each connection from a non-daemon worker thread; while
+    test_engine holds one open, the interpreter waits on that thread forever
+    after printing the summary (tests/test_session_teardown.py).
+    """
+    import asyncio
+    asyncio.run(test_engine.dispose())
+
+
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
