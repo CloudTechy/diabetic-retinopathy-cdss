@@ -83,7 +83,10 @@ jobs:
           python -m pip install --quiet torch torchvision \
             --index-url https://download.pytorch.org/whl/cpu
           python -m pip install --quiet -r backend/requirements.txt
-          python -m pip install --quiet pytest pytest-asyncio aiosqlite
+          # scipy is test-only: backend/scripts/calibrate_probabilities.py fits the
+          # temperature with it and test_probability_calibration.py refits from the
+          # committed validation predictions. The served application does not import it.
+          python -m pip install --quiet pytest pytest-asyncio aiosqlite scipy
 
       - name: Run tests
         working-directory: backend
