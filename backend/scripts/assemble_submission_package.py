@@ -74,6 +74,8 @@ SINGLE_FILES = [
     "backend/scripts/bootstrap_superadmin.py",
     "frontend/vitest.config.ts",
     "backend/models/weights/efficientnet_b0_dr.pth",
+    # Loaded beside the weights: without it the engine refuses to serve.
+    "backend/models/calibration/temperature_scaling_artifact.json",
     "notebooks/colab_train_and_evaluate.py",
     "PROGRESS_TRACKER.md",
     ".env.example",
