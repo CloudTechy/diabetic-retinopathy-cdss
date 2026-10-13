@@ -36,7 +36,7 @@ The trained checkpoint is served by the FastAPI backend on **CPU**, not on the t
 | **Vision Library** | `torchvision` | 0.29.1+cpu | EfficientNet-B0 topology, ImageNet transforms |
 | **Image Processing** | `pillow` (PIL) | 11.3.0 | Decoding, format conversion, resampling |
 | **Scientific Computing** | `numpy` | 2.5.2 | Grad-CAM activation arrays, metric computation |
-| **Backend Web Framework** | `fastapi` | 0.142.2 | RESTful API routing inference requests |
+| **Backend Web Framework** | `fastapi` | 0.143.0 | RESTful API routing inference requests |
 | **Database Engine** | `PostgreSQL` | 16 (`postgres:16-alpine` image) | Relational metadata and the application-level append-only event log |
 | **Frontend Framework** | `React` / `TypeScript` | 18.3.1 / 5.9.3 | Clinical browser user interface |
 | **Frontend Build Tool** | `Vite` | 5.4.21 | Development server and production build |
@@ -58,7 +58,7 @@ An earlier version of this paragraph said the committed benchmark was measured o
 
 ### Backend container
 
-Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-slim`, Python 3.11.15) during the clean-extraction check recorded in [`build_verification.log`](build_verification.log); versions are the container's own `pip freeze`, shipped as [`container_environment_freeze.txt`](container_environment_freeze.txt). A rule in the suite keeps this table equal to that file. The automated test suite was run **only** in the Python 3.13 test environment above, **not** inside this container; the container's evidence is the build, the `/health` response and this freeze.
+Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-slim`, Python 3.11.17) during the clean-extraction check recorded in [`build_verification.log`](build_verification.log); versions are the container's own `pip freeze`, shipped as [`container_environment_freeze.txt`](container_environment_freeze.txt). A rule in the suite keeps this table equal to that file. The automated test suite was run **only** in the Python 3.13 test environment above, **not** inside this container; the container's evidence is the build, the `/health` response and this freeze.
 
 | Package | Version | Functional Role |
 | :--- | :---: | :--- |
@@ -66,8 +66,8 @@ Built by `docker compose up --build` from `backend/Dockerfile` (`python:3.11-sli
 | `torchvision` | 0.29.1+cpu | EfficientNet-B0 topology, ImageNet transforms |
 | `pillow` | 11.3.0 | Decoding, format conversion, resampling |
 | `numpy` | 2.4.6 | Grad-CAM activation arrays, metric computation |
-| `fastapi` | 0.142.2 | RESTful API routing inference requests |
-| `sqlalchemy` | 2.1.3 | ORM over PostgreSQL |
+| `fastapi` | 0.143.0 | RESTful API routing inference requests |
+| `sqlalchemy` | 2.1.4 | ORM over PostgreSQL |
 | `uvicorn` | 0.54.0 | ASGI server |
 
 ## 3. Determinism & Reproducibility Controls

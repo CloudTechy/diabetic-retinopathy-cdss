@@ -4,25 +4,25 @@
 - **Research Project:** AI-Based Clinical Decision Support System for Early Detection of Diabetic Retinopathy
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective i (Functional testing and end-to-end evaluation)
-- **Date Test Run:** 2026-10-04
+- **Date Test Run:** 2026-10-13
 - **Test Framework:** Pytest 8.4.2 on Python 3.13.5 (as recorded in the header of [`test_execution.log`](test_execution.log)), Starlette/FastAPI TestClient, AnyIO
-- **Overall Result:** **270 collected — 269 passed, 0 failed, 1 skipped**
+- **Overall Result:** **312 collected — 311 passed, 0 failed, 1 skipped**
 - **The single skip** is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded run being present. It is not a capability gap: `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image.
 
 ---
 
 ## 1. Executive Summary
 
-A multi-layer automated test suite comprising 270 test cases was executed against the complete CDSS platform. 269 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and the application-level append-only event log.
+A multi-layer automated test suite comprising 312 test cases was executed against the complete CDSS platform. 311 passed; 1 was skipped. The skip is `test_contaminated_results_are_labelled_superseded`, which is conditional on an artefact of the superseded contaminated run being present — **not** a missing dependency. PyTorch is installed and `test_real_model_end_to_end_pipeline` runs and passes against the digest-verified checkpoint using a genuine held-out APTOS image. The test suite verifies end-to-end clinical workflow integrity, mathematical validation thresholds, state machine transitions, fail-closed safety invariants, and the application-level append-only event log.
 
 ```text
 ============================== Test Execution Summary ==============================
-Tests Collected:      270
-Passed:               269 (99.6%)
+Tests Collected:      312
+Passed:               311 (99.7%)
 Failed:                 0  (0.0%)
-Skipped:                1  (0.5%)  <- test_contaminated_results_are_labelled_superseded
+Skipped:                1  (0.3%)  <- test_contaminated_results_are_labelled_superseded
 Total Wall-Clock Time: recorded on the last line of test_execution.log
-Functional test result: 269 passed, 1 conditionally skipped
+Functional test result: 311 passed, 1 conditionally skipped
 ====================================================================================
 ```
 
@@ -123,6 +123,31 @@ Functional test result: 269 passed, 1 conditionally skipped
 | `test_root_endpoint` | Health | Root endpoint returns service identity | **PASS** |
 | `test_health_endpoint` | Health | Health probe confirms DB and service availability | **PASS** |
 | `test_api_v1_health_endpoint` | Health | API v1 health probe confirms readiness | **PASS** |
+
+---
+
+### Suite 5: Probability Calibration (`test_probability_calibration.py`, added 2026-10-13)
+*Verifies that the temperature is fitted on the validation partition only, that the frozen temperature reproduces the committed test metrics without changing a prediction, and that the interface receives the calibrated probability vector (evidence: `docs/chapter4/probability_calibration/`).*
+
+| Test Identifier | Key Verification Invariant | Result |
+| :--- | :--- | :---: |
+| `test_fit_refuses_test_tagged_records` | The fit refuses any record not tagged `val` | **PASS** |
+| `test_artifact_was_fitted_on_validation_and_carries_no_test_statistic` | The fitted-parameter file names `val`, 526 images, and no test key | **PASS** |
+| `test_prediction_manifests_are_the_two_disjoint_partitions` | 526 `val` and 525 `test` rows, equal to the split manifest, disjoint | **PASS** |
+| `test_temperature_is_reproduced_from_the_validation_manifest_alone` | Refitting from the validation predictions reproduces $T$ | **PASS** |
+| `test_leakage_audit_shows_temperature_frozen_before_test_partition_was_read` | $T$ frozen before the first test-partition read; artefact unchanged after | **PASS** |
+| `test_test_metrics_are_reproduced_from_test_manifest_and_frozen_temperature` | NLL, ECE, MCE, Brier, accuracy, QWK recompute from the test predictions | **PASS** |
+| `test_top_one_predictions_accuracy_confusion_matrix_and_qwk_unchanged` | Zero top-one changes; equal to `evaluation_summary.json` | **PASS** |
+| `test_runtime_artifact_is_the_evidence_artifact` | The runtime copy is byte-identical to the evidence copy | **PASS** |
+| `test_the_archive_ships_the_runtime_artifact` | The archive carries the file the engine needs to serve | **PASS** |
+| `test_calibrated_probabilities_is_softmax_of_logits_over_t` | The runtime function is softmax(z / T) and keeps the argmax | **PASS** |
+| `test_engine_refuses_an_invalid_artifact` (3 cases) | Wrong split, non-positive $T$, other checkpoint, missing file: refused | **PASS** |
+| `test_engine_predict_returns_the_calibrated_vector` | `predict()` returns softmax(z / T), raw softmax kept for audit | **PASS** |
+| `test_interface_receives_the_calibrated_vector` | The API's `classScores` are softmax(z / T); `calibrationTemperature` is $T$ | **PASS** |
+| `test_real_checkpoint_serves_softmax_of_its_own_logits_over_t` | Real weights, real artefact, held-out image | **PASS** |
+
+### Suite 6: Session Teardown (`test_session_teardown.py`, added 2026-10-13)
+`test_a_session_using_the_test_client_exits` runs a session that uses the API client in a child process and asserts it returns: the in-memory database engine is disposed at session end, so a run no longer hangs after printing its summary. **PASS**
 
 ---
 

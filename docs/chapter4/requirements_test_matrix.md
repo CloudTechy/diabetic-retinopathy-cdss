@@ -6,7 +6,7 @@
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Last Revised:** 2026-10-04
 - **Total Requirements Tracked:** 24 (14 Functional, 10 Non-Functional)
-- **Overall Verification Status:** **269 of 270 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
+- **Overall Verification Status:** **311 of 312 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
 

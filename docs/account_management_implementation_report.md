@@ -91,10 +91,11 @@ Frontend: `src/utils/session.test.ts` (routing by role and temporary password, s
 
 ## 8. Exact test results
 
-- Backend, complete suite, `python -m pytest -q` (Python 3.13 venv, simulated inference engine as the suite opts in): **295 collected — 294 passed, 0 failed, 1 skipped** (the skip is the pre-existing conditional `test_contaminated_results_are_labelled_superseded`). Wall-clock 393.67 s.
-- Backend, `tests/test_account_management.py` alone: **25 passed, 0 failed**.
-- Frontend, `npm test` (vitest): **2 files, 14 tests passed**.
-- Frontend, `npx tsc --noEmit`: clean. `npm run build`: succeeds.
+Every figure below is read from a recorded run of a fresh extraction of the Chapter Four evidence archive, not from a development run:
+
+- Backend, complete suite, `python -m pytest tests/ -v` in a new virtual environment built from `requirements.txt`: **312 collected — 311 passed, 0 failed, 1 skipped**, as recorded in [`docs/chapter4/test_execution.log`](chapter4/test_execution.log) (environment: [`test_environment_freeze.txt`](chapter4/test_environment_freeze.txt)). The skip is the pre-existing conditional `test_contaminated_results_are_labelled_superseded`. The suite has grown since this feature was first measured (295 collected): the probability-calibration suite and the session-teardown test were merged afterwards.
+- Backend, `tests/test_account_management.py`, within that run: **25 passed, 0 failed**.
+- Frontend, from the same extraction and recorded in [`docs/chapter4/build_verification.log`](chapter4/build_verification.log): `npx tsc --noEmit` clean, `npm test` (vitest) **2 files, 14 tests passed**, and `npm run build` succeeds.
 - Mutation-style checks performed while writing the rules: the demonstration-account rule was confirmed to fail on the pre-change `auth.py`.
 
 ## 9. Screenshots
@@ -114,5 +115,4 @@ Frontend: `src/utils/session.test.ts` (routing by role and temporary password, s
 ## 11. Remaining work
 
 - Deploy: the production database at `/opt/cdss` will be migrated by `init_db` at the next start; a Super Administrator must then be bootstrapped there (environment or command) before anyone can sign in, because the former demonstration account is suspended by the migration.
-- The Chapter Four evidence archive must be rebuilt (test log, build log) so that the counts quoted in the documents match a recorded run of this suite.
 - Independent review of this report and of the evidence above.
