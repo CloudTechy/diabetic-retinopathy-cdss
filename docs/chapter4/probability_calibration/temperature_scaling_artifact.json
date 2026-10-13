@@ -1,0 +1,42 @@
+{
+  "version": "ts-v2",
+  "method": "temperature_scaling",
+  "temperature": 1.0939212255341908,
+  "fit_split": "val",
+  "fit_counts": {
+    "n": 526,
+    "per_grade": {
+      "0": 269,
+      "1": 51,
+      "2": 138,
+      "3": 27,
+      "4": 41
+    }
+  },
+  "fit": {
+    "objective": "mean multiclass negative log-likelihood of softmax(logits / T) on the validation split",
+    "optimiser": "scipy.optimize.minimize_scalar(method='bounded')",
+    "bounds": [
+      0.05,
+      10.0
+    ],
+    "xatol": 1e-08,
+    "function_evaluations": 15,
+    "converged": true,
+    "validation_nll_at_T_1": 0.46873869124686507,
+    "validation_nll_at_fitted_T": 0.4665867322617795,
+    "deterministic": "the objective is a closed-form function of fixed logits and labels and the bounded method draws no random numbers; a rerun gives the same T"
+  },
+  "checkpoint": {
+    "filename": "efficientnet_b0_dr.pth",
+    "sha256": "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7"
+  },
+  "manifest_sha256": "43c5a84c99830a91662194affc8791c8c170ebe75c3c9522675549d3d4006d33",
+  "validation_ids_sha256": "24e6a15f506465f5bbdcb4990233d79b80d98fd03b1c115e44d07083b94a4db9",
+  "script": {
+    "name": "calibrate_probabilities.py",
+    "sha256": "e09c52fc20f733344e09de073b1cc4683779a5f6de634cadd7e0e04131e7b2e6"
+  },
+  "created_at_utc": "2026-10-13T13:49:26+00:00",
+  "note": "fitted on the validation partition only, before any test image was read; carries no test-set statistic; apply as softmax(logits / temperature)"
+}
