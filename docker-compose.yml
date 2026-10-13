@@ -37,6 +37,11 @@ services:
       APP_ENV: ${APP_ENV:-development}
       DEBUG: ${DEBUG:-true}
       SECRET_KEY: ${SECRET_KEY:-replace-this-with-a-secure-random-secret-key}
+      # First Super Administrator, created once at start-up when set (see .env.example)
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
+      SUPERADMIN_FULL_NAME: ${SUPERADMIN_FULL_NAME:-Super Administrator}
+      SUPERADMIN_INITIAL_PASSWORD: ${SUPERADMIN_INITIAL_PASSWORD:-}
       API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
       POSTGRES_USER: ${POSTGRES_USER:-dr_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dr_secure_password_2026}

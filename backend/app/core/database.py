@@ -1,3 +1,4 @@
+import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
@@ -67,9 +68,37 @@ def _relax_stale_not_null(sync_conn) -> list:
     return relaxed
 
 
+def _run_migrations(sync_conn) -> str:
+    """
+    Bring the schema to the newest Alembic revision.
+
+    Every database so far was created by create_all and carries no Alembic
+    version. Such a database is stamped at the baseline and then upgraded, so
+    the account-administration columns are added in place and existing rows
+    are backfilled; nothing is dropped or re-created. A database that create_all
+    has just built from the current models already has every column, and the
+    revision's ADD COLUMN steps skip what exists.
+    """
+    from alembic import command
+    from alembic.config import Config
+    from alembic.runtime.migration import MigrationContext
+    from sqlalchemy import inspect
+
+    cfg = Config(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "alembic.ini"))
+    cfg.attributes["connection"] = sync_conn
+    inspector = inspect(sync_conn)
+    current = MigrationContext.configure(sync_conn).get_current_revision()
+    if current is None and "users" in inspector.get_table_names():
+        command.stamp(cfg, "0001_baseline")
+    command.upgrade(cfg, "head")
+    return MigrationContext.configure(sync_conn).get_current_revision() or ""
+
+
 async def init_db() -> list:
-    """Create missing tables, then widen columns the models have made nullable. Returns the columns widened."""
+    """Create missing tables, run the migrations, then widen columns the models have made nullable."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if not settings.DATABASE_URL.startswith("sqlite"):
+            await conn.run_sync(_run_migrations)
         return await conn.run_sync(_relax_stale_not_null)
 

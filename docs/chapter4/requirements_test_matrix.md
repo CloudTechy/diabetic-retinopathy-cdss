@@ -5,7 +5,7 @@
 - **Author / Researcher:** Onyekelu Chukwuebuka Elochukwu (2024516020FN)
 - **Related Research Objective:** Objective a (System architecture, workflow & database design) & Objective i (Functional testing and end-to-end evaluation)
 - **Last Revised:** 2026-10-04
-- **Total Requirements Tracked:** 18 (10 Functional, 8 Non-Functional)
+- **Total Requirements Tracked:** 24 (14 Functional, 10 Non-Functional)
 - **Overall Verification Status:** **269 of 270 automated tests PASSED, 1 skipped** (the skip is conditional on a superseded artefact; see `system_test_report.md`)
 
 ---
@@ -14,7 +14,7 @@
 
 | Req ID | Requirement Description | Implementation Module | Automated Test Case | Test Result |
 | :--- | :--- | :--- | :--- | :---: |
-| **FR-01** | Authenticated practitioner access using JWT session tokens and inactivity timeout. | `backend/app/routers/auth.py` | `TestAuthEndpoints.test_login_and_me` | **PASS** |
+| **FR-01** | Authenticated access using JWT session tokens (claims: subject, role, session generation) and inactivity timeout; only an `ACTIVE` account signs in. | `backend/app/routers/auth.py` | `TestAuthEndpoints.test_login_and_me` | **PASS** |
 | **FR-02** | Ophthalmic Assessment Ingest with a unique record identifier (`REC-YYYY-XXXXXX`), patient ID, and eye laterality (OD/OS). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 | **FR-03** | Gate 1 File Integrity: Magic bytes validation for JPEG/PNG, file size limit <= 15MB. | `backend/app/services/validation/gate1_integrity.py` | `TestGate1FileIntegrity.test_valid_jpeg_passes_gate1` | **PASS** |
 | **FR-04** | Gate 2 Retinal Field Relevance: Circular mask, aspect ratio ($0.65-1.65$), chromatic $R/B > 1.15$. | `backend/app/services/validation/gate2_relevance.py` | `TestGate2RetinalRelevance.test_authentic_fundus_passes_gate2` | **PASS** |
@@ -24,6 +24,10 @@
 | **FR-08** | Grad-CAM visual attribution generation hooked onto final bottleneck `features.8`. | `backend/app/services/ai_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
 | **FR-09** | Clinician Review with Tri-State Agreement (Agree / Disagree / Unable to determine). | `backend/app/routers/assessments.py` | `TestAssessmentEndpoints.test_review_friction_justification_rule` | **PASS** |
 | **FR-10** | Hash-anchored PDF assessment report generation and application-level append-only event log. | `backend/app/services/report_service.py` | `TestAssessmentEndpoints.test_create_and_upload_assessment` | **PASS** |
+| **FR-11** | Two roles (`SUPERADMIN`, `PHYSICIAN`) and four account states (`PENDING_APPROVAL`, `ACTIVE`, `REJECTED`, `SUSPENDED`); a Super Administrator creates physician accounts with a temporary password that must be changed at first sign-in. | `backend/app/services/account_service.py` | `test_account_management.test_02_admin_created_physician_is_active_and_must_change_password` | **PASS** |
+| **FR-12** | Physician self-registration creates a `PENDING_APPROVAL` account that cannot sign in; only a Super Administrator approves, rejects, suspends or reactivates it, and the last active Super Administrator cannot be suspended. | `backend/app/routers/admin.py` | `test_account_management.test_05_approval_permits_sign_in_and_the_assessment_workflow` | **PASS** |
+| **FR-13** | Every assessment, professional review and report is associated with the physician account that created it, and a physician sees only their own records. | `backend/app/services/assessment_service.py` | `test_account_management.test_11_physician_cannot_view_another_physicians_records` | **PASS** |
+| **FR-14** | Account-administration events (creation, registration, approval, rejection, suspension, reactivation, temporary password, password change, sign-in success and failure, review confirmation) are written to the application-level append-only audit log with actor, target, time and outcome, and are readable by the Super Administrator. | `backend/app/services/account_service.py` | `test_account_management.test_14_administrative_events_are_audited` | **PASS** |
 
 ---
 
@@ -39,6 +43,8 @@
 | **NFR-06** | **Separation of Domains:** AI output and Reviewer-assessed grade stored in separate tables. | Independent DB entities | `TestClinicianInTheLoopGovernance.test_separate_storage_of_ai_result_and_review` | **PASS** |
 | **NFR-07** | **Terminology Compliance:** Model outputs strictly labeled "model-generated class score". | Zero diagnostic claims | `TestClinicalTerminologyCompliance.test_api_result_terminology_compliance` | **PASS** |
 | **NFR-08** | **Session Inactivity:** Automatic 15-minute inactivity workstation auto-lock. | Clinical workstation safety | `frontend/src/components/Header.tsx` timer listener | **PASS** |
+| **NFR-09** | **Authorisation in the backend:** role and account state are enforced by the API, not by hidden controls; a physician cannot reach administrative routes or change their role through a request; a pending, rejected or suspended account and an expired, tampered or invalidated token are refused. | 403 / 401 from the API | `test_account_management.test_09_physician_cannot_use_superadmin_endpoints` | **PASS** |
+| **NFR-10** | **No secret in any response:** password hashes, token versions and temporary passwords never appear in a listing; a temporary password appears once, in the response that issued it; the audit log never stores an attempted password. | Zero secrets in general endpoints | `test_account_management.test_13_no_password_hash_or_secret_is_returned` | **PASS** |
 
 > [!CAUTION]
 > **NFR-01 is specified on the mean, and the tail is not reproducible.**

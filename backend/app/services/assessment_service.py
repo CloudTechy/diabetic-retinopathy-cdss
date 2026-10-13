@@ -460,6 +460,8 @@ class AssessmentService:
         audit = AuditEvent(
             assessment_id=assessment.id,
             user_id=reviewer.id if reviewer else None,
+            target_user_id=reviewer.id if reviewer else None,
+            event_type="PROFESSIONAL_REVIEW_CONFIRMED",
             action="Clinician Professional Review Finalized",
             actor=clinician_name,
             details=f"Professional review recorded. Classification: {confirmed_label}. Agreement: {review_input.agreement.upper()}.",
@@ -472,8 +474,14 @@ class AssessmentService:
         return assessment
 
     @classmethod
-    async def get_assessment_by_id(cls, db: AsyncSession, assessment_id: str) -> Optional[Assessment]:
-        """Fetch full assessment with all related objects loaded."""
+    async def get_assessment_by_id(cls, db: AsyncSession, assessment_id: str,
+                                   owner_id: Optional[str] = None) -> Optional[Assessment]:
+        """
+        Fetch full assessment with all related objects loaded. With `owner_id`,
+        only a record created by that account is returned: a physician sees
+        their own records and nobody else's, and a record that is not theirs
+        is indistinguishable from one that does not exist.
+        """
         stmt = (
             select(Assessment)
             .where(Assessment.id == assessment_id)
@@ -486,6 +494,8 @@ class AssessmentService:
                 selectinload(Assessment.audit_events),
             )
         )
+        if owner_id is not None:
+            stmt = stmt.where(Assessment.created_by_id == owner_id)
         res = await db.execute(stmt)
         return res.scalar_one_or_none()
 
@@ -495,8 +505,9 @@ class AssessmentService:
         db: AsyncSession,
         skip: int = 0,
         limit: int = 50,
+        owner_id: Optional[str] = None,
     ) -> List[Assessment]:
-        """Fetch assessments ordered by creation timestamp descending."""
+        """Fetch assessments ordered by creation timestamp descending; with `owner_id`, only that account's."""
         stmt = (
             select(Assessment)
             .options(
@@ -508,9 +519,10 @@ class AssessmentService:
                 selectinload(Assessment.audit_events),
             )
             .order_by(desc(Assessment.created_at))
-            .offset(skip)
-            .limit(limit)
         )
+        if owner_id is not None:
+            stmt = stmt.where(Assessment.created_by_id == owner_id)
+        stmt = stmt.offset(skip).limit(limit)
         res = await db.execute(stmt)
         return list(res.scalars().all())
 
@@ -523,8 +535,9 @@ class AssessmentService:
         laterality: Optional[str] = None,
         grade: Optional[int] = None,
         agreement: Optional[str] = None,
+        owner_id: Optional[str] = None,
     ) -> List[Assessment]:
-        """Search assessments with multifaceted filters."""
+        """Search assessments with multifaceted filters; with `owner_id`, only that account's records."""
         stmt = (
             select(Assessment)
             .options(
@@ -539,6 +552,8 @@ class AssessmentService:
         )
 
         conditions = []
+        if owner_id is not None:
+            conditions.append(Assessment.created_by_id == owner_id)
         if search_query:
             q = f"%{search_query.strip().upper()}%"
             conditions.append(or_(Assessment.patient_id.ilike(q), Assessment.id.ilike(q)))

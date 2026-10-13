@@ -1,199 +1,246 @@
+"""
+Authentication: registration, sign-in, sign-out, profile and password change,
+plus the dependencies every protected route uses to establish who is calling.
+
+No account is seeded here. An earlier revision materialised a shared
+demonstration physician on first use; accounts now come only from the Super
+Administrator bootstrap (environment or command) and from the administration
+and registration flows.
+"""
 import datetime
 from datetime import timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Header
-from sqlalchemy import select
+
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import verify_password, get_password_hash, create_access_token, decode_access_token
-from app.models.models import User, AuditEvent
-from app.schemas.auth import LoginRequest, TokenResponse, ClinicianUserResponse
+from app.core.security import create_access_token, decode_access_token, verify_password
+from app.models.models import (
+    ROLE_PHYSICIAN,
+    ROLE_SUPERADMIN,
+    STATUS_ACTIVE,
+    STATUS_PENDING,
+    STATUS_REJECTED,
+    STATUS_SUSPENDED,
+    User,
+    utcnow,
+)
+from app.schemas.auth import (
+    ChangePasswordRequest,
+    ClinicianUserResponse,
+    LoginRequest,
+    RegisterRequest,
+    RegisterResponse,
+    TokenResponse,
+)
+from app.services import account_service
+from app.services.account_service import AccountError
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Seeded demonstration account. Every value here is explicitly simulated: the
-# system must never present a fabricated clinician identity, a fabricated
-# professional registration number, or an affiliation with a real institution.
-# An earlier revision seeded a plausible consultant name with a GMC-format
-# number and an nhs.uk email address, which implied a real NHS affiliation.
-DEFAULT_CLINICIAN_DATA = {
-    "username": "demo.clinician",
-    "email": "demo.clinician@research-prototype.invalid",
-    "full_name": "Dr. Demo Clinician (Simulated)",
-    "role": "Simulated Reviewer — Research Prototype",
-    "license_number": "SIM-000001",
-    "facility": "Research Prototype Environment",
+# Messages for an account that exists but may not sign in. They name the state
+# so the interface can say what to do; none of them reveals whether a password
+# was right, because they are only reached after the password verified.
+STATUS_MESSAGES = {
+    STATUS_PENDING: "This account is awaiting administrative approval. You will be able to sign in once a Super Administrator approves it.",
+    STATUS_REJECTED: "This registration was not approved. Contact the administrator if you believe this is an error.",
+    STATUS_SUSPENDED: "This account is suspended. Contact the administrator to have it reactivated.",
 }
 
-DEMO_LOGIN_IDENTIFIERS = {
-    "demo.clinician",
-    "demo.clinician@research-prototype.invalid",
-    "clinician",
-}
-# An earlier revision also accepted "dr.demo@..." and "optometrist.demo@..."
-# as aliases of this one account, which let the sign-in screen present an
-# optometrist persona that never existed.
+
+def to_user_response(user: User, login_time: Optional[str] = None) -> ClinicianUserResponse:
+    return ClinicianUserResponse(
+        id=user.id,
+        username=user.username,
+        name=user.full_name,
+        email=user.email,
+        role=user.role,
+        status=user.status,
+        mustChangePassword=bool(user.must_change_password),
+        licenseNumber=user.license_number,
+        facility=user.facility,
+        sessionTimeoutMinutes=15,
+        loginTime=login_time or datetime.datetime.now(timezone.utc).isoformat(),
+    )
 
 
-async def get_or_create_seed_user(db: AsyncSession) -> User:
-    """Ensure a default credentialed clinician exists for medical session."""
-    stmt = select(User).where(User.username == DEFAULT_CLINICIAN_DATA["username"])
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-    if not user:
-        user = User(
-            id="USR-8821",
-            username=DEFAULT_CLINICIAN_DATA["username"],
-            email=DEFAULT_CLINICIAN_DATA["email"],
-            full_name=DEFAULT_CLINICIAN_DATA["full_name"],
-            hashed_password=get_password_hash("dr_secure_password_2026"),
-            role=DEFAULT_CLINICIAN_DATA["role"],
-            license_number=DEFAULT_CLINICIAN_DATA["license_number"],
-            facility=DEFAULT_CLINICIAN_DATA["facility"],
-            is_active=True,
-        )
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
+def _unauthenticated(detail: str = "Could not validate credentials") -> HTTPException:
+    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail, headers={"WWW-Authenticate": "Bearer"})
+
+
+async def _resolve_token(authorization: Optional[str], db: AsyncSession) -> Optional[User]:
+    """The account a bearer token names, if the token is valid, unexpired and not invalidated; else None."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    payload = decode_access_token(authorization.split(" ", 1)[1])
+    if not payload or "sub" not in payload:
+        return None
+    user = await account_service.get_user(db, payload["sub"])
+    if user is None:
+        return None
+    # A token outlives a password change, a suspension or a sign-out only if
+    # its version still matches the account's.
+    if int(payload.get("tv", -1)) != int(user.token_version or 0):
+        return None
     return user
 
 
 async def get_current_user(
     authorization: Optional[str] = Header(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Strict dependency to extract authenticated user from Bearer JWT token."""
+    """An authenticated ACTIVE account of either role. Used by /auth/me, /auth/logout and /auth/change-password."""
     if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    token = authorization.split(" ")[1]
-    payload = decode_access_token(token)
-    if not payload or "sub" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    stmt = select(User).where(User.id == payload["sub"])
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated",
+                            headers={"WWW-Authenticate": "Bearer"})
+    user = await _resolve_token(authorization, db)
+    if user is None:
+        raise _unauthenticated()
+    if user.status != STATUS_ACTIVE:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=STATUS_MESSAGES.get(user.status, "This account may not sign in."))
     return user
+
+
+async def get_current_physician(current_user: User = Depends(get_current_user)) -> User:
+    """
+    An active PHYSICIAN whose password is not temporary. Every clinical route
+    depends on this: a Super Administrator administers accounts and is not
+    granted clinical content; an account with a temporary password must change
+    it first.
+    """
+    if current_user.must_change_password:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="PASSWORD_CHANGE_REQUIRED: change the temporary password before using the system.")
+    if current_user.role != ROLE_PHYSICIAN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Clinical assessment operations are available to physician accounts only.")
+    return current_user
+
+
+async def get_current_superadmin(current_user: User = Depends(get_current_user)) -> User:
+    """An active SUPERADMIN whose password is not temporary."""
+    if current_user.must_change_password:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="PASSWORD_CHANGE_REQUIRED: change the temporary password before using the system.")
+    if current_user.role != ROLE_SUPERADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Account administration is available to the Super Administrator only.")
+    return current_user
 
 
 async def get_optional_current_user(
     authorization: Optional[str] = Header(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Optional[User]:
     """Resolve a user from a bearer token, or None. Never fabricates a session."""
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        payload = decode_access_token(token)
-        if payload and "sub" in payload:
-            stmt = select(User).where(User.id == payload["sub"])
-            res = await db.execute(stmt)
-            user = res.scalar_one_or_none()
-            if user and user.is_active:
-                return user
-    # No valid bearer token means no authenticated user.
-    #
-    # An earlier revision returned the seeded demonstration account here, so
-    # every endpoint depending on this function served an authenticated session
-    # to an anonymous caller. Returning None lets a route decide, and the
-    # clinical routes now use the strict dependency instead.
+    user = await _resolve_token(authorization, db)
+    if user is not None and user.status == STATUS_ACTIVE:
+        return user
+    # No valid bearer token means no authenticated user. An earlier revision
+    # returned a seeded demonstration account here.
     return None
+
+
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Request a physician account. The account is created PENDING_APPROVAL and
+    cannot sign in until a Super Administrator approves it. The request body
+    has no role or status field; a public request can never produce an active
+    account or a Super Administrator.
+    """
+    try:
+        user = await account_service.register_physician(
+            db, full_name=payload.fullName.strip(), username=payload.username.strip(), email=str(payload.email).lower(),
+            password=payload.password, password_confirmation=payload.passwordConfirmation,
+            license_number=(payload.licenseNumber or "").strip() or None, facility=(payload.facility or "").strip() or None,
+        )
+    except AccountError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    return RegisterResponse(
+        id=user.id, username=user.username, status=user.status,
+        message="Your registration request has been submitted for administrative approval. "
+                "You will be able to sign in once a Super Administrator approves the account.",
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: LoginRequest, db: AsyncSession = Depends(get_db)):
-    """Authenticate clinician credentials and issue signed clinical session JWT token."""
-    stmt = select(User).where(
-        (User.username == credentials.username) | (User.email == credentials.username)
-    )
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
+    """Authenticate and issue a signed session token. The password is verified for every account, on every sign-in."""
+    identifier = credentials.username.strip()
+    user = await account_service.find_by_login(db, identifier)
 
-    # The demonstration account is materialised on first use so the prototype
-    # can be opened without a separate migration step. It is created WITH a
-    # password hash and authenticates against it exactly like any other account.
-    if not user and credentials.username in DEMO_LOGIN_IDENTIFIERS:
-        user = await get_or_create_seed_user(db)
-
-    # The password is verified for every account, on every login.
-    #
-    # An earlier revision placed this check inside `if not user:`, so an account
-    # that already existed skipped it entirely and any password issued a token.
-    # Keep this unconditional: no username exemption, no plaintext comparison,
-    # no "development credentials" branch.
     if user is None or not verify_password(credentials.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid clinical credentials or unauthorized account.",
+        # The attempted password is never written anywhere.
+        account_service.record_event(
+            db, event_type=account_service.EV_SIGN_IN_FAILED, action="Sign-In Failed", actor=None,
+            actor_label=identifier[:150] or "unknown", target_user=user, outcome="failure",
+            details="Sign-in failed for identifier '%s' (%s)." % (
+                identifier[:100], "unknown account" if user is None else "wrong password"),
+            badge_type="warning",
         )
+        await db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid clinical credentials or unauthorized account.")
 
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This account is deactivated.",
+    if user.status != STATUS_ACTIVE:
+        account_service.record_event(
+            db, event_type=account_service.EV_SIGN_IN_FAILED, action="Sign-In Refused", actor=user, target_user=user,
+            outcome="failure", details="Sign-in refused for '%s': account status is %s." % (user.username, user.status),
+            badge_type="warning",
         )
+        await db.commit()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=STATUS_MESSAGES.get(user.status, "This account may not sign in."))
 
-    token = create_access_token(subject=user.id, extra_claims={"role": user.role, "name": user.full_name})
+    # Claims: who (sub), what they may do (role) and which generation of
+    # sessions this is (tv). No name, no email, no facility.
+    token = create_access_token(subject=user.id, extra_claims={"role": user.role, "tv": int(user.token_version or 0)})
 
-    now = datetime.datetime.now(timezone.utc).isoformat()
-    user_response = ClinicianUserResponse(
-        id=user.id,
-        name=user.full_name,
-        email=user.email,
-        role=user.role,
-        licenseNumber=user.license_number,
-        facility=user.facility,
-        sessionTimeoutMinutes=15,
-        loginTime=now,
+    now = utcnow()
+    user.last_login_at = now
+    account_service.record_event(
+        db, event_type=account_service.EV_SIGN_IN_SUCCESS, action="Sign-In Succeeded", actor=user, target_user=user,
+        details="'%s' signed in as %s%s." % (
+            user.username, user.role, " (password change required)" if user.must_change_password else ""),
     )
-
-    # Log audit event
-    audit = AuditEvent(
-        user_id=user.id,
-        action="Clinician Session Authenticated",
-        actor=user.full_name,
-        details=f"Authenticated session initiated from facility {user.facility}.",
-        badge_type="info",
-    )
-    db.add(audit)
     await db.commit()
 
-    return TokenResponse(
-        access_token=token,
-        token_type="bearer",
-        user=user_response,
+    return TokenResponse(access_token=token, token_type="bearer", user=to_user_response(user, now.isoformat()))
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Invalidate every session of the signed-in account (its tokens stop being accepted)."""
+    current_user.token_version = int(current_user.token_version or 0) + 1
+    account_service.record_event(
+        db, event_type=account_service.EV_SIGN_OUT, action="Signed Out", actor=current_user, target_user=current_user,
+        details="'%s' signed out; the session token was invalidated." % current_user.username,
     )
+    await db.commit()
+    return None
 
 
 @router.get("/me", response_model=ClinicianUserResponse)
 async def get_my_profile(current_user: User = Depends(get_current_user)):
-    """Return authenticated clinician profile."""
-    return ClinicianUserResponse(
-        id=current_user.id,
-        name=current_user.full_name,
-        email=current_user.email,
-        role=current_user.role,
-        licenseNumber=current_user.license_number,
-        facility=current_user.facility,
-        sessionTimeoutMinutes=15,
-        loginTime=datetime.datetime.now(timezone.utc).isoformat(),
-    )
+    """Return the authenticated account's profile."""
+    return to_user_response(current_user)
+
+
+@router.post("/change-password", response_model=ClinicianUserResponse)
+async def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change the signed-in account's password. Required before anything else when the password is temporary."""
+    try:
+        user = await account_service.change_password(
+            db, user=current_user, current_password=payload.currentPassword,
+            new_password=payload.newPassword, confirmation=payload.newPasswordConfirmation,
+        )
+    except AccountError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    return to_user_response(user)

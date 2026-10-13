@@ -66,6 +66,7 @@ which only this script emits.
 | `docs/chapter4/container_environment_freeze.txt` | `pip freeze` and `python --version` run inside the backend container started by that compose check | the backend image built from `backend/Dockerfile` |
 | `docs/chapter4/screenshots/01`–`08` | `frontend/scripts/capture_live_screenshots.js`, driving the running stack (real authentication, calibrated gates, digest-verified checkpoint). The rejection frame is written as `04b_validation_stepper_rejected.png` by `frontend/scripts/capture_rejection.js` alone, which fires the shutter only on the tick the rejected state is observed (an earlier revision of `capture_live_screenshots.js` also attempted it and threw on the server-side rejection path, which left its non-2xx guard unexecuted; that step is removed); the committed file is renamed `04b_fail_closed_rejection_worklist.png` to describe the frame it holds | the running application |
 | `docs/chapter4/screenshots/09_confusion_matrix_empirical.png` | copy of `docs/chapter4/confusion_matrix.png` | — |
+| `docs/chapter4/screenshots/accounts/01`–`10` and `capture_record.json` | `frontend/scripts/capture_account_screens.js`, driving the running stack as an existing Super Administrator (supplied through the environment; nothing is seeded): it submits a registration request, approves it, creates a physician with a temporary password, signs that physician in, changes the password and opens the empty dashboard, writing each frame only after observing the captioned state | the running application |
 
 ---
 

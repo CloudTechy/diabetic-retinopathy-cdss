@@ -40,13 +40,26 @@ flowchart TD
 ```
 
 ### Screen 1: Sign-In & Authenticated Clinical Session
-* **Clinical Purpose**: Authenticate credentialed clinicians, enforce session security, and tie every subsequent assessment to an identifiable reviewer for traceability.
+* **Clinical Purpose**: Authenticate an account (Super Administrator or Physician), enforce session security, and tie every subsequent assessment to the identifiable physician account that created it.
 * **Key Components**:
-  * Clean, distraction-free authentication card with institutional branding.
-  * Form fields: Staff ID / Email, Password, Clinical Facility / Ward selector.
-  * Security indicator: TLS 1.3 encryption status badge, Session timeout notification (automatic logout after 15 minutes of inactivity per clinical workstation policies).
-  * Prominent medical regulatory disclaimer banner: *"For clinical decision support only. Requires authorized clinical credentials."*
-* **Error Handling**: Rate limiting (5 failed attempts locks out for 15 minutes), clear non-technical guidance for password recovery.
+  * Authentication card: username or email, password (both empty on open), a **Request an account** option, and the research-prototype scope notice.
+  * Session timeout notification (automatic lock after 15 minutes of inactivity; touch and scroll count as activity on a phone).
+  * Routing by account: a temporary password opens the password-change screen and nothing else; a Super Administrator lands in the account console; a physician on the worklist.
+* **Error Handling**: wrong credentials say so without naming which part was wrong; a pending, rejected or suspended account is told its state in the server's words. No rate limiting and no password recovery by email are implemented: a Super Administrator issues a temporary password instead.
+
+### Screen 1b: Physician Registration
+* **Purpose**: a prospective physician requests an account; the request is `PENDING_APPROVAL` until a Super Administrator approves it.
+* **Fields**: full name, username, email, optional professional registration number (recorded as typed, not verified), optional facility, password and confirmation (at least 10 characters with letters and digits). There is no role or status field.
+* **After submission**: a message states that the request awaits administrative approval; the applicant is not signed in.
+
+### Screen 1c: Password Change
+* **Purpose**: change the account's password; mandatory, and the only screen available, while the password is temporary.
+* **Behaviour**: a successful change invalidates every session, so the user signs in again with the new password.
+
+### Screen 1d: Super Administrator Console
+* **Purpose**: account administration only — the Super Administrator is not granted clinical content.
+* **Sections**: Overview (pending / active / suspended / rejected counts, pending requests with approve and reject), All accounts (search, status and role filters, per-account actions), Create physician (single account; batch of numbered demonstration accounts), Audit history (administrative events, filterable to one account).
+* **Controls**: every state change goes through a confirmation dialogue; a temporary password is shown once with a dismiss acknowledgement; success and error feedback are stated in the server's words.
 
 ### Screen 2: Clinical Dashboard & Triage Worklist
 * **Clinical Purpose**: High-level overview of ongoing screening sessions, patient queue, and triage priorities.

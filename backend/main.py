@@ -11,6 +11,7 @@ from app.core.database import init_db
 from app.routers.health import router as health_router
 from app.routers.auth import router as auth_router
 from app.routers.assessments import router as assessments_router
+from app.routers.admin import router as admin_router
 
 # Configure logging
 logging.basicConfig(
@@ -43,6 +44,18 @@ async def lifespan(app: FastAPI):
         logger.info("Database tables initialized successfully.")
         if relaxed:
             logger.warning("Columns widened to accept NULL to match the models: %s", ", ".join(relaxed))
+        # First Super Administrator from the environment, if configured and
+        # none exists. Idempotent; the password is temporary. Nothing is
+        # created when the variables are blank.
+        if settings.SUPERADMIN_USERNAME and settings.SUPERADMIN_INITIAL_PASSWORD:
+            from app.core.database import AsyncSessionLocal
+            from app.services import account_service
+            async with AsyncSessionLocal() as session:
+                user, outcome = await account_service.bootstrap_superadmin(
+                    session, username=settings.SUPERADMIN_USERNAME, email=settings.SUPERADMIN_EMAIL,
+                    full_name=settings.SUPERADMIN_FULL_NAME, initial_password=settings.SUPERADMIN_INITIAL_PASSWORD,
+                    source="environment")
+            logger.warning("Super Administrator bootstrap: %s", ("created '%s'" % user.username) if user else outcome)
     except Exception as e:
         logger.error("Database initialization error: %s", str(e))
 
@@ -108,6 +121,7 @@ app.include_router(health_router, prefix=settings.API_V1_PREFIX)
 # Mount Clinical Routers under API v1 prefix
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(assessments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 
 
 

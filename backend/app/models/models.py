@@ -27,8 +27,26 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
+# Account roles and states. Strings rather than database enums so the
+# migration adds plain columns and SQLite (the test database) needs nothing.
+ROLE_SUPERADMIN = "SUPERADMIN"
+ROLE_PHYSICIAN = "PHYSICIAN"
+ROLES = (ROLE_SUPERADMIN, ROLE_PHYSICIAN)
+
+STATUS_PENDING = "PENDING_APPROVAL"
+STATUS_ACTIVE = "ACTIVE"
+STATUS_REJECTED = "REJECTED"
+STATUS_SUSPENDED = "SUSPENDED"
+ACCOUNT_STATUSES = (STATUS_PENDING, STATUS_ACTIVE, STATUS_REJECTED, STATUS_SUSPENDED)
+
+
 class User(Base):
-    """User account model supporting clinicians, technicians, and system administrators."""
+    """
+    User account: a Super Administrator (account administration only) or a
+    Physician (the clinical workflow). An account is one of PENDING_APPROVAL,
+    ACTIVE, REJECTED or SUSPENDED; only ACTIVE can sign in, and an account
+    whose password is temporary must change it before doing anything else.
+    """
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
@@ -36,17 +54,30 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False, default="clinician")  # clinician, technician, admin
-    license_number = Column(String(100), nullable=True)  # simulated, e.g. SIM-000001
+    role = Column(String(50), nullable=False, default=ROLE_PHYSICIAN)   # SUPERADMIN | PHYSICIAN
+    status = Column(String(30), nullable=False, default=STATUS_ACTIVE, index=True)
+    # A professional registration number is a descriptive field typed by the
+    # applicant or the administrator. Nothing verifies it against a register.
+    license_number = Column(String(100), nullable=True)
     facility = Column(String(255), nullable=True)  # Hospital / Clinic Unit
+    # Legacy flag kept equal to (status == ACTIVE); readers should use `status`.
     is_active = Column(Boolean, default=True, nullable=False)
+    must_change_password = Column(Boolean, default=False, nullable=False)
+    # Bumped on password change, suspension, rejection and sign-out so that
+    # tokens issued before the change stop being accepted.
+    token_version = Column(Integer, default=0, nullable=False)
+    created_by_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_by_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 
     # Relationships
     created_assessments = relationship("Assessment", back_populates="creator", foreign_keys="Assessment.created_by_id")
     reviews = relationship("ProfessionalReview", back_populates="reviewer")
-    audit_events = relationship("AuditEvent", back_populates="user")
+    audit_events = relationship("AuditEvent", back_populates="user", foreign_keys="AuditEvent.user_id")
 
 
 class Assessment(Base):
@@ -244,6 +275,11 @@ class AuditEvent(Base):
     id = Column(String(64), primary_key=True, default=lambda: f"AUD-{uuid.uuid4().hex[:6].upper()}")
     assessment_id = Column(String(64), ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True, index=True)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # Account-administration events: a stable code (see app/services/account_service.py),
+    # the account acted upon, and whether the action succeeded.
+    event_type = Column(String(60), nullable=True, index=True)
+    target_user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    outcome = Column(String(20), nullable=False, default="success")
     
     action = Column(String(150), nullable=False)
     actor = Column(String(150), nullable=False)
@@ -256,4 +292,4 @@ class AuditEvent(Base):
 
     # Relationships
     assessment = relationship("Assessment", back_populates="audit_events")
-    user = relationship("User", back_populates="audit_events")
+    user = relationship("User", back_populates="audit_events", foreign_keys=[user_id])

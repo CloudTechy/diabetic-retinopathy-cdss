@@ -30,7 +30,9 @@ jobs:
       - name: Install the minimum needed to read the evidence
         run: |
           python -m pip install --quiet --upgrade pip
-          python -m pip install --quiet pytest pydantic pydantic-settings numpy pillow
+          # pydantic[email]: the account schemas validate EmailStr, which the
+          # contract checks import.
+          python -m pip install --quiet pytest "pydantic[email]" pydantic-settings numpy pillow
 
       - name: Evidence integrity gate
         working-directory: backend

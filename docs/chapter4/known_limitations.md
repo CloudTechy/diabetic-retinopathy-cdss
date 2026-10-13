@@ -281,3 +281,29 @@ An earlier revision described these routes as serving images "securely" from
 "private storage". They do neither. A deployment that needs the files
 protected must put them behind the same authentication as the API (a
 cookie-bound session, or signed short-lived URLs) — neither is implemented.
+With per-physician record separation (§13) this matters more: the API refuses
+another physician's record, but the image and heatmap files behind it are
+still served to anyone holding the filename.
+
+---
+
+## 13. Account administration: what is and is not verified
+
+- **Professional registration numbers are not verified.** The number a
+  physician or an administrator types is stored as a descriptive field. No
+  professional register is consulted, and the interface says so.
+- **No email is sent.** Approval, rejection and temporary passwords are
+  communicated outside the system; the administrator reads a temporary
+  password once, from the response that issued it.
+- **Record separation is by creating account.** A physician sees the records
+  their own account created. There is no mechanism to transfer a record to
+  another account, and the records of the former shared demonstration
+  account (now `SUSPENDED` by the migration) are visible to no physician.
+- **A Super Administrator sees no clinical content** by design; the console
+  shows each account's number of assessments, status and audit events only.
+- **The bootstrap password travels through the environment** (or an
+  interactive prompt). It is temporary and must be changed at the first
+  sign-in, but a deployment must still protect its environment file.
+- **Session invalidation is by token version**, which is checked on every
+  request against the database; there is no token revocation list, and a
+  token remains valid until its expiry or the account's next version bump.

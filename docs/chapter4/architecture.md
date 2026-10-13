@@ -138,6 +138,61 @@ stateDiagram-v2
 
 ---
 
+## 3b. Accounts: roles, states and the use cases each role has
+
+```mermaid
+flowchart LR
+    subgraph Actors
+        A1(["Super Administrator"])
+        A2(["Physician"])
+        A3(["Prospective physician"])
+    end
+    A3 --> U0["Request an account (self-registration)"]
+    A1 --> U1["Create physician account / batch"]
+    A1 --> U2["Approve or reject a registration"]
+    A1 --> U3["Suspend or reactivate an account"]
+    A1 --> U4["Issue a temporary password"]
+    A1 --> U5["View account status and audit history"]
+    A2 --> U6["Sign in, change password, sign out"]
+    A1 --> U6
+    A2 --> U7["Create assessment, validate, infer, review, report (own records only)"]
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_APPROVAL : self-registration
+    [*] --> ACTIVE : created by Super Administrator (temporary password)
+    PENDING_APPROVAL --> ACTIVE : approve
+    PENDING_APPROVAL --> REJECTED : reject
+    ACTIVE --> SUSPENDED : suspend (not the last active Super Administrator)
+    SUSPENDED --> ACTIVE : reactivate
+```
+
+```mermaid
+sequenceDiagram
+    participant SA as Super Administrator
+    participant API as FastAPI (/admin, /auth)
+    participant DB as PostgreSQL
+    participant P as Physician
+    SA->>API: POST /admin/users (fullName, username, email)
+    API->>DB: INSERT users (ACTIVE, must_change_password=true); INSERT audit_events x2
+    API-->>SA: 201 { user, temporaryPassword }  (shown once)
+    P->>API: POST /auth/login (temporary password)
+    API->>DB: last_login_at; audit SIGN_IN_SUCCESS
+    API-->>P: 200 token (mustChangePassword=true)
+    P->>API: GET /assessments
+    API-->>P: 403 PASSWORD_CHANGE_REQUIRED
+    P->>API: POST /auth/change-password
+    API->>DB: hashed_password; must_change_password=false; token_version+1; audit PASSWORD_CHANGED
+    API-->>P: 200 (all earlier tokens now refused)
+    P->>API: POST /auth/login (new password)
+    API-->>P: 200 token
+    P->>API: GET /assessments
+    API-->>P: 200 [] (no record yet: the workspace is the account's own)
+```
+
+Enforcement is in the backend: `get_current_user` (any ACTIVE account, token version checked), `get_current_physician` (ACTIVE PHYSICIAN, password not temporary) on every clinical route, `get_current_superadmin` on every `/admin` route. The record queries take the caller's account id, so a physician's worklist, search and single-record routes return their own records only.
+
 ## 4. Key Architectural Safeguards & Design Decisions
 
 1. **Physical & Logical Domain Separation:**

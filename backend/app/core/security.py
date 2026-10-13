@@ -26,7 +26,12 @@ def create_access_token(
     expires_delta: Optional[datetime.timedelta] = None,
     extra_claims: Optional[dict] = None
 ) -> str:
-    """Generate a signed JWT access token."""
+    """
+    Generate a signed JWT access token. The claims are the subject, the issue
+    and expiry times and whatever the caller passes in `extra_claims`; the
+    caller (auth.login) passes the role and the token version only. No name,
+    email or facility is placed in a token.
+    """
     now = datetime.datetime.now(timezone.utc)
     if expires_delta:
         expire = now + expires_delta

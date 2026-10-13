@@ -291,19 +291,19 @@ class TestAuthenticationEnforcement:
     the demonstration account to anonymous callers.
     """
 
-    def test_existing_user_cannot_login_with_wrong_password(self, test_client):
+    def test_existing_user_cannot_login_with_wrong_password(self, test_client, physician_account):
         """
         The password check was nested inside `if not user:`, so any account that
         already existed authenticated with ANY password and received a signed
         token. This asserts the check is unconditional.
         """
         ok = test_client.post("/api/v1/auth/login", json={
-            "username": "demo.clinician",
-            "password": "dr_secure_password_2026"})
+            "username": physician_account["username"],
+            "password": physician_account["password"]})
         assert ok.status_code == 200, ok.text
 
         bad = test_client.post("/api/v1/auth/login", json={
-            "username": "demo.clinician",
+            "username": physician_account["username"],
             "password": "not-the-password-at-all"})
         assert bad.status_code == 401, (
             f"AUTHENTICATION BYPASS: a wrong password returned "

@@ -1,0 +1,11 @@
+{
+  "capturedAt": "2026-10-13T10:56:00.032Z",
+  "base": "http://127.0.0.1:3000",
+  "api": "http://127.0.0.1:8000",
+  "runId": "defence",
+  "accountsCreated": [
+    "applicant.defence",
+    "physician.defence"
+  ],
+  "note": "Both accounts were created by this capture against the running stack; the temporary password visible in frame 05 was changed in frame 07 and is no longer valid."
+}

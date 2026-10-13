@@ -15,8 +15,10 @@ import path from 'path';
 
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:3000';
-const USER = process.env.CDSS_USER || 'demo.clinician';
-const PASS = process.env.CDSS_PASSWORD || 'dr_secure_password_2026';
+// A physician account supplied by the operator; there is no default.
+const USER = process.env.CDSS_USER;
+const PASS = process.env.CDSS_PASSWORD;
+if (!USER || !PASS) throw new Error('Set CDSS_USER and CDSS_PASSWORD to a physician account.');
 const COMPLETED = process.env.COMPLETED_ID || '';
 const REJECTED = process.env.REJECTED_ID || '';
 const OUT = process.argv[2] ? path.resolve(process.argv[2]) : null;

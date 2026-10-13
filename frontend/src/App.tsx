@@ -12,9 +12,16 @@ import { DecisionSupportScreen } from './screens/DecisionSupportScreen';
 import { ProfessionalReviewModal } from './screens/ProfessionalReviewModal';
 import { CompletedAssessmentScreen } from './screens/CompletedAssessmentScreen';
 import { RecordHistoryScreen } from './screens/RecordHistoryScreen';
+import { RegisterScreen } from './screens/RegisterScreen';
+import { ChangePasswordScreen } from './screens/ChangePasswordScreen';
+import { AdminConsoleScreen } from './screens/AdminConsoleScreen';
+import { routeAfterSignIn, screenAllowed } from './utils/session';
 
 export type ScreenState =
   | 'signin'
+  | 'register'
+  | 'change_password'
+  | 'admin'
   | 'dashboard'
   | 'new_assessment'
   | 'validation'
@@ -33,7 +40,8 @@ export const App: React.FC = () => {
     const user = browserStorage.getStoredUser();
     if (!user) return 'signin';
     const session = browserStorage.getSessionState();
-    return (session.activeScreen as ScreenState) || 'dashboard';
+    const wanted = (session.activeScreen as ScreenState) || routeAfterSignIn(user);
+    return screenAllowed(user, wanted) ? wanted : routeAfterSignIn(user);
   });
 
   const [activeAssessment, setActiveAssessment] = useState<AssessmentRecord | null>(null);
@@ -69,6 +77,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHash = async () => {
       const rawHash = window.location.hash.replace('#', '').trim();
+      const [hashScreen, hashRecordId] = rawHash.split('/');
 
       if (rawHash === 'signin') {
         setCurrentUser(null);
@@ -78,7 +87,14 @@ export const App: React.FC = () => {
         return;
       }
 
-      // Check stored clinician session
+      // Registration is reachable without a session
+      if (hashScreen === 'register') {
+        setActiveScreen('register');
+        setShowReviewModal(false);
+        return;
+      }
+
+      // Check stored session
       const storedUser = browserStorage.getStoredUser();
       if (!storedUser) {
         setCurrentUser(null);
@@ -87,12 +103,19 @@ export const App: React.FC = () => {
         return;
       }
 
-      setCurrentUser(storedUser);
-
       try {
-        await clinicalApi.getWorklist();   // session check: a 401 here signs the user out
+        // session check against the server: a 401 here signs the user out, and
+        // the profile decides where this account may go (role, temporary password)
+        const live = await clinicalApi.me();
+        setCurrentUser(live);
+        const landing = routeAfterSignIn(live);
+        if (landing !== 'dashboard') {
+          // a Super Administrator or an account with a temporary password has one place to be
+          setActiveScreen(screenAllowed(live, hashScreen || '') ? (hashScreen as ScreenState) : landing);
+          setShowReviewModal(false);
+          return;
+        }
         const session = browserStorage.getSessionState();
-        const [hashScreen, hashRecordId] = rawHash.split('/');
 
         let targetScreen: string = hashScreen || session.activeScreen || 'dashboard';
         if (targetScreen === 'completed') targetScreen = 'completed_assessment';
@@ -171,15 +194,17 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  // Screen 1 Sign In Success
+  // Screen 1 Sign In Success: a temporary password is changed before anything
+  // else; a Super Administrator lands in the console; a physician on the worklist
   const handleSignInSuccess = (user: ClinicianUser) => {
     setCurrentUser(user);
     browserStorage.saveStoredUser(user);
-    navigateTo('dashboard');
-    showToast(`Welcome back, ${user.name}`);
+    const landing = routeAfterSignIn(user);
+    navigateTo(landing);
+    showToast(landing === 'change_password' ? 'Set your own password to continue.' : `Welcome, ${user.name}`);
   };
 
-  const handleLogout = () => {
+  const clearSession = (message: string) => {
     setCurrentUser(null);
     setActiveAssessment(null);
     browserStorage.saveStoredUser(null);
@@ -187,11 +212,25 @@ export const App: React.FC = () => {
     window.location.hash = '#signin';
     setActiveScreen('signin');
     setShowReviewModal(false);
-    showToast('Signed out of clinical session.');
+    showToast(message);
+  };
+
+  const handleLogout = () => {
+    clinicalApi.logout().finally(() => clearSession('Signed out.'));
+  };
+
+  // After a password change every session is invalidated by the server, so the
+  // user signs in again with the password they chose.
+  const handlePasswordChanged = () => {
+    clearSession('Password changed. Sign in again with your new password.');
   };
 
   // Navigation from Header
-  const handleNavigate = (screen: 'dashboard' | 'new_assessment' | 'history' | 'signin') => {
+  const handleNavigate = (screen: 'dashboard' | 'new_assessment' | 'history' | 'signin' | 'admin' | 'change_password') => {
+    if (currentUser && !screenAllowed(currentUser, screen)) {
+      navigateTo(routeAfterSignIn(currentUser));
+      return;
+    }
     navigateTo(screen);
   };
 
@@ -276,9 +315,27 @@ export const App: React.FC = () => {
 
       {/* Main Screen Router */}
       <main className="flex-1 w-full pb-16 md:pb-0" role="main">
-        {/* If unauthenticated, always render Screen 1: Sign-In */}
-        {!currentUser || activeScreen === 'signin' ? (
-          <SignInScreen onSignInSuccess={handleSignInSuccess} />
+        {/* Without a session: sign-in, or the registration request */}
+        {!currentUser || activeScreen === 'signin' || activeScreen === 'register' ? (
+          activeScreen === 'register' ? (
+            <RegisterScreen onBackToSignIn={() => { window.location.hash = '#signin'; setActiveScreen('signin'); }} />
+          ) : (
+            <SignInScreen
+              onSignInSuccess={handleSignInSuccess}
+              onRegister={() => { window.location.hash = '#register'; setActiveScreen('register'); }}
+            />
+          )
+        ) : currentUser.mustChangePassword || activeScreen === 'change_password' ? (
+          /* A temporary password is changed before anything else is shown */
+          <ChangePasswordScreen
+            currentUser={currentUser}
+            mandatory={Boolean(currentUser.mustChangePassword)}
+            onChanged={handlePasswordChanged}
+            onCancel={currentUser.mustChangePassword ? undefined : () => navigateTo(routeAfterSignIn(currentUser))}
+          />
+        ) : currentUser.role === 'SUPERADMIN' ? (
+          /* The Super Administrator administers accounts and sees no clinical screen */
+          <AdminConsoleScreen />
         ) : (
           <>
             {/* Screen 2: Dashboard / Clinical Worklist */}

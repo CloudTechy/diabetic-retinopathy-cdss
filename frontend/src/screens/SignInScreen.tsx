@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Lock, Eye, AlertTriangle, UserCheck } from 'lucide-react';
+import { Lock, Eye, AlertTriangle, UserPlus } from 'lucide-react';
 import { ClinicianUser } from '../types/clinical';
 import { clinicalApi } from '../services/api';
 import { describeApiError } from '../utils/apiError';
 
 interface SignInScreenProps {
   onSignInSuccess: (user: ClinicianUser) => void;
+  onRegister: () => void;
 }
 
-export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) => {
+export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess, onRegister }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -26,10 +27,15 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
       });
       onSignInSuccess(user);
     } catch (err: any) {
-      // only a 401 is a credentials problem; anything else says what it was
+      // 401 is a credentials problem; 403 is the account's state (pending,
+      // rejected, suspended), which the server states in its own words
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
       setErrorMessage(
-        err?.response?.status === 401
-          ? 'Authentication failed. Please verify clinical staff ID and credentials.'
+        status === 401
+          ? 'Authentication failed. Please verify your username and password.'
+          : status === 403 && typeof detail === 'string'
+          ? detail
           : describeApiError(err, 'Sign-in did not complete')
       );
     } finally {
@@ -37,14 +43,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
     }
   };
 
-  // The prototype seeds ONE demonstration account, explicitly simulated
-  // (SIM-000001, "Research Prototype Environment"). An earlier revision offered
-  // two personas ("Consultant" and "Optometrist") that both filled this same
-  // account - a second identity that never existed.
-  const handleDemoFill = () => {
-    setEmail('demo.clinician');
-    setPassword('dr_secure_password_2026');
-  };
+  // No demonstration account exists any more. Earlier revisions offered two
+  // personas, then one "Fill demonstration credentials" button; accounts now
+  // come from the Super Administrator or from an approved registration.
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50">
@@ -72,7 +73,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
             <div className="space-y-1">
               <span className="font-bold block">Restricted Clinical Decision Support System</span>
               <p className="text-[11px] text-amber-800 leading-relaxed">
-                Research prototype: no real practitioner accounts exist. All activity is logged against the signed-in (simulated) account.
+                Research prototype. Accounts are created or approved by a Super Administrator; every action is logged against the signed-in account.
               </p>
             </div>
           </div>
@@ -87,7 +88,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="staff-id" className="block text-xs font-semibold text-slate-700">
-                Clinical Practitioner ID / Username
+                Username or email
               </label>
               <div className="mt-1">
                 <input
@@ -98,7 +99,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-clinical-primary focus:border-clinical-primary text-xs"
-                  placeholder="demo.clinician"
+                  placeholder="your username"
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -141,21 +143,20 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignInSuccess }) =
             </div>
           </form>
 
-          {/* The single seeded demonstration account, labelled as simulated */}
+          {/* Registration: a prospective physician requests an account; a Super Administrator approves it */}
           <div className="pt-2 border-t border-slate-100">
             <span className="text-[11px] font-semibold text-slate-500 block mb-2">
-              Research prototype: one seeded demonstration account (simulated identity, no real practitioner)
+              No account yet? A physician can request one; it becomes usable once a Super Administrator approves it.
             </span>
             <button
               type="button"
-              onClick={handleDemoFill}
-              className="w-full p-2 border border-slate-200 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
+              onClick={onRegister}
+              className="w-full p-2.5 border border-clinical-primary/40 rounded-lg text-left hover:bg-slate-50 transition-colors text-[11px]"
             >
-              <div className="flex items-center gap-1 font-semibold text-slate-800">
-                <UserCheck className="w-3.5 h-3.5 text-clinical-primary" />
-                Fill demonstration credentials — Dr. Demo Clinician (Simulated), SIM-000001
+              <div className="flex items-center gap-1.5 font-semibold text-clinical-primary">
+                <UserPlus className="w-3.5 h-3.5" />
+                Request an account
               </div>
-              <div className="text-[10px] text-slate-400">Role: Simulated Reviewer — Research Prototype Environment</div>
             </button>
           </div>
         </div>
