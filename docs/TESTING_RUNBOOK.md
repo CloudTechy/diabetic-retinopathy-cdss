@@ -112,13 +112,35 @@ flowchart TD
     S7 --> S8["Screen 8: Record History & Audit Trail"]
 ```
 
+### Screen 0: Accounts — Super Administrator and Physician
+
+No account is seeded. The first Super Administrator is created once, either from the environment (`SUPERADMIN_USERNAME`, `SUPERADMIN_EMAIL`, `SUPERADMIN_FULL_NAME`, `SUPERADMIN_INITIAL_PASSWORD` in `.env`, read at start-up) or interactively:
+
+```bash
+python backend/scripts/bootstrap_superadmin.py        # prompts for username, email and a temporary password
+```
+
+The command creates nothing when a Super Administrator already exists. The password is temporary: the first sign-in goes straight to the password-change screen.
+
+**Super Administrator (defence demonstration sequence):**
+1. Sign in with the bootstrap credentials; change the temporary password when prompted; sign in again.
+2. The console opens on **Overview** (pending, active, suspended and rejected counts; pending registration requests).
+3. **Create physician**: enter full name, username and email; leave *Activate immediately* ticked. The temporary password is shown once — copy it for the physician. (*Batch accounts* creates numbered accounts for a supervised demonstration.)
+4. **All accounts**: search and filter by status or role; approve, reject, suspend, reactivate, or issue a temporary password, each after a confirmation dialogue.
+5. **Audit history**: every administrative event with actor, target, time and outcome; the **Audit** button on an account filters to that account. The console never shows clinical content: the Super Administrator is not granted assessment records.
+
+**Physician:**
+1. Either sign in with the credentials the Super Administrator issued, or click **Request an account** on the sign-in screen, complete the form and wait for approval (the screen says the request is pending; nothing is opened).
+2. On the first sign-in with a temporary password the application shows only the password-change screen; after the change, sign in again with the new password.
+3. The dashboard opens empty: a new account has no assessment history. Everything from Screen 2 onwards is the physician's own workspace; records created by another physician are never listed and cannot be opened.
+
 ### Screen 1: Practitioner Sign-In & Authentication
 1. **Navigate to:** `http://localhost:4173/`
 2. **Observe UI Elements:**
-   - Top safety ribbon: *AI Clinical Decision Support Aid (Research & Decision Support) — TLS 1.3 Secured*.
-   - Practitioner card displaying the seeded simulated identity (`Dr. Demo Clinician (Simulated)`, `Simulated Reviewer — Research Prototype`).
-   - 15-minute clinical workstation auto-lock inactivity countdown timer.
-3. **Action:** Click **"Sign In to Clinical Workstation"** with the seeded credentials (`demo.clinician` / `dr_secure_password_2026`).
+   - Top safety ribbon: *AI Clinical Decision Support Aid (Research & Decision Support)*.
+   - Username/email and password fields (empty), the **Request an account** option, and the inactivity notice.
+   - 15-minute clinical workstation auto-lock inactivity countdown timer once signed in.
+3. **Action:** Sign in with a physician account created or approved by the Super Administrator. A pending, rejected or suspended account is told its state in words; a temporary password leads to the password-change screen before anything else.
 
 ### Screen 2: Assessment Dashboard / Worklist
 1. **Observe Summary Ribbon:**

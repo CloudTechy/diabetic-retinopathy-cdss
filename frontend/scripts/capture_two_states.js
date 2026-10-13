@@ -30,10 +30,16 @@ async function api(pathname, token) {
   return res.json();
 }
 
+// Credentials of a real physician account, supplied by the operator. There is
+// no shared demonstration account and no default password.
+const CDSS_USER = process.env.CDSS_USER;
+const CDSS_PASSWORD = process.env.CDSS_PASSWORD;
+if (!CDSS_USER || !CDSS_PASSWORD) throw new Error('Set CDSS_USER and CDSS_PASSWORD to a physician account.');
+
 const login = await fetch(`${API}/auth/login`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username: 'demo.clinician', password: 'dr_secure_password_2026' }),
+  body: JSON.stringify({ username: CDSS_USER, password: CDSS_PASSWORD }),
 }).then((r) => r.json());
 
 const token = login.access_token;

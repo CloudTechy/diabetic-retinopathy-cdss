@@ -1,5 +1,9 @@
 import axios from 'axios';
 import {
+  AccountSummary,
+  AdminAuditEvent,
+  CreatedPhysician,
+  UserAccount,
   AssessmentRecord,
   ClinicianUser,
   ClinicianReview,
@@ -69,16 +73,20 @@ class ClinicalApiService {
       localStorage.setItem('access_token', token);
     }
 
+    // the account exactly as the server describes it; nothing is invented
+    const u = res.data.user || {};
     this.currentUser = {
-      id: res.data.id || 'Unknown',
-      name: res.data.name || credentials.username,
-      email: res.data.email || credentials.username,
-      role: res.data.role ?? '',   // nothing is invented for a missing role
-      licenseNumber: res.data.licenseNumber || '',
-      facility: res.data.facility || '',
-      sessionTimeoutMinutes: 15,
-      loginTime: new Date().toISOString(),
-      ...res.data.user
+      id: u.id,
+      username: u.username || credentials.username,
+      name: u.name || credentials.username,
+      email: u.email || '',
+      role: u.role ?? '',
+      status: u.status ?? '',
+      mustChangePassword: Boolean(u.mustChangePassword),
+      licenseNumber: u.licenseNumber || '',
+      facility: u.facility || '',
+      sessionTimeoutMinutes: u.sessionTimeoutMinutes || 15,
+      loginTime: u.loginTime || new Date().toISOString(),
     };
 
     browserStorage.saveStoredUser(this.currentUser);
@@ -86,10 +94,89 @@ class ClinicalApiService {
   }
 
   async logout(): Promise<void> {
+    // invalidate the session on the server first; local state is cleared either way
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      /* the token may already be invalid; nothing to do */
+    }
     this.currentUser = null;
     browserStorage.saveStoredUser(null);
     localStorage.removeItem('access_token');
     sessionStorage.removeItem('access_token');
+  }
+
+  async me(): Promise<ClinicianUser> {
+    const res = await apiClient.get('/auth/me');
+    const u = res.data;
+    const user: ClinicianUser = {
+      id: u.id, username: u.username, name: u.name, email: u.email, role: u.role, status: u.status,
+      mustChangePassword: Boolean(u.mustChangePassword), licenseNumber: u.licenseNumber || '', facility: u.facility || '',
+      sessionTimeoutMinutes: u.sessionTimeoutMinutes || 15, loginTime: u.loginTime,
+    };
+    this.currentUser = user;
+    browserStorage.saveStoredUser(user);
+    return user;
+  }
+
+  async register(payload: {
+    fullName: string; username: string; email: string; password: string; passwordConfirmation: string;
+    licenseNumber?: string; facility?: string;
+  }): Promise<{ id: string; username: string; status: string; message: string }> {
+    const res = await apiClient.post('/auth/register', payload);
+    return res.data;
+  }
+
+  async changePassword(payload: { currentPassword: string; newPassword: string; newPasswordConfirmation: string }): Promise<void> {
+    await apiClient.post('/auth/change-password', payload);
+  }
+
+  // ---- Super Administrator console
+  async adminSummary(): Promise<AccountSummary> {
+    return (await apiClient.get('/admin/summary')).data;
+  }
+
+  async adminListUsers(params: { q?: string; role?: string; status?: string } = {}): Promise<UserAccount[]> {
+    return (await apiClient.get('/admin/users', { params })).data;
+  }
+
+  async adminPendingUsers(): Promise<UserAccount[]> {
+    return (await apiClient.get('/admin/users/pending')).data;
+  }
+
+  async adminCreatePhysician(payload: {
+    fullName: string; username: string; email: string; licenseNumber?: string; facility?: string;
+    temporaryPassword?: string; activateImmediately: boolean;
+  }): Promise<CreatedPhysician> {
+    return (await apiClient.post('/admin/users', payload)).data;
+  }
+
+  async adminCreatePhysiciansBatch(payload: { count: number; usernamePrefix: string; facility?: string }): Promise<{ created: CreatedPhysician[] }> {
+    return (await apiClient.post('/admin/users/batch', payload)).data;
+  }
+
+  async adminApprove(userId: string): Promise<UserAccount> {
+    return (await apiClient.patch(`/admin/users/${userId}/approve`)).data;
+  }
+
+  async adminReject(userId: string, reason?: string): Promise<UserAccount> {
+    return (await apiClient.patch(`/admin/users/${userId}/reject`, { reason })).data;
+  }
+
+  async adminSuspend(userId: string, reason?: string): Promise<UserAccount> {
+    return (await apiClient.patch(`/admin/users/${userId}/suspend`, { reason })).data;
+  }
+
+  async adminReactivate(userId: string): Promise<UserAccount> {
+    return (await apiClient.patch(`/admin/users/${userId}/reactivate`)).data;
+  }
+
+  async adminResetPassword(userId: string): Promise<CreatedPhysician> {
+    return (await apiClient.post(`/admin/users/${userId}/reset-password`)).data;
+  }
+
+  async adminAuditEvents(params: { userId?: string; eventType?: string; limit?: number } = {}): Promise<AdminAuditEvent[]> {
+    return (await apiClient.get('/admin/audit-events', { params })).data;
   }
 
   async getWorklist(): Promise<AssessmentRecord[]> {

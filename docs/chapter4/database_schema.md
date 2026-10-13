@@ -19,6 +19,9 @@ erDiagram
     USERS |o--o{ ASSESSMENTS : creates
     USERS |o--o{ PROFESSIONAL_REVIEWS : records
     USERS |o--o{ AUDIT_EVENTS : triggers
+    USERS |o--o{ AUDIT_EVENTS : is-target-of
+    USERS |o--o{ USERS : created-by
+    USERS |o--o{ USERS : approved-by
 
     ASSESSMENTS ||--o| IMAGE_ASSETS : contains
     ASSESSMENTS ||--o| VALIDATION_RESULTS : validates
@@ -38,21 +41,32 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 ## 2. Table Dictionaries & Field Specifications
 
 ### 1. `users`
-*Represents authorized screening practitioners, consultant medical ophthalmologists, and system administrators.*
+*An account: a Super Administrator (account administration only) or a Physician (the clinical workflow). Columns added by Alembic revision `0002_account_administration` are marked †.*
 
 | Column | Type | Nullable | Description / Constraint |
 | :--- | :--- | :---: | :--- |
 | `id` | VARCHAR(36) | NO | Primary Key (UUIDv4). |
 | `username` | VARCHAR(100) | NO | Unique login handle, indexed. |
-| `email` | VARCHAR(255) | NO | Unique clinical email address, indexed. |
-| `full_name` | VARCHAR(255) | NO | Full legal and professional title. |
-| `hashed_password` | VARCHAR(255) | NO | Bcrypt salted hash (zero plaintext). |
-| `role` | VARCHAR(50) | NO | `clinician`, `technician`, `admin`. Defaults to `clinician`. |
-| `license_number` | VARCHAR(100) | YES | Practitioner registration code. Simulated in this build (e.g. `SIM-000001`). |
-| `facility` | VARCHAR(255) | YES | Hospital unit or primary eye clinic name. |
-| `is_active` | BOOLEAN | NO | Account state flag. Defaults to true. |
-| `created_at` | TIMESTAMPTZ | NO | Timestamp of registration. |
+| `email` | VARCHAR(255) | NO | Unique email address, indexed; required. |
+| `full_name` | VARCHAR(255) | NO | Full name. |
+| `hashed_password` | VARCHAR(255) | NO | Bcrypt salted hash (zero plaintext). Never returned by any route. |
+| `role` | VARCHAR(50) | NO | `SUPERADMIN` or `PHYSICIAN`. Defaults to `PHYSICIAN`; a public request can never set it. |
+| `status` | VARCHAR(30) | NO | `PENDING_APPROVAL`, `ACTIVE`, `REJECTED` or `SUSPENDED`; indexed. Only `ACTIVE` can sign in. Added by Alembic revision 0002. |
+| `license_number` | VARCHAR(100) | YES | Professional registration number as typed by the applicant or administrator. Not verified against any register. |
+| `facility` | VARCHAR(255) | YES | Hospital unit or clinic name. |
+| `is_active` | BOOLEAN | NO | Legacy flag kept equal to (`status` = `ACTIVE`); readers use `status`. |
+| `must_change_password` | BOOLEAN | NO | True while the password is a temporary one issued by the bootstrap or an administrator; cleared by `/auth/change-password`. Added by Alembic revision 0002. |
+| `token_version` | INTEGER | NO | Session generation. Incremented on password change, suspension, rejection and sign-out; a token whose `tv` claim differs is refused. Added by Alembic revision 0002. |
+| `created_by_id` | VARCHAR(36) | YES | Foreign Key (`users.id`, `ON DELETE SET NULL`): the administrator who created the account; null for self-registration and the bootstrap. Added by Alembic revision 0002. |
+| `approved_by_id` | VARCHAR(36) | YES | Foreign Key (`users.id`, `ON DELETE SET NULL`): the administrator who approved or activated it. Added by Alembic revision 0002. |
+| `approved_at` | TIMESTAMPTZ | YES | When it was approved or activated. Added by Alembic revision 0002. |
+| `rejection_reason` | TEXT | YES | Reason recorded on rejection or suspension; cleared on approval or reactivation. Added by Alembic revision 0002. |
+| `last_login_at` | TIMESTAMPTZ | YES | Last successful sign-in. Added by Alembic revision 0002. |
+| `created_at` | TIMESTAMPTZ | NO | Account creation time. |
 | `updated_at` | TIMESTAMPTZ | NO | Last modification timestamp, set on update. |
+
+> [!NOTE]
+> **Migration.** The database is brought to this shape by Alembic (`backend/alembic/versions/0002_account_administration.py`), run at start-up and by `alembic upgrade head`. A database created before this revision is stamped at the baseline and upgraded in place: the columns are added, every pre-existing role value becomes `PHYSICIAN` (no existing row becomes a Super Administrator), `status` is set from `is_active`, and the former shared demonstration account, if present, is set `SUSPENDED` so that its assessments and reviews keep their references while it can no longer sign in. No row is deleted and no record is re-parented. The first Super Administrator comes only from `scripts/bootstrap_superadmin.py` or the `SUPERADMIN_*` environment variables, which are idempotent.
 
 ### 2. `assessments`
 *Core clinical encounter record representing a single patient eye examination.*
@@ -183,7 +197,10 @@ Cardinalities are read from the model: a nullable foreign key draws the parent a
 | :--- | :--- | :---: | :--- |
 | `id` | VARCHAR(64) | NO | Primary Key (Format: `AUD-XXXXXX`). |
 | `assessment_id` | VARCHAR(64) | YES | Foreign Key (`assessments.id`, `ON DELETE SET NULL`), indexed. |
-| `user_id` | VARCHAR(36) | YES | Foreign Key (`users.id`, `ON DELETE SET NULL`). |
+| `user_id` | VARCHAR(36) | YES | Foreign Key (`users.id`, `ON DELETE SET NULL`): the acting account. |
+| `event_type` | VARCHAR(60) | YES | Stable code for account-administration and sign-in events (`SUPERADMIN_CREATED`, `PHYSICIAN_REGISTRATION_SUBMITTED`, `PHYSICIAN_ACCOUNT_CREATED`, `ACCOUNT_APPROVED`, `ACCOUNT_REJECTED`, `ACCOUNT_SUSPENDED`, `ACCOUNT_REACTIVATED`, `TEMPORARY_PASSWORD_ISSUED`, `PASSWORD_CHANGED`, `SIGN_IN_SUCCESS`, `SIGN_IN_FAILED`, `SIGN_OUT`, `PROFESSIONAL_REVIEW_CONFIRMED`); indexed; null for the clinical workflow events that predate it. |
+| `target_user_id` | VARCHAR(36) | YES | Foreign Key (`users.id`, `ON DELETE SET NULL`): the account acted upon. |
+| `outcome` | VARCHAR(20) | NO | `success` or `failure` (a failed sign-in is recorded with `failure` and never with the attempted password). |
 | `action` | VARCHAR(150) | NO | Event name, e.g. `CREATED`, `VALIDATED`, `INFERRED`, `REVIEWED`. |
 | `actor` | VARCHAR(150) | NO | Human-readable actor label, retained if `user_id` is later nulled. |
 | `details` | TEXT | NO | Human-readable description of the event. |

@@ -142,15 +142,71 @@ export interface AssessmentRecord {
   updatedAt: string;
 }
 
+export type AccountRole = 'SUPERADMIN' | 'PHYSICIAN';
+export type AccountStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED';
+
 export interface ClinicianUser {
   id: string;
+  username: string;
   name: string;
   email: string;
-  role: string;
+  role: AccountRole | string;
+  status: AccountStatus | string;
+  mustChangePassword: boolean;
+  /** typed by the applicant or an administrator; not verified against any register */
   licenseNumber: string;
   facility: string;
   sessionTimeoutMinutes: number;
   loginTime: string;
+}
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  role: AccountRole | string;
+  status: AccountStatus | string;
+  mustChangePassword: boolean;
+  licenseNumber?: string | null;
+  facility?: string | null;
+  createdById?: string | null;
+  approvedById?: string | null;
+  approvedAt?: string | null;
+  rejectionReason?: string | null;
+  lastLoginAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  assessmentCount: number;
+}
+
+export interface CreatedPhysician {
+  user: UserAccount;
+  /** shown once, in the response that issued it */
+  temporaryPassword: string;
+}
+
+export interface AccountSummary {
+  pending: number;
+  active: number;
+  suspended: number;
+  rejected: number;
+  superadmins: number;
+  physicians: number;
+}
+
+export interface AdminAuditEvent {
+  id: string;
+  timestamp: string;
+  eventType?: string | null;
+  action: string;
+  actor: string;
+  actorUserId?: string | null;
+  targetUserId?: string | null;
+  assessmentId?: string | null;
+  outcome: string;
+  details: string;
+  badgeType: string;
 }
 
 export interface WorklistFilter {

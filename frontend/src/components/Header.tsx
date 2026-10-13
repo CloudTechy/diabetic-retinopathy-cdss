@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, ShieldCheck, Lock, LogOut, Clock, Eye, Search, PlusCircle, AlertCircle } from 'lucide-react';
+import { Activity, ShieldCheck, Lock, LogOut, Clock, Eye, Search, PlusCircle, AlertCircle, Users, KeyRound } from 'lucide-react';
 import { ClinicianUser } from '../types/clinical';
 
 interface HeaderProps {
   currentUser: ClinicianUser | null;
-  onNavigate: (screen: 'dashboard' | 'new_assessment' | 'history' | 'signin') => void;
+  onNavigate: (screen: 'dashboard' | 'new_assessment' | 'history' | 'signin' | 'admin' | 'change_password') => void;
   activeScreen: string;
   onLogout: () => void;
 }
@@ -53,6 +53,22 @@ export const Header: React.FC<HeaderProps> = ({
       activityEvents.forEach((name) => window.removeEventListener(name, handleActivity));
     };
   }, [currentUser, showTimeoutWarning, onLogout]);
+
+  // What this account may navigate to. A Super Administrator sees the console
+  // only; an account with a temporary password sees nothing until it is changed.
+  const isAdmin = currentUser?.role === 'SUPERADMIN';
+  const locked = Boolean(currentUser?.mustChangePassword);
+  const navItems: ReadonlyArray<readonly [
+    'dashboard' | 'new_assessment' | 'history' | 'admin', string, string, React.ComponentType<{ className?: string }>, boolean,
+  ]> = locked
+    ? []
+    : isAdmin
+    ? [['admin', 'Accounts', 'Accounts', Users, activeScreen === 'admin']]
+    : [
+        ['dashboard', 'Worklist', 'Worklist', Activity, activeScreen === 'dashboard'],
+        ['new_assessment', 'New Assessment', 'New', PlusCircle, activeScreen === 'new_assessment' || activeScreen === 'validation'],
+        ['history', 'Record History', 'History', Search, activeScreen === 'history'],
+      ];
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -127,47 +143,22 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </button>
 
-            {/* Navigation tabs */}
-            {currentUser && (
+            {/* Navigation tabs, by role */}
+            {currentUser && navItems.length > 0 && (
               <nav className="hidden md:flex items-center space-x-1 ml-6" aria-label="Clinical Navigation">
-                <button
-                  onClick={() => onNavigate('dashboard')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-clinical-primary ${
-                    activeScreen === 'dashboard'
-                      ? 'bg-clinical-primary-light text-clinical-primary font-bold'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                  aria-current={activeScreen === 'dashboard' ? 'page' : undefined}
-                >
-                  <Activity className="w-3.5 h-3.5 inline mr-1.5" />
-                  Worklist
-                </button>
-
-                <button
-                  onClick={() => onNavigate('new_assessment')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-clinical-primary ${
-                    activeScreen === 'new_assessment' || activeScreen === 'validation'
-                      ? 'bg-clinical-primary-light text-clinical-primary font-bold'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                  aria-current={activeScreen === 'new_assessment' ? 'page' : undefined}
-                >
-                  <PlusCircle className="w-3.5 h-3.5 inline mr-1.5" />
-                  New Assessment
-                </button>
-
-                <button
-                  onClick={() => onNavigate('history')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-clinical-primary ${
-                    activeScreen === 'history'
-                      ? 'bg-clinical-primary-light text-clinical-primary font-bold'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                  aria-current={activeScreen === 'history' ? 'page' : undefined}
-                >
-                  <Search className="w-3.5 h-3.5 inline mr-1.5" />
-                  Record History
-                </button>
+                {navItems.map(([screen, label, , Icon, active]) => (
+                  <button
+                    key={screen}
+                    onClick={() => onNavigate(screen)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-clinical-primary ${
+                      active ? 'bg-clinical-primary-light text-clinical-primary font-bold' : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <Icon className="w-3.5 h-3.5 inline mr-1.5" />
+                    {label}
+                  </button>
+                ))}
               </nav>
             )}
           </div>
@@ -181,9 +172,20 @@ export const Header: React.FC<HeaderProps> = ({
                     {currentUser.name}
                   </div>
                   <div className="text-[10px] text-slate-500 font-mono">
-                    {currentUser.licenseNumber} • {currentUser.facility.split('—')[0]}
+                    {currentUser.role}{currentUser.facility ? ` • ${currentUser.facility.split('—')[0]}` : ''}
                   </div>
                 </div>
+
+                {!locked && (
+                  <button
+                    onClick={() => onNavigate('change_password')}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-clinical-primary hover:bg-slate-100 transition-colors"
+                    title="Change password"
+                    aria-label="Change password"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                  </button>
+                )}
 
                 <div
                   className="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs border border-teal-200"
@@ -214,16 +216,12 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Navigation on a phone. The tabs in the header are hidden below the md
           breakpoint, which left a signed-in phone user with no way to move
           between the worklist, a new assessment and the record history. */}
-      {currentUser && (
+      {currentUser && navItems.length > 0 && (
         <nav
-          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_8px_rgba(15,23,42,0.06)] grid grid-cols-3"
+          className={`md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_8px_rgba(15,23,42,0.06)] grid ${navItems.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}
           aria-label="Clinical Navigation (mobile)"
         >
-          {([
-            ['dashboard', 'Worklist', Activity, activeScreen === 'dashboard'],
-            ['new_assessment', 'New', PlusCircle, activeScreen === 'new_assessment' || activeScreen === 'validation'],
-            ['history', 'History', Search, activeScreen === 'history'],
-          ] as const).map(([screen, label, Icon, active]) => (
+          {navItems.map(([screen, , label, Icon, active]) => (
             <button
               key={screen}
               type="button"

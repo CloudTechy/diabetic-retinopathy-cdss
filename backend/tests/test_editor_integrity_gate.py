@@ -610,11 +610,27 @@ def test_no_clinical_authority_overclaims_in_code():
         "Clinical authority overclaim:\n  " + "\n  ".join(offenders))
 
 
-def test_demo_identity_is_labelled_simulated():
-    """A demonstration account must announce that it is one."""
-    text = read(os.path.join(REPO_ROOT, "backend", "app", "routers", "auth.py"))
-    assert "Simulated" in text or "SIM-" in text, (
-        "The seeded account does not label itself simulated")
+def test_no_seeded_demonstration_account_exists():
+    """
+    The application once materialised a shared demonstration physician
+    ("demo.clinician", a fixed password in the source) on first use. Accounts
+    now come only from the Super Administrator bootstrap and the administration
+    and registration flows: no identifier list, no seed function, no password
+    literal anywhere in the application or the interface.
+    """
+    auth = read(os.path.join(REPO_ROOT, "backend", "app", "routers", "auth.py"))
+    for marker in ("DEMO_LOGIN_IDENTIFIERS", "get_or_create_seed_user", "DEFAULT_CLINICIAN_DATA", "dr_secure_password_2026"):
+        assert marker not in auth, "auth.py still carries the seeded account: %s" % marker
+    offenders = []
+    for rel in _code_files():
+        if "test_editor_integrity_gate" in rel or rel.startswith("backend/tests/"):
+            continue
+        for lineno, line in enumerate(read(os.path.join(REPO_ROOT, rel)).splitlines(), 1):
+            if line.lstrip().startswith(("#", "//", "*", "/*")):
+                continue
+            if "demo.clinician" in line or "dr_secure_password_2026" in line:
+                offenders.append("%s:%d" % (rel, lineno))
+    assert not offenders, "the demonstration account's identifier or password survives in: %s" % ", ".join(offenders)
 
 
 # =====================================================================
@@ -4241,24 +4257,23 @@ def test_authenticated_session_badge_renders_only_for_a_signed_in_user():
         assert ")}" not in between, "a conditional block closes before the badge; it renders unconditionally"
 
 
-def test_sign_in_offers_one_simulated_account_and_prefills_nothing():
+def test_sign_in_offers_no_demonstration_account_and_prefills_nothing():
     """
-    Two buttons ("Consultant", "Optometrist") filled the same seeded account,
-    and the form opened pre-filled with its credentials. One demonstration
-    account exists, it is labelled simulated, and the form opens empty.
+    Two buttons ("Consultant", "Optometrist") once filled the same seeded
+    account, and later one button filled it; the form opened pre-filled. There
+    is no demonstration account to fill: the form opens empty and offers a
+    registration request instead.
     """
     src = read(SIGNIN_TSX)
     rendered = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("//"))   # comments may record the old personas
-    assert src.count("demo.clinician") >= 1
-    assert "Optometrist" not in rendered and "Consultant" not in rendered, "a second persona is offered on the sign-in screen"
+    assert "demo.clinician" not in rendered and "Fill demonstration credentials" not in rendered, (
+        "the sign-in screen still offers the demonstration account")
+    assert "Optometrist" not in rendered and "Consultant" not in rendered, "a persona is offered on the sign-in screen"
     for field in ("email", "password"):
         assert re.search(r"const \[%s, set\w+\] = useState<string>\(''\)" % field, src), (
             "the sign-in form pre-fills the %s field" % field)
-    assert "Simulated" in src, "the demonstration account is not labelled simulated"
-    auth = read(AUTH_ROUTER)
-    aliases = re.search(r"DEMO_LOGIN_IDENTIFIERS = \{(.*?)\}", auth, re.S).group(1)
-    assert "optometrist" not in aliases and "dr.demo" not in aliases, "the router still accepts aliases for personas that do not exist"
-    assert '"full_name": "Dr. Demo Clinician (Simulated)"' in auth
+    assert "Request an account" in rendered, "the sign-in screen has no registration option"
+    assert "onRegister" in src, "the registration option does not navigate anywhere"
 
 
 def test_gate_titles_are_the_same_in_code_api_contract_and_screen():
@@ -4757,12 +4772,14 @@ def test_every_served_route_is_named_in_the_contract():
     assert not missing, "routes the application serves that the contract never names: %s" % sorted(set(missing))
 
 
-def test_login_example_uses_the_seeded_accounts_identity():
-    auth = read(AUTH_ROUTER)
-    seeded = re.search(r'id="(USR-\d+)"', auth).group(1)
+def test_login_example_describes_a_role_based_account():
+    """The login example once showed the seeded account (USR-8821, SIM-000001); it shows the account model now."""
     token = json.loads(re.findall(r"```json\n(.*?)```", read(API_CONTRACT)[read(API_CONTRACT).index("### `POST /api/v1/auth/login`"):], re.S)[1])
-    assert token["user"]["id"] == seeded, "the login example shows id %r; the seeded account is %r" % (token["user"]["id"], seeded)
-    assert token["user"]["licenseNumber"] == "SIM-000001"
+    user = token["user"]
+    assert user["role"] in ("PHYSICIAN", "SUPERADMIN"), user["role"]
+    assert user["status"] in ("PENDING_APPROVAL", "ACTIVE", "REJECTED", "SUSPENDED")
+    assert isinstance(user["mustChangePassword"], bool)
+    assert "USR-8821" not in json.dumps(token) and "SIM-000001" not in json.dumps(token)
 
 
 # ======================================================================

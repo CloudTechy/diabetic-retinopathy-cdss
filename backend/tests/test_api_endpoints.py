@@ -6,16 +6,19 @@ from tests.conftest import create_synthetic_retinal_fundus, image_to_bytes
 class TestAuthEndpoints:
     """Verifies authentication endpoints."""
 
-    def test_login_and_me(self, test_client):
-        # 1. Login
+    def test_login_and_me(self, test_client, physician_account):
+        # 1. Login as the physician the Super Administrator created
         login_res = test_client.post(
             "/api/v1/auth/login",
-            json={"username": "demo.clinician", "password": "dr_secure_password_2026"},
+            json={"username": physician_account["username"], "password": physician_account["password"]},
         )
         assert login_res.status_code == 200
         data = login_res.json()
         assert "access_token" in data
-        assert data["user"]["name"] == "Dr. Demo Clinician (Simulated)"
+        assert data["user"]["username"] == physician_account["username"]
+        assert data["user"]["role"] == "PHYSICIAN"
+        assert data["user"]["status"] == "ACTIVE"
+        assert data["user"]["mustChangePassword"] is False
 
         token = data["access_token"]
 
@@ -26,8 +29,9 @@ class TestAuthEndpoints:
         )
         assert me_res.status_code == 200
         me_data = me_res.json()
-        assert me_data["email"] == "demo.clinician@research-prototype.invalid"
-        assert me_data["role"] == "Simulated Reviewer — Research Prototype"
+        assert me_data["email"] == f"{physician_account['username']}@example.org"
+        assert me_data["role"] == "PHYSICIAN"
+        assert "hashed_password" not in me_data and "password" not in me_data
 
 
 class TestAssessmentEndpoints:

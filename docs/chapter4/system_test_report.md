@@ -80,6 +80,37 @@ Functional test result: 269 passed, 1 conditionally skipped
 | `test_password_hashing_and_verification` | Security | Argon2/Bcrypt hash verification with zero plaintext | **PASS** |
 | `test_nonexistent_assessment_returns_404` | Error Handling | Safe 404 response on unknown assessment UUIDs | **PASS** |
 
+### Suite 3b: Role-Based Account Administration (`test_account_management.py`)
+*Verifies the two roles, the four account states, the transitions a Super Administrator controls, the separation of each physician's records, and the audit of every administrative event. No account is seeded: the suite bootstraps a Super Administrator the way a deployment does and creates physicians through the administration API.*
+
+| Test Identifier | Test Target | Key Verification Invariant | Result |
+| :--- | :--- | :--- | :---: |
+| `test_01_superadmin_can_create_a_physician_account` | Account creation | A Super Administrator creates a physician and it appears in the account list | **PASS** |
+| `test_02_admin_created_physician_is_active_and_must_change_password` | Temporary password | The account is ACTIVE, must change its password, is refused the clinical workflow until it does, and the pre-change token dies | **PASS** |
+| `test_03_self_registration_creates_a_pending_account` | Registration | Self-registration yields PENDING_APPROVAL with role PHYSICIAN | **PASS** |
+| `test_03b_public_registration_cannot_choose_a_role_or_status` | Privilege escalation | `role`/`status` fields in a public request are ignored | **PASS** |
+| `test_04_pending_account_cannot_sign_in_or_reach_protected_endpoints` | Lock-out | A pending account receives 403 at sign-in; anonymous callers 401 | **PASS** |
+| `test_05_approval_permits_sign_in_and_the_assessment_workflow` | Approval | After approval the physician signs in and creates an assessment | **PASS** |
+| `test_06_rejection_prevents_access` | Rejection | A rejected account cannot sign in | **PASS** |
+| `test_07_suspension_stops_an_existing_physician` | Suspension | The live session is invalidated and sign-in is refused | **PASS** |
+| `test_08_reactivation_restores_access` | Reactivation | The physician signs in and uses the workflow again | **PASS** |
+| `test_09_physician_cannot_use_superadmin_endpoints` | RBAC | Every `/admin` route answers 403 to a physician | **PASS** |
+| `test_10_physician_cannot_change_their_role_through_a_request` | RBAC | No request payload alters a role | **PASS** |
+| `test_10b_superadmin_is_not_granted_clinical_content` | Separation of duties | The Super Administrator receives 403 from the assessment routes | **PASS** |
+| `test_10c_superadmin_cannot_approve_itself_and_registration_never_creates_a_superadmin` | Bootstrap boundary | Self-approval refused; registration never produces a SUPERADMIN | **PASS** |
+| `test_11_physician_cannot_view_another_physicians_records` | Record isolation | Another physician's record is 404 on every route and absent from lists and search | **PASS** |
+| `test_12_new_physician_starts_with_an_empty_history` | Clean workspace | A new account has no assessments; counts per account are correct | **PASS** |
+| `test_13_no_password_hash_or_secret_is_returned` | Secrets | No hash, token version or temporary password in any listing; the audit log never records an attempted password | **PASS** |
+| `test_14_administrative_events_are_audited` | Audit | Every required event type is recorded with actor, target, time and outcome | **PASS** |
+| `test_14b_professional_review_is_audited` | Audit | A confirmed review is recorded with `PROFESSIONAL_REVIEW_CONFIRMED` | **PASS** |
+| `test_15_last_active_superadmin_cannot_be_suspended` | Safeguard | The last active Super Administrator cannot be suspended | **PASS** |
+| `test_bootstrap_is_idempotent_and_audited` | Bootstrap | A second bootstrap creates nothing; the first is audited | **PASS** |
+| `test_batch_creation_for_a_supervised_demonstration` | Batch creation | Numbered accounts, distinct temporary passwords, limit of ten | **PASS** |
+| `test_token_carries_only_subject_role_and_version` | Token claims | Claims are exactly `sub`, `role`, `tv`, `iat`, `exp` | **PASS** |
+| `test_sign_out_invalidates_the_token` | Sign-out | The token stops being accepted | **PASS** |
+| `test_expired_and_tampered_tokens_are_rejected` | Token validation | Expired and tampered tokens receive 401 | **PASS** |
+| `test_registration_rejects_duplicates_and_weak_passwords` | Input rules | Duplicate username/email 409; weak or mismatched passwords 422 | **PASS** |
+
 ### Suite 4: REST API Endpoints & Health (`test_api_endpoints.py`, `test_health.py`)
 *Verifies HTTP endpoints, JWT authentication headers, multipart uploads, review submission, and PDF report delivery.*
 

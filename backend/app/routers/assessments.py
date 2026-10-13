@@ -14,7 +14,7 @@ from app.models.models import User, Assessment
 # `get_current_user`, which returned the seeded demonstration account whenever
 # no bearer token was supplied - so every route below served an authenticated
 # session to an anonymous caller while appearing to be protected.
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_physician
 from app.schemas.assessment import (
     AssessmentCreateRequest,
     AssessmentRecordResponse,
@@ -45,7 +45,7 @@ def decode_image_data_url(data_url: str) -> bytes:
 async def create_assessment(
     payload: AssessmentCreateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """
     Create a new assessment record.
@@ -86,7 +86,7 @@ async def upload_assessment_image(
     assessment_id: str,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """
     Upload a retinal fundus image for an existing draft assessment.
@@ -125,10 +125,10 @@ async def list_assessments(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Fetch clinical triage worklist records."""
-    assessments = await AssessmentService.list_assessments(db, skip=skip, limit=limit)
+    assessments = await AssessmentService.list_assessments(db, skip=skip, limit=limit, owner_id=current_user.id)
     return [AssessmentService.to_record_response(a) for a in assessments]
 
 
@@ -140,7 +140,7 @@ async def search_assessments(
     grade: Optional[str] = Query(None),
     agreement: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Search and filter assessments by clinical parameters.
 
@@ -163,6 +163,7 @@ async def search_assessments(
         laterality=laterality,
         grade=grade_value,
         agreement=agreement,
+        owner_id=current_user.id,
     )
     return [AssessmentService.to_record_response(a) for a in matches]
 
@@ -171,10 +172,10 @@ async def search_assessments(
 async def get_assessment(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Retrieve full clinical assessment encounter details."""
-    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
+    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id)
     if not assessment:
         raise HTTPException(status_code=404, detail=f"Assessment {assessment_id} not found.")
     return AssessmentService.to_record_response(assessment)
@@ -184,10 +185,10 @@ async def get_assessment(
 async def get_assessment_status(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Check current state machine status."""
-    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
+    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")
     return {
@@ -201,10 +202,10 @@ async def get_assessment_status(
 async def get_assessment_validation(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Retrieve 3-stage validation results."""
-    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
+    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")
     record = AssessmentService.to_record_response(assessment)
@@ -215,10 +216,10 @@ async def get_assessment_validation(
 async def get_assessment_result(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Retrieve model-generated class scores and Grad-CAM explanation."""
-    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
+    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")
     record = AssessmentService.to_record_response(assessment)
@@ -230,7 +231,7 @@ async def submit_review(
     assessment_id: str,
     review_data: ClinicianReviewSubmitRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """
     Record the reviewing professional's response: agreement, their own ICDR
@@ -239,6 +240,8 @@ async def submit_review(
     API refuses a second review; no action plan or management decision is
     recorded.
     """
+    if await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id) is None:
+        raise HTTPException(status_code=404, detail="Assessment not found.")
     try:
         assessment = await AssessmentService.submit_professional_review(
             db=db,
@@ -259,7 +262,7 @@ async def submit_review(
 async def get_assessment_audit_trail(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """
     Retrieve the application-level append-only event log for an assessment.
@@ -267,7 +270,7 @@ async def get_assessment_audit_trail(
     No route updates or deletes audit events and assessment deletion does not
     cascade to them; the database itself does not enforce immutability.
     """
-    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
+    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")
     record = AssessmentService.to_record_response(assessment)
@@ -278,10 +281,10 @@ async def get_assessment_audit_trail(
 async def download_report_pdf(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Generate and return the server-rendered assessment report PDF (hash-anchored to the image)."""
-    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id)
+    assessment = await AssessmentService.get_assessment_by_id(db, assessment_id, owner_id=current_user.id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found.")
 
@@ -298,7 +301,7 @@ async def download_report_pdf(
 async def download_report_pdf_alias(
     assessment_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_physician),
 ):
     """Alias for report download matching frontend service call."""
     return await download_report_pdf(assessment_id, db, current_user)

@@ -70,6 +70,9 @@ SINGLE_FILES = [
     "backend/main.py",
     "backend/requirements.txt",
     "backend/pytest.ini",
+    "backend/alembic.ini",
+    "backend/scripts/bootstrap_superadmin.py",
+    "frontend/vitest.config.ts",
     "backend/models/weights/efficientnet_b0_dr.pth",
     "notebooks/colab_train_and_evaluate.py",
     "PROGRESS_TRACKER.md",
@@ -105,6 +108,7 @@ TREES = [
     ("backend/app", (".py",)),
     ("backend/tests", (".py", ".png")),
     ("backend/scripts", (".py",)),
+    ("backend/alembic", (".py", ".mako")),
     ("frontend/src", (".ts", ".tsx", ".css")),
     ("docs/chapter4", None),
 ]

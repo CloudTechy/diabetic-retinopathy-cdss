@@ -174,27 +174,129 @@ def test_client():
         yield client
     app.dependency_overrides.clear()
 
+    # Each test starts from an empty database. The suite used to share one
+    # in-memory database across tests, which the seeded demonstration account
+    # hid; with accounts bootstrapped per test, leftovers would collide.
+    async def drop_tables():
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+    loop.run_until_complete(drop_tables())
+    loop.close()
+
+
+# ---------------------------------------------------------------------------
+# Accounts. No account is seeded by the application: the suite bootstraps a
+# Super Administrator exactly as a deployment does (the service the start-up
+# and the bootstrap command call), then creates physicians through the
+# administration API. Every password below is a test value that exists only
+# in this file.
+# ---------------------------------------------------------------------------
+SUPERADMIN_CREDENTIALS = {"username": "root.admin", "email": "root.admin@example.org",
+                          "temporary": "Temp-Admin-Pass-2026", "password": "Perm-Admin-Pass-2026"}
+
+
+def _run(coro):
+    import asyncio
+    return asyncio.run(coro)
+
+
+async def _bootstrap_superadmin():
+    from app.services import account_service
+    async with TestingSessionLocal() as session:
+        user, outcome = await account_service.bootstrap_superadmin(
+            session, username=SUPERADMIN_CREDENTIALS["username"], email=SUPERADMIN_CREDENTIALS["email"],
+            full_name="Test Super Administrator", initial_password=SUPERADMIN_CREDENTIALS["temporary"],
+            source="test fixture")
+        return user.id if user else None
+
+
+def sign_in(client, username, password):
+    res = client.post("/api/v1/auth/login", json={"username": username, "password": password})
+    assert res.status_code == 200, f"fixture login failed for {username}: {res.text}"
+    return res.json()
+
+
+def bearer(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
+def change_password(client, token, current, new):
+    res = client.post("/api/v1/auth/change-password", headers=bearer(token), json={
+        "currentPassword": current, "newPassword": new, "newPasswordConfirmation": new})
+    assert res.status_code == 200, f"fixture password change failed: {res.text}"
+    return res.json()
+
 
 @pytest.fixture
-def auth_headers(test_client):
+def superadmin_account(test_client):
+    """The first Super Administrator, bootstrapped, signed in and past the mandatory password change."""
+    user_id = _run(_bootstrap_superadmin())
+    assert user_id, "bootstrap created nothing"
+    first = sign_in(test_client, SUPERADMIN_CREDENTIALS["username"], SUPERADMIN_CREDENTIALS["temporary"])
+    assert first["user"]["mustChangePassword"] is True
+    change_password(test_client, first["access_token"], SUPERADMIN_CREDENTIALS["temporary"], SUPERADMIN_CREDENTIALS["password"])
+    final = sign_in(test_client, SUPERADMIN_CREDENTIALS["username"], SUPERADMIN_CREDENTIALS["password"])
+    return {"id": user_id, "username": SUPERADMIN_CREDENTIALS["username"], "password": SUPERADMIN_CREDENTIALS["password"],
+            "token": final["access_token"], "headers": bearer(final["access_token"])}
+
+
+@pytest.fixture
+def superadmin_headers(superadmin_account):
+    return superadmin_account["headers"]
+
+
+def create_physician(client, admin_headers, username, full_name=None, email=None, activate=True):
+    """Create a physician through the administration API; returns its id, temporary password and the response."""
+    res = client.post("/api/v1/admin/users", headers=admin_headers, json={
+        "fullName": full_name or f"Test Physician {username}",
+        "username": username,
+        "email": email or f"{username}@example.org",
+        "licenseNumber": None,
+        "facility": "Test Clinic",
+        "activateImmediately": activate,
+    })
+    assert res.status_code == 201, f"fixture physician creation failed: {res.text}"
+    body = res.json()
+    return body["user"]["id"], body["temporaryPassword"], body
+
+
+def activated_physician(client, admin_headers, username, password):
+    """Create a physician, sign in with the temporary password, change it, sign in again. Returns the account dict."""
+    user_id, temporary, _ = create_physician(client, admin_headers, username)
+    first = sign_in(client, username, temporary)
+    assert first["user"]["mustChangePassword"] is True
+    change_password(client, first["access_token"], temporary, password)
+    final = sign_in(client, username, password)
+    return {"id": user_id, "username": username, "password": password, "token": final["access_token"],
+            "headers": bearer(final["access_token"])}
+
+
+@pytest.fixture
+def physician_account(test_client, superadmin_headers):
+    """An ACTIVE physician created by the Super Administrator, past the mandatory password change."""
+    return activated_physician(test_client, superadmin_headers, "physician.one", "Phys-One-Pass-2026")
+
+
+@pytest.fixture
+def second_physician_account(test_client, superadmin_headers):
+    return activated_physician(test_client, superadmin_headers, "physician.two", "Phys-Two-Pass-2026")
+
+
+@pytest.fixture
+def auth_headers(physician_account):
     """
-    Bearer header for an authenticated clinical session.
+    Bearer header for an authenticated physician session.
 
     The clinical endpoints require a real token. They previously accepted
     anonymous callers because the dependency returned the seeded demonstration
     account when no token was supplied, so tests passed without authenticating
     and the protection was never exercised.
     """
-    res = test_client.post("/api/v1/auth/login", json={
-        "username": "demo.clinician",
-        "password": "dr_secure_password_2026",
-    })
-    assert res.status_code == 200, f"fixture login failed: {res.text}"
-    return {"Authorization": f"Bearer {res.json()['access_token']}"}
+    return physician_account["headers"]
 
 
 @pytest.fixture
 def authed_client(test_client, auth_headers):
-    """A TestClient that sends the bearer token on every request."""
+    """A TestClient that sends the physician's bearer token on every request."""
     test_client.headers.update(auth_headers)
     return test_client

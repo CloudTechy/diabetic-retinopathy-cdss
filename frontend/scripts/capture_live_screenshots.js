@@ -29,8 +29,10 @@ const API = process.env.API_ORIGIN || 'http://127.0.0.1:8000';
 const IMAGE = process.env.IMAGE
   || 'C:\\Users\\USER\\Downloads\\fundus image 2b.jpg';
 
-const USER = process.env.CDSS_USER || 'demo.clinician';
-const PASS = process.env.CDSS_PASSWORD || 'dr_secure_password_2026';
+// A physician account supplied by the operator; there is no default.
+const USER = process.env.CDSS_USER;
+const PASS = process.env.CDSS_PASSWORD;
+if (!USER || !PASS) throw new Error('Set CDSS_USER and CDSS_PASSWORD to a physician account.');
 
 const OUT = path.resolve('../docs/chapter4/screenshots_live');
 
