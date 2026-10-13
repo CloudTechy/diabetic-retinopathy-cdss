@@ -80,6 +80,7 @@ SINGLE_FILES = [
     ".github/workflows/evidence-integrity-gate.yml",
     "frontend/scripts/capture_live_screenshots.js",
     "frontend/scripts/capture_rejection.js",
+    "frontend/scripts/capture_account_screens.js",
     "frontend/scripts/check_preflight.cjs",
     "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.rgba",
     "frontend/scripts/fixtures/aptos_heldout_d1f1ea894da1_256.json",

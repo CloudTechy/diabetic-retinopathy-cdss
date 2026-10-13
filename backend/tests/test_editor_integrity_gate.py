@@ -924,11 +924,16 @@ def test_screenshot_manifest_only_lists_figures_that_exist():
     for line in text.splitlines():
         if not line.startswith("|"):
             continue
-        for name in re.findall(r"([0-9A-Za-z_]+\.png)", line):
-            # Figures live either in screenshots/ or beside the other artefacts
-            # (confusion_matrix.png and learning_curves.png are plots, not captures).
-            if not any(os.path.exists(os.path.join(d, name)) for d in (shots, CHAPTER4)):
-                offenders.append(name)
+        for path in re.findall(r"([0-9A-Za-z_./-]*[0-9A-Za-z_]+\.png)", line):
+            # A figure is found at the path the table gives it (screenshots/accounts/
+            # holds the account-administration frames), or by bare name in
+            # screenshots/ or beside the other artefacts (confusion_matrix.png and
+            # learning_curves.png are plots, not captures).
+            name = os.path.basename(path)
+            candidates = [os.path.join(CHAPTER4, *path.split("/"))] + [
+                os.path.join(d, name) for d in (shots, CHAPTER4)]
+            if not any(os.path.exists(c) for c in candidates):
+                offenders.append(path)
     assert not offenders, (
         "screenshot manifest table lists missing figures: " + ", ".join(sorted(set(offenders))))
 
