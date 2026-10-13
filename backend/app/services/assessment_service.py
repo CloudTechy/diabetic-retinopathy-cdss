@@ -4,6 +4,7 @@ from datetime import timezone
 import hashlib
 import io
 import os
+import re
 import uuid
 from typing import Optional, List, Dict, Any, Tuple
 from PIL import Image
@@ -39,6 +40,15 @@ from app.services.ai_service import (
     get_active_inference_service,
     ICDR_CLASS_METADATA,
 )
+
+
+_TEMPERATURE_IN_VERSION = re.compile(r"temperature-scaled T=([0-9]+(?:\.[0-9]+)?)")
+
+
+def _calibration_temperature(model_version: str) -> Optional[float]:
+    """The T the trained engine recorded in model_version, or None if none was applied."""
+    match = _TEMPERATURE_IN_VERSION.search(model_version or "")
+    return float(match.group(1)) if match else None
 
 
 class InvalidStateTransitionError(Exception):
@@ -657,17 +667,22 @@ class AssessmentService:
         model_obs: Optional[ModelObservationSchema] = None
         if assessment.ai_result and assessment.status != "rejected":
             ai = assessment.ai_result
+            model_version = (assessment.model_execution.model_version
+                             if assessment.model_execution else "EfficientNet-B0-DR-v1 (fixed weights)")
             model_obs = ModelObservationSchema(
                 primaryClassGrade=ai.primary_class_grade,
                 primaryClassLabel=ai.primary_class_label,
                 primaryScore=ai.primary_score,
-                classScores=[ScoreBreakdownItem(**cs) for cs in ai.class_scores],
+                classScores=[ScoreBreakdownItem(grade=cs["grade"], label=cs["label"], score=cs["score"],
+                                                uncalibratedScore=cs.get("uncalibrated_score"))
+                             for cs in ai.class_scores],
                 targetLayer=ai.target_layer,
                 # The fallback once named a lesion the model never located. A missing
                 # region is reported as missing.
                 topActivationRegion=ai.top_activation_region or "No attribution region was recorded for this run.",
-                modelVersion=assessment.model_execution.model_version if assessment.model_execution else "EfficientNet-B0-DR-v1 (fixed weights)",
+                modelVersion=model_version,
                 inferenceTimestamp=ai.created_at.isoformat(),
+                calibrationTemperature=_calibration_temperature(model_version),
             )
 
         # Clinician review

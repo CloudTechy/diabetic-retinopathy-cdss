@@ -31,7 +31,12 @@ class TechnicalQualityMetricsSchema(BaseModel):
 class ScoreBreakdownItem(BaseModel):
     grade: int
     label: str
+    # Temperature-scaled probability from the trained engine (the value the
+    # interface displays). uncalibratedScore is the raw softmax (T = 1) of the
+    # same logits, kept for audit; None for the simulated engine and for
+    # results stored before calibration was introduced.
     score: float
+    uncalibratedScore: Optional[float] = None
 
 
 class ModelObservationSchema(BaseModel):
@@ -43,6 +48,9 @@ class ModelObservationSchema(BaseModel):
     topActivationRegion: str
     modelVersion: str
     inferenceTimestamp: str
+    # The validation-fitted temperature the classScores were scaled with, read
+    # from the persisted modelVersion; None when no calibration was applied.
+    calibrationTemperature: Optional[float] = None
 
 
 class ClinicianReviewSubmitRequest(BaseModel):

@@ -78,12 +78,17 @@ export interface ModelObservation {
   classScores: {
     grade: number;
     label: string;
+    // Temperature-scaled probability from the trained engine.
     score: number;
+    // Raw softmax (T = 1) of the same logits, for audit; null when not recorded.
+    uncalibratedScore?: number | null;
   }[];
   targetLayer: string;
   topActivationRegion: string;
   modelVersion: string;
   inferenceTimestamp: string;
+  // Validation-fitted temperature applied to classScores; null when none was applied.
+  calibrationTemperature?: number | null;
 }
 
 export interface TechnicalQualityMetrics {
