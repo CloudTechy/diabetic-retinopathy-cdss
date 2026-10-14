@@ -110,3 +110,5 @@ calibration_evidence.zip
 .pytest_tmp/
 *.zip
 *.tar.gz
+ACCOUNT_AND_CALIBRATION_EVIDENCE_PACKAGE/
+PACKAGE4_AUDIT_EVIDENCE.txt
