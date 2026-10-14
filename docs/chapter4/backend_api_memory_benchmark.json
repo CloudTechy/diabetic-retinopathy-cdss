@@ -1,0 +1,61 @@
+{
+  "benchmark_name": "Full Running Backend API Memory & Assessment Lifecycle Benchmark",
+  "start_timestamp": "2026-10-14T14:23:45.871286+00:00",
+  "completion_timestamp": "2026-10-14T14:24:30.782076+00:00",
+  "nfr_code": "NFR-02 / NFR-05",
+  "nfr_description": "Memory Footprint: Peak backend memory usage under complete clinical load",
+  "target_scope": {
+    "execution_environment": "Live FastAPI/Uvicorn HTTP Server + PostgreSQL + PyTorch",
+    "worker_pid": 432,
+    "container_parent_pid": 1,
+    "lifecycle_exercised": [
+      "Physician JWT Authentication",
+      "Ophthalmic Image Multipart Ingest",
+      "3-Stage Validation Pipeline (Gates 1, 2, 3)",
+      "Fail-Closed Gate Halting (Rejection Verification)",
+      "Calibrated EfficientNet-B0 Inference (T = 1.093921)",
+      "Grad-CAM Heatmap Generation (features.8)",
+      "Clinician Tri-State Review Submission",
+      "Server-Side PDF Report Generation"
+    ]
+  },
+  "input_verification": {
+    "total_assessments": 30,
+    "genuine_held_out_count": 30,
+    "synthetic_count": 0,
+    "all_inputs_hash_verified": true,
+    "manifest_checked": "dataset_split_manifest.csv"
+  },
+  "memory_units_and_budget": {
+    "budget_limit_mib": 512.0,
+    "budget_limit_mb": 512.0,
+    "measured_baseline_rss_mib": 526.96,
+    "measured_baseline_rss_mb": 552.55,
+    "measured_peak_rss_mib": 558.05,
+    "measured_peak_rss_mb": 585.16,
+    "margin_mib": -46.05,
+    "margin_mb": -73.16,
+    "passes_mib_boundary": false,
+    "passes_mb_boundary": false
+  },
+  "timing_summary_ms": {
+    "mean_upload_inference_ms": 1160.71,
+    "mean_review_ms": 127.32,
+    "mean_pdf_generation_ms": 143.56,
+    "mean_total_cycle_ms": 1431.61
+  },
+  "status": "BREACH",
+  "status_statement": "Breaches memory budget: measured peak backend memory of 585.2 MB (558.0 MiB), exceeding 512.0 MB.",
+  "hardware": {
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.36",
+    "system": "Linux",
+    "release": "6.18.54.1-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "processor": "Intel(R) Core(TM) i5-10310U CPU @ 1.70GHz",
+    "logical_threads": 8,
+    "total_ram_mib": 7745.68,
+    "total_ram_mb": 8121.93,
+    "available_ram_mib": 5037.58,
+    "python_version": "3.11.15"
+  }
+}
