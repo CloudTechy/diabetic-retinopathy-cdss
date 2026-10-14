@@ -179,6 +179,14 @@ def test_runtime_artifact_is_the_evidence_artifact():
     assert _sha(RUNTIME_ARTIFACT) == _sha(os.path.join(EVIDENCE, "temperature_scaling_artifact.json"))
 
 
+def test_the_archive_ships_the_runtime_artifact():
+    """The engine fails closed without it, so an archive missing it cannot grade."""
+    sys.path.insert(0, os.path.join(BACKEND, "scripts"))
+    import assemble_submission_package as asm
+    shipped = {dst for _, dst in asm.manifest()}
+    assert "backend/models/calibration/temperature_scaling_artifact.json" in shipped
+
+
 def test_calibrated_probabilities_is_softmax_of_logits_over_t(temperature):
     from app.services.ai_service import calibrated_probabilities
     z = [2.3, -0.4, 1.9, -1.2, 0.05]
