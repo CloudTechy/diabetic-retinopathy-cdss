@@ -1,7 +1,7 @@
 ============================= test session starts =============================
 platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0 -- C:\tmp\ev_venv\Scripts\python.exe
 cachedir: .pytest_cache
-rootdir: C:\tmp\r2\DR-CDSS_Chapter4_Evidence\backend
+rootdir: C:\tmp\r3b\DR-CDSS_Chapter4_Evidence\backend
 configfile: pytest.ini
 plugins: anyio-4.15.1, asyncio-0.26.0
 asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
@@ -80,7 +80,7 @@ tests/test_editor_integrity_gate.py::test_withdrawn_qa_audit_is_archived_not_pre
 tests/test_editor_integrity_gate.py::test_objective_status_does_not_claim_completion_without_evidence PASSED [ 22%]
 tests/test_editor_integrity_gate.py::test_screenshot_manifest_only_lists_figures_that_exist PASSED [ 23%]
 tests/test_editor_integrity_gate.py::test_no_superseded_latency_value_in_documents PASSED [ 23%]
-tests/test_editor_integrity_gate.py::test_contaminated_results_are_labelled_superseded SKIPPED [ 23%]
+tests/test_editor_integrity_gate.py::test_the_active_split_manifest_holds_no_image_twice PASSED [ 23%]
 tests/test_editor_integrity_gate.py::test_validation_gate_failures_are_declared_as_a_defect PASSED [ 24%]
 tests/test_editor_integrity_gate.py::test_real_engine_never_substitutes_a_synthetic_attribution PASSED [ 24%]
 tests/test_editor_integrity_gate.py::test_real_engine_never_substitutes_demonstration_scores PASSED [ 24%]
@@ -326,4 +326,4 @@ tests/test_validation_pipeline.py::TestSequentialValidationPipelineFailClosed::t
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-============ 311 passed, 1 skipped, 1 warning in 361.74s (0:06:01) ============
+================= 312 passed, 1 warning in 409.56s (0:06:49) ==================
