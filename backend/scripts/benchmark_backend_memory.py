@@ -314,15 +314,20 @@ def main():
         if peak_during > global_max_rss:
             global_max_rss = peak_during
 
+        is_synthetic = (idx > 0)
+        peak_mib = peak_during
+        peak_mb = round(peak_mib * 1.048576, 2)
         measurements.append({
             "run_index": idx + 1,
             "image": img_name,
+            "is_synthetic": is_synthetic,
             "duration_ms": round(dur_ms, 2),
             "primary_grade": ai_res.primary_grade,
             "primary_score": round(ai_res.primary_score, 4),
-            "rss_before_mb": round(rss_before, 2),
-            "peak_rss_during_mb": round(peak_during, 2),
-            "rss_after_mb": round(rss_after, 2),
+            "rss_before_mib": round(rss_before, 2),
+            "peak_rss_during_mib": round(peak_mib, 2),
+            "peak_rss_during_mb": peak_mb,
+            "rss_after_mib": round(rss_after, 2),
             "gradcam_generated": ai_res.gradcam_bytes is not None,
             "gradcam_size_bytes": len(ai_res.gradcam_bytes) if ai_res.gradcam_bytes else 0,
         })
@@ -330,28 +335,30 @@ def main():
         if (idx + 1) % 5 == 0 or (idx + 1) == args.iterations:
             print(f"      Assessment {idx + 1:2d}/{args.iterations}: "
                   f"Grade {ai_res.primary_grade} ({ai_res.primary_score:.2f}) | "
-                  f"Peak RAM: {peak_during:.2f} MB | Time: {dur_ms:.1f} ms")
+                  f"Peak RAM: {peak_mib:.2f} MiB ({peak_mb:.2f} MB) | Time: {dur_ms:.1f} ms")
 
     # Final OS peak from getrusage
     os_max_rss = get_peak_rss_mb()
-    final_peak_mb = max(global_max_rss, os_max_rss)
-    final_rss = get_current_rss_mb()
+    final_peak_mib = max(global_max_rss, os_max_rss)
+    final_peak_mb = round(final_peak_mib * 1.048576, 2)
+    final_rss_mib = get_current_rss_mb()
+    final_rss_mb = round(final_rss_mib * 1.048576, 2)
 
     # Budget evaluation against 512 MB constraint (NFR-10 / NFR-02)
-    budget_mb = 512.0
-    passed = final_peak_mb < budget_mb
-    margin_mb = budget_mb - final_peak_mb
+    budget_limit = 512.0
+    passes_mib = final_peak_mib <= budget_limit
+    passes_mb = final_peak_mb <= budget_limit
 
     print("\n" + "=" * 76)
-    print(" BENCHMARK RESULTS SUMMARY ")
+    print(" BENCHMARK RESULTS SUMMARY (ISOLATED INFERENCE HARNESS) ")
     print("=" * 76)
-    print(f" Baseline RAM (process init):     {baseline_rss:.2f} MB")
-    print(f" Model Loaded RAM:                {model_loaded_rss:.2f} MB")
-    print(f" Peak Backend RAM (Measured):     {final_peak_mb:.2f} MB")
-    print(f" Final Post-Run RSS:              {final_rss:.2f} MB")
-    print(f" System Budget Constraint:        {budget_mb:.1f} MB RSS")
-    print(f" Margin Below Budget:             {margin_mb:+.2f} MB")
-    print(f" NFR-10 / NFR-02 Compliance:      {'✅ MET / PASS' if passed else '❌ FAILED'}")
+    print(f" Baseline RAM (process init):     {baseline_rss:.2f} MiB ({baseline_rss * 1.048576:.2f} MB)")
+    print(f" Model Loaded RAM:                {model_loaded_rss:.2f} MiB ({model_loaded_rss * 1.048576:.2f} MB)")
+    print(f" Peak Backend RAM (Measured):     {final_peak_mib:.2f} MiB ({final_peak_mb:.2f} MB)")
+    print(f" Final Post-Run RSS:              {final_rss_mib:.2f} MiB ({final_rss_mb:.2f} MB)")
+    print(f" Budget Constraint:               512.00 (specified as 512.0 MB RSS)")
+    print(f" Passes 512 MiB limit:            {'✅ YES' if passes_mib else '❌ NO'} (Margin: {budget_limit - final_peak_mib:+.2f} MiB)")
+    print(f" Passes 512 MB decimal limit:     {'✅ YES' if passes_mb else '❌ NO'} (Margin: {budget_limit - final_peak_mb:+.2f} MB)")
     print("=" * 76)
 
     # Save CSV
@@ -359,8 +366,8 @@ def main():
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "run_index", "image", "duration_ms", "primary_grade", "primary_score",
-            "rss_before_mb", "peak_rss_during_mb", "rss_after_mb",
+            "run_index", "image", "is_synthetic", "duration_ms", "primary_grade", "primary_score",
+            "rss_before_mib", "peak_rss_during_mib", "peak_rss_during_mb", "rss_after_mib",
             "gradcam_generated", "gradcam_size_bytes"
         ], lineterminator="\n")
         writer.writeheader()
@@ -369,16 +376,33 @@ def main():
 
     # Save JSON summary
     summary = {
-        "benchmark_name": "Calibrated Backend Peak RAM & Assessment Resource Benchmark",
+        "benchmark_name": "Inference Harness Peak RAM & Resource Benchmark (Isolated Mixed-Input)",
         "benchmark_timestamp": start_time.isoformat(),
         "completion_timestamp": datetime.now(timezone.utc).isoformat(),
-        "nfr_code": "NFR-10",
+        "scope": "isolated_inference_harness_mixed_input",
+        "memory_unit_measured": "MiB",
+        "nfr_code": "NFR-10 / NFR-02",
         "nfr_description": "Memory Footprint: Peak backend memory usage during complete assessments with Grad-CAM",
-        "budget_mb": budget_mb,
-        "measured_peak_ram_mb": round(final_peak_mb, 2),
-        "margin_mb": round(margin_mb, 2),
-        "status": "MET" if passed else "FAILED",
-        "status_statement": f"Met: measured peak backend memory of {final_peak_mb:.1f} MB, which is below the 512.0 MB budget.",
+        "budget_limit_mib": budget_limit,
+        "budget_limit_mb": budget_limit,
+        "measured_peak_ram_mib": round(final_peak_mib, 2),
+        "measured_peak_ram_mb": final_peak_mb,
+        "passes_mib_boundary": passes_mib,
+        "passes_mb_boundary": passes_mb,
+        "input_composition": {
+            "total_assessments": len(measurements),
+            "genuine_held_out_count": 1,
+            "genuine_held_out_file": "aptos_heldout_d1f1ea894da1.png",
+            "genuine_held_out_sha256": "d6eb606b07cdcd6045f2477f9fa3899df7f112f862897286a21f0eece06f2acf",
+            "synthetic_count": len(measurements) - 1,
+            "synthetic_files": "calibrated_sample_01.png to calibrated_sample_29.png",
+        },
+        "status": "UNVERIFIED_FOR_FULL_BACKEND",
+        "status_statement": (
+            f"Inconclusive for full backend: isolated inference harness under mixed inputs measured "
+            f"peak RSS of {final_peak_mib:.2f} MiB ({final_peak_mb:.2f} MB). Passes a 512 MiB limit, "
+            f"but exceeds a 512 MB decimal limit. Full backend under live API workload remains unverified until measured."
+        ),
         "hardware": hw,
         "model_and_calibration": {
             "model_architecture": "EfficientNet-B0 (strictly frozen, eval mode)",
@@ -388,12 +412,13 @@ def main():
             "target_gradcam_layer": "features.8",
         },
         "memory_summary": {
-            "baseline_rss_mb": round(baseline_rss, 2),
-            "model_loaded_rss_mb": round(model_loaded_rss, 2),
-            "mean_peak_per_assessment_mb": round(sum(m["peak_rss_during_mb"] for m in measurements) / len(measurements), 2),
-            "overall_peak_rss_mb": round(final_peak_mb, 2),
-            "final_rss_mb": round(final_rss, 2),
-            "total_assessments_measured": args.iterations,
+            "baseline_rss_mib": round(baseline_rss, 2),
+            "model_loaded_rss_mib": round(model_loaded_rss, 2),
+            "mean_peak_per_assessment_mib": round(sum(m["peak_rss_during_mib"] for m in measurements) / len(measurements), 2),
+            "overall_peak_rss_mib": round(final_peak_mib, 2),
+            "overall_peak_rss_mb": final_peak_mb,
+            "final_rss_mib": round(final_rss_mib, 2),
+            "total_assessments_measured": len(measurements),
         },
     }
 
