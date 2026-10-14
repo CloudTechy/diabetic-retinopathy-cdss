@@ -53,7 +53,7 @@ fitness for clinical use. **No such claim is made anywhere in this package.**
 
 ## Recorded transcript
 
-Produced from this package (build check of 2026-10-13, UTC). Your run should match it line for line.
+Produced from this package (build check of 2026-10-14, UTC). Your run should match it line for line.
 
 ```text
 ========================================================================
@@ -98,7 +98,7 @@ files in this archive.
       -> PASS
 
 [5] Documents quote the committed test log
-      log records: 312 collected, 311 passed, 0 failed, 1 skipped
+      log records: 312 collected, 312 passed, 0 failed, 0 skipped
       every test count in every .md in this package matches this log
       -> PASS
 
