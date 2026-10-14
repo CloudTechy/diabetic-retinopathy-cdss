@@ -1,0 +1,39 @@
+{
+  "benchmark_name": "Calibrated Backend Peak RAM & Assessment Resource Benchmark",
+  "benchmark_timestamp": "2026-10-14T12:48:43.035370+00:00",
+  "completion_timestamp": "2026-10-14T12:49:38.718548+00:00",
+  "nfr_code": "NFR-10",
+  "nfr_description": "Memory Footprint: Peak backend memory usage during complete assessments with Grad-CAM",
+  "budget_mb": 512.0,
+  "measured_peak_ram_mb": 506.47,
+  "margin_mb": 5.53,
+  "status": "MET",
+  "status_statement": "Met: measured peak backend memory of 506.5 MB, which is below the 512.0 MB budget.",
+  "hardware": {
+    "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.36",
+    "system": "Linux",
+    "release": "6.18.54.1-microsoft-standard-WSL2",
+    "machine": "x86_64",
+    "processor": "Intel(R) Core(TM) i5-10310U CPU @ 1.70GHz",
+    "logical_threads": 8,
+    "total_ram_mb": 7745.68,
+    "available_ram_mb": 5375.79,
+    "python_version": "3.11.15",
+    "torch_version": "2.14.1+cpu"
+  },
+  "model_and_calibration": {
+    "model_architecture": "EfficientNet-B0 (strictly frozen, eval mode)",
+    "checkpoint_sha256": "67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7",
+    "calibration_temperature": 1.0939212255341908,
+    "calibration_version": "ts-v2",
+    "target_gradcam_layer": "features.8"
+  },
+  "memory_summary": {
+    "baseline_rss_mb": 238.88,
+    "model_loaded_rss_mb": 354.77,
+    "mean_peak_per_assessment_mb": 496.03,
+    "overall_peak_rss_mb": 506.47,
+    "final_rss_mb": 496.28,
+    "total_assessments_measured": 30
+  }
+}
