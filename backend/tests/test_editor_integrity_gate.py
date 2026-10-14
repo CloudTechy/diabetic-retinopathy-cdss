@@ -949,23 +949,30 @@ def test_no_superseded_latency_value_in_documents():
         "Superseded latency value 298.3 ms still quoted:\n  " + "\n  ".join(offenders))
 
 
-def test_contaminated_results_are_labelled_superseded():
+def test_the_active_split_manifest_holds_no_image_twice():
     """
-    While the active manifest is the contaminated one, any document reporting
-    the 549-image figures must say they are provisional.
+    The first split placed byte-identical images in more than one partition,
+    so held-out results were partly measured on training images
+    (known_limitations.md section 6). The clean rerun de-duplicated by image
+    bytes; this rule keeps it so: no SHA-256 appears twice in the active
+    manifest, so no image can sit in two partitions.
+
+    It replaces a rule that applied only while the contaminated manifest was
+    active, and so skipped on every run after the rerun.
     """
     manifest = os.path.join(CHAPTER4, "dataset_split_manifest.csv")
-    if not os.path.exists(manifest):
-        pytest.skip("manifest not present")
+    assert os.path.exists(manifest), "docs/chapter4/dataset_split_manifest.csv is missing"
     with open(manifest, newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    if len({r["sha256_hash"] for r in rows}) == len(rows):
-        pytest.skip("manifest is already de-duplicated - clean rerun has happened")
-
-    report = read(os.path.join(CHAPTER4, "model_evaluation_report.md"))
-    assert "superseded" in report.lower(), (
-        "the evaluation report quotes results from a contaminated partition "
-        "without marking them superseded")
+    seen, repeated = {}, []
+    for r in rows:
+        first = seen.setdefault(r["sha256_hash"], r)
+        if first is not r:
+            repeated.append("%s (%s) = %s (%s)" % (r["image_id"], r["split"], first["image_id"], first["split"]))
+    assert not repeated, (
+        "the active split manifest holds %d image(s) more than once - the partitions "
+        "share image bytes and every held-out figure is contaminated:\n  %s"
+        % (len(repeated), "\n  ".join(repeated[:10])))
 
 
 def test_validation_gate_failures_are_declared_as_a_defect():
@@ -4309,8 +4316,7 @@ def test_gate2_details_state_the_boundary():
 
 def test_system_test_report_states_a_result_not_a_certification():
     text = read(os.path.join(CHAPTER4, "system_test_report.md"))
-    assert "Functional test result: 233 passed, 1 conditionally skipped" in text or re.search(
-        r"Functional test result: \d+ passed, \d+ conditionally skipped", text), (
+    assert re.search(r"Functional test result: \d+ passed, \d+ (?:conditionally )?skipped", text), (
         "the summary block no longer states the functional result plainly")
     assert "Execution Status:" not in text, "the summary block still carries a status line"
 
