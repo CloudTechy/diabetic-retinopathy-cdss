@@ -23,6 +23,8 @@ class HealthResponse(BaseModel):
     # The SHA-256 the engine verified before loading; None for the simulated
     # engine or while not ready.
     checkpoint_sha256: Optional[str] = None
+    # Validation-fitted temperature scaling parameter (T); None for simulated engine or while not ready
+    calibration_temperature: Optional[float] = None
     version: str = "1.0.0"
 
 
@@ -46,5 +48,6 @@ async def health_check():
         inference_engine=inference["engine"],
         inference_detail=inference["detail"],
         checkpoint_sha256=inference.get("checkpoint_sha256"),
+        calibration_temperature=inference.get("calibration_temperature"),
         version="1.0.0",
     )

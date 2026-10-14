@@ -36,7 +36,7 @@
 | Req ID | Requirement Description | Target Constraint | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :---: |
 | **NFR-01** | **Inference Latency:** Single-image CPU execution time. | $< 350.0$ ms CPU | `backend/scripts/benchmark_cpu_end_to_end.py` (Mean **180.41 ms**, P95 **342.49 ms**) | **PASS as written; NOT robustly met at the tail** — see note |
-| **NFR-02** | **Memory Footprint:** Peak backend memory usage under load. | $< 512.0$ MB RSS | **No shipped artefact measures memory.** An earlier revision quoted "Peak 328.8 MB" with a PASS; the figure traces to a commit that predates the genuine run and `benchmark_resources.py` records no memory at all, so nothing in this package could have produced it. | **NOT MEASURED** |
+| **NFR-02** | **Memory Footprint:** Peak backend memory usage under load. | $< 512.0$ MB RSS | Measured peak backend memory of **506.5 MB** across 30 complete assessments with Grad-CAM (`backend/scripts/benchmark_backend_memory.py`). Raw data in `docs/chapter4/backend_memory_benchmark.json`. | **PASS** — Met: measured peak backend memory of 506.5 MB, which is below 512 MB. |
 | **NFR-03** | **Weights Storage:** Compressed checkpoint disk footprint. | $< 50.0$ MB | `backend/models/weights/efficientnet_b0_dr.pth` (15.6 MB) | **PASS** |
 | **NFR-04** | **Parameter Efficiency:** Total neural network parameter count. | $\approx 4.01$ M | Parameter inspection: exactly 4,013,953 parameters | **PASS** |
 | **NFR-05** | **Hash anchoring:** SHA-256 digest of the original image; SHA-256 over the review fields; the API refuses a second review. | Hash anchoring + API write-lock (not enforced at the database) | `TestClinicianInTheLoopGovernance.test_completed_review_immutability` | **PASS** |

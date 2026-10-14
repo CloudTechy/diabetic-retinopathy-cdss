@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  AlertTriangle, CheckCircle2, ClipboardList, Clock, KeyRound, RefreshCw, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users,
+  AlertTriangle, Check, CheckCircle2, ClipboardList, Clock, Copy, KeyRound, RefreshCw, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X,
 } from 'lucide-react';
 import { clinicalApi } from '../services/api';
 import { describeApiError } from '../utils/apiError';
@@ -52,6 +52,11 @@ export const AdminConsoleScreen: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submittingOne, setSubmittingOne] = useState(false);
+  const [submittingBatch, setSubmittingBatch] = useState(false);
+  const [actionRunning, setActionRunning] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [action, setAction] = useState<PendingAction | null>(null);
   const [actionReason, setActionReason] = useState('');
@@ -92,9 +97,27 @@ export const AdminConsoleScreen: React.FC = () => {
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => { if (tab === 'audit') loadAudit(auditUserId); }, [tab, auditUserId, loadAudit]);
 
+  const copyCredential = (username: string, password?: string) => {
+    if (!password) return;
+    navigator.clipboard.writeText(`Username: ${username}\nTemporary Password: ${password}`);
+    setCopiedId(username);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  const copyAllCredentials = () => {
+    if (!issued || issued.length === 0) return;
+    const text = issued
+      .map((c) => `Account: ${c.user.fullName || c.user.username}\nUsername: ${c.user.username}\nTemporary Password: ${c.temporaryPassword}\nLogin URL: ${window.location.origin}/#auth\n`)
+      .join('\n-------------------------\n');
+    navigator.clipboard.writeText(text);
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 2500);
+  };
+
   const runAction = async () => {
-    if (!action) return;
+    if (!action || actionRunning) return;
     const { kind, user } = action;
+    setActionRunning(true);
     try {
       if (kind === 'approve') await clinicalApi.adminApprove(user.id);
       else if (kind === 'reject') await clinicalApi.adminReject(user.id, actionReason || undefined);
@@ -112,11 +135,15 @@ export const AdminConsoleScreen: React.FC = () => {
     } catch (err) {
       fail(err, `${ACTION_LABEL[kind]} failed`);
       setAction(null);
+    } finally {
+      setActionRunning(false);
     }
   };
 
   const createOne = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingOne) return;
+    setSubmittingOne(true);
     try {
       const res = await clinicalApi.adminCreatePhysician({
         fullName: form.fullName.trim(), username: form.username.trim(), email: form.email.trim(),
@@ -124,25 +151,31 @@ export const AdminConsoleScreen: React.FC = () => {
         activateImmediately: form.activateImmediately,
       });
       setIssued([res]);
-      setNotice({ kind: 'success', text: `Physician account ${res.user.username} created.` });
+      setNotice({ kind: 'success', text: `Physician account ${res.user.username} created successfully.` });
       setForm({ fullName: '', username: '', email: '', licenseNumber: '', facility: '', activateImmediately: true });
       await refresh();
     } catch (err) {
       fail(err, 'The physician account was not created');
+    } finally {
+      setSubmittingOne(false);
     }
   };
 
   const createBatch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingBatch) return;
+    setSubmittingBatch(true);
     try {
       const res = await clinicalApi.adminCreatePhysiciansBatch({
         count: batch.count, usernamePrefix: batch.usernamePrefix.trim(), facility: batch.facility.trim() || undefined,
       });
       setIssued(res.created);
-      setNotice({ kind: 'success', text: `${res.created.length} demonstration accounts created.` });
+      setNotice({ kind: 'success', text: `${res.created.length} demonstration accounts created successfully.` });
       await refresh();
     } catch (err) {
       fail(err, 'The demonstration accounts were not created');
+    } finally {
+      setSubmittingBatch(false);
     }
   };
 
@@ -150,20 +183,56 @@ export const AdminConsoleScreen: React.FC = () => {
     <div className="flex flex-wrap gap-1 justify-end">
       {u.status === 'PENDING_APPROVAL' && (
         <>
-          <button onClick={() => setAction({ kind: 'approve', user: u })} className="px-2 py-1 rounded text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700">Approve</button>
-          <button onClick={() => setAction({ kind: 'reject', user: u })} className="px-2 py-1 rounded text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700">Reject</button>
+          <button
+            onClick={() => setAction({ kind: 'approve', user: u })}
+            disabled={actionRunning || loading}
+            className="px-2 py-1 rounded text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Approve
+          </button>
+          <button
+            onClick={() => setAction({ kind: 'reject', user: u })}
+            disabled={actionRunning || loading}
+            className="px-2 py-1 rounded text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Reject
+          </button>
         </>
       )}
       {u.status === 'ACTIVE' && (
-        <button onClick={() => setAction({ kind: 'suspend', user: u })} className="px-2 py-1 rounded text-[11px] font-bold text-slate-700 bg-slate-200 hover:bg-slate-300">Suspend</button>
+        <button
+          onClick={() => setAction({ kind: 'suspend', user: u })}
+          disabled={actionRunning || loading}
+          className="px-2 py-1 rounded text-[11px] font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Suspend
+        </button>
       )}
       {u.status === 'SUSPENDED' && (
-        <button onClick={() => setAction({ kind: 'reactivate', user: u })} className="px-2 py-1 rounded text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700">Reactivate</button>
+        <button
+          onClick={() => setAction({ kind: 'reactivate', user: u })}
+          disabled={actionRunning || loading}
+          className="px-2 py-1 rounded text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Reactivate
+        </button>
       )}
       {(u.status === 'ACTIVE' || u.status === 'SUSPENDED') && (
-        <button onClick={() => setAction({ kind: 'reset-password', user: u })} className="px-2 py-1 rounded text-[11px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200">Temp password</button>
+        <button
+          onClick={() => setAction({ kind: 'reset-password', user: u })}
+          disabled={actionRunning || loading}
+          className="px-2 py-1 rounded text-[11px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Temp password
+        </button>
       )}
-      <button onClick={() => { setAuditUserId(u.id); setTab('audit'); }} className="px-2 py-1 rounded text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200">Audit</button>
+      <button
+        onClick={() => { setAuditUserId(u.id); setTab('audit'); }}
+        disabled={actionRunning || loading}
+        className="px-2 py-1 rounded text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Audit
+      </button>
     </div>
   );
 
@@ -197,21 +266,6 @@ export const AdminConsoleScreen: React.FC = () => {
         <div role={notice.kind === 'error' ? 'alert' : 'status'}
           className={`p-3 rounded-lg border text-xs font-semibold ${notice.kind === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
           {notice.text}
-        </div>
-      )}
-
-      {issued && (
-        <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-xs text-amber-900 space-y-2" role="status">
-          <div className="flex items-start gap-2">
-            <KeyRound className="w-4 h-4 mt-0.5 text-amber-700 flex-shrink-0" />
-            <p className="font-bold">Temporary password{issued.length > 1 ? 's' : ''} — shown once. Give {issued.length > 1 ? 'each' : 'it'} to the physician; the server does not store or show it again, and it must be changed at the first sign-in.</p>
-          </div>
-          <ul className="font-mono text-[11px] space-y-1 pl-6">
-            {issued.map((c) => (
-              <li key={c.user.id}><span className="font-bold">{c.user.username}</span> → {c.temporaryPassword}</li>
-            ))}
-          </ul>
-          <button onClick={() => setIssued(null)} className="text-[11px] font-semibold underline">I have recorded {issued.length > 1 ? 'them' : 'it'}; dismiss</button>
         </div>
       )}
 
@@ -331,16 +385,28 @@ export const AdminConsoleScreen: React.FC = () => {
               <div key={id}>
                 <label htmlFor={`create-${id}`} className="block text-xs font-semibold text-slate-700">{label}</label>
                 <input id={`create-${id}`} type={type} value={form[id]} required={id === 'fullName' || id === 'username' || id === 'email'}
+                  disabled={submittingOne}
                   onChange={(e) => setForm((f) => ({ ...f, [id]: e.target.value }))}
-                  className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs" />
+                  className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs disabled:bg-slate-100 disabled:cursor-not-allowed" />
               </div>
             ))}
             <label className="flex items-center gap-2 text-xs text-slate-700">
-              <input type="checkbox" checked={form.activateImmediately} onChange={(e) => setForm((f) => ({ ...f, activateImmediately: e.target.checked }))} />
+              <input type="checkbox" checked={form.activateImmediately} disabled={submittingOne} onChange={(e) => setForm((f) => ({ ...f, activateImmediately: e.target.checked }))} />
               Activate immediately (otherwise the account waits for approval)
             </label>
             <p className="text-[11px] text-slate-500">A temporary password is generated and shown once after creation. The physician must change it at the first sign-in.</p>
-            <button type="submit" className="w-full py-2.5 rounded-lg text-xs font-bold text-white bg-clinical-primary hover:bg-clinical-primary/90">Create account</button>
+            <button
+              type="submit"
+              disabled={submittingOne}
+              className={`w-full py-2.5 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 ${
+                submittingOne
+                  ? 'bg-clinical-primary/60 cursor-not-allowed opacity-80'
+                  : 'bg-clinical-primary hover:bg-clinical-primary/90'
+              }`}
+            >
+              {submittingOne && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+              <span>{submittingOne ? 'Creating physician account...' : 'Create account'}</span>
+            </button>
           </form>
 
           <form onSubmit={createBatch} className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 space-y-3">
@@ -348,17 +414,28 @@ export const AdminConsoleScreen: React.FC = () => {
             <p className="text-[11px] text-slate-500">Creates numbered accounts (prefix-01, prefix-02, ...) with example.org addresses, each with its own temporary password. Up to ten.</p>
             <div>
               <label htmlFor="batch-prefix" className="block text-xs font-semibold text-slate-700">Username prefix</label>
-              <input id="batch-prefix" value={batch.usernamePrefix} onChange={(e) => setBatch((b) => ({ ...b, usernamePrefix: e.target.value }))} className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs" />
+              <input id="batch-prefix" value={batch.usernamePrefix} disabled={submittingBatch} onChange={(e) => setBatch((b) => ({ ...b, usernamePrefix: e.target.value }))} className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs disabled:bg-slate-100 disabled:cursor-not-allowed" />
             </div>
             <div>
               <label htmlFor="batch-count" className="block text-xs font-semibold text-slate-700">Number of accounts (1–10)</label>
-              <input id="batch-count" type="number" min={1} max={10} value={batch.count} onChange={(e) => setBatch((b) => ({ ...b, count: Number(e.target.value) }))} className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs" />
+              <input id="batch-count" type="number" min={1} max={10} value={batch.count} disabled={submittingBatch} onChange={(e) => setBatch((b) => ({ ...b, count: Number(e.target.value) }))} className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs disabled:bg-slate-100 disabled:cursor-not-allowed" />
             </div>
             <div>
               <label htmlFor="batch-facility" className="block text-xs font-semibold text-slate-700">Facility (optional)</label>
-              <input id="batch-facility" value={batch.facility} onChange={(e) => setBatch((b) => ({ ...b, facility: e.target.value }))} className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs" />
+              <input id="batch-facility" value={batch.facility} disabled={submittingBatch} onChange={(e) => setBatch((b) => ({ ...b, facility: e.target.value }))} className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-xs disabled:bg-slate-100 disabled:cursor-not-allowed" />
             </div>
-            <button type="submit" className="w-full py-2.5 rounded-lg text-xs font-bold text-slate-800 bg-slate-200 hover:bg-slate-300">Create demonstration accounts</button>
+            <button
+              type="submit"
+              disabled={submittingBatch}
+              className={`w-full py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                submittingBatch
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'text-slate-800 bg-slate-200 hover:bg-slate-300'
+              }`}
+            >
+              {submittingBatch && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+              <span>{submittingBatch ? 'Generating demonstration accounts...' : 'Create demonstration accounts'}</span>
+            </button>
           </form>
         </div>
       )}
@@ -410,9 +487,127 @@ export const AdminConsoleScreen: React.FC = () => {
               </div>
             )}
             <div className="flex justify-end gap-2">
-              <button onClick={() => { setAction(null); setActionReason(''); }} className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-100">Cancel</button>
-              <button onClick={runAction} className="px-4 py-1.5 text-xs font-bold text-white bg-clinical-primary rounded-lg hover:bg-clinical-primary/90 inline-flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Confirm
+              <button
+                disabled={actionRunning}
+                onClick={() => { setAction(null); setActionReason(''); }}
+                className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={actionRunning}
+                onClick={runAction}
+                className="px-4 py-1.5 text-xs font-bold text-white bg-clinical-primary rounded-lg hover:bg-clinical-primary/90 inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionRunning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                <span>{actionRunning ? 'Executing...' : 'Confirm'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {issued && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="issued-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+        >
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-start justify-between bg-amber-50/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-800 shrink-0">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 id="issued-title" className="text-sm font-black text-slate-900">
+                    Temporary Credentials Generated
+                  </h3>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    {issued.length > 1
+                      ? `${issued.length} demonstration accounts generated successfully.`
+                      : 'Physician account created successfully.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIssued(null);
+                  setTab('users');
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-amber-100/50 transition-colors"
+                aria-label="Close dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+              <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  <strong>Shown once:</strong> The server never stores or logs plaintext temporary passwords. Clinicians are required to set their own permanent password on first sign-in.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {issued.map((c) => (
+                  <div
+                    key={c.user.id}
+                    className="p-3 rounded-lg border border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3 text-xs hover:border-slate-300 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-900 truncate">{c.user.fullName || c.user.username}</p>
+                      <p className="font-mono text-[11px] text-slate-500 truncate">{c.user.username}</p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Temp Pass:</span>
+                        <code className="font-mono font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded text-[11px] select-all border border-amber-200/50">
+                          {c.temporaryPassword}
+                        </code>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyCredential(c.user.username, c.temporaryPassword)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700 shrink-0 transition-colors shadow-2xs"
+                    >
+                      {copiedId === c.user.username ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-700">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={copyAllCredentials}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 transition-colors"
+              >
+                {copiedAll ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-600" />}
+                <span>{copiedAll ? 'All Copied to Clipboard!' : 'Copy All Credentials'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIssued(null);
+                  setTab('users');
+                }}
+                className="px-4 py-2 rounded-lg bg-clinical-primary hover:bg-clinical-primary/90 text-xs font-bold text-white transition-colors"
+              >
+                Done &amp; View All Accounts
               </button>
             </div>
           </div>

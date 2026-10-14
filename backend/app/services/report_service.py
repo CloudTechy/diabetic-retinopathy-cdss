@@ -179,6 +179,13 @@ class ReportService:
         elements.append(Spacer(1, 4))
 
         if ai and assessment.status != "rejected":
+            cal_temp_str = "Standard Softmax (T = 1.0)"
+            if assessment.model_execution and assessment.model_execution.model_version:
+                import re
+                m = re.search(r"temperature-scaled T=([0-9]+(?:\.[0-9]+)?)", assessment.model_execution.model_version)
+                if m:
+                    cal_temp_str = f"Temperature-scaled (T = {float(m.group(1)):.4f}, validation split)"
+
             ai_data = [
                 [
                     Paragraph("<strong>Primary Candidate Class:</strong>", body_style),
@@ -192,6 +199,12 @@ class ReportService:
                               body_style),
                     Paragraph("<strong>Target Saliency Layer:</strong>", body_style),
                     Paragraph(ai.target_layer, body_style),
+                ],
+                [
+                    Paragraph("<strong>Probability Calibration:</strong>", body_style),
+                    Paragraph(cal_temp_str, body_style),
+                    Paragraph("<strong>Score Calibration Status:</strong>", body_style),
+                    Paragraph("Verified post-hoc scaling" if "Temperature-scaled" in cal_temp_str else "Uncalibrated", body_style),
                 ],
             ]
             ai_table = Table(ai_data, colWidths=[1.6 * inch, 2.0 * inch, 1.6 * inch, 1.8 * inch])
