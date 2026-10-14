@@ -1,14 +1,14 @@
 {
-  "benchmark_name": "Calibrated Backend Peak RAM & Assessment Resource Benchmark",
+  "benchmark_name": "Inference Harness Peak RAM & Resource Benchmark (Isolated Mixed-Input)",
   "benchmark_timestamp": "2026-10-14T12:48:43.035370+00:00",
   "completion_timestamp": "2026-10-14T12:49:38.718548+00:00",
   "nfr_code": "NFR-10",
   "nfr_description": "Memory Footprint: Peak backend memory usage during complete assessments with Grad-CAM",
   "budget_mb": 512.0,
-  "measured_peak_ram_mb": 506.47,
+  "measured_peak_ram_mb": 531.07,
   "margin_mb": 5.53,
-  "status": "MET",
-  "status_statement": "Met: measured peak backend memory of 506.5 MB, which is below the 512.0 MB budget.",
+  "status": "UNVERIFIED_FOR_FULL_BACKEND",
+  "status_statement": "Inconclusive for full backend: isolated inference harness under mixed inputs measured peak RSS of 506.47 MiB (531.07 MB). Passes a 512 MiB limit, but exceeds a 512 MB decimal limit. Full backend under live API workload remains unverified until measured.",
   "hardware": {
     "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.36",
     "system": "Linux",
@@ -29,11 +29,27 @@
     "target_gradcam_layer": "features.8"
   },
   "memory_summary": {
-    "baseline_rss_mb": 238.88,
-    "model_loaded_rss_mb": 354.77,
-    "mean_peak_per_assessment_mb": 496.03,
-    "overall_peak_rss_mb": 506.47,
-    "final_rss_mb": 496.28,
-    "total_assessments_measured": 30
+    "overall_peak_rss_mb": 531.07,
+    "total_assessments_measured": 30,
+    "baseline_rss_mib": 238.88,
+    "model_loaded_rss_mib": 354.77,
+    "mean_peak_per_assessment_mib": 496.03,
+    "overall_peak_rss_mib": 506.47,
+    "final_rss_mib": 496.28
+  },
+  "scope": "isolated_inference_harness_mixed_input",
+  "memory_unit_measured": "MiB",
+  "measured_peak_ram_mib": 506.47,
+  "budget_limit_mib": 512.0,
+  "budget_limit_mb": 512.0,
+  "passes_mib_boundary": true,
+  "passes_mb_boundary": false,
+  "input_composition": {
+    "total_assessments": 30,
+    "genuine_held_out_count": 1,
+    "genuine_held_out_file": "aptos_heldout_d1f1ea894da1.png",
+    "genuine_held_out_sha256": "d6eb606b07cdcd6045f2477f9fa3899df7f112f862897286a21f0eece06f2acf",
+    "synthetic_count": 29,
+    "synthetic_files": "calibrated_sample_01.png to calibrated_sample_29.png"
   }
 }
