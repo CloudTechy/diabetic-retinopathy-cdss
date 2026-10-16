@@ -19,6 +19,7 @@ from reportlab.platypus import (
 
 from app.core.config import settings
 from app.models.models import Assessment
+from app.services.score_terminology import score_terms
 
 
 class ReportService:
@@ -193,19 +194,23 @@ class ReportService:
         elements.append(Paragraph("2. Preliminary Model-Generated Observation (AI Assistive Engine)", h2_style))
         elements.append(Spacer(1, 4))
 
+        model_version = assessment.model_execution.model_version if assessment.model_execution else None
+        terms = score_terms(model_version, ai.class_scores if ai else None)
+
         if ai and assessment.status != "rejected":
-            cal_temp_str = "Standard Softmax (T = 1.0)"
-            if assessment.model_execution and assessment.model_execution.model_version:
-                import re
-                m = re.search(r"temperature-scaled T=([0-9]+(?:\.[0-9]+)?)", assessment.model_execution.model_version)
-                if m:
-                    cal_temp_str = f"Temperature-scaled (T = {float(m.group(1)):.4f}, validation split)"
+            # Model information: the technical calibration detail is stated here once.
+            if terms.calibrated:
+                cal_temp_str = f"Temperature-scaled (T = {terms.temperature:.4f}, validation partition)"
+                cal_status_str = "Verified post-hoc scaling"
+            else:
+                cal_temp_str = "No verified temperature-scaling record"
+                cal_status_str = "Uncalibrated: model-generated class scores"
 
             ai_data = [
                 [
                     Paragraph("<strong>Primary Candidate Class:</strong>", body_style),
                     Paragraph(f"<strong>{ai.primary_class_label}</strong>", body_style),
-                    Paragraph("<strong>Class Relative Score:</strong>", body_style),
+                    Paragraph(f"<strong>{terms.highest}:</strong>", body_style),
                     Paragraph(f"<strong>{ai.primary_score:.2f}</strong>", body_style),
                 ],
                 [
@@ -219,7 +224,7 @@ class ReportService:
                     Paragraph("<strong>Probability Calibration:</strong>", body_style),
                     Paragraph(cal_temp_str, body_style),
                     Paragraph("<strong>Score Calibration Status:</strong>", body_style),
-                    Paragraph("Verified post-hoc scaling" if "Temperature-scaled" in cal_temp_str else "Uncalibrated", body_style),
+                    Paragraph(cal_status_str, body_style),
                 ],
             ]
             ai_table = Table(ai_data, colWidths=[1.6 * inch, 2.0 * inch, 1.6 * inch, 1.8 * inch])
@@ -234,12 +239,17 @@ class ReportService:
             elements.append(ai_table)
             elements.append(Spacer(1, 4))
 
-            # 5-Class Breakdown Table
-            score_rows = [["ICDR Stage", "Grade Description", "Model-Generated Class Score"]]
+            # Five-class table. The header cells are Paragraphs so a long label
+            # ("Temperature-Scaled Class Probability") wraps inside its column.
+            header_style = ParagraphStyle("TableHeader", parent=cell_style, fontName="Helvetica-Bold", fontSize=7.5)
+            header_right = ParagraphStyle("TableHeaderRight", parent=header_style, alignment=2)
+            elements.append(Paragraph(f"<strong>{terms.distribution}</strong>", body_style))
+            elements.append(Spacer(1, 2))
+            score_rows = [[Paragraph("ICDR Stage", header_style), Paragraph("Grade Description", header_style),
+                           Paragraph(terms.per_class, header_right)]]
             for cs in ai.class_scores:
                 score_rows.append([f"Grade {cs['grade']}", cs["label"], f"{cs['score']:.2f}"])
 
-            # 2.0 in holds the bold column header on one line; 1.4 in did not.
             score_table = Table(score_rows, colWidths=[1.2 * inch, 3.8 * inch, 2.0 * inch])
             score_table.setStyle(
                 TableStyle([
@@ -260,11 +270,13 @@ class ReportService:
             )
             elements.append(Paragraph(rejection_text, body_style))
 
+        notice = terms.explanation if (ai and assessment.status != "rejected") else (
+            "No model output was produced for this record. The report supports professional review "
+            "and does not establish a diagnosis.")
         elements.append(Spacer(1, 4))
         elements.append(
             Paragraph(
-                "<strong>Regulatory Boundary Notice:</strong> Scores reflect feature activations derived from the pre-trained "
-                "EfficientNet-B0 network. Scores do not represent clinical certainty, diagnostic probability, or confirmed diagnosis.",
+                f"<strong>Boundary Notice:</strong> {notice}",
                 disclaimer_style,
             )
         )
