@@ -4,7 +4,6 @@ from datetime import timezone
 import hashlib
 import io
 import os
-import re
 import uuid
 from typing import Optional, List, Dict, Any, Tuple
 from PIL import Image
@@ -36,19 +35,24 @@ from app.schemas.assessment import (
     AuditEventSchema,
 )
 from app.services.validation.pipeline import ValidationPipeline, ValidationPipelineResult
+from app.services.score_terminology import recorded_temperature
 from app.services.ai_service import (
     get_active_inference_service,
     ICDR_CLASS_METADATA,
 )
 
 
-_TEMPERATURE_IN_VERSION = re.compile(r"temperature-scaled T=([0-9]+(?:\.[0-9]+)?)")
+def _overlay_resolution(png_bytes: Optional[bytes]) -> str:
+    """WxH of the stored Grad-CAM overlay; it follows the photograph's aspect ratio, so it is read, not assumed."""
+    if not png_bytes:
+        return "unknown"
+    with Image.open(io.BytesIO(png_bytes)) as overlay:
+        return "%dx%d" % overlay.size
 
 
 def _calibration_temperature(model_version: str) -> Optional[float]:
     """The T the trained engine recorded in model_version, or None if none was applied."""
-    match = _TEMPERATURE_IN_VERSION.search(model_version or "")
-    return float(match.group(1)) if match else None
+    return recorded_temperature(model_version)
 
 
 class InvalidStateTransitionError(Exception):
@@ -308,7 +312,7 @@ class AssessmentService:
                 relative_url=inference_out.gradcam_url,
                 target_layer=inference_out.target_layer,
                 colormap="viridis",
-                metadata_json={"resolution": "512x512"},
+                metadata_json={"resolution": _overlay_resolution(inference_out.gradcam_bytes)},
             )
             artifacts.append(artifact)
 
