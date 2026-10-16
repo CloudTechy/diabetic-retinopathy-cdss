@@ -180,11 +180,12 @@ The command creates nothing when a Super Administrator already exists. The passw
    - **Blink Comparison:** Click **"Toggle Saliency (Blink)"** to rapidly compare raw fundus anatomy with model activation zones.
    - **Colormap Selector:** Switch between **Viridis** (perceptually uniform) and **Inferno** palettes.
    - **Side-by-Side Mode:** Click **"Side-by-Side Dual Pane"** to view the raw photograph and saliency overlay simultaneously.
-2. **5-Class Score Distribution Card:**
-   - Verify prominent display of **"Model-Generated Class Score"** (e.g. `0.78`).
-   - Verify continuous probability breakdown across all 5 ICDR disease stages.
-   - Observe explainability insight tag specifying target layer: `features.8 (Conv2d Bottleneck Residual)`.
-   - Verify boundary disclaimer: *Scores reflect preliminary mathematical associations and do not represent confirmed clinical diagnoses*.
+2. **Five-Class Probability Distribution Card:**
+   - For a result from the trained engine (calibration recorded), verify the predicted grade's value is labelled **"Temperature-Scaled Class Probability"** and **"Highest Class Probability"** (e.g. `0.88`), and the list is titled **"Five-Class Probability Distribution"** across all 5 ICDR stages.
+   - Verify the *Model information* line states the temperature (`T = 1.0939`, fitted on the validation partition only).
+   - A result with no recorded calibration (simulated engine, or stored before calibration) keeps the **"Model-Generated Class Score"** wording and is never called a probability.
+   - Observe the Grad-CAM explainability insight specifying target layer: `features.8 (Conv2d Bottleneck Residual)`; activation wording stays with Grad-CAM, not with the probabilities.
+   - Verify the boundary notice: *Class probabilities are produced using temperature scaling fitted on the validation partition. They support professional review and do not establish a diagnosis.*
 
 ### Screen 6: Professional Review Modal (Clinician-in-the-Loop)
 1. **Action:** Click **"Record Clinician Review (Screen 6)"**.
