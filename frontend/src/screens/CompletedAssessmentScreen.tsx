@@ -16,6 +16,7 @@ import { FundusViewer } from '../components/FundusViewer';
 import { AuditDrawer } from '../components/AuditDrawer';
 import { clinicalApi } from '../services/api';
 import { describeApiError } from '../utils/apiError';
+import { scoreTerms } from '../utils/scoreTerminology';
 
 interface CompletedAssessmentScreenProps {
   assessment: AssessmentRecord;
@@ -134,7 +135,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
 
             <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">
-                Candidate Classification & Score
+                Candidate Classification
               </span>
               <div className="flex justify-between items-center">
                 <span className="font-bold text-slate-900 text-sm">
@@ -144,7 +145,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
                   {assessment.modelObservation?.primaryScore.toFixed(2)}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400">model-generated class score</p>
+              <p className="text-[10px] text-slate-400">{scoreTerms(assessment.modelObservation).highest}</p>
             </div>
 
             <div className="space-y-1 text-xs text-slate-600">
@@ -162,7 +163,7 @@ export const CompletedAssessmentScreen: React.FC<CompletedAssessmentScreenProps>
           </div>
 
           <div className="p-2.5 bg-slate-100 rounded text-[11px] text-slate-500 leading-relaxed border border-slate-200">
-            <strong>Non-Diagnostic Notice:</strong> Model score reflects algorithmic association only. Not for independent diagnosis.
+            {scoreTerms(assessment.modelObservation).explanation}
           </div>
         </div>
 

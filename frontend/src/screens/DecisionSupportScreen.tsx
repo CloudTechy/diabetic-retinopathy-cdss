@@ -111,7 +111,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
           </h2>
         </div>
         <p className="text-xs text-amber-900 leading-relaxed pl-7">
-          Model-generated scores represent preliminary mathematical associations based on visual feature activations. Clinical interpretation of model-generated scores remains the responsibility of the reviewing clinician. This system does not provide diagnosis or management recommendations.
+          Clinical interpretation of the model output remains the responsibility of the reviewing clinician. This system does not provide diagnosis or management recommendations.
         </p>
       </div>
 
@@ -198,7 +198,7 @@ export const DecisionSupportScreen: React.FC<DecisionSupportScreenProps> = ({
             )}
           </div>
 
-          {/* Model-Generated Class Scores Card (Bounded Terminology) */}
+          {/* Five-class model output (labelled by scoreTerms: probabilities only when calibration is recorded) */}
           {assessment.modelObservation && (
             <ScoreDistributionCard observation={assessment.modelObservation} />
           )}
