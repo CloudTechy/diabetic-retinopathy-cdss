@@ -124,8 +124,8 @@ stateDiagram-v2
   * **Left Pane (65% width)**: Dual-Layer Fundus & Grad-CAM Interactive Viewer (detailed in Section 2).
   * **Right Pane (35% width)**:
     * **Assessment Summary Card**: Patient ID, Laterality (`OD`/`OS`), Capture Date, Image Quality Scores (Laplacian metric, Illumination index).
-    * **Model-Generated Class Scores Card**:
-      * Primary Candidate Class: e.g., `Moderate NPDR (Stage 2)` with associated model score (e.g., `0.78`).
+    * **Class Probability Card**: labelled *Temperature-Scaled Class Probability* when the output carries the verified, validation-fitted temperature and its five values are a valid distribution; otherwise *Model-Generated Class Score*.
+      * Primary Candidate Class: e.g., `Moderate NPDR (Stage 2)` with its class probability (e.g., `0.78`).
       * 5-Class Probability Distribution (horizontal stacked bar charts normalized to $1.00$):
         1. Class 0: No DR ($0.04$)
         2. Class 1: Mild NPDR ($0.12$)
@@ -265,8 +265,8 @@ The CDSS enforces standardized terminology at both UI and documentation levels t
 | FORBIDDEN TERMS                   | MANDATORY PRESCRIBED REPLACEMENTS          |
 +-----------------------------------+--------------------------------------------+
 | "AI Diagnosis"                    | "Preliminary Model-Generated Observation"  |
-| "Confidence: 94%"                 | "Model-Generated Class Score: 0.94"        |
-| "Certainty" / "Probability"       | "Class Relative Weight" / "Score"          |
+| "Confidence: 94%"                 | "Temperature-Scaled Class Probability: 0.94" (calibrated outputs; otherwise "Model-Generated Class Score: 0.94") |
+| "Certainty" / "Diagnostic probability" | "Class Probability" (calibrated outputs only) / "Score" |
 | "AI verified this image"         | "Image passed technical validation checks" |
 | "Good image quality"              | "Meets technical thresholds for inference" |
 | "Normal Retina"                   | "No Apparent DR Detected by Model"         |
@@ -573,7 +573,7 @@ These design tokens provide the direct styling contract for `ui_frontend_agent`:
     </div>
     <div class="text-right">
       <span class="text-2xl font-black text-amber-600 font-mono">0.78</span>
-      <p class="text-[10px] uppercase font-semibold text-slate-400">Class Relative Score</p>
+      <p class="text-[10px] uppercase font-semibold text-slate-400">Temperature-Scaled Class Probability</p>
     </div>
   </div>
 
@@ -583,12 +583,12 @@ These design tokens provide the direct styling contract for `ui_frontend_agent`:
       <div class="w-3 h-3 rounded-full bg-amber-500" aria-hidden="true"></div>
       <span class="font-bold text-sm text-amber-900">Moderate NPDR (Stage 2)</span>
     </div>
-    <span class="text-xs font-mono font-medium text-amber-800">Highest Relative Association</span>
+    <span class="text-xs font-mono font-medium text-amber-800">Highest Class Probability</span>
   </div>
 
-  <!-- 5-Class Relative Score Distribution Breakdown -->
-  <div class="space-y-2 pt-2 border-t border-slate-100" role="region" aria-label="Full 5-Class Score Distribution">
-    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full 5-Class Score Breakdown</p>
+  <!-- Five-Class Probability Distribution -->
+  <div class="space-y-2 pt-2 border-t border-slate-100" role="region" aria-label="Five-Class Probability Distribution">
+    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Five-Class Probability Distribution</p>
     
     <!-- Class 0 -->
     <div class="space-y-1">
@@ -648,7 +648,7 @@ These design tokens provide the direct styling contract for `ui_frontend_agent`:
 
   <!-- Regulatory Boundary Footer -->
   <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-600 leading-relaxed">
-    <strong>Boundary Disclaimer:</strong> Scores reflect feature activations derived from the pre-trained EfficientNet-B0 model. Scores do not represent clinical probability, disease likelihood, or confirmed diagnosis.
+    <strong>Boundary Disclaimer:</strong> Class probabilities are produced using temperature scaling fitted on the validation partition. They support professional review and do not establish a diagnosis.
   </div>
 </section>
 ```
