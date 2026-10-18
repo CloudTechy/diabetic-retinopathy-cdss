@@ -94,8 +94,7 @@ def load_calibration_artifact(path: str, expected_checkpoint_sha256: str) -> Dic
         raise CalibrationArtifactError(
             f"Calibration artifact not found at '{path}'. Refusing to serve "
             "uncalibrated probabilities in its place. Set "
-            "CALIBRATION_ARTIFACT_PATH to the fitted artifact, or set "
-            "AI_INFERENCE_ENGINE=mock to run the simulated engine explicitly.")
+            "CALIBRATION_ARTIFACT_PATH to the fitted artifact.")
     try:
         import json
         with open(path, "r", encoding="utf-8") as fh:
@@ -202,8 +201,7 @@ class InferenceOutput:
         self.gradcam_path = gradcam_path
         self.gradcam_url = gradcam_url
         # The raw logits and the frozen temperature that turned them into
-        # class_scores (see docs/chapter4/probability_calibration/). None for
-        # the simulated engine, which has neither.
+        # class_scores (see docs/chapter4/probability_calibration/).
         self.logits = logits
         self.calibration_temperature = calibration_temperature
         self.calibration_artifact_version = calibration_artifact_version
@@ -309,158 +307,6 @@ def _peak_activation_region(cam) -> str:
             f"({spread}: {above_half:.0%} of the map is above half the peak).")
 
 
-def create_mock_gradcam_heatmap(
-    grade: int,
-    width: int = 512,
-    height: int = 512,
-    laterality: str = "OD"
-) -> Image.Image:
-    """Generate a realistic synthetic Grad-CAM visual attribution overlay."""
-    # Create coordinate grid
-    y, x = np.ogrid[:height, :width]
-    activation = np.zeros((height, width), dtype=np.float32)
-
-    # Optic disc and fovea centers (OD vs OS)
-    if laterality == "OD":
-        # Right eye: Disc is on nasal (left side of fundus photo), Macula is temporal (center-right)
-        fovea_cx, fovea_cy = width * 0.55, height * 0.50
-        disc_cx, disc_cy = width * 0.30, height * 0.50
-    else:
-        # Left eye: Disc is on nasal (right side of fundus photo), Macula is temporal (center-left)
-        fovea_cx, fovea_cy = width * 0.45, height * 0.50
-        disc_cx, disc_cy = width * 0.70, height * 0.50
-
-    if grade == 0:
-        # Grade 0: Diffuse, low-level baseline activation around macula
-        dist_sq = (x - fovea_cx) ** 2 + (y - fovea_cy) ** 2
-        activation += 0.25 * np.exp(-dist_sq / (2 * (width * 0.3) ** 2))
-    elif grade == 1:
-        # Grade 1: Small focal hotspot near parafovea (microaneurysm)
-        focal_x, focal_y = fovea_cx + width * 0.08, fovea_cy + height * 0.06
-        dist_sq = (x - focal_x) ** 2 + (y - focal_y) ** 2
-        activation += 0.85 * np.exp(-dist_sq / (2 * (width * 0.05) ** 2))
-    elif grade == 2:
-        # Grade 2: Hotspots along inferotemporal arcade and macula
-        focal1_x, focal1_y = fovea_cx + width * 0.10, fovea_cy + height * 0.12
-        focal2_x, focal2_y = fovea_cx - width * 0.08, fovea_cy - height * 0.10
-        dist1 = (x - focal1_x) ** 2 + (y - focal1_y) ** 2
-        dist2 = (x - focal2_x) ** 2 + (y - focal2_y) ** 2
-        activation += 0.90 * np.exp(-dist1 / (2 * (width * 0.08) ** 2))
-        activation += 0.75 * np.exp(-dist2 / (2 * (width * 0.07) ** 2))
-    elif grade == 3:
-        # Grade 3: Extensive multi-quadrant activations
-        quadrants = [
-            (fovea_cx + width * 0.15, fovea_cy - height * 0.15),
-            (fovea_cx + width * 0.15, fovea_cy + height * 0.15),
-            (fovea_cx - width * 0.15, fovea_cy + height * 0.15),
-            (fovea_cx - width * 0.15, fovea_cy - height * 0.15),
-        ]
-        for qx, qy in quadrants:
-            dist = (x - qx) ** 2 + (y - qy) ** 2
-            activation += 0.80 * np.exp(-dist / (2 * (width * 0.09) ** 2))
-    elif grade == 4:
-        # Grade 4: Peak activation at optic disc and vascular tree
-        dist_disc = (x - disc_cx) ** 2 + (y - disc_cy) ** 2
-        dist_fovea = (x - fovea_cx) ** 2 + (y - fovea_cy) ** 2
-        activation += 0.95 * np.exp(-dist_disc / (2 * (width * 0.09) ** 2))
-        activation += 0.70 * np.exp(-dist_fovea / (2 * (width * 0.12) ** 2))
-
-    # Normalize activation [0, 1]
-    max_val = np.max(activation)
-    if max_val > 0:
-        activation /= max_val
-
-    # Convert to RGBA image with Viridis palette
-    rgba_arr = viridis_rgba_array(activation)
-
-    return Image.fromarray(rgba_arr)
-
-
-class MockInferenceService(BaseInferenceService):
-    """
-    SIMULATED inference engine for interface development and testing.
-
-    It returns hardcoded 5-class distributions and a synthetic Grad-CAM
-    overlay. Nothing it produces is a model output, and it is reachable only
-    when AI_INFERENCE_ENGINE=mock is set explicitly - never as a fallback,
-    because a simulated grade is indistinguishable from a real one in the UI.
-    """
-
-    def predict(
-        self,
-        pil_image: Image.Image,
-        laterality: str = "OD",
-    ) -> InferenceOutput:
-        start_time = time.time()
-
-        # Simulated engine always returns Grade 2 (Moderate NPDR) — the most
-        # representative class in the test corpus. Grade is fixed and not
-        # externally configurable; a steerable grade would be indistinguishable
-        # from a real one in the UI and is therefore not permitted.
-        grade = 2
-        meta = ICDR_CLASS_METADATA[grade]
-
-        # Construct mathematically normalized 5-class score distribution
-        if grade == 0:
-            scores = [0.91, 0.05, 0.02, 0.01, 0.01]
-        elif grade == 1:
-            scores = [0.08, 0.74, 0.12, 0.04, 0.02]
-        elif grade == 2:
-            scores = [0.04, 0.12, 0.78, 0.05, 0.01]
-        elif grade == 3:
-            scores = [0.02, 0.04, 0.08, 0.82, 0.04]
-        else:
-            scores = [0.01, 0.02, 0.03, 0.08, 0.86]
-
-        primary_score = scores[grade]
-
-        class_scores = [
-            {"grade": i, "label": f"Grade {i}: {ICDR_CLASS_METADATA[i]['label']}", "score": scores[i]}
-            for i in range(5)
-        ]
-
-        # Generate Grad-CAM attribution heatmap
-        width, height = pil_image.size
-        # Render at 512x512 resolution for smooth WebGL canvas blending
-        gradcam_img = create_mock_gradcam_heatmap(grade, width=min(width, 768), height=min(height, 768), laterality=laterality)
-
-        # Save heatmap to attribution storage
-        os.makedirs(settings.STORAGE_ATTRIBUTIONS_PATH, exist_ok=True)
-        gradcam_filename = f"gradcam_{uuid.uuid4().hex}.png"
-        gradcam_path = os.path.join(settings.STORAGE_ATTRIBUTIONS_PATH, gradcam_filename)
-        gradcam_img.save(gradcam_path, format="PNG")
-
-        # Encode to bytes for in-memory / data URL consumers
-        buf = io.BytesIO()
-        gradcam_img.save(buf, format="PNG")
-        gradcam_bytes = buf.getvalue()
-
-        execution_time_ms = round((time.time() - start_time) * 1000.0 + 45.0, 1)
-
-        disclaimer = (
-            "NOTICE: CLINICAL DECISION SUPPORT ONLY — NOT FOR INDEPENDENT DIAGNOSIS. "
-            "Model-generated scores represent preliminary mathematical associations from the pre-trained EfficientNet-B0 network. "
-            "Diagnostic judgment, clinical staging, and management plans remain exclusively the responsibility of the reviewing clinician."
-        )
-
-        return InferenceOutput(
-            primary_grade=grade,
-            primary_label=meta["label"],
-            primary_score=primary_score,
-            class_scores=class_scores,
-            target_layer="features.8 (Conv2d Bottleneck Residual)",
-            top_activation_region="Simulated engine: no attribution map was computed.",
-            model_version="EfficientNet-B0-DR-v1 (fixed weights)",
-            execution_time_ms=execution_time_ms,
-            disclaimer=disclaimer,
-            gradcam_bytes=gradcam_bytes,
-            gradcam_filename=gradcam_filename,
-            gradcam_path=gradcam_path,
-            gradcam_url=(f"/api/v1/storage/attributions/{gradcam_filename}"
-                         if gradcam_filename else None),
-        )
-
-
 import logging
 
 logger = logging.getLogger("dr_cdss.ai_service")
@@ -524,8 +370,8 @@ class EfficientNetB0InferenceService(BaseInferenceService):
         A clinical decision-support engine must never serve grades from an
         untrained graph. If the checkpoint is absent, unreadable, or does not
         match the expected SHA-256 digest, this raises and the service is left
-        uninitialised — it does not silently fall back to random ImageNet-less
-        weights or to the simulated engine.
+        uninitialised — it does not fall back to untrained weights or to any
+        other source of predictions.
         """
         # Cheap, dependency-free checks first, so a misconfigured path reports
         # the real cause rather than an unrelated import failure.
@@ -533,8 +379,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             raise ModelCheckpointError(
                 f"Model checkpoint not found at '{self.checkpoint_path}'. "
                 "Refusing to serve inference from an untrained network. "
-                "Set MODEL_CHECKPOINT_PATH to the trained weights, or set "
-                "AI_INFERENCE_ENGINE=mock to run the simulated engine explicitly."
+                "Set MODEL_CHECKPOINT_PATH to the trained weights."
             )
 
         self._verify_checkpoint_digest()
@@ -549,11 +394,7 @@ class EfficientNetB0InferenceService(BaseInferenceService):
                 f"  pip install torch torchvision --index-url "
                 f"https://download.pytorch.org/whl/cpu\n"
                 f"  pip install -r backend/requirements.txt\n"
-                f"Then restart the service.\n"
-                "Alternatively set AI_INFERENCE_ENGINE=mock to run the "
-                "simulated engine explicitly. The simulated engine is never "
-                "selected implicitly, because a simulated grade is "
-                "indistinguishable from a real one downstream."
+                f"Then restart the service."
             ) from exc
 
         device = torch.device(settings.MODEL_DEVICE if torch.cuda.is_available() else "cpu")
@@ -777,22 +618,14 @@ class EfficientNetB0InferenceService(BaseInferenceService):
 
 def get_ai_inference_service() -> BaseInferenceService:
     """
-    Resolve the active inference engine from configuration.
+    Load the fixed EfficientNet-B0 engine with its verified checkpoint and
+    temperature-scaling calibration artifact.
 
-    The simulated engine is only ever returned when it has been asked for by
-    name (AI_INFERENCE_ENGINE=mock). A failure to load the real checkpoint
-    propagates: it must not be silently downgraded to simulated grades, because
-    the two are indistinguishable to a clinician reading the result.
+    This is the only engine the application serves. A failure to load the
+    checkpoint or the calibration artifact propagates, so processing fails
+    explicitly; there is no fallback that returns predictions from any other
+    source.
     """
-    engine_type = os.getenv("AI_INFERENCE_ENGINE", "pytorch").strip().lower()
-
-    if engine_type == "mock":
-        logger.warning(
-            "AI_INFERENCE_ENGINE=mock — serving SIMULATED diabetic retinopathy "
-            "grades. This engine is for development and interface testing only."
-        )
-        return MockInferenceService()
-
     service = EfficientNetB0InferenceService(checkpoint_path=settings.MODEL_CHECKPOINT_PATH)
     service.load_model()
     return service
@@ -825,15 +658,12 @@ def get_inference_health() -> Dict[str, Any]:
     except Exception as exc:  # pragma: no cover - defensive
         return {"ready": False, "engine": "unknown", "detail": str(exc)}
 
-    if isinstance(service, MockInferenceService):
-        return {
-            "ready": True,
-            "engine": "mock",
-            "detail": "SIMULATED grades — not a trained model.",
-        }
+    # The engine actually loaded is named; in the application this is always
+    # EfficientNet-B0, since no other engine can be resolved.
+    engine = "pytorch" if isinstance(service, EfficientNetB0InferenceService) else type(service).__name__
     return {
         "ready": True,
-        "engine": "pytorch",
+        "engine": engine,
         "detail": f"EfficientNet-B0 checkpoint loaded from {service.checkpoint_path}",
         "checkpoint_sha256": getattr(service, "verified_sha256", None),
         "calibration_temperature": getattr(service, "temperature", None),

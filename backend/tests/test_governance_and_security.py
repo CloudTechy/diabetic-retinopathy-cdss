@@ -175,11 +175,17 @@ class TestClinicianInTheLoopGovernance:
         # an earlier version demanded the literal word "frozen", so replacing
         # that jargon with plain language for clinicians broke a test that was
         # never about wording.
-        version = processed.model_execution.model_version.lower()
-        assert ("fixed weights" in version or "frozen" in version), (
-            f"model_version {processed.model_execution.model_version!r} does not "
-            "record that the weights are fixed. The served model must be "
-            "identifiable as the evaluated one.")
+        # The service records the engine's version unchanged (the API tests
+        # run against tests/inference_doubles.py) ...
+        from tests.inference_doubles import MODEL_VERSION
+        assert processed.model_execution.model_version == MODEL_VERSION
+        # ... and the version the real engine reports says its weights are fixed.
+        import inspect
+        import app.services.ai_service as ai_svc
+        real_predict = inspect.getsource(ai_svc.EfficientNetB0InferenceService.predict).lower()
+        assert ("fixed weights" in real_predict or "frozen" in real_predict), (
+            "EfficientNetB0InferenceService does not record that the weights are "
+            "fixed. The served model must be identifiable as the evaluated one.")
 
 
 class TestClinicalTerminologyCompliance:

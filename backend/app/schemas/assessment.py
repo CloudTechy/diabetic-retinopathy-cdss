@@ -33,8 +33,8 @@ class ScoreBreakdownItem(BaseModel):
     label: str
     # Temperature-scaled probability from the trained engine (the value the
     # interface displays). uncalibratedScore is the raw softmax (T = 1) of the
-    # same logits, kept for audit; None for the simulated engine and for
-    # results stored before calibration was introduced.
+    # same logits, kept for audit; None for results stored before
+    # calibration was introduced.
     score: float
     uncalibratedScore: Optional[float] = None
 

@@ -646,11 +646,11 @@ def test_inference_engine_still_fails_closed():
     text = read(os.path.join(REPO_ROOT, "backend", "app", "services", "ai_service.py"))
     assert "ModelCheckpointError" in text
     assert "_verify_checkpoint_digest" in text
-    # The mock must never be reachable as a silent fallback from predict().
-    predict_body = text.split("def predict(", 1)[1]
-    first_branch = predict_body[:800]
-    assert "MockInferenceService().predict" not in first_branch, (
-        "predict() delegates to the simulated engine instead of failing closed")
+    # EfficientNet-B0 is the only engine: no simulated engine, and no setting
+    # that selects one, may exist for predict() or the loader to fall back to.
+    for marker in ("MockInferenceService", "AI_INFERENCE_ENGINE", "create_mock_gradcam_heatmap"):
+        assert marker not in text, (
+            f"ai_service.py contains {marker}: a simulated inference path is back")
 
 
 # =====================================================================
@@ -1023,7 +1023,7 @@ AI_SERVICE = os.path.join(REPO_ROOT, "backend", "app", "services", "ai_service.p
 
 
 def _real_inference_source():
-    """The body of EfficientNetB0InferenceService only, excluding the mock."""
+    """The body of EfficientNetB0InferenceService only."""
     text = read(AI_SERVICE)
     start = text.index("class EfficientNetB0InferenceService")
     end = text.find("\ndef get_ai_inference_service", start)
@@ -1032,12 +1032,13 @@ def _real_inference_source():
 
 def test_real_engine_never_substitutes_a_synthetic_attribution():
     """
-    The real service called create_mock_gradcam_heatmap on an empty CAM and in
-    its exception handler, so a failed attribution was shown as a real one.
+    The real service once called a synthetic heat-map generator on an empty CAM
+    and in its exception handler, so a failed attribution was shown as a real
+    one. The generator has since been removed from the application.
     """
-    body = _real_inference_source()
+    body = read(AI_SERVICE)
     offenders = [f"line {i}" for i, line in enumerate(body.split("\n"), 1)
-                 if "create_mock_gradcam_heatmap" in line
+                 if ("create_mock_gradcam_heatmap" in line or "mock_gradcam" in line)
                  and not line.lstrip().startswith("#")]
     assert not offenders, (
         "EfficientNetB0InferenceService renders a synthetic Grad-CAM: "
@@ -3305,7 +3306,7 @@ def test_peak_activation_region_is_derived_from_the_cam_not_a_constant():
         "_peak_activation_region must locate the CAM's maximum (argmax); a region not "
         "read from the map is a constant with extra steps")
     # Every InferenceOutput built in the file: the region keyword must be a
-    # NAME bound from the helper, except the simulated engine's, which must say so.
+    # NAME bound from the helper. No engine may pass a constant.
     seen_name = False
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
@@ -3315,10 +3316,6 @@ def test_peak_activation_region_is_derived_from_the_cam_not_a_constant():
                 continue
             if isinstance(kw.value, ast.Name):
                 seen_name = True
-            elif isinstance(kw.value, ast.Constant):
-                assert "imulated" in str(kw.value.value), (
-                    "a constant top_activation_region that does not declare itself simulated: %r"
-                    % kw.value.value)
             else:
                 raise AssertionError("top_activation_region built from %s" % type(kw.value).__name__)
     assert seen_name, "the real engine does not pass a derived region"

@@ -81,9 +81,9 @@ async function preflight() {
         `${API}/health reports inference_ready=${body.inference_ready}. `
         + `Detail: ${String(body.inference_detail).slice(0, 160)}`);
     }
-    if (String(body.inference_engine).toLowerCase().includes('mock')) {
-      problems.push('The backend is serving the SIMULATED engine. These figures '
-        + 'must show the evaluated checkpoint.');
+    if (body.inference_engine !== 'pytorch' || !body.checkpoint_sha256) {
+      problems.push(`${API}/health does not report the verified EfficientNet-B0 `
+        + `checkpoint (engine=${body.inference_engine}). These figures must show the evaluated checkpoint.`);
     }
   } catch (err) {
     problems.push(`No backend at ${API}/health (${err.message})`);

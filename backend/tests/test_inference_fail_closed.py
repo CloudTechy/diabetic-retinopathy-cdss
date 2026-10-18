@@ -3,8 +3,8 @@ Fail-closed guarantees for the inference engine.
 
 The property under test is narrow and safety-critical: the CDSS must never
 return a diabetic retinopathy grade unless verified trained weights are loaded.
-Silently degrading to a randomly-initialised network or to the simulated engine
-produces output a clinician cannot distinguish from a real prediction.
+Silently degrading to a randomly-initialised network, or to any other source of
+predictions, produces output a clinician cannot distinguish from a real one.
 """
 
 import hashlib
@@ -20,7 +20,6 @@ requires_torch = pytest.mark.skipif(
 
 from app.services.ai_service import (
     EfficientNetB0InferenceService,
-    MockInferenceService,
     ModelCheckpointError,
     get_ai_inference_service,
 )
@@ -46,7 +45,7 @@ def test_missing_checkpoint_raises_instead_of_using_random_weights(tmp_path):
 
 
 def test_predict_refuses_when_uninitialised(blank_image, tmp_path):
-    """predict() must raise rather than quietly delegating to the mock engine."""
+    """predict() must raise rather than return a prediction from anywhere else."""
     service = EfficientNetB0InferenceService(checkpoint_path=str(tmp_path / "nope.pth"))
 
     with pytest.raises(ModelCheckpointError):
@@ -117,10 +116,11 @@ def test_digest_mismatch_refuses_to_load(tmp_path):
         settings.MODEL_CHECKPOINT_SHA256 = original
 
 
-def test_missing_torch_does_not_silently_downgrade_to_mock(tmp_path, monkeypatch):
+def test_missing_torch_does_not_silently_downgrade(tmp_path, monkeypatch):
     """
-    Regression guard: the old loader caught ImportError and served simulated
-    grades. A missing PyTorch must now surface as a checkpoint error instead.
+    Regression guard: the old loader caught ImportError and served grades that
+    did not come from the model. A missing PyTorch must surface as a checkpoint
+    error instead.
     """
     from app.core.config import settings
 
@@ -131,7 +131,7 @@ def test_missing_torch_does_not_silently_downgrade_to_mock(tmp_path, monkeypatch
     service = EfficientNetB0InferenceService(checkpoint_path=str(weights))
     if torch_installed:
         # With torch present the failure comes from deserialisation instead;
-        # either way it must be a ModelCheckpointError, never a mock result.
+        # either way it must be a ModelCheckpointError, never a result.
         with pytest.raises(ModelCheckpointError):
             service.load_model()
     else:
@@ -140,19 +140,54 @@ def test_missing_torch_does_not_silently_downgrade_to_mock(tmp_path, monkeypatch
         assert "pytorch is not installed" in str(exc.value).lower()
 
 
-def test_mock_engine_only_served_when_explicitly_requested(monkeypatch, tmp_path):
-    """The simulated engine is opt-in by name, never a fallback."""
+@pytest.mark.parametrize("engine_setting", [None, "mock", "simulated", "pytorch"])
+def test_no_configuration_selects_another_engine(engine_setting, monkeypatch, tmp_path):
+    """
+    EfficientNet-B0 is the only engine. The former AI_INFERENCE_ENGINE switch
+    to a simulated engine is gone: whatever it is set to, a missing checkpoint
+    raises rather than returning predictions from another source.
+    """
     from app.core.config import settings
 
-    monkeypatch.setenv("AI_INFERENCE_ENGINE", "mock")
-    assert isinstance(get_ai_inference_service(), MockInferenceService)
-
-    # Without the explicit opt-in, a broken checkpoint must raise rather than
-    # silently returning the simulated engine.
-    monkeypatch.setenv("AI_INFERENCE_ENGINE", "pytorch")
+    if engine_setting is None:
+        monkeypatch.delenv("AI_INFERENCE_ENGINE", raising=False)
+    else:
+        monkeypatch.setenv("AI_INFERENCE_ENGINE", engine_setting)
     monkeypatch.setattr(settings, "MODEL_CHECKPOINT_PATH", str(tmp_path / "absent.pth"))
     with pytest.raises(ModelCheckpointError):
         get_ai_inference_service()
+
+
+def test_missing_calibration_artifact_fails_closed(monkeypatch, tmp_path):
+    """Verified weights without the fitted temperature must not serve uncalibrated output."""
+    from app.services.ai_service import CalibrationArtifactError, load_calibration_artifact
+
+    with pytest.raises(CalibrationArtifactError):
+        load_calibration_artifact(str(tmp_path / "absent_artifact.json"), "0" * 64)
+
+
+def test_simulated_engine_is_not_in_the_application():
+    """No simulated engine or synthetic attribution generator remains importable from the app."""
+    import app.services.ai_service as ai_svc
+
+    for name in ("MockInferenceService", "create_mock_gradcam_heatmap"):
+        assert not hasattr(ai_svc, name), name
+    engines = [obj for obj in vars(ai_svc).values()
+               if isinstance(obj, type) and issubclass(obj, ai_svc.BaseInferenceService)
+               and obj is not ai_svc.BaseInferenceService]
+    assert engines == [EfficientNetB0InferenceService]
+
+
+def test_health_reports_not_ready_when_the_checkpoint_cannot_load(monkeypatch, tmp_path):
+    """With no loadable checkpoint the health endpoint says so; it never reports another engine as ready."""
+    import app.services.ai_service as ai_svc
+    from app.core.config import settings
+
+    monkeypatch.setattr(ai_svc, "_service_singleton", None)
+    monkeypatch.setattr(settings, "MODEL_CHECKPOINT_PATH", str(tmp_path / "absent.pth"))
+    health = ai_svc.get_inference_health()
+    assert health["ready"] is False
+    assert health["engine"] == "pytorch"
 
 
 def test_configured_checkpoint_path_matches_compose_mount():

@@ -5,8 +5,8 @@
  * partition and records the temperature in the persisted model version, which
  * the API returns as calibrationTemperature. Only an output that carries that
  * record, and whose five values form a valid probability distribution, is
- * labelled a class probability. Anything else (the simulated engine, a record
- * stored before calibration, a malformed vector) keeps the neutral
+ * labelled a class probability. Anything else (a record stored before
+ * calibration, a malformed vector) keeps the neutral
  * "model-generated class score" wording, so an uncalibrated value is never
  * relabelled as a probability.
  *
