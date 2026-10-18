@@ -362,58 +362,32 @@ class GradCAMVisualizer:
 
 ---
 
-## 7. Local Dry-Run vs. Production Checkpoint Toggle
+## 7. Engine Configuration
 
-The CDSS is designed with a **pluggable architecture** allowing seamless switching between:
-1. **Mock Inference Harness** (Dry-Run / Unit Testing): Generates realistic synthetic distributions, simulates clinical scenarios, and generates mathematically aligned Grad-CAM overlays without needing GPU hardware or pre-trained weight files.
-2. **Production EfficientNet-B0 Engine**: Loads real PyTorch weights, executes tensor inference, and performs actual layer hook backpropagation.
+The application serves one inference engine: the fixed EfficientNet-B0 checkpoint with its validation-fitted temperature-scaling artifact. There is no simulated or dry-run engine and no setting that selects one. If the checkpoint or the calibration artifact cannot be loaded or verified, the engine raises `ModelCheckpointError` (or its subclass `CalibrationArtifactError`), the health endpoint reports `inference_ready: false`, and assessment submission returns `503`. No prediction is returned from any other source.
 
-### 7.1 Configuration via Environment Variable
+### 7.1 Configuration via Environment Variables
 In `backend/.env` (or environment settings):
 
 ```ini
-# Toggle inference engine: 'mock' (default) or 'pytorch'
-AI_INFERENCE_ENGINE=mock
-
-# Checkpoint settings (active when AI_INFERENCE_ENGINE=pytorch)
-MODEL_CHECKPOINT_PATH=./backend/models/weights/efficientnet_b0_dr.pth
+MODEL_CHECKPOINT_PATH=/app/models/weights/efficientnet_b0_dr.pth
+MODEL_CHECKPOINT_SHA256=67d0b89641f08057126dd411e380b25575ef29f71ae37ee5796d472d9203dbf7
+CALIBRATION_ARTIFACT_PATH=/app/models/calibration/temperature_scaling_artifact.json
 MODEL_DEVICE=cpu
-MODEL_TARGET_LAYER=features.8
-MODEL_EXPECTED_SHA256=d3b07384d113edec49eaa6238ad5ff00f898394b9f076b666a337181c015b6d5
 ```
 
-### 7.2 Service Factory Pattern in `backend/app/services/ai_service.py`
+### 7.2 Service Factory in `backend/app/services/ai_service.py`
 
 ```python
-import os
-from app.core.config import settings
-
 def get_ai_inference_service() -> BaseInferenceService:
-    """
-    Factory resolving the active inference service based on application configuration.
-    """
-    engine_type = os.getenv("AI_INFERENCE_ENGINE", "mock").strip().lower()
-    
-    if engine_type == "pytorch":
-        checkpoint_path = settings.MODEL_CHECKPOINT_PATH
-        if os.path.exists(checkpoint_path):
-            try:
-                service = EfficientNetB0InferenceService(checkpoint_path=checkpoint_path)
-                service.load_model()
-                logger.info(f"Loaded production EfficientNet-B0 engine from {checkpoint_path}")
-                return service
-            except Exception as e:
-                logger.error(f"Failed to load PyTorch checkpoint: {e}. Falling back to Mock service.")
-        else:
-            logger.warning(
-                f"Checkpoint {checkpoint_path} not found. Operating in Mock Inference mode."
-            )
-            
-    return MockInferenceService()
-
-# Global singleton initialized at application startup
-default_ai_service: BaseInferenceService = get_ai_inference_service()
+    service = EfficientNetB0InferenceService(checkpoint_path=settings.MODEL_CHECKPOINT_PATH)
+    service.load_model()   # verifies the digest, loads the weights and the calibration artifact; raises on failure
+    return service
 ```
+
+The service is resolved lazily on first use (`get_active_inference_service()`), so a missing or unverified checkpoint surfaces as a handled `503` rather than a start-up crash, and the error is raised on every call until it is corrected.
+
+The automated API tests replace the engine with a test double that lives in `backend/tests/inference_doubles.py`; it is not part of the application.
 
 ---
 
@@ -441,12 +415,11 @@ Generate the SHA-256 digest:
 # Windows PowerShell:
 Get-FileHash -Algorithm SHA256 .\backend\models\weights\efficientnet_b0_dr.pth
 ```
-Copy the hash into `backend/.env` under `MODEL_EXPECTED_SHA256`.
+Copy the hash into `backend/.env` under `MODEL_CHECKPOINT_SHA256`.
 
-### Step 4: Toggle Production Mode
+### Step 4: Point the Service at the Checkpoint
 Update `backend/.env`:
 ```ini
-AI_INFERENCE_ENGINE=pytorch
 MODEL_CHECKPOINT_PATH=./backend/models/weights/efficientnet_b0_dr.pth
 ```
 

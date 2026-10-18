@@ -39,7 +39,7 @@ This digest is not documentation alone. The backend verifies it before serving:
 
 - `MODEL_CHECKPOINT_SHA256` in [`backend/app/core/config.py`](../../backend/app/core/config.py) carries the digest above.
 - `EfficientNetB0InferenceService._verify_checkpoint_digest()` hashes the file on load and raises `ModelCheckpointError` on any mismatch.
-- A missing, corrupt, or structurally incompatible checkpoint also raises. The engine never falls back to randomly-initialised weights or to the simulated engine.
+- A missing, corrupt, or structurally incompatible checkpoint also raises. The engine never falls back to randomly-initialised weights or to any other source of predictions; EfficientNet-B0 is the only engine the application serves.
 
 This means a graded prediction served by the running system is demonstrably produced by the same bytes that produced [`model_evaluation_report.md`](model_evaluation_report.md).
 
