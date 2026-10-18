@@ -1,0 +1,166 @@
+classDiagram
+    direction TB
+
+    class User {
+        +string id
+        +string username
+        +string email
+        +string fullName
+        +string role
+        +string status
+        +bool mustChangePassword
+        +login()
+        +logout()
+        +changePassword()
+    }
+    class Physician {
+        +string licenseNumber
+        +string facility
+        +register()
+        +createAssessment()
+        +uploadImage()
+        +submitReview()
+        +viewHistory()
+        +downloadReport()
+    }
+    class SuperAdministrator {
+        +createPhysician()
+        +approve()
+        +reject()
+        +suspend()
+        +reactivate()
+        +resetPassword()
+        +viewAdminAudit()
+    }
+
+    class Assessment {
+        +string id
+        +string patientId
+        +string eyeLaterality
+        +string cameraModel
+        +bool isMydriatic
+        +string clinicalNotes
+        +string status
+        +validateTransition()
+    }
+    class ImageAsset {
+        +string storedFilename
+        +string mimeType
+        +string sha256Hash
+        +int width
+        +int height
+    }
+
+    class ValidationPipeline {
+        +execute(imageBytes)
+    }
+    class Gate1Integrity {
+        +evaluate()
+    }
+    class Gate2Relevance {
+        +evaluate()
+    }
+    class Gate3Quality {
+        +float laplacianVariance
+        +float illuminationIndex
+        +evaluate()
+    }
+    class ValidationResult {
+        +string status
+        +int failedGate
+        +string failureReason
+        +string actionableGuidance
+    }
+
+    class BaseInferenceService {
+        <<abstract>>
+        +predict(image, laterality)
+    }
+    class EfficientNetB0InferenceService {
+        +string checkpointPath
+        +float temperature
+        +loadModel()
+        +verifyCheckpointDigest()
+        +predict(image, laterality)
+    }
+    class CalibrationArtifact {
+        +string version
+        +float temperature
+        +string fitSplit
+        +string checkpointSha256
+    }
+
+    class ModelExecution {
+        +string modelVersion
+        +string device
+        +float executionTimeMs
+    }
+    class AIResult {
+        +int primaryClassGrade
+        +float primaryScore
+        +json classScores
+        +string topActivationRegion
+    }
+    class ExplanationArtifact {
+        +string artifactType
+        +string relativeUrl
+        +string colormap
+    }
+
+    class ProfessionalReview {
+        +string agreement
+        +int reviewerAssessedGrade
+        +string justificationNotes
+        +string signatureHash
+        +bool isImmutable
+    }
+    class AuditEvent {
+        +string eventType
+        +string action
+        +string actor
+        +string details
+        +datetime timestamp
+    }
+
+    class AssessmentService {
+        +createAssessment()
+        +processAndValidateImage()
+        +submitProfessionalReview()
+        +searchAssessments()
+    }
+    class ReportService {
+        +generatePdfReport()
+    }
+    class AccountService {
+        +registerPhysician()
+        +createPhysician()
+        +approve()
+        +changePassword()
+    }
+
+    User <|-- Physician
+    User <|-- SuperAdministrator
+
+    Physician "1" --> "many" Assessment : creates
+    Assessment "1" --> "0..1" ImageAsset : has
+    Assessment "1" --> "0..1" ValidationResult : validated by
+    Assessment "1" --> "0..1" ModelExecution : runs
+    ModelExecution "1" --> "0..1" AIResult : produces
+    AIResult "1" --> "many" ExplanationArtifact : explained by
+    Assessment "1" --> "0..1" ProfessionalReview : reviewed in
+    Physician "1" --> "many" ProfessionalReview : signs
+    Assessment "1" --> "many" AuditEvent : logs
+
+    ValidationPipeline --> Gate1Integrity : runs
+    ValidationPipeline --> Gate2Relevance : runs
+    ValidationPipeline --> Gate3Quality : runs
+    ValidationPipeline ..> ValidationResult : records
+
+    BaseInferenceService <|-- EfficientNetB0InferenceService
+    EfficientNetB0InferenceService --> CalibrationArtifact : loads
+
+    AssessmentService --> ValidationPipeline : uses
+    AssessmentService --> BaseInferenceService : uses
+    AssessmentService ..> AuditEvent : records
+    ReportService ..> Assessment : reports on
+    SuperAdministrator --> AccountService : manages accounts via

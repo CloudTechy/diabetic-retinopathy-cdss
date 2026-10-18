@@ -1,0 +1,91 @@
+sequenceDiagram
+    actor P as Physician
+    participant UI as User Interface
+    participant AUTH as Authentication Service
+    participant AS as Assessment Service
+    participant VP as Validation Pipeline
+    participant IE as Inference Engine (EfficientNet-B0)
+    participant RS as Report Service
+    participant DB as Database
+
+    P->>UI: Enter username and password
+    UI->>AUTH: Authenticate user
+    activate AUTH
+    AUTH->>DB: Find account and verify password
+    DB-->>AUTH: Return user record and status
+    AUTH-->>UI: Token (or refusal)
+    deactivate AUTH
+
+    alt Login failed (wrong credentials, pending, rejected or suspended)
+        UI-->>P: Display reason sign-in was refused
+    else Login successful
+        opt Temporary password
+            UI-->>P: Require password change
+            P->>UI: Enter new password
+            UI->>AUTH: Change password
+            AUTH->>DB: Store new password hash
+        end
+        UI-->>P: Display worklist
+
+        P->>UI: Enter study details and select fundus image
+        UI-->>P: Show browser pre-checks
+        P->>UI: Proceed to validation
+        UI->>AS: Create assessment and upload image
+        activate AS
+        AS->>DB: Save assessment and image (SHA-256)
+        AS->>VP: Validate image
+        activate VP
+        VP->>VP: Gate 1 file integrity and safe decode
+        VP->>VP: Gate 2 retinal-image relevance
+        VP->>VP: Gate 3 sharpness, illumination, contrast
+        VP-->>AS: Gate results
+        deactivate VP
+        AS->>DB: Save validation result
+
+        alt Any gate failed (fail-closed)
+            AS->>DB: Set status rejected and log audit event
+            AS-->>UI: Rejection reason and guidance
+            UI-->>P: Display rejection, no model output
+        else All gates passed
+            AS->>IE: Predict(image, laterality)
+            activate IE
+            alt Checkpoint or calibration artifact cannot be loaded or verified
+                IE-->>AS: ModelCheckpointError, no prediction
+                AS-->>UI: 503 Inference engine unavailable, no result saved
+                UI-->>P: Display error, no model output
+            else Verified checkpoint and calibration artifact loaded
+                IE->>IE: Preprocess to 224x224 and compute logits
+                IE->>IE: Temperature-scale logits (T = 1.0939)
+                IE->>IE: Generate Grad-CAM in the image's shape
+                IE-->>AS: Class probabilities, grade, Grad-CAM
+                deactivate IE
+                AS->>DB: Save model execution, result, Grad-CAM and audit event
+                AS-->>UI: Status result_ready
+                deactivate AS
+                UI-->>P: Display probabilities and Grad-CAM
+
+                P->>UI: Submit professional review
+                UI->>AS: Submit review
+                activate AS
+                alt Disagree or inconclusive without justification
+                    AS-->>UI: Validation error
+                    UI-->>P: Ask for justification notes
+                else Valid review
+                    AS->>DB: Save signed, immutable review
+                    AS->>DB: Set status completed and log audit event
+                    AS-->>UI: Completed, write-locked record
+                    UI-->>P: Display completed record
+                end
+                deactivate AS
+
+                P->>UI: Download report
+                UI->>RS: Generate PDF report
+                activate RS
+                RS->>DB: Read assessment, result and review
+                DB-->>RS: Return record
+                RS-->>UI: PDF report
+                deactivate RS
+                UI-->>P: Save hash-anchored PDF
+            end
+        end
+    end

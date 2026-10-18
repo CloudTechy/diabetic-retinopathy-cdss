@@ -1,0 +1,146 @@
+erDiagram
+    USERS {
+        string id PK
+        string username UK
+        string email UK
+        string full_name
+        string hashed_password
+        string role
+        string status
+        string license_number
+        string facility
+        boolean is_active
+        boolean must_change_password
+        int token_version
+        string created_by_id FK
+        string approved_by_id FK
+        datetime approved_at
+        text rejection_reason
+        datetime last_login_at
+        datetime created_at
+        datetime updated_at
+    }
+    ASSESSMENTS {
+        string id PK
+        string patient_id
+        string eye_laterality
+        string camera_model
+        boolean is_mydriatic
+        text clinical_notes
+        string status
+        string created_by_id FK
+        datetime created_at
+        datetime updated_at
+    }
+    IMAGE_ASSETS {
+        string id PK
+        string assessment_id FK
+        string original_filename
+        string stored_filename
+        string storage_path
+        int file_size_bytes
+        string mime_type
+        string sha256_hash
+        int width
+        int height
+        datetime created_at
+    }
+    VALIDATION_RESULTS {
+        string id PK
+        string assessment_id FK
+        string status
+        boolean gate1_passed
+        json gate1_details
+        boolean gate2_passed
+        json gate2_details
+        boolean gate3_passed
+        json gate3_details
+        int failed_gate
+        string failure_code
+        text failure_reason
+        text actionable_guidance
+        float laplacian_variance
+        float illumination_index
+        float contrast_dynamic_range
+        string native_resolution
+        datetime evaluated_at
+    }
+    MODEL_EXECUTIONS {
+        string id PK
+        string assessment_id FK
+        string model_name
+        string model_version
+        string execution_mode
+        string device
+        float execution_time_ms
+        datetime started_at
+        datetime completed_at
+    }
+    AI_RESULTS {
+        string id PK
+        string assessment_id FK
+        string model_execution_id FK
+        int primary_class_grade
+        string primary_class_label
+        float primary_score
+        json class_scores
+        string target_layer
+        string top_activation_region
+        text disclaimer
+        datetime created_at
+    }
+    EXPLANATION_ARTIFACTS {
+        string id PK
+        string ai_result_id FK
+        string artifact_type
+        string storage_path
+        string relative_url
+        string target_layer
+        string colormap
+        json metadata_json
+        datetime created_at
+    }
+    PROFESSIONAL_REVIEWS {
+        string id PK
+        string assessment_id FK
+        string reviewer_id FK
+        string agreement
+        int reviewer_assessed_grade
+        string reviewer_assessed_grade_label
+        text justification_notes
+        string inconclusive_reason
+        string clinician_name
+        string license_number
+        string facility
+        string signature_hash
+        boolean is_immutable
+        datetime signed_at
+    }
+    AUDIT_EVENTS {
+        string id PK
+        string assessment_id FK
+        string user_id FK
+        string event_type
+        string target_user_id FK
+        string outcome
+        string action
+        string actor
+        text details
+        string badge_type
+        json event_metadata
+        string ip_address
+        datetime timestamp
+    }
+
+    USERS ||--o{ ASSESSMENTS : creates
+    USERS ||--o{ PROFESSIONAL_REVIEWS : signs
+    USERS |o--o{ AUDIT_EVENTS : performs
+    USERS |o--o{ USERS : "creates / approves"
+    ASSESSMENTS ||--o| IMAGE_ASSETS : has
+    ASSESSMENTS ||--o| VALIDATION_RESULTS : "validated by"
+    ASSESSMENTS ||--o| MODEL_EXECUTIONS : runs
+    ASSESSMENTS ||--o| AI_RESULTS : yields
+    MODEL_EXECUTIONS ||--o| AI_RESULTS : produces
+    AI_RESULTS ||--o{ EXPLANATION_ARTIFACTS : "explained by"
+    ASSESSMENTS ||--o| PROFESSIONAL_REVIEWS : "reviewed in"
+    ASSESSMENTS |o--o{ AUDIT_EVENTS : logs
