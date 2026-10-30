@@ -77,6 +77,17 @@ class ReportService:
             textColor=colors.HexColor("#334155"),
         )
 
+        # Table text that may be wider than its column. A plain-string cell is
+        # drawn on one line and runs into the next cell; a Paragraph wraps.
+        cell_style = ParagraphStyle(
+            "TableCell",
+            parent=normal,
+            fontName="Helvetica",
+            fontSize=8,
+            leading=10,
+            textColor=colors.HexColor("#334155"),
+        )
+
         disclaimer_style = ParagraphStyle(
             "Disclaimer",
             parent=normal,
@@ -154,9 +165,12 @@ class ReportService:
         sha_hash = img.sha256_hash if img else "N/A"
 
         gate_data = [
-            ["Gate 1: File Integrity", g1_stat, f"MIME {img.mime_type if img else 'n/a'}, SHA-256: {sha_hash[:16]}..."],
-            ["Gate 2: Technical retinal-image relevance", g2_stat, "Configured geometry and colour-profile thresholds; no anatomical confirmation."],
-            ["Gate 3: Technical Quality", g3_stat, f"Laplacian variance: {lap_metric} (Threshold >= {settings.LAPLACIAN_BLUR_THRESHOLD}), Illum: {illum_metric}"],
+            [Paragraph(label, cell_style), status, Paragraph(detail, cell_style)]
+            for label, status, detail in (
+                ("Gate 1: File Integrity", g1_stat, f"MIME {img.mime_type if img else 'n/a'}, SHA-256: {sha_hash[:16]}..."),
+                ("Gate 2: Technical retinal-image relevance", g2_stat, "Configured geometry and colour-profile thresholds; no anatomical confirmation."),
+                ("Gate 3: Technical Quality", g3_stat, f"Laplacian variance: {lap_metric} (Threshold &gt;= {settings.LAPLACIAN_BLUR_THRESHOLD}), Illum: {illum_metric}"),
+            )
         ]
 
         gate_table = Table(gate_data, colWidths=[1.8 * inch, 1.0 * inch, 4.2 * inch])
@@ -167,6 +181,7 @@ class ReportService:
                 ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
                 ("FONTSIZE", (0, 0), (-1, -1), 8),
                 ("TEXTCOLOR", (1, 0), (1, -1), colors.HexColor("#059669") if assessment.status != "rejected" else colors.HexColor("#DC2626")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 3),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
             ])
@@ -224,7 +239,8 @@ class ReportService:
             for cs in ai.class_scores:
                 score_rows.append([f"Grade {cs['grade']}", cs["label"], f"{cs['score']:.2f}"])
 
-            score_table = Table(score_rows, colWidths=[1.2 * inch, 4.4 * inch, 1.4 * inch])
+            # 2.0 in holds the bold column header on one line; 1.4 in did not.
+            score_table = Table(score_rows, colWidths=[1.2 * inch, 3.8 * inch, 2.0 * inch])
             score_table.setStyle(
                 TableStyle([
                     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E2E8F0")),
