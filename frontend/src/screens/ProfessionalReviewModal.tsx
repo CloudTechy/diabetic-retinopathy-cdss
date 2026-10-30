@@ -16,6 +16,7 @@ import {
 } from '../types/clinical';
 import { clinicalApi } from '../services/api';
 import { describeApiError } from '../utils/apiError';
+import { scoreTerms } from '../utils/scoreTerminology';
 
 interface ProfessionalReviewModalProps {
   assessment: AssessmentRecord;
@@ -127,7 +128,7 @@ export const ProfessionalReviewModal: React.FC<ProfessionalReviewModalProps> = (
                 {assessment.modelObservation?.primaryClassLabel} (Grade {modelGrade})
               </span>
               <span className="font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
-                Score: {assessment.modelObservation?.primaryScore.toFixed(2)}
+                {scoreTerms(assessment.modelObservation).highest}: {assessment.modelObservation?.primaryScore.toFixed(2)}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded border border-slate-100 leading-relaxed">

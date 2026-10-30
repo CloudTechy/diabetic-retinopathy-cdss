@@ -16,6 +16,7 @@ import {
 } from '../types/clinical';
 import { clinicalApi } from '../services/api';
 import { describeApiError } from '../utils/apiError';
+import { scoreTerms } from '../utils/scoreTerminology';
 import { AuditDrawer } from '../components/AuditDrawer';
 
 interface RecordHistoryScreenProps {
@@ -98,7 +99,8 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
       'Validation Status',
       'Laplacian Variance',
       'Model Candidate Stage',
-      'Model Score',
+      'Model Value',
+      'Model Value Type',
       'Clinician Recorded Grade',
       'Agreement',
       'Reviewing Clinician',
@@ -113,6 +115,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
       r.qualityMetrics.laplacianVariance.toFixed(1),
       r.modelObservation?.primaryClassLabel || 'N/A',
       r.modelObservation?.primaryScore.toFixed(2) || 'N/A',
+      r.modelObservation ? scoreTerms(r.modelObservation).short : 'N/A',
       r.clinicianReview?.reviewerAssessedGradeLabel || 'N/A',
       r.clinicianReview?.agreement || 'N/A',
       r.clinicianReview?.clinicianName || 'N/A',
@@ -296,7 +299,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                   {rec.modelObservation ? (
                     <>
                       <span className="font-semibold">{rec.modelObservation.primaryClassLabel}</span>{' '}
-                      <span className="font-mono text-slate-500">Score: {rec.modelObservation.primaryScore.toFixed(2)}</span>
+                      <span className="font-mono text-slate-500">{scoreTerms(rec.modelObservation).calibrated ? 'Class probability' : 'Score'}: {rec.modelObservation.primaryScore.toFixed(2)}</span>
                     </>
                   ) : (
                     <span className="text-slate-400 italic">Aborted</span>
@@ -413,7 +416,7 @@ export const RecordHistoryScreen: React.FC<RecordHistoryScreenProps> = ({
                             {rec.modelObservation.primaryClassLabel}
                           </span>
                           <span className="font-mono text-slate-500 text-[11px] block">
-                            Score: {rec.modelObservation.primaryScore.toFixed(2)}
+                            {scoreTerms(rec.modelObservation).calibrated ? 'Class probability' : 'Score'}: {rec.modelObservation.primaryScore.toFixed(2)}
                           </span>
                         </div>
                       ) : (

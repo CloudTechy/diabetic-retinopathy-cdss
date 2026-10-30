@@ -14,6 +14,7 @@ import {
 import { AssessmentRecord, ReviewStatus, EyeLaterality } from '../types/clinical';
 import { clinicalApi } from '../services/api';
 import { describeApiError } from '../utils/apiError';
+import { scoreTerms } from '../utils/scoreTerminology';
 
 interface DashboardScreenProps {
   onSelectAssessment: (assessment: AssessmentRecord) => void;
@@ -305,7 +306,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       <>
                         <span className="font-semibold">{rec.modelObservation.primaryClassLabel}</span>{' '}
                         <span className="font-mono text-slate-600">({rec.modelObservation.primaryScore.toFixed(2)})</span>{' '}
-                        <span className="text-[10px] text-slate-400">model-generated class score</span>
+                        <span className="text-[10px] text-slate-400">{scoreTerms(rec.modelObservation).short}</span>
                       </>
                     ) : (
                       <span className="text-slate-400 italic">Inference aborted</span>
@@ -427,7 +428,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                         </span>
                       </td>
 
-                      {/* Preliminary Model Class Score (strictly non-diagnostic terminology) */}
+                      {/* Model output for the candidate grade, labelled by scoreTerms */}
                       <td className="px-4 py-3 whitespace-nowrap">
                         {rec.modelObservation ? (
                           <div>
@@ -438,7 +439,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                               </span>
                             </div>
                             <span className="text-[10px] text-slate-400">
-                              model-generated class score
+                              {scoreTerms(rec.modelObservation).short}
                             </span>
                           </div>
                         ) : (

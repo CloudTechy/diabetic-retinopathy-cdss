@@ -31,7 +31,7 @@ This matrix establishes direct, bidirectional traceability between the 9 approve
 
 ## 2. Academic Traceability Notes
 1. **Accreditation:** Postgraduate Diploma (PGD) Computer Science, Faculty of Physical Sciences.
-2. **Methodological Boundaries:** In accordance with academic guidelines, all automated outputs are presented strictly as *"Model-Generated Class Scores"* for preliminary decision support. The system is a research prototype and does not independently diagnose, stage, or prescribe. Final clinical assessment and management decisions remain exclusively the responsibility of the reviewing clinician.
+2. **Methodological Boundaries:** In accordance with academic guidelines, automated outputs are presented as *"Temperature-Scaled Class Probabilities"* when they carry the verified, validation-fitted temperature (and as *"Model-Generated Class Scores"* otherwise), for preliminary decision support; a calibrated probability is not a diagnosis. The system is a research prototype and does not independently diagnose, stage, or prescribe. Final clinical assessment and management decisions remain exclusively the responsibility of the reviewing clinician.
 
 
 
