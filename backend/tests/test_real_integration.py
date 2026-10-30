@@ -158,8 +158,6 @@ def test_real_model_end_to_end_pipeline(authed_client):
     # ------------------------------------------------------------------ #
     # 1. Redirect inference to the real checkpoint for this test only      #
     # ------------------------------------------------------------------ #
-    old_engine_env = os.environ.get("AI_INFERENCE_ENGINE", "mock")
-    os.environ["AI_INFERENCE_ENGINE"] = "pytorch"
 
     old_singleton = ai_svc._service_singleton
     ai_svc._service_singleton = None  # force re-initialisation
@@ -295,6 +293,5 @@ def test_real_model_end_to_end_pipeline(authed_client):
 
     finally:
         # Always restore the global inference singleton and env variable
-        os.environ["AI_INFERENCE_ENGINE"] = old_engine_env
         ai_svc._service_singleton = old_singleton
         settings.MODEL_CHECKPOINT_PATH = old_checkpoint

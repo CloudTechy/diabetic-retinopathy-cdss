@@ -11,7 +11,6 @@ import numpy as np
 import pytest
 
 from app.services.ai_service import (
-    create_mock_gradcam_heatmap,
     generate_viridis_colormap,
     viridis_rgba_array,
 )
@@ -81,10 +80,14 @@ def test_output_shape_and_dtype():
     assert out.dtype == np.uint8
 
 
-@pytest.mark.parametrize("grade", [0, 1, 2, 3, 4])
-def test_mock_heatmap_still_renders_for_every_grade(grade):
-    """The simulated overlay uses the same vectorised path; it must still work."""
-    img = create_mock_gradcam_heatmap(grade, width=64, height=64, laterality="OD")
-    assert img.size == (64, 64)
+@pytest.mark.parametrize("size", [(64, 64), (512, 340), (340, 512)])
+def test_cam_renders_as_rgba_overlay_in_the_image_shape(size):
+    """A normalised CAM in the image's aspect ratio becomes an RGBA overlay of that shape."""
+    from PIL import Image
+    width, height = size
+    y, x = np.ogrid[:height, :width]
+    cam = np.exp(-((x - width / 2) ** 2 + (y - height / 2) ** 2) / (2 * (width * 0.1) ** 2))
+    img = Image.fromarray(viridis_rgba_array(cam / cam.max()))
+    assert img.size == (width, height)
     assert img.mode == "RGBA"
     assert np.array(img).max() > 0

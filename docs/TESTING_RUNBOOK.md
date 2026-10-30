@@ -183,7 +183,7 @@ The command creates nothing when a Super Administrator already exists. The passw
 2. **Five-Class Probability Distribution Card:**
    - For a result from the trained engine (calibration recorded), verify the predicted grade's value is labelled **"Temperature-Scaled Class Probability"** and **"Highest Class Probability"** (e.g. `0.88`), and the list is titled **"Five-Class Probability Distribution"** across all 5 ICDR stages.
    - Verify the *Model information* line states the temperature (`T = 1.0939`, fitted on the validation partition only).
-   - A result with no recorded calibration (simulated engine, or stored before calibration) keeps the **"Model-Generated Class Score"** wording and is never called a probability.
+   - A result with no recorded calibration (stored before calibration was introduced) keeps the **"Model-Generated Class Score"** wording and is never called a probability.
    - Observe the Grad-CAM explainability insight specifying target layer: `features.8 (Conv2d Bottleneck Residual)`; activation wording stays with Grad-CAM, not with the probabilities.
    - Verify the boundary notice: *Class probabilities are produced using temperature scaling fitted on the validation partition. They support professional review and do not establish a diagnosis.*
 

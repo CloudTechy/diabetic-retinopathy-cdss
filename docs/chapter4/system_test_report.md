@@ -153,25 +153,28 @@ Functional test result: 312 passed, 0 skipped
 
 ## Fail-Closed Inference Tests (added 2026-09-29)
 
-Eight cases in `backend/tests/test_inference_fail_closed.py` guard a single safety invariant: **the system must never return a diabetic retinopathy grade unless verified trained weights are loaded.**
+Fourteen cases in `backend/tests/test_inference_fail_closed.py` guard a single safety invariant: **the system must never return a diabetic retinopathy grade unless verified trained weights are loaded.**
 
 | # | Test | Asserts |
 | :---: | :--- | :--- |
 | 1 | `test_missing_checkpoint_raises_instead_of_using_random_weights` | An absent checkpoint raises `ModelCheckpointError`; the service stays uninitialised rather than serving the randomly-initialised graph. |
-| 2 | `test_predict_refuses_when_uninitialised` | `predict()` raises instead of silently delegating to the simulated engine. |
+| 2 | `test_predict_refuses_when_uninitialised` | `predict()` raises instead of returning a prediction from any other source. |
 | 3 | `test_corrupt_checkpoint_raises` *(skipped without PyTorch)* | A file that exists but will not deserialise fails closed. |
 | 4 | `test_digest_mismatch_refuses_to_load` | Weights whose SHA-256 differs from `MODEL_CHECKPOINT_SHA256` are rejected on provenance. |
-| 5 | `test_missing_torch_does_not_silently_downgrade_to_mock` | A missing PyTorch raises rather than downgrading to simulated grades. |
-| 6 | `test_mock_engine_only_served_when_explicitly_requested` | The simulated engine is returned only for `AI_INFERENCE_ENGINE=mock`, never as a fallback. |
-| 7 | `test_configured_checkpoint_path_matches_compose_mount` | Regression guard on the path defect that made every deployment serve random weights. |
-| 8 | `test_repository_checkpoint_matches_declared_digest` | The committed weights are the evaluated weights. |
+| 5 | `test_missing_torch_does_not_silently_downgrade` | A missing PyTorch raises rather than returning grades that did not come from the model. |
+| 6–9 | `test_no_configuration_selects_another_engine` *(4 settings)* | Whatever `AI_INFERENCE_ENGINE` is set to (unset, `mock`, `simulated`, `pytorch`), a missing checkpoint raises: no setting selects another engine. |
+| 10 | `test_missing_calibration_artifact_fails_closed` | A missing temperature-scaling artifact raises rather than serving uncalibrated output. |
+| 11 | `test_simulated_engine_is_not_in_the_application` | No simulated engine or synthetic attribution generator is importable; EfficientNet-B0 is the only engine class. |
+| 12 | `test_health_reports_not_ready_when_the_checkpoint_cannot_load` | With no loadable checkpoint, health reports not ready rather than another engine as ready. |
+| 13 | `test_configured_checkpoint_path_matches_compose_mount` | Regression guard on the path defect that made every deployment serve random weights. |
+| 14 | `test_repository_checkpoint_matches_declared_digest` | The committed weights are the evaluated weights. |
 
-The suite opts into the simulated engine explicitly in `conftest.py`. Without that opt-in the assessment endpoints correctly return `503` — which is the behaviour being protected.
+The API tests install an isolated test double (`backend/tests/inference_doubles.py`) as the inference singleton through an autouse fixture in `conftest.py`. It exists only in the test package; the application cannot select it, and without it the assessment endpoints return `503` when no checkpoint is loaded — which is the behaviour being protected. `test_real_model_end_to_end_pipeline` replaces it with the real engine.
 
 ---
 
 ## Grad-CAM Render-Equivalence Tests (added 2026-09-29)
 
-13 cases in `backend/tests/test_gradcam_colormap.py` assert that vectorising the Viridis colormap changed **no pixel**. Grad-CAM overlays are clinical attribution artefacts, so a performance change must not alter what a clinician sees.
+11 cases in `backend/tests/test_gradcam_colormap.py` assert that vectorising the Viridis colormap changed **no pixel**. Grad-CAM overlays are clinical attribution artefacts, so a performance change must not alter what a clinician sees.
 
-The original per-pixel implementation is retained in the test file as the oracle. Coverage: random inputs at four shapes; the exact `uint8 -> PIL resize -> float32` dtype path `predict()` uses (where a precision mismatch would surface); the transparency floor at 0.05; clipping of out-of-range and negative values; output shape/dtype; and that the simulated overlay still renders for all five grades.
+The original per-pixel implementation is retained in the test file as the oracle. Coverage: random inputs at four shapes; the exact `uint8 -> PIL resize -> float32` dtype path `predict()` uses (where a precision mismatch would surface); the transparency floor at 0.05; clipping of out-of-range and negative values; output shape/dtype; and that a CAM in the image's aspect ratio (square, landscape, portrait) renders as an RGBA overlay of that shape.

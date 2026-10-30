@@ -4,8 +4,8 @@ What a stored model output may be called in the report.
 The trained engine applies temperature scaling fitted on the validation
 partition and records the temperature in the persisted model version. Only an
 output with that record whose five values form a valid probability
-distribution is labelled a class probability. Anything else (the simulated
-engine, a result stored before calibration, a malformed vector) keeps the
+distribution is labelled a class probability. Anything else (a result
+stored before calibration, a malformed vector) keeps the
 neutral "model-generated class score" wording, so an uncalibrated value is
 never relabelled as a probability.
 

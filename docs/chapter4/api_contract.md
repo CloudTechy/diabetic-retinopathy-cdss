@@ -173,7 +173,7 @@ All routes in this section require an active `PHYSICIAN` whose password is not t
   ```
 
 ### `GET /api/v1/assessments/{id}/result`
-- **Description:** Retrieves the model-generated class score distribution and explainability metadata. `classScores[].score` and `primaryScore` are the temperature-scaled probabilities, softmax(logits / T), with T fitted on the validation split only (`docs/chapter4/probability_calibration/`); `uncalibratedScore` is the raw softmax of the same logits, kept for audit. `calibrationTemperature` is the T applied, or `null` when none was (the simulated engine, or a result stored before calibration was introduced).
+- **Description:** Retrieves the model-generated class score distribution and explainability metadata. `classScores[].score` and `primaryScore` are the temperature-scaled probabilities, softmax(logits / T), with T fitted on the validation split only (`docs/chapter4/probability_calibration/`); `uncalibratedScore` is the raw softmax of the same logits, kept for audit. `calibrationTemperature` is the T applied, or `null` when none was (a result stored before calibration was introduced).
 - **Response `200 OK`:**
   ```json
   {

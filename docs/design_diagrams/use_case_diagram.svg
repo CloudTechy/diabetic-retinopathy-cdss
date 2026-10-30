@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1250" viewBox="0 0 1120 1250" font-family="Times New Roman, Times, serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+<rect width="1120" height="1250" fill="#fff"/>
+<rect x="275" y="45" width="575" height="1160" fill="none" stroke="#000" stroke-width="1.4" stroke-dasharray="5,4"/>
+<text x="562.5" y="71" text-anchor="middle" font-size="16" font-weight="bold">AI-BASED CLINICAL DECISION SUPPORT SYSTEM</text>
+<text x="562.5" y="91" text-anchor="middle" font-size="16" font-weight="bold">FOR EARLY DETECTION OF DIABETIC RETINOPATHY</text>
+<line x1="100" y1="634" x2="290.0" y2="150" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="225" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="300" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="375" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="450" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="525" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="760" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="835" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="910" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="985" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="1060" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="290.0" y2="1135" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="448.0" y2="602" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="678.0" y2="602" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="100" y1="634" x2="448.0" y2="683" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="678.0" y2="683" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="835.0" y2="215" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="835.0" y2="310" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="835.0" y2="405" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="835.0" y2="880" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="835.0" y2="975" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="1018" y1="634" x2="835.0" y2="1070" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+<ellipse cx="405" cy="150" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="146.0" text-anchor="middle" font-size="15" font-weight="bold">Request Account</text>
+<text x="405" y="164.0" text-anchor="middle" font-size="15" font-weight="bold">(Register)</text>
+<ellipse cx="405" cy="225" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="230.0" text-anchor="middle" font-size="15" font-weight="bold">View Worklist</text>
+<ellipse cx="405" cy="300" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="305.0" text-anchor="middle" font-size="15" font-weight="bold">Create Assessment</text>
+<ellipse cx="405" cy="375" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="380.0" text-anchor="middle" font-size="15" font-weight="bold">Upload Fundus Image</text>
+<ellipse cx="405" cy="450" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="455.0" text-anchor="middle" font-size="15" font-weight="bold">View Validation Results</text>
+<ellipse cx="405" cy="525" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="521.0" text-anchor="middle" font-size="15" font-weight="bold">View Class</text>
+<text x="405" y="539.0" text-anchor="middle" font-size="15" font-weight="bold">Probabilities</text>
+<ellipse cx="405" cy="760" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="756.0" text-anchor="middle" font-size="15" font-weight="bold">View Grad-CAM</text>
+<text x="405" y="774.0" text-anchor="middle" font-size="15" font-weight="bold">Explanation</text>
+<ellipse cx="405" cy="835" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="831.0" text-anchor="middle" font-size="15" font-weight="bold">Submit Professional</text>
+<text x="405" y="849.0" text-anchor="middle" font-size="15" font-weight="bold">Review</text>
+<ellipse cx="405" cy="910" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="906.0" text-anchor="middle" font-size="15" font-weight="bold">View Completed</text>
+<text x="405" y="924.0" text-anchor="middle" font-size="15" font-weight="bold">Record</text>
+<ellipse cx="405" cy="985" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="981.0" text-anchor="middle" font-size="15" font-weight="bold">Search Assessment</text>
+<text x="405" y="999.0" text-anchor="middle" font-size="15" font-weight="bold">History</text>
+<ellipse cx="405" cy="1060" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="1065.0" text-anchor="middle" font-size="15" font-weight="bold">View Audit Trail</text>
+<ellipse cx="405" cy="1135" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="405" y="1140.0" text-anchor="middle" font-size="15" font-weight="bold">Download PDF Report</text>
+<ellipse cx="563" cy="602" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="563" y="607.0" text-anchor="middle" font-size="15" font-weight="bold">Log In/Log Out</text>
+<ellipse cx="563" cy="683" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="563" y="688.0" text-anchor="middle" font-size="15" font-weight="bold">Change Password</text>
+<ellipse cx="720" cy="215" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="720" y="211.0" text-anchor="middle" font-size="15" font-weight="bold">View Account</text>
+<text x="720" y="229.0" text-anchor="middle" font-size="15" font-weight="bold">Summary</text>
+<ellipse cx="720" cy="310" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="720" y="306.0" text-anchor="middle" font-size="15" font-weight="bold">Approve / Reject</text>
+<text x="720" y="324.0" text-anchor="middle" font-size="15" font-weight="bold">Registrations</text>
+<ellipse cx="720" cy="405" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="720" y="401.0" text-anchor="middle" font-size="15" font-weight="bold">Create Physician</text>
+<text x="720" y="419.0" text-anchor="middle" font-size="15" font-weight="bold">Accounts</text>
+<ellipse cx="720" cy="880" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="720" y="876.0" text-anchor="middle" font-size="15" font-weight="bold">Suspend / Reactivate</text>
+<text x="720" y="894.0" text-anchor="middle" font-size="15" font-weight="bold">Accounts</text>
+<ellipse cx="720" cy="975" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="720" y="980.0" text-anchor="middle" font-size="15" font-weight="bold">Reset Passwords</text>
+<ellipse cx="720" cy="1070" rx="115.0" ry="31.0" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<text x="720" y="1066.0" text-anchor="middle" font-size="15" font-weight="bold">View Account</text>
+<text x="720" y="1084.0" text-anchor="middle" font-size="15" font-weight="bold">Audit Log</text>
+<circle cx="78" cy="584" r="13" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<line x1="78" y1="597" x2="78" y2="647" stroke="#000" stroke-width="1.4"/>
+<line x1="54" y1="620" x2="102" y2="620" stroke="#000" stroke-width="1.4"/>
+<line x1="78" y1="647" x2="58" y2="680" stroke="#000" stroke-width="1.4"/>
+<line x1="78" y1="647" x2="98" y2="680" stroke="#000" stroke-width="1.4"/>
+<text x="78" y="704" text-anchor="middle" font-size="15" font-weight="bold">Physician</text>
+<circle cx="1040" cy="584" r="13" fill="#fff" stroke="#000" stroke-width="1.4"/>
+<line x1="1040" y1="597" x2="1040" y2="647" stroke="#000" stroke-width="1.4"/>
+<line x1="1016" y1="620" x2="1064" y2="620" stroke="#000" stroke-width="1.4"/>
+<line x1="1040" y1="647" x2="1020" y2="680" stroke="#000" stroke-width="1.4"/>
+<line x1="1040" y1="647" x2="1060" y2="680" stroke="#000" stroke-width="1.4"/>
+<text x="1040" y="704" text-anchor="middle" font-size="15" font-weight="bold">Super</text>
+<text x="1040" y="722" text-anchor="middle" font-size="15" font-weight="bold">Administrator</text>
+</svg>

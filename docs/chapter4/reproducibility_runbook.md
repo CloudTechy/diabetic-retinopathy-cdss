@@ -188,8 +188,7 @@ curl http://localhost:8000/api/v1/health
 }
 ```
 
-- `"inference_engine": "mock"` means simulated grades are being served — check `AI_INFERENCE_ENGINE`.
-- `"status": "degraded"` with `inference_ready: false` means the checkpoint is missing or failed digest verification. The system will return `503` on assessment submission rather than grade from untrained weights.
+- `"status": "degraded"` with `inference_ready: false` means the checkpoint or the calibration artifact is missing or failed verification; there is no other engine to fall back to. The system will return `503` on assessment submission rather than grade from untrained weights.
 
 ---
 
@@ -216,4 +215,4 @@ python -m venv .venv
 # Linux/macOS: .venv/bin/python in place of .venv/Scripts/python.exe
 ```
 
-Expected: **312 collected — 312 passed, 0 skipped** (wall-clock between 60 and 480 s across this package's recorded runs with PyTorch installed — 61 s to 410 s were observed, the longer runs after the account-administration and probability-calibration suites were added and under machine load; the last line of the committed log records its own duration, and a rule checks it falls inside that range). No test is skipped. `test_real_model_end_to_end_pipeline` in particular runs: it sets `AI_INFERENCE_ENGINE=pytorch` for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.
+Expected: **312 collected — 312 passed, 0 skipped** (wall-clock between 60 and 480 s across this package's recorded runs with PyTorch installed — 61 s to 410 s were observed, the longer runs after the account-administration and probability-calibration suites were added and under machine load; the last line of the committed log records its own duration, and a rule checks it falls inside that range). No test is skipped. `test_real_model_end_to_end_pipeline` in particular runs: it replaces the suite's test double with the real engine for its own duration and runs against the digest-verified checkpoint using the genuine held-out fixture. It carries the `slow` marker so it *can* be deselected with `-m "not slow"`; nothing deselects it by default.

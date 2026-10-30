@@ -10,12 +10,6 @@ _pytest_tmp = pathlib.Path(__file__).resolve().parent.parent / ".pytest_tmp"
 _pytest_tmp.mkdir(exist_ok=True)
 os.environ.setdefault("PYTEST_DEBUG_TEMPROOT", str(_pytest_tmp))
 
-# The suite exercises the clinical journey against the SIMULATED inference
-# engine. This opt-in is explicit and must stay explicit: the production code
-# path fails closed rather than silently substituting simulated grades, so
-# without this the assessment endpoints correctly return 503.
-os.environ.setdefault("AI_INFERENCE_ENGINE", "mock")
-
 import numpy as np
 import pytest
 import pytest_asyncio
@@ -121,6 +115,22 @@ def pytest_sessionfinish(session, exitstatus):
     """
     import asyncio
     asyncio.run(test_engine.dispose())
+
+
+@pytest.fixture(autouse=True)
+def inference_double():
+    """
+    Install the test double (tests/inference_doubles.py) as the inference
+    singleton for each test, then restore the previous one. The application has
+    no other engine than EfficientNet-B0 and fails closed when it cannot load;
+    tests that exercise the real engine replace the singleton themselves.
+    """
+    import app.services.ai_service as ai_svc
+    from tests.inference_doubles import FixedOutputInferenceDouble
+    previous = ai_svc._service_singleton
+    ai_svc._service_singleton = FixedOutputInferenceDouble()
+    yield ai_svc._service_singleton
+    ai_svc._service_singleton = previous
 
 
 @pytest.fixture(scope="session")

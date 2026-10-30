@@ -20,10 +20,9 @@ class HealthResponse(BaseModel):
     inference_ready: bool
     inference_engine: str
     inference_detail: str
-    # The SHA-256 the engine verified before loading; None for the simulated
-    # engine or while not ready.
+    # The SHA-256 the engine verified before loading; None while not ready.
     checkpoint_sha256: Optional[str] = None
-    # Validation-fitted temperature scaling parameter (T); None for simulated engine or while not ready
+    # Validation-fitted temperature scaling parameter (T); None while not ready
     calibration_temperature: Optional[float] = None
     version: str = "1.0.0"
 

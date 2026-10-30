@@ -36,8 +36,6 @@ jobs:
 
       - name: Evidence integrity gate
         working-directory: backend
-        env:
-          AI_INFERENCE_ENGINE: mock
         run: |
           # --noconftest is load-bearing, not a convenience.
           #
@@ -89,6 +87,4 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        env:
-          AI_INFERENCE_ENGINE: mock
         run: python -m pytest tests/ -q

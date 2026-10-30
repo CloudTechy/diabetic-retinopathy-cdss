@@ -4,8 +4,8 @@ verified calibration record keeps the model-generated class score wording.
 
 The report is built through the API twice: once with the real engine class
 carrying the committed temperature-scaling artifact (a stub network with fixed
-logits, so the vector is known), once with the simulated engine, which records
-no calibration. Every Paragraph and table the report asks ReportLab to draw is
+logits, so the vector is known), once with the test double
+(tests/inference_doubles.py), which records no calibration. Every Paragraph and table the report asks ReportLab to draw is
 recorded, so the test reads the labels the PDF prints and checks that each
 wrapped label fits inside its column.
 """
@@ -55,7 +55,7 @@ def test_recorded_calibration_with_a_valid_vector_is_a_probability():
     assert terms.explanation == CALIBRATION_EXPLANATION
 
 
-@pytest.mark.parametrize("version", [None, "", "EfficientNet-B0-DR-v1 (fixed weights)", "Simulated engine"])
+@pytest.mark.parametrize("version", [None, "", "EfficientNet-B0-DR-v1 (fixed weights)", "Uncalibrated engine"])
 def test_no_recorded_calibration_stays_a_model_generated_score(version):
     terms = score_terms(version, _scores(SERVED))
     assert not terms.calibrated and terms.temperature is None
@@ -188,7 +188,7 @@ def test_calibrated_report_prints_probability_labels(authed_client, monkeypatch)
 
 
 def test_uncalibrated_report_keeps_model_generated_score_labels(authed_client, monkeypatch):
-    obs, texts, tables = _report(authed_client, monkeypatch)   # simulated engine: no calibration record
+    obs, texts, tables = _report(authed_client, monkeypatch)   # test double: no calibration record
     assert obs.get("calibrationTemperature") is None
     joined = "\n".join(texts)
     assert "Highest Model-Generated Class Score:" in joined
