@@ -270,6 +270,21 @@ def viridis_rgba_array(values: np.ndarray) -> np.ndarray:
     return rgba
 
 
+def attribution_size(width: int, height: int, long_side: int = 512) -> Tuple[int, int]:
+    """
+    (width, height) of the Grad-CAM overlay for a photograph of this size.
+
+    The model sees the whole photograph squashed to 224x224, so the activation
+    map spans the photograph's full width and height. Stretched back to the
+    photograph's aspect ratio it lies over the photograph cell for cell; the
+    viewer draws both with object-contain in the same box, so a square overlay
+    on a non-square photograph put every hotspot in the wrong place.
+    """
+    if width >= height:
+        return long_side, max(1, round(long_side * height / width))
+    return max(1, round(long_side * width / height)), long_side
+
+
 def _peak_activation_region(cam) -> str:
     """
     Where the Grad-CAM map peaks, in plain image-frame terms.
@@ -697,8 +712,9 @@ class EfficientNetB0InferenceService(BaseInferenceService):
             else:
                 peak_region = _peak_activation_region(cam)
                 cam = cam / np.max(cam)
+                # The overlay takes the photograph's shape, not a square: see attribution_size().
                 cam_pil = Image.fromarray((cam * 255).astype(np.uint8)).resize(
-                    (512, 512), Image.Resampling.BILINEAR)
+                    attribution_size(*rgb_image.size), Image.Resampling.BILINEAR)
                 cam_arr = np.array(cam_pil, dtype=np.float32) / 255.0
                 gradcam_img = Image.fromarray(viridis_rgba_array(cam_arr))
 

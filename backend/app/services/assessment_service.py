@@ -42,6 +42,14 @@ from app.services.ai_service import (
 )
 
 
+def _overlay_resolution(png_bytes: Optional[bytes]) -> str:
+    """WxH of the stored Grad-CAM overlay; it follows the photograph's aspect ratio, so it is read, not assumed."""
+    if not png_bytes:
+        return "unknown"
+    with Image.open(io.BytesIO(png_bytes)) as overlay:
+        return "%dx%d" % overlay.size
+
+
 _TEMPERATURE_IN_VERSION = re.compile(r"temperature-scaled T=([0-9]+(?:\.[0-9]+)?)")
 
 
@@ -308,7 +316,7 @@ class AssessmentService:
                 relative_url=inference_out.gradcam_url,
                 target_layer=inference_out.target_layer,
                 colormap="viridis",
-                metadata_json={"resolution": "512x512"},
+                metadata_json={"resolution": _overlay_resolution(inference_out.gradcam_bytes)},
             )
             artifacts.append(artifact)
 
